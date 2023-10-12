@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="boBaBatPgm">
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 ID 중복확인
+	* 작성자 : spect22
+	* 작성 일자 : 2022-12-22
+	******************************************************************************
+	-->
+	<select id="selectBatPgm" parameterType="com.ssp.core.ba.vo.BaBatPgmVo" resultType="com.ssp.core.ba.vo.BaBatPgmVo">
+		/* boBaBatPgm.selectBatPgm */
+		SELECT
+			A.BAT_PGM_ID
+		FROM
+			SSP_APP.TB_CO_BAT_PGM_INFO A
+		WHERE
+			A.USE_YN = 'Y'
+		AND	A.BAT_PGM_ID = #{batPgmId}
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 등록
+	* 작성자 : spect22
+	* 작성 일자 : 2022-12-26
+	******************************************************************************
+	-->
+	<insert id="insertBatPgm" parameterType="com.ssp.core.ba.vo.BaBatPgmVo">
+		<selectKey keyProperty="batPgmSeq" resultType="Integer" order="BEFORE">
+            SELECT SQ_BA_BAT_PGM_01.NEXTVAL FROM DUAL
+        </selectKey>
+		/* boBaBatPgm.insertBatPgm */
+		INSERT INTO TB_CO_BAT_PGM_INFO (
+			BAT_PGM_SEQ
+		,	THME_DOMN_CD
+		,	BAT_SERVER_SEQ
+		,	BAT_PGM_ID
+		,	BAT_PGM_NM
+		,	RSRV_SPR_CD
+		,	RSRV_SCH
+		,	CLASS_METHOD_NM
+		,	USE_YN
+		,	RMKS
+		,	REGPSN_ID
+		,	REG_DTM
+		,	UPDPSN_ID
+		,	UPD_DTM
+		)
+		VALUES (
+			#{batPgmSeq}
+		,	#{thmeDomnCd}
+		,	#{batServerSeq}
+		,	#{batPgmId}
+		,	#{batPgmNm}
+		,	#{rsrvSprCd}
+		,	#{rsrvSch}
+		,	#{classMethodNm}
+		,	#{useYn}
+		,	#{remark}
+		,	#{regpsnId}
+		,	SYSDATE
+		,	#{updpsnId}
+		,	SYSDATE
+		)
+	</insert>
+
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 갱신
+	* 작성자 : spect22
+	* 작성 일자 : 2022-12-28
+	******************************************************************************
+	-->
+	<update id="updateBatPgm" parameterType="com.ssp.core.ba.vo.BaBatPgmVo">
+		/* boBaBatPgm.updateBatPgm */
+		UPDATE TB_CO_BAT_PGM_INFO SET
+			THME_DOMN_CD = #{thmeDomnCd}
+		,	BAT_PGM_SEQ = #{batPgmSeq}
+		,	BAT_SERVER_SEQ = #{batServerSeq}
+		,	BAT_PGM_NM = #{batPgmNm}
+		,	RSRV_SPR_CD = #{rsrvSprCd}
+		,	RSRV_SCH = #{rsrvSch}
+		,	CLASS_METHOD_NM = #{classMethodNm}
+		,	USE_YN = #{useYn}
+		,	RMKS = #{remark}
+		,	UPDPSN_ID = #{updpsnId}
+		,	UPD_DTM = SYSDATE
+		WHERE
+			BAT_PGM_SEQ = #{batPgmSeq}
+	</update>
+
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 삭제
+	* 작성자 : spect22
+	* 작성 일자 : 2023-01-05
+	******************************************************************************
+	-->
+	<delete id="deleteBatPgm" parameterType="com.ssp.core.ba.vo.BaBatPgmVo">
+		DELETE FROM TB_CO_BAT_PGM_INFO WHERE BAT_PGM_SEQ = #{batPgmSeq}
+	</delete>
+</mapper>

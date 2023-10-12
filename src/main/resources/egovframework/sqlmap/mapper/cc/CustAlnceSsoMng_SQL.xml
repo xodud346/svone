@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.cc.custAlnceSsoMng">
+   <!--
+    ******************************************************************************
+    * SELECT : SSO고객 관리 조회
+    * 작성자 : 
+    * 작성 일자 : 2023.05.09
+    ******************************************************************************
+    -->
+	    
+    <sql id="ssoMngWhere">
+        <if test="BIZNO != null and BIZNO != ''">
+		AND A.BIZNO LIKE '%' || #{BIZNO} || '%'
+		</if>
+        <if test="useYn != null and useYn != ''">
+		AND A.USE_YN LIKE '%' || #{useYn} || '%'
+		</if>
+		AND 1=1
+	</sql>
+	
+    <select id="selectSsoMngList" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.co.coSsoMng.selectSsoMngList   */
+		SELECT A.CO_CD,
+		       A.BZPLC_ID,
+		       A.BZPLC_NM,
+		       A.BIZNO,
+		       A.CNSOL_IP_ADDR,
+		       A.PREFIX_ID,
+		       A.PWD_CTL_YN,
+		       A.KEY_VAL1,
+		       A.KEY_VAL2,
+		       A.RMKS,
+		       A.REGPSN_ID,
+		       A.REG_DTM,
+		       A.UPDPSN_ID,
+		       A.UPD_DTM,
+		       A.USE_YN,
+		       A.ETC_FDS_1,
+		       A.ETC_FDS_2, 
+			  (SELECT COUNT(*)
+		         FROM TB_CO_MBR_SYS_CNCT_LOG Z
+		        WHERE Z.BZPLC_ID = A.BZPLC_ID
+		          AND Z.LOGN_MTHD_CD = 'B0') AS LOGN_CNT
+		  FROM TB_CO_ALNCE_LOGN_API_INFO A
+		<where>
+		 	<include refid="ssoMngWhere" />
+		</where>
+		 
+		<choose>
+			<when test="sortColumn != null and sortColumn != ''">
+			 	ORDER BY ${sortColumn} ${sortType}
+			</when>
+			<otherwise>
+				ORDER BY REG_DTM
+			</otherwise>
+		</choose>
+		
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <!-- 프로그램관리목록 갯수 -->
+	<select id="selectSsoMngCount" parameterType="hashMap" resultType="integer">
+		/* com.ssp.bo.co.coSsoMng.selectSsoMngCount */
+		SELECT
+			COUNT(0)
+		 FROM SSP_APP.TB_CO_ALNCE_LOGN_API_INFO A
+		<where>
+			 <include refid="ssoMngWhere" />
+		</where>
+	</select>
+	
+	<!--  SSO 회원관리 목록 등록 -->
+    <insert id="insertSsoMng" parameterType="HashMap">
+        /*com.ssp.bo.co.coSsoMng.insertSsoMng  */
+		INSERT INTO
+		    SSP_APP.TB_CO_ALNCE_LOGN_API_INFO
+		    ( 
+		       CO_CD,
+		       BZPLC_ID,
+		       BZPLC_NM,
+		       BIZNO,
+		       CNSOL_IP_ADDR,
+		       PREFIX_ID,
+		       PWD_CTL_YN,
+		       KEY_VAL1,
+		       KEY_VAL2,
+		       RMKS,
+		       REGPSN_ID,
+		       REG_DTM,
+		       UPDPSN_ID,
+		       UPD_DTM,
+		       USE_YN
+		    )
+		SELECT CO_CD,
+		       BZPLC_ID,
+		       BZPLC_NM,
+		       BIZNO,
+		       #{cnsolIpAddr},
+		       #{prefixId},
+		       NVL(#{pwdCtlYn},'N'),
+		       #{keyVal1},
+			   #{keyVal2},
+			   NVL(#{RMKS},'N'),
+		       #{regpsnId}, 
+			    SYSDATE,
+			   #{regpsnId},
+				SYSDATE,
+			   #{useYn}
+		  FROM TB_CC_BZPLC_BASIS
+		 where BIZNO = #{BIZNO}  
+		   AND CUST_SPR_CD in ('20','30') /* S-MRO 가입 고객 제외 */  
+    </insert>
+    
+    <!-- SSO 회원관리 목록 수정 -->
+	<update id="updateSsoMng" parameterType="hashMap">
+		/* com.ssp.bo.co.coSsoMng.updateSsoMng */
+		UPDATE
+			SSP_APP.TB_CO_ALNCE_LOGN_API_INFO
+		SET
+			  CNSOL_IP_ADDR = #{cnsolIpAddr}
+			, PREFIX_ID = #{prefixId}
+			, PWD_CTL_YN = #{pwdCtlYn}
+			, KEY_VAL1 = #{keyVal1}
+			, KEY_VAL2 = #{keyVal2}
+			, RMKS = #{RMKS}
+			, USE_YN = #{useYn}
+			, UPD_DTM = SYSDATE
+			, UPDPSN_ID = #{updpsnId}
+		WHERE
+			BZPLC_ID = #{bzplcId}
+	</update>
+    
+    <!--  SSO 회원관리 목록 삭제 -->
+    <delete id="deleteSsoMng" parameterType="hashMap">
+		/* com.ssp.bo.co.coSsoMng.deleteSsoMng */
+		DELETE FROM SSP_APP.TB_CO_ALNCE_LOGN_API_INFO
+		WHERE BZPLC_ID = #{bzplcId} 
+	</delete>
+	
+	<!--  SSO 회원관리 목록 삭제 -->
+	<select id="selectSsoIdCheck" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.co.coSsoMng.selectSsoIdCheck   */
+      
+	        SELECT 
+				 A.PGM_ID
+				,A.PGM_NM
+			 FROM SSP_APP.TB_CO_ALNCE_LOGN_API_INFO A
+			<where>
+				<if test="pgmIdList != null and pgmIdList.size > 0">
+	                      A.BIZNO IN
+	                    <foreach collection="ssoList" item="ssoList" open="(" close=")" separator=",">
+	                        #{BIZNO}
+	                    </foreach>
+	             </if>
+			</where>
+			ORDER BY A.BIZNO
+			
+    </select>
+
+    
+</mapper>

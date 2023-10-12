@@ -1,0 +1,577 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PA_27" width="1336" height="846" titletext="제조원 목록" onload="fn_onLoad" onkeyup="fn_onkeyup" onkeydown="fn_onkeydown">
+    <Layouts>
+      <Layout height="846" mobileorientation="landscape" width="1336">
+        <Div id="Div00" taborder="3" text="Div00" left="0" top="0" height="132" cssclass="div_WF_SearchArea" right="0">
+          <Layouts>
+            <Layout>
+              <Static id="Static03" taborder="0" left="20" top="20" height="32" cssclass="sta_cm_box02L_tdt" right="20" text="" onclick="Div00_Static03_onclick"/>
+              <Static id="Static65" taborder="2" left="20" top="51" height="32" cssclass="sta_cm_box02L" right="20"/>
+              <Static id="Static02" taborder="3" text="제조원" left="20" top="20" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static04" taborder="4" text="수정자" top="20" height="32" cssclass="sta_cm_box01L_tdt" width="130" left="762"/>
+              <Static id="Static10" taborder="5" text="수정일자" left="20" top="51" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static66" taborder="6" text="제조원명 상이여부" top="51" height="32" cssclass="sta_cm_box01L" width="130" left="762"/>
+              <Edit id="edt_mnfrNm" taborder="7" left="266" top="24" width="184" height="24" enable="true"/>
+              <Button id="btn_mnfrPopup" taborder="8" left="edt_mnfrNm:4" top="24" height="24" cssclass="btn_WF_search02" width="24" text="" onclick="Div00_btn_mnfrPopup_onclick"/>
+              <Calendar id="cal_startDate" taborder="9" left="160" top="55" width="140" height="24" cssclass="cal_WF_calendar" enable="true" dateformat="yyyy-MM-dd"/>
+              <Static id="Static59" taborder="10" text="~" left="304" top="55" width="9" height="24"/>
+              <Calendar id="cal_endDate" taborder="11" left="317" top="55" width="140" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd"/>
+              <Combo id="cmb_inqPerdSprCd" taborder="12" text="전체" left="cal_endDate:4" top="55" width="130" height="24" innerdataset="ds_comboDate" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" onitemchanged="Div00_cmb_inqPerdSprCd_onitemchanged" index="0"/>
+              <Combo id="Combo50" taborder="13" text="Combo00" left="159" top="-93" width="150" height="24" index="-1"/>
+              <Combo id="Combo51" taborder="14" text="Combo00" left="1021" top="-93" width="150" height="24" index="-1"/>
+              <Button id="btn_search" taborder="1" text="조회" top="93" height="28" cssclass="btn_WF_require" onclick="btn_search_onclick" right="20" width="60"/>
+              <Button id="btn_clear" taborder="15" text="초기화" top="93" height="28" onclick="Div00_btn_clear_onclick" right="84" width="60"/>
+              <Edit id="edt_mnfrNo" taborder="16" left="160" top="24" width="100" height="24"/>
+              <Button id="btn_psnPopup" taborder="17" top="24" height="24" cssclass="btn_WF_search02" text="" width="24" left="1195" onclick="Div00_btn_psnPopup_onclick"/>
+              <Edit id="edt_oprtrNm" taborder="18" top="24" height="24" width="184" left="1007" enable="true"/>
+              <Edit id="edt_updpsnId" taborder="19" top="24" height="24" width="100" left="901"/>
+              <CheckBox id="chk_mnfrNmDiffYn" taborder="20" text="CheckBox00" left="902" top="56" width="18" height="23"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btn_upload" taborder="1" text="일괄수정" top="152" width="81" height="28" right="342" onclick="btn_upload_onclick" visible="true"/>
+        <Button id="btn_exceldown" taborder="8" text="엑셀다운로드" top="152" width="110" height="28" cssclass="btn_WF_excel" right="228" textPadding="0px" onclick="btn_exceldown_onclick"/>
+        <Grid id="grd_list" taborder="2" left="20" top="190" binddataset="ds_list" right="20" autofittype="col" cssclass="grd_WF_list" bottom="110" autoenter="select" autosizingtype="none" selecttype="multiarea" cellmovingtype="col">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="37"/>
+                <Column size="97"/>
+                <Column size="155"/>
+                <Column size="155"/>
+                <Column size="102"/>
+                <Column size="100"/>
+                <Column size="100"/>
+                <Column size="103"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="제조원ID"/>
+                <Cell col="2" text="S-MRO 제조원명"/>
+                <Cell col="3" text="SSP 제조원명" cssclass="grd_WF_bg_image"/>
+                <Cell col="4" text="제조원명 상이여부"/>
+                <Cell col="5" text="제조원명 수정일"/>
+                <Cell col="6" text="제조원명 수정자ID"/>
+                <Cell col="7" text="제조원명 수정자명"/>
+              </Band>
+              <Band id="body">
+                <Cell edittype="checkbox" displaytype="checkboxcontrol" text="bind:CHK"/>
+                <Cell col="1" text="bind:MNFR_NO" textAlign="center"/>
+                <Cell col="2" text="bind:MRO_MNFR_NM" textAlign="left"/>
+                <Cell col="3" text="bind:MNFR_NM" displaytype="editcontrol" editautoselect="false" edittype="expr:CHK==1?&quot;text&quot;:&quot;readonly&quot;" editmaxlength="100" textAlign="left"/>
+                <Cell col="4" text="bind:MNFR_NM_DIFF_YN" textAlign="center" expr="MNFR_NM_DIFF_YN=='Y'?'Y':''"/>
+                <Cell col="5" text="bind:UPD_DTM" textAlign="center" displaytype="text" calendardisplaynulltype="none" calendardateformat="yyyy-MM-dd hh:mm:ss"/>
+                <Cell col="6" text="bind:UPDPSN_ID" textAlign="center"/>
+                <Cell col="7" text="bind:UPDPSN_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="div_paging" taborder="4" height="grd_list:30" formscrollbartype="none none" right="20" url="COMM::cmmPaging.xfdl" left="20" top="grd_list:30"/>
+        <Static id="totalPageCount" taborder="0" text="(총 0건 0 / 0)" left="20" top="165" width="300" height="14" usedecorate="true"/>
+        <Button id="btn_save" taborder="5" text="저장" top="152" width="81" height="28" right="427" onclick="btn_save_onclick"/>
+        <Button id="btn_layoutSave" taborder="6" text="레이아웃 저장" top="152" width="100" height="28" right="124" onclick="btn_layoutSave_onclick"/>
+        <Button id="btn_layoutInit" taborder="7" text="레이아웃 초기화" top="152" width="100" height="28" right="20" onclick="btn_layoutInit_onclick"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="NO" type="STRING" size="256"/>
+          <Column id="MNFR_NO" type="STRING" size="256"/>
+          <Column id="MNFR_NM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="UPD_DTM_START" type="STRING" size="256"/>
+          <Column id="UPD_DTM_END" type="STRING" size="256"/>
+          <Column id="MNFR_NM_DIFF_YN" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="DATE_UNIT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="NO">1</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="MNFR_NO" type="STRING" size="256"/>
+          <Column id="MRO_MNFR_NM" type="STRING" size="256"/>
+          <Column id="FRT_EXPS_YN" type="STRING" size="256"/>
+          <Column id="MNFR_SYM_UNN_NM" type="STRING" size="256"/>
+          <Column id="MNFR_NM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+          <Column id="MNFR_NM_DIFF_YN" type="STRING" size="256"/>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="UPDPSN_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_comboDate">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COM_DTL_CD">0</Col>
+            <Col id="COM_DTL_CD_NM">전체</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_comboDateTemp">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_saveRow">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="MNFR_NO" type="STRING" size="256"/>
+          <Column id="MNFR_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.mnfrTotalCount = 0;
+
+this.searchMnfrCount = 0;
+this.searchMnfrNo = "";
+this.searchMnfrNm = "";
+
+this.oprtrCount = 0;
+this.searchEmpNo = '';
+this.searchOprtrNm = '';
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+    //공통 함수 호출(필수)
+    this.gfn_formOnLoad(this);
+    //this.fn_search(true);
+    this.fn_commonCodeSearch();
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo){
+	var objType = obj.getFocus();
+	
+	if( e.keycode == 13 && objType == "[object Edit]"){
+		var value = e.fromobject.value;
+		this.ds_search.setColumn(0, "CO_CD", this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD"));
+		this.ds_search.setColumn(0, "ROW_COUNT", 1000);
+		this.ds_search.setColumn(0, "START_NUM", 0);
+		if(this.gfn_lengthByte(this.gfn_allTrim(value)) > 0){
+			if( e.fromobject.id == "edt_mnfrNo") {	//제조원ID
+				this.ds_search.setColumn(0, "MNFR_NO", value);
+				this.fn_popupSearch("edt_mnfrNo", "/pr/prd-popup/select-manufacturer-popup-list.do");
+			}
+			
+			if( e.fromobject.id == "edt_mnfrNm") {	//제조원명
+				this.ds_search.setColumn(0, "MNFR_NM", value);
+				this.fn_popupSearch("edt_mnfrNm", "/pr/prd-popup/select-manufacturer-popup-list.do");
+			}
+			
+			if( e.fromobject.id == "edt_updpsnId") {	//담당자
+				this.ds_search.setColumn(0, "EMP_NO", value);
+				this.fn_popupSearch("edt_updpsnId", "/co/popup/select-operator-popup-list.do");
+			}
+		}
+	}
+}
+
+// 화면 단축키
+this.fn_onkeydown = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	// CTRL + ENTER
+	if (e.keycode == 13 && e.ctrlkey == true) {
+		// 조회
+		this.btn_search_onclick();
+	}
+	
+	// CTRL + s
+	if (e.keycode == 83 && e.ctrlkey == true) {
+		// 저장
+		this.btn_save_onclick();
+		event.preventDefault();
+	}
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (bInit){
+    
+    var sSvcId = "search";    
+    var sUrl = "/pr/ctg-mng/select-manufacturer-list.do";  
+    var inDs = "ds_search=ds_search";
+    var outDs = "ds_list=manufacturerList";
+    var arg = "";
+    
+    // 조회버튼 클릭시 페이징 초기화 시킨다.
+    if(bInit) {
+        this.div_paging.uPage = 1;
+        this.div_paging.uPageNum = 0;
+        this.ds_search.setColumn(0,"START_NUM",0);
+        this.ds_search.setColumn(0,"ROW_COUNT",this.fv_oApp.gv_pageViewCnt);
+    }
+     
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+this.fn_save = function (bInit){
+    
+    var sSvcId = "save";    
+    var sUrl = "/pr/ctg-mng/save-manufacturer.do";  
+    var inDs = "ds_saveRow=ds_saveRow";
+    var outDs = "ds_list=manufacturerList";
+    var arg = "";
+     
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//공통코드조회
+this.fn_commonCodeSearch = function(){  
+
+    var sSvcId = "commonCodeSearch";    
+    var sUrl = "/co/select-common-code-list.do";  
+    var inDs = "ds_search=ds_search";
+    var outDs = "ds_comboDate=ds_output1";
+    var arg = "";
+    
+    this.ds_search.setColumn(0, "CODE_LIST", "INQ_PERD_SPR_CD");
+    this.ds_search.setColumn(0, "LANG_CD", "KO");
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//폼 엔터처리용
+this.fn_popupSearch = function (svcId, url){
+	var sSvcId = svcId;    
+	var sUrl = url;  
+	var inDs = "ds_search=ds_search";
+	var outDs = "";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");	
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+    switch(svcID) {
+        case "search" :
+            this.div_paging.form.cfn_createPage(this.div_paging,this.mnfrTotalCount,this.fv_oApp.gv_pageViewCnt,"fn_pageCallback");
+            break;
+        
+        case "commonCodeSearch" :
+			this.ds_comboDate.insertRow(0);
+            this.ds_comboDate.setColumn(0, "COM_DTL_CD", "");
+            this.ds_comboDate.setColumn(0, "COM_DTL_CD_NM", "전체");
+            this.Div00.form.cmb_inqPerdSprCd.set_index(0);
+			this.fn_setSearchDate();
+			
+            break;
+            
+        case "save" : 
+            this.fn_search(false);
+            break;
+            
+        case "edt_mnfrNo" : 
+            if(this.searchMnfrCount>0){
+				this.Div00.form.edt_mnfrNm.set_value(this.searchMnfrNm);
+			}else{
+				var params = {coCd:this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD"), mnfrNo:this.Div00.form.edt_mnfrNo.value};
+				var options = {};
+				this.gfn_openPopup('btn_mnfrPopup', "PR_POP::SSP_BO_PP_08.xfdl", params,  "fn_popupCallback", options);
+			}
+            break;
+			
+		case "edt_mnfrNm" : 
+            if(this.searchMnfrCount==1){
+				this.Div00.form.edt_mnfrNo.set_value(this.searchMnfrNo);
+			}else{
+				this.Div00.form.edt_mnfrNo.set_value('');
+				var params = {coCd:this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD"), mnfrNm:this.Div00.form.edt_mnfrNm.value};
+				var options = {};
+				this.gfn_openPopup('btn_mnfrPopup', "PR_POP::SSP_BO_PP_08.xfdl", params,  "fn_popupCallback", options);
+			}
+            break;
+			
+		case "edt_updpsnId" : 
+            if(this.oprtrCount>0){
+				this.Div00.form.edt_oprtrNm.set_value(this.searchOprtrNm);
+			}else{
+				var params = {coCd:this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD"), oprtrId:this.Div00.form.edt_updpsnId.value};
+				var options = {};
+				this.gfn_openPopup('btn_psnPopup', "CO_POP::SSP_BO_PP_27.xfdl", params,  "fn_popupCallback", options);
+			}
+            break;
+    }
+};
+
+this.fn_pageCallback = function(sFlag){
+    var oPaging = this.div_paging;  
+    
+    if(sFlag){
+        this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+        this.ds_search.setColumn(0,"ROW_COUNT", this.fv_oApp.gv_pageViewCnt);
+        this.fn_search();
+    }
+
+    var sTotText = "(총 "+ this.gfn_appendComma(oPaging.uTotCount, 0) +"건 </b>"+ this.gfn_appendComma(oPaging.uPage) +" / "+ this.gfn_appendComma(oPaging.uPageCnt) +")";
+    this.totalPageCount.set_text(sTotText);
+};
+
+//팝업콜백
+this.fn_popupCallback = function(svcID, args){
+    switch(svcID) {
+        case "btn_mnfrPopup" :
+            var jsonData = JSON.parse(args);
+            this.Div00.form.edt_mnfrNo.set_value(jsonData.MNFR_NO);
+            this.Div00.form.edt_mnfrNm.set_value(jsonData.MNFR_NM);
+            
+            break;
+			
+		case "btn_psnPopup" :
+            var jsonData = JSON.parse(args);
+            this.Div00.form.edt_updpsnId.set_value(jsonData.EMP_NO);
+            this.Div00.form.edt_oprtrNm.set_value(jsonData.OPRTR_NM);
+            
+            break;
+            
+    }
+}
+
+//정렬콜백
+this.fn_sortCallback = function(sGridId){
+    var oGrid=null;
+    if(sGridId == "grd_list"){
+        oSortInfo = this.grd_list.uaSortInfo;
+        this.ds_search.setColumn(0,"SORT_COLUMN",oSortInfo.bindCol);
+        this.ds_search.setColumn(0,"SORT_TYPE",oSortInfo.status);
+        this.fn_search(true);
+    }
+};
+
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수 
+this.cfn_formInit = function(){
+    //grid 초기 설정
+    this.grd_list.uSortFlag = "false";
+    this.grd_list.uServerSortFlag = "true";
+    this.grd_list.uSortCallback = "fn_sortCallback";
+    this.grd_list.uCellSizeType = "true";
+        
+    //페이징 초기 설정
+    this.div_paging.uPage = 1;
+    this.div_paging.uPageNum = 0;
+    this.div_paging.uPageRowCnt = 10;
+    this.div_paging.uPageCnt = 0;
+    this.div_paging.uTotCount = 0;
+	
+	this.uGridList="grd_list";
+	this.grd_list.uRightMouse="true";
+	this.grd_list.uPersonalFlag="true";
+	this.grd_list.uDefaultFormat="CHK|MNFR_NO|MRO_MNFR_NM|MNFR_NM|MNFR_NM_DIFF_YN|UPD_DTM|UPDPSN_ID|UPDPSN_NM";
+	
+}
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+//기간 설정
+this.fn_setSearchDate = function() {
+    
+    var term = this.Div00.form.cmb_inqPerdSprCd.value;
+    var objDate = new Date();
+    var sToday = objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0');
+
+    /* 1 : 1일,    2 : 1주일,    3 : 2주일,    4 : 1개월,    5 : 3개월,    6 : 6개월,    7 : 1년 */
+	if( term == "" ) {
+        this.Div00.form.cal_startDate.set_value("");
+		this.Div00.form.cal_endDate.set_value("");  
+    } else {
+		if( term == "1" ) {
+			objDate.setDate(objDate.getDate());
+		} else if( term == "2" ) {
+			objDate.setDate(objDate.getDate() -6);
+		} else if( term == "3" ) {
+			objDate.setDate(objDate.getDate() -13);
+		} else if( term == "4" ) {
+			objDate.setMonth(objDate.getMonth() -1);
+			objDate.setDate(objDate.getDate() +1);
+		} else if( term == "5" ) {
+			objDate.setMonth(objDate.getMonth() -3);
+			objDate.setDate(objDate.getDate() +1);
+		} else if( term == "6" ) {
+			objDate.setMonth(objDate.getMonth() -6);
+			objDate.setDate(objDate.getDate() +1);
+		} else if( term == "7" ) {
+			objDate.setMonth(objDate.getMonth() -12);
+			objDate.setDate(objDate.getDate() +1);
+		}
+
+		this.Div00.form.cal_startDate.set_value(objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0'));
+		this.Div00.form.cal_endDate.set_value(sToday);  
+	}
+};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//달력콤보선택
+this.Div00_cmb_inqPerdSprCd_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+    this.fn_setSearchDate();
+};
+
+//조회버튼
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    this.ds_search.setColumn(0, "MNFR_NO", this.Div00.form.edt_mnfrNo.value); //제조원ID
+    this.ds_search.setColumn(0, "MNFR_NM", this.Div00.form.edt_mnfrNm.value); //제조원명
+    this.ds_search.setColumn(0, "UPDPSN_ID", this.Div00.form.edt_updpsnId.value); //수정자ID
+    this.ds_search.setColumn(0, "OPRTR_NM", this.Div00.form.edt_oprtrNm.value);   //수정자명
+    this.ds_search.setColumn(0, "DATE_UNIT", this.Div00.form.cmb_inqPerdSprCd.value);   //날짜단위
+    this.ds_search.setColumn(0, "UPD_DTM_START", this.Div00.form.cal_startDate.value);  //수정일자시작
+    this.ds_search.setColumn(0, "UPD_DTM_END", this.Div00.form.cal_endDate.value);  //수정일자종료
+    this.ds_search.setColumn(0, "MNFR_NM_DIFF_YN", this.Div00.form.chk_mnfrNmDiffYn.value);  //제조원명 상이여부
+    
+    this.fn_search(true);
+};
+
+//제조원조회팝업
+this.Div00_btn_mnfrPopup_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    var params = {coCd:this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD")};
+    var options = {};
+    this.gfn_openPopup(e.fromobject.id, "PR_POP::SSP_BO_PP_08.xfdl", params,  "fn_popupCallback", options);
+};
+
+//저장버튼
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    this.ds_saveRow.clearData();
+    for(var i=0; i<this.ds_list.rowcount; i++)
+    {
+        if(this.ds_list.getColumn(i, "CHK")==1){//체크된것만
+            var nRow = this.ds_saveRow.addRow();
+            this.ds_saveRow.copyRow(nRow, this.ds_list, i);
+        }
+    }
+    
+    if(this.ds_saveRow.getRowCount()==0){
+        alert('제조원을 선택해 주세요');
+        return false;
+    }
+    
+    for(var i=0; i<this.ds_saveRow.rowcount; i++)
+    {
+        if(this.ds_saveRow.getColumn(i, "MNFR_NM").trim().length==0){
+            alert('SSP 제조원명을 입력해 주세요');
+            return false;
+        }
+    }
+    
+    var sReturn = this.confirm("수정된 내용으로 저장하시겠습니까?");
+    if(sReturn){
+        this.fn_save();
+    }
+};
+
+//초기화버튼
+this.Div00_btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    var objDate = new Date();
+    var today = objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0');
+    this.ds_search.reset();
+    this.Div00.form.edt_mnfrNo.set_value('');
+    this.Div00.form.edt_mnfrNm.set_value('');
+    this.Div00.form.edt_updpsnId.set_value('');
+    this.Div00.form.edt_oprtrNm.set_value('');
+    this.Div00.form.cmb_inqPerdSprCd.set_index(0);
+    this.Div00.form.cal_startDate.set_value('');
+    this.Div00.form.cal_endDate.set_value('');
+    this.Div00.form.chk_mnfrNmDiffYn.set_value(false);
+    
+};
+
+this.btn_exceldown_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_list.rowcount>0){
+		this.gfn_excelExport(this.grd_list, "제조원 목록", "제조원 목록", null, ["CHK"]);
+	}else{
+		alert('엑셀 파일로 다운로드 할 수 있는 자료가 없습니다.');
+	}
+};
+
+//수정자조회팝업
+this.Div00_btn_psnPopup_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    var params = {coCd:this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD")};
+    var options = {};
+    this.gfn_openPopup(e.fromobject.id, "CO_POP::SSP_BO_PP_27.xfdl", params,  "fn_popupCallback", options);
+};
+
+this.btn_upload_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    var param = {pgmId : "SSP_JF_PR_09"};
+	this.gfn_openPopup("SSP_BO_PP_34", "CO_POP::SSP_BO_PP_34.xfdl", param);
+};
+
+this.Div00_edt_mnfrNo_onkeyup = function(obj:nexacro.Edit,e:nexacro.KeyEventInfo)
+{
+    if( e.keycode == 13 ) {
+        this.fn_mnfrSearch(true);
+    }
+    
+};
+
+
+
+this.Div00_btn_psnPopup_onclickDiv00_btn_PSN_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	
+};
+
+this.btn_saveAll_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	alert('작업예정');
+};
+
+
+this.btn_layoutSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.gfn_personalSave("grd_list", this.grd_list.getCurFormatString());
+};
+
+this.btn_layoutInit_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.gfn_personalReset("grd_list");
+	this.grd_list.set_formats(this.grd_list.uOrgFormat);
+};
+]]></Script>
+  </Form>
+</FDL>

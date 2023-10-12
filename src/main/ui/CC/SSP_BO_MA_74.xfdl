@@ -1,0 +1,962 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="dlvplcMngList" width="1336" height="846" titletext="계정설정" onload="fn_onLoad" enable="true" onkeyup="dlvplcMngList_onkeyup">
+    <Layouts>
+      <Layout height="846" mobileorientation="landscape" width="1336">
+        <Div id="Div_top_info" taborder="0" text="Div01" left="23" top="0" height="150" right="0">
+          <Layouts>
+            <Layout>
+              <Static id="title01" taborder="9" text="조회" left="0" cssclass="sta_WF_title01" onclick="Static00_onclick" width="130" bottom="121" height="20"/>
+              <Static id="Static03" taborder="1" left="80" top="34" height="32" cssclass="sta_cm_box02L_tdt" text="" right="20"/>
+              <Static id="Static22_00" taborder="5" text="운영단위" left="389" top="34" width="90" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static04" taborder="2" text="부서" left="778" top="34" width="90" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Combo id="Combo50" taborder="3" text="Combo00" left="159" top="-115" width="150" height="24" index="-1"/>
+              <Combo id="Combo51" taborder="4" text="Combo00" left="1021" top="-115" width="150" height="24" index="-1"/>
+              <Button id="btn_bzplc" taborder="10" top="38" height="24" cssclass="btn_WF_search02" left="334" width="24" onclick="searchPopupBtn_onclick"/>
+              <Edit id="searchBzplcNm" taborder="6" top="38" height="24" enable="false" enableevent="false" left="200" width="130"/>
+              <Edit id="searchOprUnitNm" taborder="7" left="589" top="38" height="24" initvalueid="" enable="false" enableevent="false" width="130"/>
+              <Button id="btn_oprUnitMemo" taborder="8" left="746" top="39" height="24" cssclass="btn_WF_document" onclick="btn_oprUnitMemo_onclick" width="30"/>
+              <Static id="Static03_00" taborder="12" left="80" top="64" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+              <Static id="Static22_00_00" taborder="13" text="계정" left="389" top="64" width="90" height="32" cssclass="sta_cm_box01L"/>
+              <Combo id="searchDisplayDiv" taborder="14" left="95" top="68" height="24" index="0" value="1" width="231" enable="true" innerdataset="ds_display" codecolumn="DISPLAY_TYPE" datacolumn="DISPLAY_TYPE_NM" text="계정/부서" onitemchanged="fn_searchDisplayDiv_onitemchanged">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">Y</Col>
+                      <Col id="datacolumn">사용</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">N</Col>
+                      <Col id="datacolumn">미사용</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Combo>
+              <Edit id="searchDeptNm" taborder="15" left="979" top="38" height="24" initvalueid="" enable="false" enableevent="false" width="130"/>
+              <Button id="btn_deptMemo" taborder="16" left="1135" top="39" height="24" cssclass="btn_WF_document" onclick="btn_deptMemo_onclick" width="30"/>
+              <Edit id="searchAcctNm" taborder="17" top="68" height="24" enable="false" enableevent="false" left="590" width="130"/>
+              <Button id="btn_acctMemo" taborder="18" top="68" height="24" cssclass="btn_WF_document" onclick="btn_acctMemo_onclick" text="" left="748" width="24"/>
+              <Button id="btn_search" taborder="20" text="조회" top="Static03_00:10" height="28" onclick="btn_search_onclick" cssclass="btn_WF_require" width="60" right="20"/>
+              <Button id="btn_reset" taborder="19" text="초기화" top="106" height="28" onclick="btn_reset_onclick" right="btn_search:5" width="70" cssclass="btn_WF_reset"/>
+              <Button id="btn_oprUnit" taborder="21" left="724" top="38" height="24" cssclass="btn_WF_multi" width="24" onclick="searchPopupBtn_onclick"/>
+              <Button id="btn_dept" taborder="22" left="1114" top="38" height="24" cssclass="btn_WF_multi" width="24" onclick="searchPopupBtn_onclick"/>
+              <Button id="btn_acct" taborder="23" left="724" top="68" height="24" cssclass="btn_WF_multi" width="24" onclick="searchPopupBtn_onclick"/>
+              <Edit id="searchBzplcId" taborder="24" top="38" height="24" enable="true" left="95" width="100"/>
+              <Edit id="searchAcctId" taborder="25" top="68" height="24" enable="true" left="485" width="100"/>
+              <Edit id="searchOprUnitId" taborder="26" left="485" top="38" height="24" initvalueid="" enable="true" width="100"/>
+              <Edit id="searchDeptId" taborder="27" left="875" top="38" height="24" initvalueid="" enable="true" width="100"/>
+              <Static id="Static02" taborder="0" text="사업장" left="0" top="34" width="90" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static02_00" taborder="11" text="구분" left="0" top="64" width="90" height="32" cssclass="sta_cm_box01L"/>
+              <Button id="btn_allExcel" taborder="28" text="대용량다운로드" top="106" width="100" height="28" right="btn_reset:4" cssclass="btn_WF_default" onclick="Div_top_info_btn_allExcel_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="Div01_01" taborder="1" text="tree" left="19" top="150" width="327" bottom="2">
+          <Layouts>
+            <Layout>
+              <Grid id="grd_acctTree" taborder="1" left="7" top="27" height="596" binddataset="ds_treeList" autofittype="col" autoenter="none" oncellclick="grd_acctTreeOnCellClick" autosizingtype="none" width="295" nodatatext="조회 조건을 선택 하신 후, 조회해 주세요." selectscrollmode="default" scrollbartype="auto auto" treeusecheckbox="false" treeinitstatus="expand,all" selectchangetype="down" selecttype="row">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="294"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="30" band="head"/>
+                      <Row size="30"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="bind:TREE_TEXT" edittype="tree" displaytype="treeitemcontrol" treelevel="bind:LVL" expr="UNDER_CNT  == '0' ? TREE_TEXT : TREE_TEXT + &quot; (&quot; + UNDER_CNT +&quot;)&quot;" cssclass="expr:String(LVL).valueOf()==&quot;0&quot;?&quot;error&quot;:&quot;&quot;"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Static id="title02" taborder="0" text="목록" left="7" top="0" cssclass="sta_WF_title01" onclick="Static00_onclick" width="130" bottom="grd_acctTree:10"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="Div02_01" taborder="2" text="dtl" left="339" top="138" height="212" right="0" enable="true">
+          <Layouts>
+            <Layout>
+              <Static id="Static03" taborder="1" top="49" height="32" cssclass="sta_cm_box02L_tdt" text="" left="161" right="20"/>
+              <Static id="Static02" taborder="0" text="계정유형" top="49" width="162" height="32" cssclass="sta_cm_box01L_tdt" left="0"/>
+              <Static id="Static22_00" taborder="2" text="계정ID" left="496" top="49" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="title03" taborder="3" text="계정 정보" left="0" top="22" cssclass="sta_WF_title01" onclick="Static00_onclick" width="130" bottom="Static02:10"/>
+              <Static id="Static02_00" taborder="4" text="계정명" left="0" top="80" height="32" cssclass="sta_cm_box01L" width="164"/>
+              <Static id="Static03_00" taborder="5" top="80" height="32" text="" cssclass="sta_cm_box02L" left="161" right="20"/>
+              <Static id="Static22_00_00" taborder="6" text="계정코드" left="496" top="80" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static02_00_00" taborder="7" text="계정레벨" left="0" top="111" width="162" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static03_00_00" taborder="8" top="111" height="32" text="" cssclass="sta_cm_box02L" left="161" right="20"/>
+              <Static id="Static02_00_00_00" taborder="9" text="계정 사용 상태" left="0" top="142" width="162" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static03_00_00_00" taborder="10" top="142" height="32" text="" cssclass="sta_cm_box02L" left="161" right="20"/>
+              <Static id="sta_acctTpNm" taborder="11" left="169" top="54" height="23" onclick="Static00_onclick" width="234"/>
+              <Static id="Static22_00_00_00" taborder="12" text="상위계정명" left="496" top="111" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="sta_acctLvl" taborder="13" left="169" top="116" height="23" onclick="Static00_onclick" width="234"/>
+              <Static id="sta_useYn" taborder="14" left="169" top="147" height="23" onclick="Static00_onclick" width="234"/>
+              <Static id="sta_hrnkAcctNm" taborder="16" left="633" top="117" height="23" onclick="Static00_onclick" width="234"/>
+              <Edit id="sta_acctNm" taborder="17" left="168" top="84" width="284" height="24" enable="true"/>
+              <Edit id="sta_acctCd" taborder="18" left="631" top="84" width="191" height="24" initvalueid="" enable="true"/>
+              <Edit id="edt_accttId" taborder="15" left="631" top="53" width="191" height="24" readonly="true"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="Div02_02" taborder="4" text="dtl" left="339" top="138" height="212" right="0" enable="true" visible="true">
+          <Layouts>
+            <Layout>
+              <Static id="Static03" taborder="1" top="49" height="32" cssclass="sta_cm_box02L_tdt" text="" left="161" right="20"/>
+              <Static id="Static02" taborder="0" text="부서명" top="49" width="162" height="32" cssclass="sta_cm_box01L_tdt" left="0"/>
+              <Static id="sta_deptId" taborder="2" text="부서ID" left="496" top="49" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="title03" taborder="3" text="부서 정보" left="0" top="22" cssclass="sta_WF_title01" onclick="Static00_onclick" width="130" bottom="Static02:10"/>
+              <Static id="Static02_00" taborder="4" text="상위부서명" left="0" top="80" height="32" cssclass="sta_cm_box01L" width="164" onclick="Div02_02_Static02_00_onclick"/>
+              <Static id="Static03_00" taborder="5" top="80" height="32" text="" cssclass="sta_cm_box02L" left="161" right="20"/>
+              <Static id="Static22_00_00" taborder="6" text="부서코드" left="496" top="80" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static02_00_00" taborder="7" text="예산이체허용여부" left="0" top="111" width="162" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static03_00_00" taborder="8" top="111" height="32" text="" cssclass="sta_cm_box02L" left="161" right="20" onclick="Div02_02_Static03_00_00_onclick"/>
+              <Static id="Static02_00_00_00" taborder="9" text="주소" left="0" top="142" width="162" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static03_00_00_00" taborder="10" top="142" height="32" text="" cssclass="sta_cm_box02L" left="161" right="20"/>
+              <Static id="ACCT_NM" taborder="11" left="169" top="85" height="23" width="234"/>
+              <Static id="Static22_00_00_00" taborder="12" text="예산초과허용여부" left="496" top="111" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="ACCT_LVL" taborder="13" left="169" top="116" height="23" width="234"/>
+              <Static id="USE_YN" taborder="14" left="169" top="147" height="23" width="676"/>
+              <Static id="ACCT_CD" taborder="15" left="633" top="85" height="23" width="234"/>
+              <Static id="ACCT_CD00" taborder="16" left="633" top="115" height="23" width="234"/>
+              <Edit id="edt_deptNm" taborder="17" left="Static02:4" top="53" width="284" height="24" readonly="true"/>
+              <Edit id="edt_deptId" taborder="18" left="sta_deptId:4" top="53" width="191" height="24" readonly="true"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="Div03_01" taborder="3" text="grid" left="329" top="333" right="0" bottom="8">
+          <Layouts>
+            <Layout>
+              <Grid id="grd_deptList" taborder="0" left="13" top="50" height="390" autofittype="col" autoenter="none" autosizingtype="none" nodatatext="조회 조건을 선택 하신 후, 조회해 주세요." selectscrollmode="default" scrollbartype="auto auto" treeusecheckbox="false" treeinitstatus="expand,all" selectchangetype="down" selecttype="row" right="20" binddataset="ds_subGrdList">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="30"/>
+                      <Column size="130"/>
+                      <Column size="250"/>
+                      <Column size="130"/>
+                      <Column size="250"/>
+                      <Column size="160"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="30" band="head"/>
+                      <Row size="30"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                      <Cell col="1" text="운영단위ID"/>
+                      <Cell col="2" text="운영단위명"/>
+                      <Cell col="3" text="부서ID"/>
+                      <Cell col="4" text="부서명"/>
+                      <Cell col="5" text="부서코드"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="bind:CHK" displaytype="checkboxcontrol" edittype="checkbox"/>
+                      <Cell col="1" text="bind:OPR_UNIT_ID"/>
+                      <Cell col="2" text="bind:OPR_UNIT_NM"/>
+                      <Cell col="3" text="bind:DEPT_ID"/>
+                      <Cell col="4" text="bind:DEPT_NM" textAlign="left"/>
+                      <Cell col="5" text="bind:CCO_DEPT_CD"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Grid id="grd_acctList" taborder="6" left="13" top="50" height="390" autofittype="col" autoenter="none" autosizingtype="none" nodatatext="조회 조건을 선택 하신 후, 조회해 주세요." selectscrollmode="default" scrollbartype="auto auto" treeusecheckbox="false" treeinitstatus="expand,all" selectchangetype="down" selecttype="row" right="20" binddataset="ds_subGrdList">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="30"/>
+                      <Column size="60"/>
+                      <Column size="100"/>
+                      <Column size="200"/>
+                      <Column size="100"/>
+                      <Column size="200"/>
+                      <Column size="200"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="30" band="head"/>
+                      <Row size="30"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                      <Cell col="1" text="계정유형"/>
+                      <Cell col="2" text="계정ID"/>
+                      <Cell col="3" text="계정명"/>
+                      <Cell col="4" text="계정코드"/>
+                      <Cell col="5" text="상위계정명"/>
+                      <Cell col="6" text="최상위계정명"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="bind:CHK" displaytype="checkboxcontrol" edittype="checkbox"/>
+                      <Cell col="1" text="bind:ACCT_TP_NM"/>
+                      <Cell col="2" text="bind:ACCT_ID"/>
+                      <Cell col="3" text="bind:ACCT_NM" textAlign="left"/>
+                      <Cell col="4" text="bind:ACCT_CD"/>
+                      <Cell col="5" text="bind:HRNK_ACCT_NM" textAlign="left"/>
+                      <Cell col="6" text="bind:TOP_HRNK_ACCT_NM" textAlign="left"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Combo id="cbo_page" taborder="1" text="20개씩" top="16" codecolumn="DISPLAY_COUNT" datacolumn="DISPLAY_COUNT_TEXT" index="0" value="20" onitemchanged="cbo_page_onitemchanged" right="20" width="110" height="24" innerdataset="displayCount_ds">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">Y</Col>
+                      <Col id="datacolumn">사용</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">N</Col>
+                      <Col id="datacolumn">미사용</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Combo>
+              <Button id="btn_addPopup" taborder="3" text="추가" top="14" height="28" onclick="btn_addPopup_onclick" right="cbo_page:5" width="60"/>
+              <Button id="btn_delete" taborder="2" text="선택 삭제" top="14" height="28" onclick="btn_delete_onclick" right="btn_addPopup:5" width="95"/>
+              <Div id="div_paging" taborder="4" left="14" height="38" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="447" right="20"/>
+              <Static id="title04" taborder="5" text="부서 정보" left="12" top="22" cssclass="sta_WF_title01" width="130" bottom="grd_deptList:10"/>
+              <Button id="btn_excel" taborder="7" text="엑셀다운로드" top="14" width="110" cssclass="btn_WF_excel" right="btn_delete:5" textPadding="0px" height="28" onclick="btn_excel_onclick"/>
+              <Static id="sta_totCount" taborder="8" text="(총 0건 1/1)" left="88" top="20" width="121" height="25" usedecorate="true"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="Div00" taborder="5" text="Div00" top="140" height="46" right="20" width="320">
+          <Layouts>
+            <Layout>
+              <Button id="btn_save" taborder="1" text="저장" top="14" onclick="btn_save_onclick" right="0" width="60" height="28"/>
+              <Button id="btn_batchUpdate" taborder="0" text="일괄등록/수정" top="14" height="28" onclick="btn_batchUpdate_onclick" right="btn_save:5" width="95"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="SEARCH_CO_CD" type="STRING" size="256"/>
+          <Column id="SEARCH_BZPLC_ID" type="STRING" size="256"/>
+          <Column id="SEARCH_BZPLC_NM" type="STRING" size="256"/>
+          <Column id="SEARCH_OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="SEARCH_OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="SEARCH_DEPT_ID" type="STRING" size="256"/>
+          <Column id="SEARCH_DEPT_NM" type="STRING" size="256"/>
+          <Column id="SEARCH_ACCT_ID" type="STRING" size="256"/>
+          <Column id="SEARCH_ACCT_NM" type="STRING" size="256"/>
+          <Column id="SEARCH_DISPLAY_DIV" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_treeList">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="LVL" type="STRING" size="256"/>
+          <Column id="UNDER_CNT" type="STRING" size="256"/>
+          <Column id="TREE_TEXT" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_display">
+        <ColumnInfo>
+          <Column id="DISPLAY_TYPE" type="STRING" size="256"/>
+          <Column id="DISPLAY_TYPE_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="DISPLAY_TYPE">1</Col>
+            <Col id="DISPLAY_TYPE_NM">계정/부서</Col>
+          </Row>
+          <Row>
+            <Col id="DISPLAY_TYPE_NM">부서/계정</Col>
+            <Col id="DISPLAY_TYPE">2</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_subGrdList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_NM" type="STRING" size="256"/>
+          <Column id="CCO_DEPT_CD" type="STRING" size="256"/>
+          <Column id="DEPT_SRT_SEQ" type="STRING" size="256"/>
+          <Column id="NEW_YN" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="TOT_CUNT" type="STRING" size="256"/>
+          <Column id="ACCT_LVL" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_CD" type="STRING" size="256"/>
+          <Column id="HRNK_ACCT_ID" type="STRING" size="256"/>
+          <Column id="HRNK_ACCT_NM" type="STRING" size="256"/>
+          <Column id="TOP_HRNK_ACCT_NM" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_TP_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_dtlParam">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">20</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="displayCount_ds">
+        <ColumnInfo>
+          <Column id="DISPLAY_COUNT" type="STRING" size="256"/>
+          <Column id="DISPLAY_COUNT_TEXT" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="DISPLAY_COUNT">20</Col>
+            <Col id="DISPLAY_COUNT_TEXT">20개씩</Col>
+          </Row>
+          <Row>
+            <Col id="DISPLAY_COUNT">50</Col>
+            <Col id="DISPLAY_COUNT_TEXT">50개씩</Col>
+          </Row>
+          <Row>
+            <Col id="DISPLAY_COUNT_TEXT">100개씩</Col>
+            <Col id="DISPLAY_COUNT">100</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_message">
+        <ColumnInfo>
+          <Column id="SUCCESS_YN" type="STRING" size="256"/>
+          <Column id="RETURN_MSG" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_dtlInfo">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_TP_CD" type="STRING" size="256"/>
+          <Column id="ACCT_TP_NM" type="STRING" size="256"/>
+          <Column id="ACCT_CD" type="STRING" size="256"/>
+          <Column id="ACCT_LVL" type="STRING" size="256"/>
+          <Column id="HRNK_ACCT_ID" type="STRING" size="256"/>
+          <Column id="HRNK_ACCT_NM" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_NM" type="STRING" size="256"/>
+          <Column id="ADDR" type="STRING" size="500"/>
+          <Column id="HRNK_DEPT_ID" type="STRING" size="256"/>
+          <Column id="HRNK_DEPT_NM" type="STRING" size="256"/>
+          <Column id="CCO_DEPT_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="BGT_OVER_AGD_YN" type="STRING" size="256"/>
+          <Column id="BGT_TRNSF_AGD_YN" type="STRING" size="256"/>
+          <Column id="ORG_ACCT_CD" type="STRING" size="256"/>
+          <Column id="ORG_ACCT_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : 계정설정
+  CREATION DATES : 2022.02.23
+*******************************************************/
+//인클루드
+include "CO::coUtils.xjs";
+include "CC::CcUtils.xjs";
+include "OD::odUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_sessionData = this.getSession(); //session object
+this.fv_totalCount = 0;
+this.preSelectRowPosition = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);	
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//트리 조회
+this.fn_treeSearch= function(page)	
+{
+	var sSvcId = "selectTreeList";
+	var sUrl   = "/cc/acct/select-tree-list.do";
+	var inDs   = "ds_search=ds_search";
+	var outDs  = "ds_treeList=ds_treeList";
+	var arg    = "";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+//계정,부서정보와 매핑목록 저장
+this.fn_save = function() {
+
+	var sSvcId = "saveAcctDeptMapp";
+	var sUrl = "/cc/acct/save-acct-dept-mapp.do";
+	var inDs = "ds_dtlInfo=ds_dtlInfo ds_subGrdList=ds_subGrdList:U"
+	var outDs = "";
+	var arg = "";
+	var callback = "fn_callBack";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+//계정, 부서 상세 정보 조회
+this.fn_selectAcctDeptDtlInfo = function()	
+{	
+	var sSvcId = "selectAcctDeptDtlInfo";
+	var sUrl   = "/cc/acct/select-acct-dept-dtl-info.do";
+	var inDs   = "ds_dtlParam=ds_dtlParam";
+	var outDs  = "ds_dtlInfo=ds_dtlInfo";
+	var arg    = "";
+		
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+//부서 목록 정보 조회
+this.fn_selectAcctDeptMappListById = function()	
+{	
+	var sSvcId = "selectAcctDeptMappListById";
+	var sUrl   = "/cc/acct/select-acct-dept-mapp-list-by-id.do";
+	var inDs   = "ds_dtlParam=ds_dtlParam";
+	var outDs  = "ds_subGrdList=ds_subGrdList";
+	var arg    = "";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+// 대용량다운로드
+this.fn_allExcelDownload = function(){
+	var sSvcId = "allExcelDownload";    
+	var sUrl = "/cc/acct/select-all-excel-download.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+//트랜잭션 콜백함수
+this.fn_callBack = function(objID, rtnValue) 
+{
+	
+	if(objID == 'selectTreeList'){		
+		this.ds_dtlInfo.clearData();		
+		this.ds_subGrdList.clearData();		
+	}
+	else if(objID == 'selectAcctDeptMappListById'){
+		if(this.ds_subGrdList.getRowCount() > 0) {		
+			this.fv_totalCount = this.ds_subGrdList.getColumn(0,"TOT_CUNT");
+			//this.div_paging.form.cfn_createPage(this.div_paging,this.fv_totalCount,this.fv_oApp.gv_pageViewCnt,"fn_pageCallback");
+			this.Div03_01.form.div_paging.form.cfn_createPage(this.Div03_01.form.div_paging, this.fv_totalCount, this.Div03_01.form.cbo_page.value, "fn_pageCallback");
+		}
+		else {
+			this.Div03_01.form.sta_totCount.set_text("(총 0건 1/1)");
+		}
+	}
+	else if(objID == 'saveAcctDeptMapp'){		
+		alert(this.fn_getMessage("ERRC000081"));
+		this.fn_treeSearch();
+	}else if(objID == "allExcelDownload"){
+		if(errorCode == -100){
+			alert(errorMsg);
+		}
+	}
+}
+//팝업 콜백함수
+this.fn_popupCallback = function(objID, rtnValue) 
+{
+	var resParam = JSON.parse(rtnValue);
+	
+	var sIdList = "";
+	var sNmList = "";
+	
+	if(objID == 'btn_bzplc'){
+		this.ds_search.setColumn(0, "SEARCH_BZPLC_NM", resParam.BZPLC_NM);
+		this.ds_search.setColumn(0, "SEARCH_BZPLC_ID", resParam.BZPLC_ID);
+	}
+	if(objID == 'btn_oprUnit'){
+		for (var i = 0; i < resParam.length; i++) {
+			var rtnData = JSON.parse(resParam[i]);
+			sIdList += rtnData.OPR_UNIT_ID +",";
+			sNmList += rtnData.OPR_UNIT_NM +",";
+		}
+		this.ds_search.setColumn(0, "SEARCH_OPR_UNIT_NM", sNmList.replace(/,\s*$/, ""));
+		this.ds_search.setColumn(0, "SEARCH_OPR_UNIT_ID", sIdList.replace(/,\s*$/, ""));
+	}
+	if(objID == 'btn_dept'){
+		for (var i = 0; i < resParam.length; i++) {
+			var rtnData = JSON.parse(resParam[i]);
+			sIdList += rtnData.DEPT_ID +",";
+			sNmList += rtnData.DEPT_NM +",";
+		}
+		this.ds_search.setColumn(0, "SEARCH_DEPT_NM", sNmList.replace(/,\s*$/, ""));
+		this.ds_search.setColumn(0, "SEARCH_DEPT_ID", sIdList.replace(/,\s*$/, ""));
+	}
+	if(objID == 'btn_acct'){
+		for (var i = 0; i < resParam.length; i++) {
+			var rtnData = JSON.parse(resParam[i]);
+			sIdList += rtnData.ACCT_ID +",";
+			sNmList += rtnData.ACCT_NM +",";
+		}
+		this.ds_search.setColumn(0, "SEARCH_ACCT_NM", sNmList.replace(/,\s*$/, ""));
+		this.ds_search.setColumn(0, "SEARCH_ACCT_ID", sIdList.replace(/,\s*$/, ""));
+	}
+	
+}
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.Div03_01.form.div_paging;	
+	
+	if(sFlag){
+		this.ds_dtlParam.setColumn(0, "START_NUM", oPaging.uPageNum);
+		this.ds_dtlParam.setColumn(0, "ROW_COUNT", this.Div03_01.form.cbo_page.value);		
+		this.fn_selectAcctDeptMappListById();
+	}
+	
+	var sTotText = "(<b v='true'>총 "+ oPaging.uTotCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+	this.Div03_01.form.sta_totCount.set_text(sTotText);
+	
+}
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+	//search static 필수표시 설정	
+	this.Div_top_info.form.Static02.uEssentiel = "true";
+		
+	//페이징 초기 설정
+	this.Div03_01.form.div_paging.uPage = 1;
+	this.Div03_01.form.div_paging.uPageNum = 0;
+	this.Div03_01.form.div_paging.uPageRowCnt = 10;
+	this.Div03_01.form.div_paging.uPageCnt = 0;
+	this.Div03_01.form.div_paging.uTotCount = 0;
+	
+	//구분 콤보 설정
+	this.Div_top_info.form.searchDisplayDiv.set_index(0);
+	this.displayType();		
+};
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+//조회조건 구분 기준으로 보여줄 화면 처리
+this.displayType = function()
+{
+	this.Div03_01.form.sta_totCount.set_text("(총 0건 1/1)");
+
+	this.ds_treeList.clearData();
+	this.ds_dtlInfo.clearData();
+	this.ds_subGrdList.clearData();	
+	
+	this.ds_search.setColumn(0,"SEARCH_OPR_UNIT_ID","");
+	this.ds_search.setColumn(0,"SEARCH_OPR_UNIT_NM","");
+	this.ds_search.setColumn(0,"SEARCH_DEPT_ID","");
+	this.ds_search.setColumn(0,"SEARCH_DEPT_NM","");
+	this.ds_search.setColumn(0,"SEARCH_ACCT_ID","");
+	this.ds_search.setColumn(0,"SEARCH_ACCT_NM","");		
+	
+	//1 : 계정/부서, 2 : 부서/계정
+	var displayDiv = this.ds_search.getColumn(0,"SEARCH_DISPLAY_DIV");
+	if(displayDiv == '1')
+	{
+		this.Div_top_info.form.searchOprUnitId.set_enable(false);
+		this.Div_top_info.form.searchOprUnitNm.set_enable(false);
+		this.Div_top_info.form.btn_oprUnit.set_enable(false);
+		this.Div_top_info.form.btn_oprUnitMemo.set_enable(false);
+		this.Div_top_info.form.searchDeptId.set_enable(false);
+		this.Div_top_info.form.searchDeptNm.set_enable(false);
+		this.Div_top_info.form.btn_dept.set_enable(false);
+		this.Div_top_info.form.btn_deptMemo.set_enable(false);
+		this.Div_top_info.form.searchAcctId.set_enable(true);
+		this.Div_top_info.form.searchAcctNm.set_enable(true);
+		this.Div_top_info.form.btn_acct.set_enable(true);
+		this.Div_top_info.form.btn_acctMemo.set_enable(true);					
+		
+		this.Div02_01.set_visible(true);
+		this.Div02_02.set_visible(false);
+		this.Div03_01.form.title04.set_text("부서 목록");
+		this.Div03_01.form.grd_deptList.set_visible(true);
+		this.Div03_01.form.grd_acctList.set_visible(false);		
+	}
+	if(displayDiv == '2'){
+		this.Div_top_info.form.searchOprUnitId.set_enable(true);
+		this.Div_top_info.form.searchOprUnitNm.set_enable(true);
+		this.Div_top_info.form.btn_oprUnit.set_enable(true);
+		this.Div_top_info.form.btn_oprUnitMemo.set_enable(true);
+		this.Div_top_info.form.searchDeptId.set_enable(true);
+		this.Div_top_info.form.searchDeptNm.set_enable(true);
+		this.Div_top_info.form.btn_dept.set_enable(true);
+		this.Div_top_info.form.btn_deptMemo.set_enable(true);
+		this.Div_top_info.form.searchAcctId.set_enable(false);
+		this.Div_top_info.form.searchAcctNm.set_enable(false);
+		this.Div_top_info.form.btn_acct.set_enable(false);
+		this.Div_top_info.form.btn_acctMemo.set_enable(false);
+		
+		this.Div02_01.set_visible(false);
+		this.Div02_02.set_visible(true);
+		this.Div03_01.form.title04.set_text("계정 목록");
+		this.Div03_01.form.grd_deptList.set_visible(false);
+		this.Div03_01.form.grd_acctList.set_visible(true);		
+	}
+	
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//조회
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+	
+	if(this.gfn_isNull(this.ds_search.getColumn(0, "SEARCH_BZPLC_ID"))){		
+		alert(this.fn_getMessage("ERRC000005", "사업장"));
+		return false; 
+	}
+	
+	this.ds_search.setColumn(0,"SEARCH_CO_CD", this.fv_sessionData.coCd);
+	this.fn_treeSearch();	
+};
+//조회팝
+this.searchPopupBtn_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+	
+	var params = {
+			coCd : this.fv_sessionData.coCd
+			,bzplcId : this.ds_search.getColumn(0,"SEARCH_BZPLC_ID")
+			,oprUnitId : this.ds_search.getColumn(0,"SEARCH_OPR_UNIT_ID")
+		};
+	var options = {};
+	
+	//사업장
+	if(e.fromobject.id == 'btn_bzplc'){ this.gfn_openPopup(e.fromobject.id, "CO_POP::SSP_BO_PP_22.xfdl", params,  "fn_popupCallback", options); }
+	//운영단위
+	if(e.fromobject.id == 'btn_oprUnit'){ this.gfn_openPopup(e.fromobject.id, "CO_POP::SSP_BO_PP_23.xfdl", params,  "fn_popupCallback", options); }	
+	//부서조회
+	if(e.fromobject.id == 'btn_dept'){ this.gfn_openPopup(e.fromobject.id, "CC::SSP_BO_PP_37.xfdl", params,  "fn_popupCallback", options); }
+	//계정조회
+	if(e.fromobject.id == 'btn_acct'){ this.gfn_openPopup(e.fromobject.id, "CC::SSP_BO_PP_31.xfdl", params,  "fn_popupCallback", options); }	
+	
+};
+//트리메뉴 클릭
+this.grd_acctTreeOnCellClick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	this.ds_dtlParam.setColumn(0,"CO_CD", this.ds_treeList.getColumn(this.ds_treeList.rowposition, "CO_CD"));
+	this.ds_dtlParam.setColumn(0,"BZPLC_ID", this.ds_treeList.getColumn(this.ds_treeList.rowposition, "BZPLC_ID"));
+	
+	
+	//페이징 변수 설정
+	var oPaging = this.Div03_01.form.div_paging;
+	oPaging.uPageNum = 0;
+	this.ds_dtlParam.setColumn(0,"START_NUM",oPaging.uPageNum);
+	//this.ds_search.setColumn(0,"ROW_COUNT",this.fv_oApp.gv_pageViewCnt);
+	this.ds_dtlParam.setColumn(0,"ROW_COUNT",this.Div03_01.form.cbo_page.value);
+	
+	if(this.ds_search.getColumn(0,"SEARCH_DISPLAY_DIV") == "1") { //계정/부서
+		this.ds_dtlParam.setColumn(0,"OPR_UNIT_ID", this.ds_search.getColumn(0, "SEARCH_OPR_UNIT_ID"));
+		this.ds_dtlParam.setColumn(0,"ACCT_ID", this.ds_treeList.getColumn(this.ds_treeList.rowposition, "ACCT_ID"));
+		this.ds_dtlParam.setColumn(0,"DEPT_ID", "");
+		
+	}
+	else if(this.ds_search.getColumn(0,"SEARCH_DISPLAY_DIV") == "2") { //부서/계정
+		this.ds_dtlParam.setColumn(0,"OPR_UNIT_ID", this.ds_treeList.getColumn(this.ds_treeList.rowposition, "OPR_UNIT_ID"));
+		this.ds_dtlParam.setColumn(0,"ACCT_ID", "");
+		this.ds_dtlParam.setColumn(0,"DEPT_ID", this.ds_treeList.getColumn(this.ds_treeList.rowposition, "DEPT_ID"));				
+	}		
+	
+	this.fn_selectAcctDeptDtlInfo(); //계정,부서 상세 조회			
+	this.fn_selectAcctDeptMappListById(); //목록 조회		
+	
+
+};
+//부서추가팝업
+this.btn_addPopup_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_dtlInfo.getRowCount() < 1) {		
+		alert(this.fn_getMessage("ERRC000085")); //조회후 목록의 계정이나 부서를 클릭하세요.
+		return;
+	}
+	
+	if(this.ds_search.getColumn(0,"SEARCH_DISPLAY_DIV") == "1") { //계정/부서
+		var params = {
+				coCd : this.fv_sessionData.coCd
+				,bzplcId : this.ds_dtlInfo.getColumn(0, "BZPLC_ID")				
+			};
+		var options = {};
+		this.gfn_openPopup(e.fromobject.id, "CC::SSP_BO_PP_37.xfdl", params,  function(objID, rtnValue) { //부서팝업 호출
+			var resParam = JSON.parse(rtnValue);
+				
+			for (var i = 0; i < resParam.length; i++) {
+				var rtnData = JSON.parse(resParam[i]);
+				
+				if(this.ds_subGrdList.findRow("DEPT_ID", rtnData.DEPT_ID) < 0) {
+					var nRow = this.ds_subGrdList.insertRow(0);			
+					this.ds_subGrdList.setColumn(nRow, "CO_CD"   , rtnData.CO_CD);		//회사코드				
+					this.ds_subGrdList.setColumn(nRow, "BZPLC_ID", rtnData.BZPLC_ID);				//사업장 아이디
+					this.ds_subGrdList.setColumn(nRow, "OPR_UNIT_ID", rtnData.OPR_UNIT_ID);				//운영단위 아이디
+					this.ds_subGrdList.setColumn(nRow, "OPR_UNIT_NM", rtnData.OPR_UNIT_NM);				//운영단위명
+					this.ds_subGrdList.setColumn(nRow, "DEPT_ID", rtnData.DEPT_ID);				//부서ID
+					this.ds_subGrdList.setColumn(nRow, "DEPT_NM", rtnData.DEPT_NM);				//부서명
+					this.ds_subGrdList.setColumn(nRow, "ACCT_ID" , this.ds_dtlInfo.getColumn(0, "ACCT_ID") );
+					this.ds_subGrdList.setColumn(nRow, "DEPT_SRT_SEQ", rtnData.DEPT_SRT_SEQ);	//부서레벨
+					this.ds_subGrdList.setColumn(nRow, "CCO_DEPT_CD", rtnData.CCO_DEPT_CD);		//부서코드
+				}
+				else {					
+					alert(this.fn_getMessage("ERRC000003", rtnData.DEPT_NM)); //는 이미 등록된 부서입니다.
+				}
+			}
+		}, options);		
+	}
+	else if(this.ds_search.getColumn(0,"SEARCH_DISPLAY_DIV") == "2") { //부서/계정
+		var params = {
+			coCd : this.fv_sessionData.coCd
+			,bzplcId : this.ds_dtlInfo.getColumn(0, "BZPLC_ID")				
+		};		
+		var options = {};
+		this.gfn_openPopup(e.fromobject.id, "CC::SSP_BO_MA_76.xfdl", params,  function(objID, rtnValue) { //계정팝업 호출			
+			var resParam = JSON.parse(rtnValue);
+				
+			for (var i = 0; i < resParam.length; i++) {
+				var rtnData = JSON.parse(resParam[i]);
+				
+				if(this.ds_subGrdList.findRow("ACCT_ID", rtnData.ACCT_ID) < 0) {					
+					var nRow = this.ds_subGrdList.insertRow(0);	
+					
+					//계정유형명 설정
+					var acctTpNm = "";
+					if(rtnData.ACCT_TP_CD == "1") acctTpNm = "일반";
+					else if(rtnData.ACCT_TP_CD == "2") acctTpNm = "공통";
+					
+					this.ds_subGrdList.setColumn(nRow, "CO_CD"   , rtnData.CO_CD);	//회사코드				
+					this.ds_subGrdList.setColumn(nRow, "BZPLC_ID", rtnData.BZPLC_ID);				
+					this.ds_subGrdList.setColumn(nRow, "DEPT_ID", this.ds_dtlInfo.getColumn(0, "DEPT_ID"));				//부서ID
+					this.ds_subGrdList.setColumn(nRow, "ACCT_ID" , rtnData.ACCT_ID );
+					this.ds_subGrdList.setColumn(nRow, "ACCT_NM", rtnData.ACCT_NM);				//계정명
+					this.ds_subGrdList.setColumn(nRow, "ACCT_LVL", rtnData.ACCT_LVL);	//계정레벨
+					this.ds_subGrdList.setColumn(nRow, "ACCT_CD", rtnData.ACCT_CD);		//계정코드
+					this.ds_subGrdList.setColumn(nRow, "HRNK_ACCT_ID", rtnData.HRNK_ACCT_ID);	//상위계정ID
+					this.ds_subGrdList.setColumn(nRow, "HRNK_ACCT_NM", rtnData.HRNK_ACCT_NM);	//상위계정명
+					this.ds_subGrdList.setColumn(nRow, "TOP_HRNK_ACCT_NM", rtnData.TOP_HRNK_ACCT_NM);		//최상위계정명
+					this.ds_subGrdList.setColumn(nRow, "ACCT_TP_NM", acctTpNm);		//계정유형					
+				}
+				else {					
+					alert(this.fn_getMessage("ERRC000002", rtnData.ACCT_NM)); //은(는) 이미 등록된 계정입니다.
+				}
+			}	
+		}, options);		
+	}	
+
+};
+//선택삭제버튼
+this.btn_delete_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_subGrdList.getCaseCount("CHK==1") == 0) {		
+		alert(this.fn_getMessage("ERRC000050", "행"));
+		return;	
+	}
+	
+	this.ds_subGrdList.deleteMultiRows(this.ds_subGrdList.extractRows("CHK == 1"));			
+};
+
+this.btn_reset_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	for(i=0; i<this.ds_search.colcount; i++) {
+		this.ds_search.setColumn(0, i, "");
+	}	
+	
+	//구분 콤보 설정
+	this.Div_top_info.form.searchDisplayDiv.set_index(0);
+	this.displayType();			
+};
+
+this.fn_searchDisplayDiv_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	//구분 변경시
+	this.displayType();	
+};
+
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	if(this.ds_search.getColumn(0,"SEARCH_DISPLAY_DIV") == "1") { //계정/부서
+		if(this.gfn_isNull(this.ds_dtlInfo.getColumn(0,"ACCT_NM"))) {			
+			alert(this.fn_getMessage("ERRC000009", "계정명"));
+			return;
+		}
+	}
+	else if(this.ds_search.getColumn(0,"SEARCH_DISPLAY_DIV") == "2") { //부서/계정
+		if(!this.gfn_dsIsUpdated(this.ds_subGrdList)) {			
+			alert(this.fn_getMessage("ERRC000034"));
+			return;
+		}			
+	}
+	
+	if(!confirm(this.fn_getMessage("ERRC000080"))) return;
+	
+	this.fn_save();	
+};
+
+
+this.cbo_page_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	//페이징 변수 설정
+	var oPaging = this.Div03_01.form.div_paging;
+	oPaging.uPageNum = 0;
+	this.ds_dtlParam.setColumn(0,"START_NUM",oPaging.uPageNum);
+	//this.ds_search.setColumn(0,"ROW_COUNT",this.fv_oApp.gv_pageViewCnt);
+	this.ds_dtlParam.setColumn(0,"ROW_COUNT",this.Div03_01.form.cbo_page.value);
+
+	this.fn_selectAcctDeptMappListById();
+};
+
+this.btn_excel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_search.getColumn(0,"SEARCH_DISPLAY_DIV") == "1") { //계정/부서
+		this.ofn_exportExcel({form:this, grid:this.Div03_01.form.grd_deptList, fileName:"계정설정_부서목록"});
+	}
+	else if(this.ds_search.getColumn(0,"SEARCH_DISPLAY_DIV") == "2") { //부서/계정
+		this.ofn_exportExcel({form:this, grid:this.Div03_01.form.grd_acctList, fileName:"계정설정_계정목록"});
+	}
+};
+
+
+this.btn_oprUnitMemo_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = { textId : this.Div_top_info.form.searchOprUnitId };
+	
+	var options = {title : "운영단위"};
+	this.gfn_openPopup("oprUnitMemoTextPopup", "CO_POP::SSP_BO_PP_13.xfdl", params,  function(objID, rtnValue) {
+		var retJson = JSON.parse(rtnValue);
+
+		this.ds_search.setColumn(0,"SEARCH_OPR_UNIT_ID",retJson.textValue.replace(/,\s*$/, ""));
+		this.ds_search.setColumn(0,"SEARCH_OPR_UNIT_NM",retJson.textValue.replace(/,\s*$/, ""));
+		
+	}, options);	
+	
+};
+
+this.btn_deptMemo_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = { textId : this.Div_top_info.form.searchDeptId };
+	
+	var options = {title : "부서"};
+	this.gfn_openPopup("oprUnitMemoTextPopup", "CO_POP::SSP_BO_PP_13.xfdl", params,  function(objID, rtnValue) {
+		var retJson = JSON.parse(rtnValue);
+
+		this.ds_search.setColumn(0,"SEARCH_DEPT_ID",retJson.textValue.replace(/,\s*$/, ""));
+		this.ds_search.setColumn(0,"SEARCH_DEPT_NM",retJson.textValue.replace(/,\s*$/, ""));
+		
+	}, options);	
+	
+};
+
+this.btn_acctMemo_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = { textId : this.Div_top_info.form.searchAcctId };
+	
+	var options = {title : "계정"};
+	this.gfn_openPopup("oprUnitMemoTextPopup", "CO_POP::SSP_BO_PP_13.xfdl", params,  function(objID, rtnValue) {
+		var retJson = JSON.parse(rtnValue);
+
+		this.ds_search.setColumn(0,"SEARCH_ACCT_ID",retJson.textValue.replace(/,\s*$/, ""));
+		this.ds_search.setColumn(0,"SEARCH_ACCT_NM",retJson.textValue.replace(/,\s*$/, ""));
+		
+	}, options);	
+	
+};
+
+this.btn_batchUpdate_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var param = {pgmId : "SSP_XL_CC_17"};
+	var options = {};
+	options.title = "계정부서매핑 일괄등록";
+	this.gfn_openPopup("SSP_BO_PP_34", "CO_POP::SSP_BO_PP_34.xfdl", param, function() {
+	
+	}, options);		
+};
+
+this.Div_top_info_btn_allExcel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(!confirm(this.fn_getMessage("ERRC000181", "대용량 엑셀을 다운로드"))) {
+		return;
+	}
+
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+	
+	// 대용량다운로드
+	this.fn_allExcelDownload();
+};
+
+this.dlvplcMngList_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	if(e.ctrlkey && e.keycode==13) {
+		this.btn_search_onclick();
+	}	
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="Div_top_info.form.searchBzplcNm" propid="value" datasetid="ds_search" columnid="SEARCH_BZPLC_NM"/>
+      <BindItem id="item1" compid="Div_top_info.form.searchOprUnitNm" propid="value" datasetid="ds_search" columnid="SEARCH_OPR_UNIT_NM"/>
+      <BindItem id="item2" compid="Div_top_info.form.searchDeptNm" propid="value" datasetid="ds_search" columnid="SEARCH_DEPT_NM"/>
+      <BindItem id="item3" compid="Div_top_info.form.searchAcctNm" propid="value" datasetid="ds_search" columnid="SEARCH_ACCT_NM"/>
+      <BindItem id="item7" compid="Div02_01.form.sta_acctTpNm" propid="text" datasetid="ds_dtlInfo" columnid="ACCT_TP_NM"/>
+      <BindItem id="item6" compid="Div02_01.form.sta_acctLvl" propid="text" datasetid="ds_dtlInfo" columnid="ACCT_LVL"/>
+      <BindItem id="item8" compid="Div02_01.form.sta_hrnkAcctNm" propid="text" datasetid="ds_dtlInfo" columnid="HRNK_ACCT_NM"/>
+      <BindItem id="item9" compid="Div02_01.form.sta_useYn" propid="text" datasetid="ds_dtlInfo" columnid="USE_YN"/>
+      <BindItem id="item12" compid="Div02_01.form.sta_acctNm" propid="value" datasetid="ds_dtlInfo" columnid="ACCT_NM"/>
+      <BindItem id="item10" compid="Div02_01.form.sta_acctCd" propid="value" datasetid="ds_dtlInfo" columnid="ACCT_CD"/>
+      <BindItem id="item4" compid="Div_top_info.form.searchBzplcId" propid="value" datasetid="ds_search" columnid="SEARCH_BZPLC_ID"/>
+      <BindItem id="item11" compid="Div_top_info.form.searchAcctId" propid="value" datasetid="ds_search" columnid="SEARCH_ACCT_ID"/>
+      <BindItem id="item13" compid="Div_top_info.form.searchOprUnitId" propid="value" datasetid="ds_search" columnid="SEARCH_OPR_UNIT_ID"/>
+      <BindItem id="item14" compid="Div_top_info.form.searchDeptId" propid="value" datasetid="ds_search" columnid="SEARCH_DEPT_ID"/>
+      <BindItem id="item15" compid="Div_top_info.form.searchDisplayDiv" propid="value" datasetid="ds_search" columnid="SEARCH_DISPLAY_DIV"/>
+      <BindItem id="item18" compid="Div02_02.form.ACCT_CD" propid="text" datasetid="ds_dtlInfo" columnid="CCO_DEPT_CD"/>
+      <BindItem id="item19" compid="Div02_02.form.ACCT_NM" propid="text" datasetid="ds_dtlInfo" columnid="HRNK_DEPT_NM"/>
+      <BindItem id="item20" compid="Div02_02.form.ACCT_LVL" propid="text" datasetid="ds_dtlInfo" columnid="BGT_TRNSF_AGD_YN"/>
+      <BindItem id="item21" compid="Div02_02.form.ACCT_CD00" propid="text" datasetid="ds_dtlInfo" columnid="BGT_OVER_AGD_YN"/>
+      <BindItem id="item22" compid="Div02_02.form.USE_YN" propid="text" datasetid="ds_dtlInfo" columnid="ADDR"/>
+      <BindItem id="item23" compid="Div02_02.form.edt_deptNm" propid="value" datasetid="ds_dtlInfo" columnid="DEPT_NM"/>
+      <BindItem id="item24" compid="Div02_02.form.edt_deptId" propid="value" datasetid="ds_dtlInfo" columnid="DEPT_ID"/>
+      <BindItem id="item16" compid="Div02_01.form.edt_accttId" propid="value" datasetid="ds_dtlInfo" columnid="ACCT_ID"/>
+    </Bind>
+  </Form>
+</FDL>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Truncate">
+
+	<!-- 절사관리 목록 -->
+    <select id="selectTruncateList" parameterType="HashMap" resultType="sspMap">
+        /* Truncate.selectTruncateList */
+		SELECT
+			DETR_UNT_ID,
+			DETR_UNT_NM,	
+			UPRC_BSS_CD,
+			RNOF_RULE_CD,
+			NVL(SDU.UPD_DTM,SDU.REG_DTM) AS UPD_DTM,
+			LENGTH(SDU.MAX_PRC) AS MAX_PRC_LENGTH,
+			DECODE(SDU.REGPSN_ID,NULL,'','('||SDU.REGPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = SDU.REGPSN_ID)) AS REGPSN
+		FROM
+			TB_SG_DETR_UNT SDU
+		WHERE SDU.USE_YN = 'Y'
+		AND SDU.PRD_SPR_CD = #{prdSprCd}
+		ORDER BY MIN_PRC ASC
+    </select>
+    
+    <!-- 절사관리 수정 -->
+    <update id="updateTruncate" parameterType="HashMap">
+        /* ProductNotice.updateProductNotice */
+        UPDATE	TB_SG_DETR_UNT 
+		SET	 
+			UPDPSN_ID = #{updpsnId}
+		 	,UPD_DTM = SYSDATE
+	 	<if test="uprcBssCd != null and uprcBssCd!= ''.toString()">
+		    , UPRC_BSS_CD = #{uprcBssCd}
+		</if>
+		<if test="rnofRuleCd != null and rnofRuleCd!= ''.toString()">
+		    , RNOF_RULE_CD = #{rnofRuleCd}
+		</if>
+		WHERE 
+			DETR_UNT_ID = #{detrUntId}
+    </update>
+    
+    
+</mapper>

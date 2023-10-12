@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.cc.bzplc">
+
+<!--
+ ******************************************************************************
+ * SELECT : selectListBzplc
+ * 작성자 : 박성근
+ * 작성일자 : 2022.02.10
+ ******************************************************************************
+ -->
+<sql id="sqlBzplc">
+SELECT LL.* FROM (
+SELECT BZPL.CO_CD                     /* 회사코드                */
+     , BZPL.BZPLC_ID                  /* 사업장ID                */
+     , BZPL.GRP_ID                    /* 그룹ID                  */, NVL((SELECT GRP_NM        FROM TB_CC_BZPLC_GRP_BASIS  WHERE CO_CD=BZPL.CO_CD AND GRP_ID =BZPL.GRP_ID ), NVL(BZPL.GRP_ID , '-'))  GRP_ID_NM
+     , BZPL.CORP_ID                   /* 법인ID                  */, NVL((SELECT CORP_NM       FROM TB_CC_BZPLC_CORP_BASIS WHERE CO_CD=BZPL.CO_CD AND CORP_ID=BZPL.CORP_ID), NVL(BZPL.CORP_ID, '-'))  CORP_ID_NM
+     , BZPL.CORP_NO                   /* 법인번호                */
+     , BZPL.BZPLC_NM                  /* 사업장명                */
+     , BZPL.BIZNO                     /* 사업자등록번호          */
+     , BZPL.BZCAT_NM                  /* 업종명                  */
+     , BZPL.BZTP_NM                   /* 업태명                  */
+     , BZPL.EMPCNT                    /* 종업원수                */
+     , BZPL.CEO_NM                    /* 대표자명                */
+     , BZPL.ZPCD                      /* 우편번호                */
+     , BZPL.REPR_ADDR                 /* 대표주소                */
+     , BZPL.DTL_ADDR                  /* 상세주소                */
+     , BZPL.CONT_STR_DT               /* 계약시작일자            */
+     , BZPL.CONT_END_DT               /* 계약종료일자            */
+     , BZPL.LGGRP_YN                  /* LG그룹여부              */, DECODE(BZPL.LGGRP_YN, 'Y', 'LG그룹', '-')  LGGRP_YN_NM
+     , BZPL.USE_YN                    /* 사용여부                */, (SELECT FN_COM_DTL_CDNM_NVL('KO', 'USE_YN'            , BZPL.USE_YN            , '-') FROM DUAL)  USE_YN_NM
+     , BZPL.CUST_SPR_CD               /* 고객구분코드            */, (SELECT FN_COM_DTL_CDNM_NVL('KO', 'CUST_SPR_CD'       , BZPL.CUST_SPR_CD       , '-') FROM DUAL)  CUST_SPR_CD_NM
+     , BZPL.BZPLC_REG_STATS_CD        /* 사업장등록상태코드      */, (SELECT FN_COM_DTL_CDNM_NVL('KO', 'BZPLC_REG_STATS_CD', BZPL.BZPLC_REG_STATS_CD, '-') FROM DUAL)  BZPLC_REG_STATS_CD_NM
+     , BZPL.OSD_SPR_CD                /* 외부구분코드            */, (SELECT FN_COM_DTL_CDNM_NVL('KO', 'OSD_SPR_CD'        , BZPL.OSD_SPR_CD        , '-') FROM DUAL)  OSD_SPR_CD_NM
+     , BZPL.POSD_SPR_CD               /* 순수외부구분코드        */, (SELECT FN_COM_DTL_CDNM_NVL('KO', 'POSD_SPR_CD'       , BZPL.POSD_SPR_CD       , '-') FROM DUAL)  POSD_SPR_CD_NM
+     , BZPL.SALS_CHRPSN_ID1           /* 영업담당자ID1           */, NVL((SELECT OPRTR_NM      FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=BZPL.CO_CD AND OPRTR_ID=BZPL.SALS_CHRPSN_ID1), NVL(BZPL.SALS_CHRPSN_ID1, '-'))  SALS_CHRPSN_ID1_NM
+     , BZPL.SALS_CHRPSN_ID2           /* 영업담당자ID2           */, NVL((SELECT OPRTR_NM      FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=BZPL.CO_CD AND OPRTR_ID=BZPL.SALS_CHRPSN_ID2), NVL(BZPL.SALS_CHRPSN_ID2, '-'))  SALS_CHRPSN_ID2_NM
+     , BZPL.CONT_MNG_NM               /* 계약관리명              */
+     , BZPL.BZPLC_GRD_ID              /* 사업장등급ID            */
+     , NVL(BGRD.BZPLC_GRD_NM, NVL(BZPL.BZPLC_GRD_ID, '-'))  BZPLC_GRD_ID_NM
+     , NVL(BGRD.APLY_DCRT   , 0.0                        )  BZPLC_GRD_APLY_DCRT
+     
+     , BZPL.IDDT_ID                   /* 산업군ID                */, NVL((SELECT IDDT_NM       FROM SSP_APP.TB_CC_IDDT_BASIS     WHERE IDDT_ID=BZPL.IDDT_ID), NVL(BZPL.IDDT_ID, '-'))  IDDT_ID_NM
+<!--      , BZPL.BIZDOC_ATFL_ID            /* 사업자등록증첨부파일ID  */ -->
+<!--      , BZPL.CUSTCI_ATFL_ID            /* 고객CI첨부파일ID        */ -->
+     , BZPL.ERP_CUST_CD               /* ERP고객코드             */
+     , BZPL.REGPSN_ID                 /* 등록자ID                */
+     , BZPL.REG_DTM                   /* 등록일시                */
+     , BZPL.UPDPSN_ID                 /* 수정자ID                */
+     , BZPL.UPD_DTM                   /* 수정일시                */
+     
+     <!-- /* [2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+     ,           BZPL.CONSN_CUST_YN
+     , DECODE(   BZPL.CONSN_CUST_YN,   'Y', '특약고객')  CONSN_CUST_YNNM
+     , CASE WHEN BZPL.CONSN_CUST_YN != 'Y'                                                 THEN NULL
+<!--             WHEN BZPL.CONSN_CUST_STR_DT IS NOT NULL AND BZPL.CONSN_CUST_END_DT IS NOT NULL THEN TO_CHAR(TO_DATE(BZPL.CONSN_CUST_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') ||' ~ '|| TO_CHAR(TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD')  -->
+       END  CONSN_CUST_DATE
+     , CASE WHEN BZPL.CONSN_CUST_YN != 'Y'                                                 THEN NULL
+<!--             WHEN BZPL.CONSN_CUST_STR_DT IS     NULL OR  BZPL.CONSN_CUST_END_DT IS     NULL THEN NULL -->
+<!--             WHEN TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD') = D_TODAY                     THEN '* 금일('    || TO_CHAR(D_TODAY, 'YYYY-MM-DD')                             ||') 완료예정.' -->
+<!--             WHEN TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD') > D_TODAY                     THEN '* 완료까지 '|| TRUNC(TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD')-D_TODAY) ||'일 남음.' -->
+<!--             WHEN D_TODAY > TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD')                     THEN '* 종료일 '  || TRUNC(D_TODAY-TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD')) ||'일 경과.' -->
+       END  CONSN_CUST_DATE_MESG
+     <!-- /* /[2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+     <!-- /* [2023-03-01] sg.park AI-018 CMS의료기기 사업장 관리 */ -->
+     ,           BZPL.MEDI_DEVI_SELL_PERMIT_YN
+     , DECODE(   BZPL.MEDI_DEVI_SELL_PERMIT_YN, 'Y', '판매허가')  MEDI_DEVI_SELL_PERMIT_YNNM
+     <!-- /* /[2023-03-01] sg.park AI-018 CMS의료기기 사업장 관리 */ -->
+     
+  FROM TB_CC_BZPLC_BASIS         BZPL
+     , (SELECT TO_DATE(TO_CHAR(SYSDATE, 'YYYYMMDD'), 'YYYYMMDD')  D_TODAY  FROM DUAL)
+     , (
+        <include refid="com.ssp.bo.cc.common.sqlBzplcGrdInfo" />
+       )      BGRD
+ WHERE ROWNUM > 0
+   AND BZPL.BZPLC_GRD_ID = BGRD.BZPLC_GRD_ID(+)
+   <if test='CO_CD              != null and !"".equals( CO_CD             .trim() )'                                                                             >AND     BZPL.CO_CD                           = #{CO_CD                   }  /* 회사코드             : CO_CD                    */</if>
+   <if test='CUST_SPR_CD              != null and !"".equals( CUST_SPR_CD              .trim() )'                                                                >AND     BZPL.CUST_SPR_CD                     = #{CUST_SPR_CD             }  /* 고객구분             : CUST_SPR_CD              */</if>
+   <if test='CUST_SPR_CD              != null and !"".equals( CUST_SPR_CD              .trim() ) and "20".equals( CUST_SPR_CD.trim() ) and CONSN_CUST_YN != null'>AND NVL(BZPL.CONSN_CUST_YN           , 'N' ) = #{CONSN_CUST_YN           }  /* 특약고객여부         : CONSN_CUST_YN            */</if>
+   <if test='MEDI_DEVI_SELL_PERMIT_YN != null and !"".equals( MEDI_DEVI_SELL_PERMIT_YN .trim() )'                                                                >AND NVL(BZPL.MEDI_DEVI_SELL_PERMIT_YN, 'N' ) = #{MEDI_DEVI_SELL_PERMIT_YN}  /* 의료기기판매허가여부 : MEDI_DEVI_SELL_PERMIT_YN */</if>
+   <if test='BZPLC_REG_STATS_CD != null and !"".equals( BZPLC_REG_STATS_CD.trim() )'                                                                             >AND     BZPL.BZPLC_REG_STATS_CD              = #{BZPLC_REG_STATS_CD      }  /* 등록상태             : BZPLC_REG_STATS_CD       */</if>
+   <if test='USE_YN             != null and !"".equals( USE_YN            .trim() )'                                                                             >AND     BZPL.USE_YN                          = #{USE_YN                  }  /* 사용여부             : USE_YN                   */</if>
+   <if test='BZPLC_GRD_ID       != null and !"".equals( BZPLC_GRD_ID      .trim() )'                                                                             >AND NVL(BZPL.BZPLC_GRD_ID            , '99') = #{BZPLC_GRD_ID            }  /* 고객등급             : BZPLC_GRD_ID             */</if>
+   <if test='LGGRP_YN           != null and !"".equals( LGGRP_YN          .trim() )'                                                                             >AND     BZPL.LGGRP_YN                        = #{LGGRP_YN                }  /* LG그룹구분           : LGGRP_YN                 */</if>
+   <if test='OSD_SPR_CD         != null and !"".equals( OSD_SPR_CD        .trim() )'                                                                             >AND     BZPL.OSD_SPR_CD                      = #{OSD_SPR_CD              }  /* 외부구분             : OSD_SPR_CD               */</if>
+   <if test='POSD_SPR_CD        != null and !"".equals( POSD_SPR_CD       .trim() )'                                                                             >AND     BZPL.POSD_SPR_CD                     = #{POSD_SPR_CD             }  /* 순수외부구분         : POSD_SPR_CD              */</if>
+   <if test='SALS_CHRPSN_ID     != null and             SALS_CHRPSN_ID    .size() > 0'>
+   AND (   BZPL.SALS_CHRPSN_ID1 IN (<foreach collection="SALS_CHRPSN_ID" item="item" separator=",">#{item}</foreach>)  /* 영업담당자   : SALS_CHRPSN_ID1, SALS_CHRPSN_ID2 */
+        OR BZPL.SALS_CHRPSN_ID2 IN (<foreach collection="SALS_CHRPSN_ID" item="item" separator=",">#{item}</foreach>)  )
+   </if>
+   )LL
+  <if test=" BZPLC_ID > 0 ">
+  JOIN
+  TB_OD_ODR_INQ_TGT_DTLS   T1
+  ON  T1.SES_ID = #{SES_ID}
+  AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+  AND T1.COL_ITM = 'BZPLC_ID'
+  AND T1.COND_DATA_VAL = LL.BZPLC_ID
+  </if>
+  <if test=" IDDT_ID > 0 ">
+  JOIN
+  TB_OD_ODR_INQ_TGT_DTLS   T2
+  ON  T2.SES_ID = #{SES_ID}
+  AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+  AND T2.COL_ITM = 'IDDT_ID'
+  AND T2.COND_DATA_VAL = LL.IDDT_ID
+  </if>
+  <if test=" CORP_ID > 0 ">
+  JOIN
+  TB_OD_ODR_INQ_TGT_DTLS   T2
+  ON  T2.SES_ID = #{SES_ID}
+  AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+  AND T2.COL_ITM = 'CORP_ID'
+  AND T2.COND_DATA_VAL = LL.CORP_ID
+  </if>
+</sql>
+
+<select id="selectListBzplc" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.cc.bzplc.selectBzplc */
+<include refid="com.ssp.bo.cc.common.sqlPrefixPaging" />
+SELECT LL.* FROM (
+SELECT '0' AS CHK
+	 , BZPL.CO_CD                     /* 회사코드                */
+     , BZPL.BZPLC_ID                  /* 사업장ID                */
+     , BZPL.GRP_ID                    /* 그룹ID                  */, NVL((SELECT GRP_NM        FROM TB_CC_BZPLC_GRP_BASIS  WHERE CO_CD=BZPL.CO_CD AND GRP_ID =BZPL.GRP_ID ), NVL(BZPL.GRP_ID , '-'))  GRP_ID_NM
+     , BZPL.CORP_ID                   /* 법인ID                  */, NVL((SELECT CORP_NM       FROM TB_CC_BZPLC_CORP_BASIS WHERE CO_CD=BZPL.CO_CD AND CORP_ID=BZPL.CORP_ID), NVL(BZPL.CORP_ID, '-'))  CORP_ID_NM
+     , BZPL.CORP_NO                   /* 법인번호                */
+     , BZPL.BZPLC_NM                  /* 사업장명                */
+     , BZPL.BIZNO                     /* 사업자등록번호          */
+     , BZPL.BZCAT_NM                  /* 업종명                  */
+     , BZPL.BZTP_NM                   /* 업태명                  */
+     , BZPL.EMPCNT                    /* 종업원수                */
+     , BZPL.CEO_NM                    /* 대표자명                */
+     , BZPL.ZPCD                      /* 우편번호                */
+     , BZPL.REPR_ADDR                 /* 대표주소                */
+     , BZPL.DTL_ADDR                  /* 상세주소                */
+     , BZPL.CONT_STR_DT               /* 계약시작일자            */
+     , BZPL.CONT_END_DT               /* 계약종료일자            */
+     , BZPL.LGGRP_YN                  /* LG그룹여부              */, DECODE(BZPL.LGGRP_YN, 'Y', 'LG그룹', '-')  LGGRP_YN_NM
+     , BZPL.USE_YN                    /* 사용여부                */, (SELECT FN_COM_DTL_CDNM_NVL('KO', 'USE_YN'            , BZPL.USE_YN            , '-') FROM DUAL)  USE_YN_NM
+     , BZPL.CUST_SPR_CD               /* 고객구분코드            */, (SELECT FN_COM_DTL_CDNM_NVL('KO', 'CUST_SPR_CD'       , BZPL.CUST_SPR_CD       , '-') FROM DUAL)  CUST_SPR_CD_NM
+     , BZPL.BZPLC_REG_STATS_CD        /* 사업장등록상태코드      */, (SELECT FN_COM_DTL_CDNM_NVL('KO', 'BZPLC_REG_STATS_CD', BZPL.BZPLC_REG_STATS_CD, '-') FROM DUAL)  BZPLC_REG_STATS_CD_NM
+     , BZPL.OSD_SPR_CD                /* 외부구분코드            */, (SELECT FN_COM_DTL_CDNM_NVL('KO', 'OSD_SPR_CD'        , BZPL.OSD_SPR_CD        , '-') FROM DUAL)  OSD_SPR_CD_NM
+     , BZPL.POSD_SPR_CD               /* 순수외부구분코드        */, (SELECT FN_COM_DTL_CDNM_NVL('KO', 'POSD_SPR_CD'       , BZPL.POSD_SPR_CD       , '-') FROM DUAL)  POSD_SPR_CD_NM
+     , BZPL.SALS_CHRPSN_ID1           /* 영업담당자ID1           */, NVL((SELECT OPRTR_NM      FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=BZPL.CO_CD AND OPRTR_ID=BZPL.SALS_CHRPSN_ID1), NVL(BZPL.SALS_CHRPSN_ID1, '-'))  SALS_CHRPSN_ID1_NM
+     , BZPL.SALS_CHRPSN_ID2           /* 영업담당자ID2           */, NVL((SELECT OPRTR_NM      FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=BZPL.CO_CD AND OPRTR_ID=BZPL.SALS_CHRPSN_ID2), NVL(BZPL.SALS_CHRPSN_ID2, '-'))  SALS_CHRPSN_ID2_NM
+     , BZPL.CONT_MNG_NM               /* 계약관리명              */
+     , BZPL.BZPLC_GRD_ID              /* 사업장등급ID            */
+     , NVL(BGRD.BZPLC_GRD_NM, NVL(BZPL.BZPLC_GRD_ID, '-'))  BZPLC_GRD_ID_NM
+     , NVL(BGRD.APLY_DCRT   , 0.0                        )  BZPLC_GRD_APLY_DCRT
+     
+     , BZPL.IDDT_ID                   /* 산업군ID                */, NVL((SELECT IDDT_NM       FROM SSP_APP.TB_CC_IDDT_BASIS     WHERE IDDT_ID=BZPL.IDDT_ID), NVL(BZPL.IDDT_ID, '-'))  IDDT_ID_NM
+<!--      , BZPL.BIZDOC_ATFL_ID            /* 사업자등록증첨부파일ID  */ -->
+<!--      , BZPL.CUSTCI_ATFL_ID            /* 고객CI첨부파일ID        */ -->
+     , BZPL.ERP_CUST_CD               /* ERP고객코드             */
+     , BZPL.REGPSN_ID                 /* 등록자ID                */
+     , BZPL.REG_DTM                   /* 등록일시                */
+     , BZPL.UPDPSN_ID                 /* 수정자ID                */
+     , BZPL.UPD_DTM                   /* 수정일시                */
+     , B.ODR_AGNC_USE_YN
+     , B.GRP_APRV_USE_YN
+     , B.CORP_APRV_USE_YN
+     , B.GRP_ORD_USE_YN
+     , B.CORP_ORD_USE_YN
+     , B.BGT_YY_STR_MM
+     
+     <!-- /* [2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+     ,           BZPL.CONSN_CUST_YN
+     , DECODE(   BZPL.CONSN_CUST_YN,   'Y', '특약고객')  CONSN_CUST_YNNM
+     , CASE WHEN BZPL.CONSN_CUST_YN     IS NOT NULL AND BZPL.CONSN_CUST_YN != 'Y'          THEN NULL
+            WHEN BZPL.CONSN_CUST_STR_DT IS NOT NULL AND BZPL.CONSN_CUST_END_DT IS NOT NULL THEN TO_CHAR(TO_DATE(BZPL.CONSN_CUST_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') ||' ~ '|| TO_CHAR(TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD') 
+       END  CONSN_CUST_DATE
+     , CASE WHEN BZPL.CONSN_CUST_YN != 'Y'                                                 THEN NULL
+            WHEN BZPL.CONSN_CUST_STR_DT IS     NULL OR  BZPL.CONSN_CUST_END_DT IS     NULL THEN NULL
+            WHEN TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD') = D_TODAY                     THEN '* 금일('    || TO_CHAR(D_TODAY, 'YYYY-MM-DD')                             ||') 완료예정.'
+            WHEN TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD') > D_TODAY                     THEN '* 완료까지 '|| TRUNC(TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD')-D_TODAY) ||'일 남음.'
+            WHEN D_TODAY > TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD')                     THEN '* 종료일 '  || TRUNC(D_TODAY-TO_DATE(BZPL.CONSN_CUST_END_DT, 'YYYYMMDD')) ||'일 경과.'
+       END  CONSN_CUST_DATE_MESG
+     <!-- /* /[2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+     <!-- /* [2023-03-01] sg.park AI-018 CMS의료기기 사업장 관리 */ -->
+     ,           BZPL.MEDI_DEVI_SELL_PERMIT_YN
+     , DECODE(   BZPL.MEDI_DEVI_SELL_PERMIT_YN, 'Y', '판매허가')  MEDI_DEVI_SELL_PERMIT_YNNM
+     <!-- /* /[2023-03-01] sg.park AI-018 CMS의료기기 사업장 관리 */ -->
+     
+  FROM TB_CC_BZPLC_BASIS         BZPL
+     , (SELECT TO_DATE(TO_CHAR(SYSDATE, 'YYYYMMDD'), 'YYYYMMDD')  D_TODAY  FROM DUAL)  <!-- /* [2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+     , (
+        <include refid="com.ssp.bo.cc.common.sqlBzplcGrdInfo" />
+       )      BGRD
+     , TB_CC_BZPLC_CTL_AUTH_INFO B
+ WHERE ROWNUM > 0
+   AND BZPL.BZPLC_GRD_ID = BGRD.BZPLC_GRD_ID(+)
+   <if test='CO_CD                    != null and !"".equals( CO_CD                    .trim() )'                                                                >AND     BZPL.CO_CD                           = #{CO_CD                   }  /* 회사코드             : CO_CD                    */</if>
+   <if test='CUST_SPR_CD              != null and !"".equals( CUST_SPR_CD              .trim() )'                                                                >AND     BZPL.CUST_SPR_CD                     = #{CUST_SPR_CD             }  /* 고객구분             : CUST_SPR_CD              */</if>
+   <if test='CUST_SPR_CD              != null and !"".equals( CUST_SPR_CD              .trim() ) and "20".equals( CUST_SPR_CD.trim() ) and CONSN_CUST_YN != null'>AND NVL(BZPL.CONSN_CUST_YN           , 'N' ) = #{CONSN_CUST_YN           }  /* 특약고객여부         : CONSN_CUST_YN            */</if>
+   <if test='MEDI_DEVI_SELL_PERMIT_YN != null and !"".equals( MEDI_DEVI_SELL_PERMIT_YN .trim() )'                                                                >AND NVL(BZPL.MEDI_DEVI_SELL_PERMIT_YN, 'N' ) = #{MEDI_DEVI_SELL_PERMIT_YN}  /* 의료기기판매허가여부 : MEDI_DEVI_SELL_PERMIT_YN */</if>
+   <if test='BZPLC_REG_STATS_CD       != null and !"".equals( BZPLC_REG_STATS_CD       .trim() )'                                                                >AND     BZPL.BZPLC_REG_STATS_CD              = #{BZPLC_REG_STATS_CD      }  /* 등록상태             : BZPLC_REG_STATS_CD       */</if>
+   <if test='USE_YN                   != null and !"".equals( USE_YN                   .trim() )'                                                                >AND     BZPL.USE_YN                          = #{USE_YN                  }  /* 사용여부             : USE_YN                   */</if>
+   <if test='BZPLC_GRD_ID             != null and !"".equals( BZPLC_GRD_ID             .trim() )'                                                                >AND NVL(BZPL.BZPLC_GRD_ID            , '99') = #{BZPLC_GRD_ID            }  /* 고객등급             : BZPLC_GRD_ID             */</if>
+   <if test='LGGRP_YN                 != null and !"".equals( LGGRP_YN                 .trim() )'                                                                >AND     BZPL.LGGRP_YN                        = #{LGGRP_YN                }  /* LG그룹구분           : LGGRP_YN                 */</if>
+   <if test='OSD_SPR_CD               != null and !"".equals( OSD_SPR_CD               .trim() )'                                                                >AND     BZPL.OSD_SPR_CD                      = #{OSD_SPR_CD              }  /* 외부구분             : OSD_SPR_CD               */</if>
+   <if test='POSD_SPR_CD              != null and !"".equals( POSD_SPR_CD              .trim() )'                                                                >AND     BZPL.POSD_SPR_CD                     = #{POSD_SPR_CD             }  /* 순수외부구분         : POSD_SPR_CD              */</if>
+   <if test='SALS_CHRPSN_ID           != null and             SALS_CHRPSN_ID           .size() > 0'>
+   AND (   BZPL.SALS_CHRPSN_ID1 IN (<foreach collection="SALS_CHRPSN_ID" item="item" separator=",">#{item}</foreach>)  /* 영업담당자   : SALS_CHRPSN_ID1, SALS_CHRPSN_ID2 */
+        OR BZPL.SALS_CHRPSN_ID2 IN (<foreach collection="SALS_CHRPSN_ID" item="item" separator=",">#{item}</foreach>)  )
+   </if>
+   
+   AND BZPL.CO_CD = B.CO_CD(+)
+   AND BZPL.BZPLC_ID = B.BZPLC_ID(+)
+   )   LL
+  <if test=" BZPLC_ID > 0 ">
+  JOIN
+  TB_OD_ODR_INQ_TGT_DTLS   T1
+  ON  T1.SES_ID = #{SES_ID}
+  AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+  AND T1.COL_ITM = 'BZPLC_ID'
+  AND T1.COND_DATA_VAL = LL.BZPLC_ID
+  </if>
+  <if test=" IDDT_ID > 0 ">
+  JOIN
+  TB_OD_ODR_INQ_TGT_DTLS   T2
+  ON  T2.SES_ID = #{SES_ID}
+  AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+  AND T2.COL_ITM = 'IDDT_ID'
+  AND T2.COND_DATA_VAL = LL.IDDT_ID
+  </if>
+  <if test=" CORP_ID > 0 ">
+  JOIN
+  TB_OD_ODR_INQ_TGT_DTLS   T2
+  ON  T2.SES_ID = #{SES_ID}
+  AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+  AND T2.COL_ITM = 'CORP_ID'
+  AND T2.COND_DATA_VAL = LL.CORP_ID
+  </if>
+  <if test=" BIZNO > 0 ">
+  JOIN
+  TB_OD_ODR_INQ_TGT_DTLS   T2
+  ON  T2.SES_ID = #{SES_ID}
+  AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+  AND T2.COL_ITM = 'BIZNO'
+  AND T2.COND_DATA_VAL = LL.BIZNO
+  </if>
+  <if test="SORT_COLUMN != null and SORT_COLUMN != ''"> 
+  ORDER BY ${SORT_COLUMN} ${SORT_TYPE} 
+  </if> 
+  <if test="SORT_COLUMN == null or SORT_COLUMN == ''"> 
+  ORDER BY 
+       CO_CD
+     , CORP_ID   NULLS LAST
+     , BZPLC_ID  NULLS LAST
+  </if> 
+<!--      , UPD_DTM   DESC -->
+<!--      , IDDT_ID   NULLS LAST -->
+
+<include refid="com.ssp.bo.cc.common.sqlPostfixPaging" />
+</select>
+
+<select id="selectDetailBzplc" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.cc.bzplc.selectDetailBzplc */
+<include refid="sqlBzplc" />
+   AND ROWNUM = 1
+</select>
+
+</mapper>

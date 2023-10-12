@@ -1,0 +1,491 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_ED_02" width="660" height="260" titletext="EDM - 등록" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="260" mobileorientation="landscape" width="660">
+        <Button id="btn_save" taborder="1" text="저장" left="335" top="196" width="70" height="32" onclick="btn_save_onclick" cssclass="btn_WF_select"/>
+        <Button id="btn_cancel" taborder="0" text="취소" top="196" height="32" onclick="btn_cancel_onclick" width="70" right="335"/>
+        <Static id="Static03" taborder="2" left="30" top="23" height="35" cssclass="sta_cm_box02L_tdt" text="" width="600"/>
+        <Static id="Static03_00" taborder="3" left="30" top="58" height="35" cssclass="sta_cm_box02L_tdt" text="" width="600"/>
+        <Static id="Static03_00_00" taborder="4" left="30" top="93" height="35" cssclass="sta_cm_box02L_tdt" text="" width="600"/>
+        <Static id="Static03_00_00_00" taborder="5" left="30" top="128" height="35" cssclass="sta_cm_box02L_tdt" text="" width="600"/>
+        <Static id="static_edm_type" taborder="6" text="타입" left="30" top="23" width="80" height="35" cssclass="sta_cm_box01L_tdt"/>
+        <Static id="static_edm_mbr" taborder="7" text="회원ID" left="30" top="58" width="80" height="35" cssclass="sta_cm_box01L_tdt"/>
+        <Static id="static_edm_reason" taborder="8" text="사유" left="30" top="93" width="80" height="35" cssclass="sta_cm_box01L_tdt"/>
+        <Static id="static_edm_evtId" taborder="9" text="이벤트ID" left="30" top="128" width="80" height="35" cssclass="sta_cm_box01L_tdt"/>
+        <Static id="static_edm_excelPw" taborder="10" text="엑셀PW" left="360" top="128" width="80" height="35" cssclass="sta_cm_box01L_tdt"/>
+        <Radio id="rdo_type" taborder="11" left="121" top="34" width="149" height="16" index="0" text="E-Mail" value="E" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" direction="vertical">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">E</Col>
+                <Col id="datacolumn">E-Mail</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">S</Col>
+                <Col id="datacolumn">SMS</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Radio>
+        <Static id="static_edm_reason_size" taborder="12" text="(0 / 100 Byte)" left="536" top="98" height="24" textAlign="right" width="88" usedecorate="true"/>
+        <Button id="btn_mbrMltPop" taborder="15" left="466" height="24" cssclass="btn_WF_multi" width="24" bottom="172" onclick="btn_mbrMltPop_onclick"/>
+        <Button id="btn_mbrMltTxtPop" taborder="16" left="496" height="24" cssclass="btn_WF_document" width="24" bottom="172" onclick="btn_mbrTxt_onclick" text=""/>
+        <CheckBox id="chk_allMbr" taborder="17" text="전체 선택" left="533" top="68" width="91" height="17" onchanged="chk_allMbr_onchanged" value="false"/>
+        <Edit id="edt_mbr" taborder="18" left="115" top="62" width="333" height="27"/>
+        <Edit id="edt_reason" taborder="19" left="115" top="97" width="420" height="27" onkeyup="edt_reason_onkeyup"/>
+        <Edit id="edt_evtId" taborder="20" left="115" top="132" width="240" height="27"/>
+        <Edit id="edt_excelPw" taborder="21" left="450" top="132" width="180" height="27" password="true"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : EDM 타겟 관리 등록
+CREATION DATES : 2022.12.13
+CREATER        : YHK
+*******************************************************/
+/* 스크립트 인클루드 */
+include "CO::coUtils.xjs";
+include "OD::odUtils.xjs";
+include "CC::CcUtils.xjs";
+/***********************************************************************************************
+ * 0.Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();
+var fv_coCd = "";
+/***********************************************************************************************
+* 1.FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//초기화	
+	this.fn_init("INIT");
+	
+		
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	//ESC : 닫기기능
+	if(e.keycode == 27){
+		this.close();
+	}
+};
+
+/***********************************************************************************************
+* 2.Transaction 서비스 호출 영역
+************************************************************************************************/
+//저장
+this.fn_save = function() {
+
+	this.ds_edmInfo.setColumn(0, "CO_CD", this.fv_coCd);
+
+	var sSvcId = "saveEdmInfo";
+	var sUrl = "/sa/edm/insertEdmInfo.do";
+	var inDs = "ds_save=ds_edmInfo";
+	var outDs = "ds_edmInfo=ds_output";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+}
+
+// 대용량엑셀다운로드
+this.fn_largeExcelDownload = function(){
+   
+	var sSvcId = "largeExcelDown";    
+	var sUrl = "/sa/excelDown/large/edmInfo.do";
+	var inDs = "ds_save=ds_edmInfo";
+	var outDs = "";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	
+};
+
+/***********************************************************************************************
+* 3.Callback 처리 영역
+************************************************************************************************/
+	
+//콜백
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+			
+	if(errorCode < 0)
+	{
+		alert(errorMsg);
+		return;
+	}
+
+	switch (svcID)
+	{		
+		case "saveEdmInfo" :
+
+			//대용량 엑셀다운로드
+			this.fn_largeExcelDownload();
+			
+			alert(this.fn_getMessage("ERRN000029")); // 등록되었습니다.
+									
+			var resData = {};
+			var resString = "";
+			
+			resData.RETURN_YN = "Y";
+			
+			// json string 변경
+			resString = JSON.stringify(resData);	
+			
+			// return
+			this.close(resString);
+								
+			break;
+			
+		
+		
+		case "insertOdrInqTgtDtls" :
+			
+			this.fn_save();
+			
+			break;
+		
+
+
+		default : 
+		
+			break;
+	}
+	
+};
+
+//팝업 콜백
+this.fn_popupCallback = function(sPopupId, sRetValue){
+
+	var resData = "";
+	var sIdList = "";
+	var sNmList = "";
+	
+	if(sRetValue == undefined){
+		return;
+	}else{
+		resData = JSON.parse(sRetValue);
+	}
+			
+	switch(sPopupId){
+		
+		case "mbrMultiPop":				
+			for(var i=0; i<resData.length; i++){	
+				var rtnData = JSON.parse(resData[i]);
+				sIdList += rtnData.MBR_ID + ",";
+				
+			}
+			this.ds_edmInfo.setColumn(0,"MBR_ID",sIdList.replace(/,\s*$/, ""));
+			
+			
+			break;
+			
+		default : 
+			break;
+	}
+};
+
+//조건 멀티 텍스트 팝업 콜백
+this.fn_multiTextPopupCallback = function(objID, rtnValue) {
+	
+	var resParam = JSON.parse(rtnValue);					
+	var splitedStringArr = resParam.textValue.split(",");
+
+	switch(objID){	
+	
+		case "mbrMultiTextPopup":
+			this.ds_edmInfo.setColumn(0,"MBR_ID",this.gfn_allTrim(resParam.textValue).replace(/,\s*$/, ""));												
+			break;
+			
+		default : 
+			break;
+	}		
+}
+
+/***********************************************************************************************
+* 4.외부 호출 FUNCTION 영역
+************************************************************************************************/
+this.cfn_formInit = function()
+{	
+	// 필수 값 표시
+	this.static_edm_type.uEssentiel = "true";
+	this.static_edm_mbr.uEssentiel = "true";
+	this.static_edm_reason.uEssentiel = "true";
+	this.static_edm_evtId.uEssentiel = "true";
+	this.static_edm_excelPw.uEssentiel = "true";
+}
+
+
+/***********************************************************************************************
+*  5.개발자(사용자) 함수 영역
+************************************************************************************************/
+// 글자 byte 체크 함수
+this.fn_setLenByte = function(sVal, maxByte, sGubun)
+{
+	var count = nexacro._getUtf8Length(sVal);
+	var expsText = "";
+
+	if (count < 0) {
+		count = 0;
+	}
+
+	if(count <= maxByte) {
+		expsText = "(<fc v='red'>" + count + "</fc> / " + maxByte + " Byte)";
+
+		if (sGubun == "reason") {
+			this.static_edm_reason_size.set_text(expsText);
+		}
+		return;
+	}
+
+	var tempVal = "";
+
+	tempVal = nexacro._substrByUtf8(sVal, 0, maxByte);
+	count = nexacro._getUtf8Length(tempVal);
+
+	expsText = "(<fc v='red'>" + count + "</fc> / " + maxByte + " Byte)";
+
+	if (sGubun == "reason") {
+		this.edt_reason.set_value("");
+		this.edt_reason.set_value(tempVal);
+		this.static_edm_reason_size.set_text(expsText);
+	}
+};
+
+//화면 초기화 함수
+this.fn_init = function(sVal)
+{
+	switch (sVal)
+	{		
+		case "INIT" :
+			//변수 세팅
+			this.fv_coCd = this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD");
+			
+			//타입값 초기세팅(E-Mail)
+			this.rdo_type.set_index(0);
+					
+			//전체 선택 체크박스 초기세팅					
+			this.chk_allMbr.set_enable(true); // 체크박스 사용가능			
+			this.chk_allMbr.set_value(false); // 체크해제
+			this.ds_edmInfo.setColumn(0, "ALL_MBR_YN","N"); // 초기 데이터셋값
+			
+			this.edt_mbr.set_enable(true); //회원아이디인풋 사용가능
+			this.btn_mbrMltPop.set_enable(true); // 회원멀티입력 버튼 사용
+			this.btn_mbrMltTxtPop.set_enable(true); // 회원멀티텍스트 버튼 사용			
+						
+			
+			// 엑셀PW 자동설정(난수), 변경불가
+			var pw = this.makePw();			
+			this.edt_excelPw.set_value(pw);
+			this.edt_excelPw.set_enable(false);
+			
+			break;
+
+		default :			
+
+			break;
+	}	
+}
+
+// 엑셀 PW 난수생성
+this.makePw = function() {
+    return Math.random().toString(36).substr(2,9);
+}
+
+
+/***********************************************************************************************
+* 6. 각 Component 별 이벤트 영역
+************************************************************************************************/
+	
+// 사유 키업 이벤트 (글자수제한)
+this.edt_reason_onkeyup = function(obj:nexacro.Edit,e:nexacro.KeyEventInfo)
+{
+	this.fn_setLenByte(obj.value, 100, "reason");
+};
+
+
+	
+// 취소
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	if(confirm(this.fn_getMessage("ERRN000053"))) { // 취소하시겠습니까?
+		this.close();
+	}
+};
+
+// 저장 
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	// 필수 입력값 체크
+	
+	// 엑셀비밀번호 
+	if(this.ds_edmInfo.getColumn(0,"EXCEL_PW") == "" || this.ds_edmInfo.getColumn(0,"EXCEL_PW") == undefined){
+		alert(this.fn_getMessage("ERRN000001", "엑셀 비밀번호는")); // 엑셀 비밀번호는 필수 입력항목입니다.
+		this.edt_excelPw.setFocus();
+		return;
+	}
+	
+	// 회원 ID (전체 선택 체크시 필수X)
+	if(this.chk_allMbr.value == false){
+	
+		if(this.ds_edmInfo.getColumn(0,"MBR_ID") == "" || this.ds_edmInfo.getColumn(0,"MBR_ID") == undefined){		
+		alert(this.fn_getMessage("ERRN000001", "회원 ID는")); // 회원 ID는 필수 입력항목입니다.
+		this.edt_mbr.setFocus();			
+		return;
+		}	
+	}
+		
+	// 사유
+	if(this.ds_edmInfo.getColumn(0,"EXTR_RSN") == "" || this.ds_edmInfo.getColumn(0,"EXTR_RSN") == undefined){
+		alert(this.fn_getMessage("ERRN000001", "사유는")); // 사유는 필수 입력항목입니다.
+		this.edt_reason.setFocus();
+		return;
+	}
+			
+	// 이벤트 ID
+	if(this.ds_edmInfo.getColumn(0,"EVT_ID") == "" || this.ds_edmInfo.getColumn(0,"EVT_ID") == undefined){
+		alert(this.fn_getMessage("ERRN000001", "이벤트 ID는")); // 이벤트 ID는 필수 입력항목입니다.
+		this.edt_evtId.setFocus();
+		return;
+	}
+		
+	if ( !confirm(this.fn_getMessage("ERRN000043"))) // 등록하시겠습니까?
+	{
+		return;
+	}	
+	
+	// 멀티입력값 세팅	
+	this.ds_edmInfo.setColumn(0,"INQ_COND_DTLS", this.name);
+	
+	if(!this.gfn_isNull(this.edt_mbr.value)){	
+		this.fn_setMSearch(this.name,"MBR_ID_MULTI",this.edt_mbr.value,"ds_edmInfo");	
+		
+	}else{	
+		this.ds_edmInfo.setColumn(0, "MBR_ID_MULTI", null);		
+	}
+		
+	// 멀티입력값 테이블에 등록
+	if(this.ds_select.getRowCount() > 0){
+		this.fn_insertSelectedData("fn_callBack");
+		
+	}else{
+		this.fn_save();
+	}				
+	
+};
+
+//전체선택 체크박스 이벤트
+this.chk_allMbr_onchanged = function(obj:nexacro.CheckBox,e:nexacro.CheckBoxChangedEventInfo)
+{
+	if(this.chk_allMbr.value) {
+	
+		this.edt_mbr.set_value("");	// 회원ID 입력값 삭제
+		this.edt_mbr.set_enable(false); // 회원ID 인풋 비활성화
+		this.btn_mbrMltPop.set_enable(false); // 회원 멀티 팝업버튼 비활성화
+		this.btn_mbrMltTxtPop.set_enable(false); // 회원 멀티 텍스트버튼 비활성화
+		this.ds_edmInfo.setColumn(0, "ALL_MBR_YN","Y");		
+		
+	}	
+	else {
+	
+		this.edt_mbr.set_enable(true);
+		this.btn_mbrMltPop.set_enable(true);
+		this.btn_mbrMltTxtPop.set_enable(true);		
+		this.ds_edmInfo.setColumn(0, "ALL_MBR_YN","N");	
+		
+	}
+	
+};
+	
+	
+	
+	
+/***********************************************************************************************
+*  7.팝업 관련 영역
+************************************************************************************************/
+
+
+//회원 조건 팝업
+this.btn_mbrMltPop_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+		
+	var objParam = {
+		coCd : this.fv_coCd,		
+		mbrId: this.edt_mbr.value,
+		mbrNm: ""
+	};
+	this.gfn_openPopup("mbrMultiPop", "CO_POP::SSP_BO_PP_25.xfdl", objParam);
+};
+
+//회원 조건 텍스트 입력 팝업
+this.btn_mbrTxt_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = {
+		textId : this.edt_mbr
+	};
+	
+	var options = {};
+	options.title = "회원";
+
+	this.gfn_openPopup("mbrMultiTextPopup", "CO_POP::SSP_BO_PP_13.xfdl", params,  "fn_multiTextPopupCallback", options);
+};
+
+
+
+]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="MBR_ID_MULTI" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CO_CD"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_edmInfo">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="EDM_SEQ" type="STRING" size="256"/>
+          <Column id="EDM_FORM_CD" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="EXTR_RSN" type="STRING" size="256"/>
+          <Column id="EVT_ID" type="STRING" size="256"/>
+          <Column id="EXCEL_PW" type="STRING" size="256"/>
+          <Column id="ALL_MBR_YN" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="MBR_ID_MULTI" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_select" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="SES_ID" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="COL_ITM" type="STRING" size="256"/>
+          <Column id="COND_DATA_VAL" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item1" compid="edt_mbr" propid="value" datasetid="ds_edmInfo" columnid="MBR_ID"/>
+      <BindItem id="item2" compid="edt_reason" propid="value" datasetid="ds_edmInfo" columnid="EXTR_RSN"/>
+      <BindItem id="item3" compid="edt_evtId" propid="value" datasetid="ds_edmInfo" columnid="EVT_ID"/>
+      <BindItem id="item4" compid="edt_excelPw" propid="value" datasetid="ds_edmInfo" columnid="EXCEL_PW"/>
+      <BindItem id="item0" compid="rdo_type" propid="value" datasetid="ds_edmInfo" columnid="EDM_FORM_CD"/>
+    </Bind>
+    <InitValue/>
+  </Form>
+</FDL>

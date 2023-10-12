@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
+<Configuration status="INFO">
+	<Appenders>
+		<Console name="console" target="SYSTEM_OUT">
+			<PatternLayout pattern="%d %5p [%c][Line %L] %m%n" charset="UTF-8" />
+		</Console>
+
+		<RollingFile name="LogToFile" fileName="${sys:catalina.base}/logs/ssp.log" filePattern="${sys:catalina.base}/logs/ssp.%d{yyyy-MM-dd}.log" >
+			<PatternLayout pattern="%d %5p [%c][Line %L] %m%n" charset="UTF-8" />
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+			</Policies>
+			<DefaultRolloverStrategy max="10" fileIndex="max">
+				<!-- 일주일이 경과한 로그파일은 자동 삭제 -->
+				<Delete basePath = "${sys:catalina.base}/logs" maxDepth = "1">
+					<IfFileName glob="ssp.*.log" />
+					<IfLastModified age = "7d"/>
+				</Delete>
+			</DefaultRolloverStrategy>
+		</RollingFile>
+	</Appenders>
+
+	<Loggers>
+		<Logger name="com.ssp.bo" level="INFO" />				<!-- 운영단계에서는 INFO 로 지정 -->
+<!--		<Logger name="com.market.mall.dao" level="DEBUG" />&lt;!&ndash; 운영단계에서는 INFO 로 지정 &ndash;&gt;-->
+		<!-- 쿼리 내용이 DB에 저장되면 안될 것 같음. -->
+<!--		<Logger name="com.market.mall.dao" level="DEBUG" additivity="false" >				-->
+<!--			<AppenderRef ref="console" />-->
+<!--			<AppenderRef ref="LogToFile" />-->
+<!--		</Logger>-->
+
+<!--		<Logger name="com.serveone" level="DEBUG" />				&lt;!&ndash; 운영단계에서는 INFO 로 지정 &ndash;&gt;-->
+<!--		<Logger name="com.serveone.common" level="INFO" />			&lt;!&ndash; 운영단계에서는 WARN 로 지정 &ndash;&gt;-->
+<!--		<Logger name="com.serveone.common.excel" level="INFO"/>	&lt;!&ndash; 엑셀관련 테스트 종료후 제거 &ndash;&gt;-->
+<!--		<Logger name="com.serveone.util" level="INFO" />			&lt;!&ndash; 운영단계에서는 WARN 로 지정 &ndash;&gt;-->
+
+		<Logger name="egovframework" level="WARN"  />
+		<Logger name="org.springframework" level="WARN"  />
+		<Logger name="org.springframework.web.context.ContextLoader" level="WARN" />
+		<Logger name="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" level="WARN"  />
+		<Logger name="org.springframework.context.support.MessageSourceSupport" level="WARN"  />
+		<Logger name="kr.co.serveone.EAI.MSD" level="WARN" />      <!-- 운영단계에서는 WARN 로 지정 -->
+
+		<!-- log SQL with timing information, post execution -->
+		<Logger name="jdbc" level="WARN"/>
+		<Logger name="jdbc.sqlonly" level="WARN" />
+		<!-- 쿼리 내용이 DB에 저장되면 안될 것 같음. -->
+		
+		<!-- TODO 쿼리 내용이 DB에 저장되면 안될 것 같음. -->
+		<Logger name="jdbc.sqlonly" level="DEBUG" additivity="false">		
+			<AppenderRef ref="console" />
+  			<!--   <AppenderRef ref="LogToFile" /> --> 
+		</Logger>
+		
+		<Logger name="jdbc.resultsettable" level="OFF" />
+		<Logger name="jdbc.sqltiming" level="OFF" />
+		<Logger name="jdbc.audit" level="OFF" />
+		<Logger name="jdbc.resultset" level="OFF" />
+
+		<Root level="INFO">						<!-- 운영단계에서는 WARN 로 지정 -->
+			<AppenderRef ref="console" />
+			<AppenderRef ref="LogToFile" />
+			<AppenderRef ref="databaseAppender" /> <!--추가 -->
+		</Root>
+	</Loggers>
+</Configuration>

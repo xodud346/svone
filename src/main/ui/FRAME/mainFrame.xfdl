@@ -1,0 +1,478 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="workPage" width="963" height="872" titletext="New Form" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="872" width="963">
+        <ImageViewer id="mainLogo" taborder="1" left="0" top="0" onclick="ImageViewer00_onclick" cssclass="sta_MAIN_logo" bottom="0" right="0" border="0" text=""/>
+        <Grid id="grd_main" taborder="0" left="20" top="63" binddataset="ds_master" treeusecheckbox="false" treeuseimage="false" autofittype="col" height="267" right="20" treeinitstatus="collapse,all" oncellclick="grd_main_oncellclick" visible="false" nodatatext="조회된 결과가 없습니다.">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="217"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="항목"/>
+                <Cell col="1" text="정상"/>
+                <Cell col="2" text="지연"/>
+                <Cell col="3" text="합계"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:MNU_NM" displaytype="treeitemcontrol" edittype="tree" treelevel="bind:MNU_LVL" autosizecol="limitmax" cssclass="cell_mark"/>
+                <Cell col="1" text="bind:OK_CNT" color="blue" cssclass="expr:MNU_TP_CD == &quot;02&quot; ? 'grd_Txt_Blue_U' : '' " textAlign="center"/>
+                <Cell col="2" text="bind:DELAY_CNT" color="red" cssclass="expr:MNU_TP_CD == &quot;02&quot; ? 'grd_Txt_Blue_U' : '' " textAlign="center"/>
+                <Cell col="3" text="bind:SUM_CNT" textDecoration="expr:STATUS == &quot;&quot; ? : &quot;none&quot; : &quot;underline&quot;" cssclass="expr:MNU_TP_CD == &quot;02&quot; ? 'grd_Txt_Blue_U' : '' " textAlign="center"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="sta_title" taborder="2" text="MY To-Do" left="30" top="20" height="21" cssclass="sta_WF_title02" width="300" visible="false"/>
+        <Radio id="rdo_period" taborder="3" top="20" height="24" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" index="0" text="3개월" value="3" columncount="2" width="138" right="109" visible="false">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">1</Col>
+                <Col id="datacolumn">3개월</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">2</Col>
+                <Col id="datacolumn">전체</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Radio>
+        <Button id="btn_search" taborder="4" text="조회" top="18" height="28" onclick="btn_search_onclick" cssclass="btn_WF_require" right="33" width="60" visible="false"/>
+        <Tab id="tab_noRnd" taborder="5" tabindex="0" left="20" top="372" right="20" bottom="72" visible="false" onchanged="tab_noRnd_onchanged">
+          <Tabpages>
+            <Tabpage id="Tabpage1" text="항목별">
+              <Layouts>
+                <Layout>
+                  <Grid id="grd_noRndItem" taborder="0" left="12" top="3" height="206" binddataset="ds_master2" autofittype="col" treeinitstatus="collapse,all" treeusecheckbox="false" treeuseimage="false" right="33" nodatatext="조회된 결과가 없습니다.">
+                    <Formats>
+                      <Format id="default">
+                        <Columns>
+                          <Column size="80"/>
+                          <Column size="53"/>
+                          <Column size="53"/>
+                          <Column size="53"/>
+                          <Column size="53"/>
+                          <Column size="53"/>
+                          <Column size="53"/>
+                        </Columns>
+                        <Rows>
+                          <Row size="24" band="head"/>
+                          <Row size="24" band="head"/>
+                          <Row size="24"/>
+                        </Rows>
+                        <Band id="head">
+                          <Cell rowspan="2" text="항목"/>
+                          <Cell col="1" colspan="2" text="정상"/>
+                          <Cell col="3" colspan="2" text="지연"/>
+                          <Cell col="5" colspan="2" text="합계"/>
+                          <Cell row="1" col="1" text="건수"/>
+                          <Cell row="1" col="2" text="비율"/>
+                          <Cell row="1" col="3" text="건수"/>
+                          <Cell row="1" col="4" text="비율"/>
+                          <Cell row="1" col="5" text="건수"/>
+                          <Cell row="1" col="6" text="비율"/>
+                        </Band>
+                        <Band id="body">
+                          <Cell text="bind:MNU_NM" displaytype="treeitemcontrol" edittype="tree" treelevel="bind:MNU_LVL"/>
+                          <Cell col="1" text="bind:OK_CNT" color="blue"/>
+                          <Cell col="2" text="expr:OK_RATE+&quot;%&quot;" color="blue"/>
+                          <Cell col="3" text="bind:DELAY_CNT" color="red"/>
+                          <Cell col="4" text="expr:DELAY_RATE+&quot;%&quot;" color="red"/>
+                          <Cell col="5" text="bind:SUM_CNT"/>
+                          <Cell col="6" text="expr:SUM_RATE+&quot;%&quot;"/>
+                        </Band>
+                      </Format>
+                    </Formats>
+                  </Grid>
+                </Layout>
+              </Layouts>
+            </Tabpage>
+            <Tabpage id="Tabpage2" text="팀원별">
+              <Layouts>
+                <Layout>
+                  <Grid id="grd_noRndTeam" taborder="0" left="12" top="3" height="206" binddataset="ds_master3" autofittype="col" treeinitstatus="collapse,all" treeusecheckbox="false" treeuseimage="false" right="33" nodatatext="조회된 결과가 없습니다.">
+                    <Formats>
+                      <Format id="default">
+                        <Columns>
+                          <Column size="80"/>
+                          <Column size="53"/>
+                          <Column size="53"/>
+                          <Column size="53"/>
+                          <Column size="53"/>
+                          <Column size="53"/>
+                          <Column size="53"/>
+                        </Columns>
+                        <Rows>
+                          <Row size="24" band="head"/>
+                          <Row size="24" band="head"/>
+                          <Row size="24"/>
+                        </Rows>
+                        <Band id="head">
+                          <Cell rowspan="2" text="담당자"/>
+                          <Cell col="1" colspan="2" text="정상"/>
+                          <Cell col="3" colspan="2" text="지연"/>
+                          <Cell col="5" colspan="2" text="합계"/>
+                          <Cell row="1" col="1" text="건수"/>
+                          <Cell row="1" col="2" text="비율"/>
+                          <Cell row="1" col="3" text="건수"/>
+                          <Cell row="1" col="4" text="비율"/>
+                          <Cell row="1" col="5" text="건수"/>
+                          <Cell row="1" col="6" text="비율"/>
+                        </Band>
+                        <Band id="body">
+                          <Cell text="bind:MNU_NM" displaytype="treeitemcontrol" edittype="tree" treelevel="bind:MNU_LVL"/>
+                          <Cell col="1" text="bind:OK_CNT" color="blue"/>
+                          <Cell col="2" color="blue" text="expr:OK_RATE+&quot;%&quot;"/>
+                          <Cell col="3" text="bind:DELAY_CNT" color="red"/>
+                          <Cell col="4" color="red" text="expr:DELAY_RATE+&quot;%&quot;"/>
+                          <Cell col="5" text="bind:SUM_CNT"/>
+                          <Cell col="6" text="expr:SUM_RATE+&quot;%&quot;"/>
+                        </Band>
+                      </Format>
+                    </Formats>
+                  </Grid>
+                </Layout>
+              </Layouts>
+            </Tabpage>
+          </Tabpages>
+        </Tab>
+        <Tab id="tab_rnd" taborder="6" tabindex="0" left="20" top="372" right="20" bottom="62" visible="false" onchanged="tab_rnd_onchanged">
+          <Tabpages>
+            <Tabpage id="Tabpage1" text="신규상품등록현황">
+              <Layouts>
+                <Layout>
+                  <Grid id="grd_newItem" taborder="0" left="12" top="3" height="346" binddataset="ds_master4" autofittype="col" treeinitstatus="collapse,all" treeusecheckbox="false" treeuseimage="false" right="33">
+                    <Formats>
+                      <Format id="default">
+                        <Columns>
+                          <Column size="80"/>
+                          <Column size="80"/>
+                          <Column size="111"/>
+                          <Column size="80"/>
+                          <Column size="80"/>
+                        </Columns>
+                        <Rows>
+                          <Row size="24" band="head"/>
+                          <Row size="24"/>
+                        </Rows>
+                        <Band id="head">
+                          <Cell text="담당자명"/>
+                          <Cell col="1" text="견적"/>
+                          <Cell col="2" text="신규상품등록"/>
+                          <Cell col="3" text="전시상품견적"/>
+                          <Cell col="4" text="합계"/>
+                        </Band>
+                        <Band id="body">
+                          <Cell text="bind:PURG_CHRPSN_NM" displaytype="treeitemcontrol" edittype="tree" treelevel="bind:MNU_LVL"/>
+                          <Cell col="1" text="bind:ESTM_CNT"/>
+                          <Cell col="2" text="bind:NEW_PRD_CNT"/>
+                          <Cell col="3" text="bind:RND_ESTM_CNT"/>
+                          <Cell col="4" text="bind:SUM_CNT"/>
+                        </Band>
+                      </Format>
+                    </Formats>
+                  </Grid>
+                </Layout>
+              </Layouts>
+            </Tabpage>
+            <Tabpage id="Tabpage2" text="구매정보현황">
+              <Layouts>
+                <Layout>
+                  <Grid id="grd_noRndTeam" taborder="0" left="12" top="3" height="346" binddataset="ds_master5" autofittype="col" treeinitstatus="collapse,all" treeusecheckbox="false" treeuseimage="false" right="33">
+                    <Formats>
+                      <Format id="default">
+                        <Columns>
+                          <Column size="80"/>
+                          <Column size="80"/>
+                          <Column size="80"/>
+                          <Column size="80"/>
+                          <Column size="80"/>
+                          <Column size="80"/>
+                          <Column size="80"/>
+                        </Columns>
+                        <Rows>
+                          <Row size="24" band="head"/>
+                          <Row size="24"/>
+                        </Rows>
+                        <Band id="head">
+                          <Cell text="담당자명"/>
+                          <Cell col="1" text="구매유효상품"/>
+                          <Cell col="2" text="비율"/>
+                          <Cell col="3" text="구매불가예정상품"/>
+                          <Cell col="4" text="비율"/>
+                          <Cell col="5" text="구매정보 미존재 상품"/>
+                          <Cell col="6" text="비율"/>
+                        </Band>
+                        <Band id="body">
+                          <Cell text="bind:OPRTR_NM" displaytype="treeitemcontrol" edittype="tree" treelevel="bind:MNU_LVL"/>
+                          <Cell col="1" text="bind:A_CNT" color="blue"/>
+                          <Cell col="2" text="expr:OK_RATE+&quot;%&quot;"/>
+                          <Cell col="3" text="bind:B_CNT" color="blue"/>
+                          <Cell col="4" text="expr:DELAY_RATE+&quot;%&quot;"/>
+                          <Cell col="5" text="bind:C_CNT" color="blue"/>
+                          <Cell col="6" text="expr:SUM_RATE+&quot;%&quot;"/>
+                        </Band>
+                      </Format>
+                    </Formats>
+                  </Grid>
+                </Layout>
+              </Layouts>
+            </Tabpage>
+          </Tabpages>
+        </Tab>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : 
+  CREATION DATES : 
+*******************************************************/
+
+
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.oApp = nexacro.getApplication();
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{  
+	this.rdo_period.set_index(0); 
+	this.ds_search.setColumn(0,"INIT","Y");
+	this.fn_dashBoardSearch(); 
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_dashBoardSearch = function() {
+	var sSvcId = "BoardSearch";
+	var sUrl = "/da/dash/select-board.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_master=ds_master ds_master2=ds_master2 ds_master3=ds_master3 ds_master4=ds_master4 ds_auth=ds_auth ds_master5=ds_master5";
+	var arg = "";
+	trace(this.ds_search.saveXML());
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");	
+	
+}
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+
+	if(svcID == "BoardSearch"){  
+	
+		trace(this.ds_master.saveXML());
+		trace(this.ds_master2.saveXML());
+		trace(this.ds_master3.saveXML());
+		trace(this.ds_master4.saveXML());
+		trace(this.ds_auth.saveXML());
+		trace(this.ds_master5.saveXML());
+		
+		if(this.ds_search.getColumn(0, "INIT") == "Y" && this.ds_auth.getColumn(0, "SEARCH_YN") == "Y") {
+			this.ds_search.setColumn(0,"INIT","N");
+			this.sta_title.set_visible(true);
+			this.rdo_period.set_visible(true);
+			this.btn_search.set_visible(true);
+		} else {
+			if(this.ds_auth.getColumn(0, "R_YN") == "Y"){  // 대시보드 실행
+				this.sta_title.set_visible(true);
+				this.rdo_period.set_visible(true);
+				this.btn_search.set_visible(true);
+				this.grd_main.set_visible(true);
+				if(this.ds_auth.getColumn(0, "TEAM_LEADER_YN") == "Y"){ // 팀장 
+					if(this.ds_auth.getColumn(0, "RND_YN") == "Y"){		// RND 조직장 
+						this.tab_rnd.set_visible(true);
+					} else {
+						this.tab_noRnd.set_visible(true);
+					}
+				}	
+			} else {
+				this.sta_title.set_visible(false);
+				this.rdo_period.set_visible(false);
+				this.btn_search.set_visible(false);
+				this.grd_main.set_visible(false);
+				this.tab_noRnd.set_visible(false);
+				this.tab_rnd.set_visible(false);
+			} 
+		}
+	}
+}
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+/*******************************
+* grd_main_oncellclick : 그리드 클릭이벤트
+*******************************/
+this.grd_main_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.col == 1 || e.col == 2 || e.col == 3){
+		if(this.ds_master.getColumn(e.row,"SUM_CNT") > 0 ) {
+			var sMenuId = this.ds_master.getColumn(e.row,"MNU_LVL_SPR_CD");
+			var oArgs = this.ds_master.getColumn(e.row,"PARAM");  // 화면 파라미터 넘기기.
+			var sMenuType = this.ds_master.getColumn(e.row,"MNU_TP_CD");
+			var sParam = {
+				STATUS : this.ds_master.getColumn(e.row,"STATUS"),
+				STATUS2 : this.ds_master.getColumn(e.row,"STATUS2"),
+				ID : this.ds_auth.getColumn(0,"USER_ID"),
+				NM : this.ds_master.getColumn(e.row,"OPRTR_NM"),
+			//	OPR_UNIT_ID : this.ds_master.getColumn(e.row,"OPR_UNIT_ID"),
+				DTM : this.ds_search.getColumn(0,"PERIOD"),
+				TODO : "Y"
+			};
+			
+			if(this.gfn_isNull(sMenuId) == false && sMenuType == "02") {			
+				// 메뉴 화면 호출
+				this.gfn_menuOpen(sMenuId, sParam);
+			}
+		}
+	}
+};
+/*******************************
+* btn_search_onclick : 조회버튼 클릭이벤트 
+*******************************/
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_dashBoardSearch();
+};
+
+
+// 테스트 코드 
+this.ImageViewer00_onclick = function(obj:nexacro.ImageViewer,e:nexacro.ClickEventInfo)
+{
+	return;    
+	var sUrl = "FRAME::DebugPop.xfdl";
+	var oArg = {};
+	var oOption = {popuptype:"modaless", title:"디버그", width:1080, height:703};
+
+	this.gfn_openPopup("DebugPopUp",sUrl,oArg,"gfn_debugPopUp",oOption);
+};
+
+
+]]></Script>
+    <Objects>
+      <Dataset enableevent="true" id="ds_master" preload="true" updatecontrol="true" useclientlayout="false" canrowposchange="dsMaster_canrowposchange">
+        <ColumnInfo>
+          <Column id="MNU_NM" type="STRING" size="256"/>
+          <Column id="OK_CNT" type="STRING" size="256"/>
+          <Column id="DELAY_CNT" type="STRING" size="256"/>
+          <Column id="SUM_CNT" type="STRING" size="256"/>
+          <Column id="MNU_LVL" type="STRING" size="256"/>
+          <Column id="MNU_NO" type="STRING" size="256"/>
+          <Column id="SUB_MNU_YN" type="STRING" size="256"/>
+          <Column id="MNU_LVL_SPR_CD" type="STRING" size="256"/>
+          <Column id="PARAM" type="STRING" size="256"/>
+          <Column id="MNU_TP_CD" type="STRING" size="256"/>
+          <Column id="STATUS2" type="STRING" size="256"/>
+          <Column id="STATUS" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="PERIOD" type="STRING" size="256"/>
+          <Column id="INIT" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset enableevent="true" id="ds_master2" preload="true" updatecontrol="true" useclientlayout="false" canrowposchange="dsMaster_canrowposchange">
+        <ColumnInfo>
+          <Column id="MNU_NM" type="STRING" size="256"/>
+          <Column id="OK_CNT" type="STRING" size="256"/>
+          <Column id="DELAY_CNT" type="STRING" size="256"/>
+          <Column id="SUM_CNT" type="STRING" size="256"/>
+          <Column id="MNU_LVL" type="STRING" size="256"/>
+          <Column id="MNU_NO" type="STRING" size="256"/>
+          <Column id="SUB_MNU_YN" type="STRING" size="256"/>
+          <Column id="ARR_SEQ" type="STRING" size="256"/>
+          <Column id="PARAM" type="STRING" size="256"/>
+          <Column id="OK_RATE" type="STRING" size="256"/>
+          <Column id="DELAY_RATE" type="STRING" size="256"/>
+          <Column id="SUM_RATE" type="STRING" size="256"/>
+          <Column id="STATUS" type="STRING" size="256"/>
+          <Column id="STATUS2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset enableevent="true" id="ds_master3" preload="true" updatecontrol="true" useclientlayout="false" canrowposchange="dsMaster_canrowposchange">
+        <ColumnInfo>
+          <Column id="MNU_NM" type="STRING" size="256"/>
+          <Column id="OK_CNT" type="STRING" size="256"/>
+          <Column id="DELAY_CNT" type="STRING" size="256"/>
+          <Column id="SUM_CNT" type="STRING" size="256"/>
+          <Column id="MNU_LVL" type="STRING" size="256"/>
+          <Column id="MNU_NO" type="STRING" size="256"/>
+          <Column id="SUB_MNU_YN" type="STRING" size="256"/>
+          <Column id="ARR_SEQ" type="STRING" size="256"/>
+          <Column id="PARAM" type="STRING" size="256"/>
+          <Column id="OK_RATE" type="STRING" size="256"/>
+          <Column id="DELAY_RATE" type="STRING" size="256"/>
+          <Column id="SUM_RATE" type="STRING" size="256"/>
+          <Column id="STATUS" type="STRING" size="256"/>
+          <Column id="STSTUS2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset enableevent="true" id="ds_master4" preload="true" updatecontrol="true" useclientlayout="false" canrowposchange="dsMaster_canrowposchange">
+        <ColumnInfo>
+          <Column id="PURG_CHRPSN_NM" type="STRING" size="256"/>
+          <Column id="MNU_LVL" type="STRING" size="256"/>
+          <Column id="ESTM_CNT" type="STRING" size="256"/>
+          <Column id="NEW_PRD_CNT" type="STRING" size="256"/>
+          <Column id="RND_ESTM_CNT" type="STRING" size="256"/>
+          <Column id="SUM_CNT" type="STRING" size="256"/>
+          <Column id="STATUS" type="STRING" size="256"/>
+          <Column id="STSTUS2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_auth">
+        <ColumnInfo>
+          <Column id="TEAM_LEADER_YN" type="STRING" size="256"/>
+          <Column id="RND_YN" type="STRING" size="256"/>
+          <Column id="R_YN" type="STRING" size="256"/>
+          <Column id="USER_ID" type="STRING" size="256"/>
+          <Column id="SEARCH_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset enableevent="true" id="ds_master5" preload="true" updatecontrol="true" useclientlayout="false" canrowposchange="dsMaster_canrowposchange">
+        <ColumnInfo>
+          <Column id="MNU_LVL" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="A_CNT" type="STRING" size="256"/>
+          <Column id="OK_RATE" type="STRING" size="256"/>
+          <Column id="B_CNT" type="STRING" size="256"/>
+          <Column id="DELAY_RATE" type="STRING" size="256"/>
+          <Column id="C_CNT" type="STRING" size="256"/>
+          <Column id="SUM_CNT" type="STRING" size="256"/>
+          <Column id="SUM_RATE" type="STRING" size="256"/>
+          <Column id="STATUS" type="STRING" size="256"/>
+          <Column id="STSTUS2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="rdo_period" propid="value" datasetid="ds_search" columnid="PERIOD"/>
+    </Bind>
+  </Form>
+</FDL>

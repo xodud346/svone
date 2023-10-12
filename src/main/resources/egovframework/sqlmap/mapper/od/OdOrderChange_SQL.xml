@@ -1,0 +1,1986 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.od.orderChange">
+<resultMap id="getExceluploadResultTypeA" type="HashMap">
+     <result property="CHK" column="CHK" />
+     <result property="CO_CD" column="CO_CD" />
+     <result property="CHG_ITM_GRP_CD" column="CHG_ITM_GRP_CD" />
+     <result property="UPLD_PGM_IDT_NM" column="UPLD_PGM_IDT_NM" />
+     <result property="EXCEL_ROW_NO" column="EXCEL_ROW_NO" />
+     <result property="USR_ID" column="USR_ID" />
+     <result property="REGPSN_ID" column="REGPSN_ID" />
+     <result property="ERR_OCUR_CD" column="ERR_OCUR_CD" />
+     <result property="ERR_OCUR_CTS" column="ERR_OCUR_CTS" jdbcType="CLOB" javaType="java.lang.String" />
+     <result property="ODR_NO_ITM_NO" column="ODR_NO_ITM_NO" />
+     <result property="CHG_MEMO_CTS" column="CHG_MEMO_CTS" />
+     <result property="SALE_ADJ_STATS_CD" column="SALE_ADJ_STATS_CD" />
+     <result property="ODR_STATS_CD" column="ODR_STATS_CD" />
+     <result property="BZPLC_ID" column="BZPLC_ID" />
+     <result property="OPR_UNIT_ID" column="OPR_UNIT_ID" />
+     <result property="OPR_UNIT_NM" column="OPR_UNIT_NM" />
+     <result property="PRD_ID" column="PRD_ID" />
+     <result property="PRD_NM" column="PRD_NM" />
+     <result property="REPR_SPEC" column="REPR_SPEC" />
+     <result property="EXCEL_DATA_VAL_01" column="EXCEL_DATA_VAL_01" />
+     <result property="EXCEL_DATA_VAL_02" column="EXCEL_DATA_VAL_02" />
+     <result property="EXCEL_DATA_VAL_03" column="EXCEL_DATA_VAL_03" />
+     <result property="EXCEL_DATA_VAL_04" column="EXCEL_DATA_VAL_04" />
+     <result property="EXCEL_DATA_VAL_05" column="EXCEL_DATA_VAL_05" />
+     <result property="EXCEL_DATA_VAL_06" column="EXCEL_DATA_VAL_06" />
+     <result property="EXCEL_DATA_VAL_07" column="EXCEL_DATA_VAL_07" />
+     <result property="EXCEL_DATA_VAL_08" column="EXCEL_DATA_VAL_08" />
+     <result property="EXCEL_DATA_VAL_09" column="EXCEL_DATA_VAL_09" />
+     <result property="EXCEL_DATA_VAL_10" column="EXCEL_DATA_VAL_10" />
+     <result property="EXCEL_DATA_VAL_11" column="EXCEL_DATA_VAL_11" />
+     <result property="EXCEL_DATA_VAL_12" column="EXCEL_DATA_VAL_12" />
+     <result property="EXCEL_DATA_VAL_13" column="EXCEL_DATA_VAL_13" />
+     <result property="EXCEL_DATA_VAL_14" column="EXCEL_DATA_VAL_14" />
+     <result property="EXCEL_DATA_VAL_15" column="EXCEL_DATA_VAL_15" />
+     <result property="EXCEL_DATA_VAL_16" column="EXCEL_DATA_VAL_16" />
+     <result property="EXCEL_DATA_VAL_17" column="EXCEL_DATA_VAL_17" />
+     <result property="EXCEL_DATA_VAL_18" column="EXCEL_DATA_VAL_18" />
+     <result property="EXCEL_DATA_VAL_19" column="EXCEL_DATA_VAL_19" />
+     <result property="EXCEL_DATA_VAL_20" column="EXCEL_DATA_VAL_20" />
+     <result property="EXCEL_DATA_VAL_21" column="EXCEL_DATA_VAL_21" />
+     <result property="EXCEL_DATA_VAL_22" column="EXCEL_DATA_VAL_22" />
+     <result property="EXCEL_DATA_VAL_23" column="EXCEL_DATA_VAL_23" />
+     <result property="EXCEL_DATA_VAL_24" column="EXCEL_DATA_VAL_24" />
+     <result property="EXCEL_DATA_VAL_25" column="EXCEL_DATA_VAL_25" />
+     <result property="EXCEL_DATA_VAL_26" column="EXCEL_DATA_VAL_26" />
+     <result property="EXCEL_DATA_VAL_27" column="EXCEL_DATA_VAL_27" />
+     <result property="EXCEL_DATA_VAL_28" column="EXCEL_DATA_VAL_28" />
+     <result property="EXCEL_DATA_VAL_29" column="EXCEL_DATA_VAL_29" />
+     <result property="EXCEL_DATA_VAL_30" column="EXCEL_DATA_VAL_30" />
+     <result property="OLD_ODR_STATS_CD" column="OLD_ODR_STATS_CD" />
+     <result property="OLD_SALE_ADJ_STATS_CD" column="OLD_SALE_ADJ_STATS_CD" />
+</resultMap>
+    <select id="selectCommonMessage" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectCommonMessage */
+            SELECT  MSG_CD,
+                    MSG_CTS
+            FROM    TB_CO_SYS_MSG_INFO
+            WHERE   LANG_CD ='KO'
+    </select>
+
+    <select id="selectCommonCodeName" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectCommonCodeName */
+        <if test="SEARCH_GB == 'BZPLC' ">
+            SELECT  BZPLC_NM    NM
+            FROM    SSP_APP.TB_CC_BZPLC_BASIS
+            WHERE   CO_CD = #{CO_CD}
+              AND   BZPLC_ID = #{CD}
+              AND   NVL(USE_YN,'Y') LIKE Upper(#{USE_YN})||'%'
+        </if>
+        <if test="SEARCH_GB == 'OPR_UNIT' ">
+            SELECT  OPR_UNIT_NM NM
+            FROM    SSP_APP.TB_CC_OPR_UNIT_BASIS
+            WHERE   CO_CD = #{CO_CD}
+              AND   OPR_UNIT_ID = #{CD}
+              AND   ROWNUM =1
+              AND   NVL(USE_YN,'Y') LIKE Upper(#{USE_YN})||'%'
+        </if>
+        <if test="SEARCH_GB == 'DEPT' ">
+            SELECT  DEPT_NM NM
+            FROM    SSP_APP.TB_CC_DEPT_BASIS
+            WHERE   CO_CD = #{CO_CD}
+              AND   DEPT_ID = #{CD}
+              AND   NVL(USE_YN,'Y') LIKE Upper(#{USE_YN})||'%'
+        </if>
+        <if test="SEARCH_GB == 'MBR' ">
+            SELECT  MBR_NM  NM
+            FROM    SSP_APP.TB_CC_MBR_BASIS
+            WHERE   CO_CD = #{CO_CD}
+              AND   MBR_ID = #{CD}
+              AND   NVL(MBR_USE_YN,'Y') LIKE Upper(#{USE_YN})||'%'
+        </if>
+        <if test="SEARCH_GB == 'SALS_TEAM' ">
+            SELECT  SALS_TEAM_NM    NM
+            FROM    SSP_APP.TB_CC_SALS_TEAM_BASIS
+            WHERE   SALS_TEAM_CD = #{CD}
+        </if>
+        <if test="SEARCH_GB == 'SALS_CHR' ">
+            SELECT  SALS_CHR_NM NM
+            FROM    SSP_APP.TB_CC_SALS_CHR_BASIS
+            WHERE   SALS_CHR_CD = #{CD}
+        </if>
+        <if test="SEARCH_GB == 'SALS_ORG' ">
+            SELECT  SALS_ORG_NM NM
+            FROM    SSP_APP.TB_CC_SALS_ORG_BASIS
+            WHERE   SALS_ORG_CD = #{CD}
+        </if>
+        <if test="SEARCH_GB == 'OPRTR' ">
+            SELECT  OPRTR_NM    NM
+            FROM    SSP_APP.TB_CO_MBR_OPRTR_INFO
+            WHERE   CO_CD = #{CO_CD}
+              AND   OPRTR_ID = #{CD}
+              AND   NVL(USE_YN,'Y') LIKE Upper(#{USE_YN})||'%'
+        </if>
+        <if test="SEARCH_GB == 'OPRTR_ORG' ">
+            SELECT  ORG_NM  NM
+            FROM    SSP_APP.TB_CO_MBR_OPRTR_ORG_INFO
+            WHERE   CO_CD = #{CO_CD}
+              AND   ORG_CD = #{CD}
+              AND   NVL(USE_YN,'Y') LIKE Upper(#{USE_YN})||'%'
+        </if>
+        <if test="SEARCH_GB == 'PRD' ">
+            SELECT  PRD_NM  NM
+            FROM    SSP_APP.TB_CO_MBR_OPRTR_ORG_INFO
+            WHERE   CO_CD = #{CO_CD}
+              AND   PRD_ID = #{CD}
+              AND   NVL(PRD_USE_YN,'Y') LIKE Upper(#{USE_YN})||'%'
+        </if>
+        <if test="SEARCH_GB == 'MNFR' ">
+            SELECT  MNFR_NM NM
+            FROM    SSP_APP.TB_PR_MNFR_INFO
+            WHERE   CO_CD = #{CO_CD}
+              AND   MNFR_NO = #{CD}
+        </if>
+        <if test="SEARCH_GB == 'PLNT' ">
+            SELECT  PLNT_NM NM
+            FROM    SSP_APP.TB_DL_PLNT_BASIS
+            WHERE   CO_CD = #{CO_CD}
+              AND   PLNT_ID = #{CD}
+        </if>
+        <if test="SEARCH_GB == 'CHG_ITM_GRP' ">
+            SELECT  CHG_ITM_GRP_NM  NM
+            FROM    SSP_APP.TB_DL_CHG_CTL_ITM_GRP_CD
+            WHERE   CO_CD = #{CO_CD}
+              AND   CHG_ITM_GRP_CD = #{CD}
+        </if>
+        <if test="SEARCH_GB == 'CPRTCP' ">
+            SELECT  CPRTCP_KOR_NM   NM
+            FROM    SSP_APP.TB_CP_CPRTCP_BASIS
+            WHERE   CO_CD = #{CO_CD}
+              AND   CPRTCP_ID = #{CD}
+        </if>
+        <if test="SEARCH_GB == 'TRNS_VNDR' ">
+            SELECT  TRNS_VNDR_NM    NM
+            FROM    SSP_APP.TB_DL_TRNS_VNDR_MST
+            WHERE   CO_CD = #{CO_CD}
+              AND   TRNS_VNDR_ID = #{CD}
+        </if>
+        <if test="SEARCH_GB == 'ACCT' ">
+            SELECT  ACCT_NM    NM
+            FROM    SSP_APP.TB_CC_BGT_ACCT_BASIS
+            WHERE   CO_CD = #{CO_CD}
+              AND   ACCT_ID = #{CD}
+        </if>
+    </select>
+
+    <select id="selectOrderChangeList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectOrderChangeList */
+        SELECT  --+PARALLEL(T1 4)
+                T3.OPR_UNIT_ID,                                             /*운영단위ID*/
+                T7.OPR_UNIT_NM,                                             /* 운영단위명 */
+                T1.BZPLC_ID,
+                T1.ODR_NO,                                                  /*주문번호*/
+                T1.ODR_ITM_NO,                                              /*주문항목번호*/
+                T1.ODR_NO || '-' || T1.ODR_ITM_NO   JNT_ODR_NO_ITM_NO,      /* 주문번호-항목번호 */
+                T1.ODR_CHG_MNG_NO,                                          /*주문변경관리번호*/
+                T3.CNSLT_DOC_NO,                                            /*품의문서번호*/
+                T1.CHG_ITM_GRP_CD,                                          /*변경항목그룹코드*/
+                NVL(T4.COM_DTL_CD_NM,T6.CHG_ITM_GRP_NM)  CHG_ITM_GRP_NM,    /*변경항목그룹명*/
+                T1.CHG_STATS_CD,                                            /*변경상태코드*/
+                T5.COM_DTL_CD_NM  CHG_STATS_NM,                             /*변경상태명*/
+                T1.REQDT,                                                   /*요청일자*/
+                T1.REQR_ID,                                                 /*요청자ID*/
+                NVL(T11.OPRTR_NM,T12.MBR_NM)    REQR_NM,                    /*요청자명*/
+                T1.DCN_DT,                                                  /*확정일자*/
+                T1.DCNR_ID,                                                 /*확정자ID*/
+                NVL(T13.OPRTR_NM,T14.MBR_NM)    DCNR_NM,                    /*확정자명*/
+                T3.ODRPSN_ID,                                               /*주문자ID*/
+                T14.MBR_NM   ODRPSN_NM,                                     /*주문자명*/
+                T1.VOC_NO,                                                  /*VOC번호*/
+                T1.ORI_ODR_CTS,                                             /*원주문내용*/
+                T1.CHGRQST_CTS,                                             /*변경요청내용*/
+                T1.CHG_DCN_CTS,                                              /*변경확정내용*/
+                NVL(T1.CHG_DCN_CTS, T1.CHGRQST_CTS) CHGRQST_DCN_CTS         /* 변경요청-확정내용 */
+        FROM    (
+                SELECT  T1.CO_CD,
+                        T1.BZPLC_ID,
+                        T1.ODR_NO,
+                        T2.ODR_ITM_NO,
+                        T1.ODR_CHG_MNG_NO,
+                        T1.CHG_ITM_GRP_CD,
+                        T1.CHG_STATS_CD,
+                        T1.REG_DTM  REQDT,
+                        T1.REQR_ID,
+                        T1.DCN_DT,
+                        T1.DCNR_ID,
+                        T1.VOC_NO,
+                        T2.ORI_ODR_CTS,
+                        T2.CHGRQST_CTS,
+                        T2.CHG_DCN_CTS,
+                        ROW_NUMBER() OVER(PARTITION BY T1.ODR_NO,T2.ODR_ITM_NO ORDER BY T1.ODR_CHG_MNG_NO DESC) RN
+                FROM    TB_OD_ODR_MST T0
+                        JOIN
+                        TB_OD_ODR_CHG_MST_HST   T1
+                        ON  T1.CO_CD = T0.CO_CD
+                        AND T1.BZPLC_ID = T0.BZPLC_ID
+                        AND T1.ODR_NO = T0.ODR_NO
+                        JOIN
+                        TB_OD_ODR_CHG_DTL_HST   T2
+                        ON   T1.CO_CD  = T2.CO_CD
+                        AND  T1.BZPLC_ID = T2.BZPLC_ID
+                        AND  T1.ODR_NO = T2.ODR_NO
+                        AND  T1.ODR_CHG_MNG_NO = T2.ODR_CHG_MNG_NO
+                        <if test=" OPR_UNIT_ID > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T21
+                        ON  T21.SES_ID = #{SES_ID}
+                        AND T21.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T21.COL_ITM = 'OPR_UNIT_ID'
+                        AND T21.COND_DATA_VAL = T0.OPR_UNIT_ID
+                        </if>
+                        <if test=" ODR_NO > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T22
+                        ON  T22.SES_ID = #{SES_ID}
+                        AND T22.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T22.COL_ITM = 'ODR_NO'
+                        AND REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,1) = T2.ODR_NO
+                        AND (CASE WHEN TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR
+                                      TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN
+                                      T2.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2))) END) = T2.ODR_ITM_NO
+                        </if>
+                        <if test=" CHG_ITM_GRP_CD > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T23
+                        ON  T23.SES_ID = #{SES_ID}
+                        AND T23.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T23.COL_ITM = 'CHG_ITM_GRP_CD'
+                        AND T23.COND_DATA_VAL = T1.CHG_ITM_GRP_CD
+                        </if>
+                WHERE   T1.CO_CD = #{CO_CD}
+                  AND   T1.BZPLC_ID LIKE Upper(#{BZPLC_ID})||'%'
+                  AND   T1.REQDT BETWEEN #{FROM_DT} AND #{TO_DT}
+                  AND   NVL(T1.CHG_STATS_CD,'00') LIKE Upper(#{CHG_STATUS})||'%'
+                )           T1
+                JOIN
+                TB_OD_ODR_MST           T3          /* 주문마스터 */
+                ON   T3.CO_CD    = T1.CO_CD         /* 회사코드 */
+                AND  T3.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                AND  T3.ODR_NO   = T1.ODR_NO        /* 주문번호 */
+                LEFT JOIN
+                TB_CO_COM_CD_DTL        T4
+                ON   T4.LANG_CD = 'KO'
+                AND  T4.COM_CLSF_CD = 'CHG_ITM_GRP_CD'
+                AND  T4.COM_DTL_CD = T1.CHG_ITM_GRP_CD
+                LEFT JOIN
+                TB_CO_COM_CD_DTL        T5
+                ON   T5.LANG_CD = 'KO'
+                AND  T5.COM_CLSF_CD = 'CHG_STATS_CD'
+                AND  T5.COM_DTL_CD = T1.CHG_STATS_CD
+                LEFT JOIN
+                TB_DL_CHG_CTL_ITM_GRP_CD    T6
+                ON  T6.CHG_ITM_GRP_CD = T1.CHG_ITM_GRP_CD
+                JOIN
+                TB_CC_OPR_UNIT_BASIS T7
+                ON   T7.CO_CD       = T3.CO_CD
+                AND  T7.BZPLC_ID    = T3.BZPLC_ID
+                AND  T7.OPR_UNIT_ID = T3.OPR_UNIT_ID
+                LEFT JOIN
+                TB_CO_MBR_OPRTR_INFO    T11
+                ON  T11.CO_CD    = T1.CO_CD
+                AND T11.OPRTR_ID = T1.REQR_ID
+                LEFT JOIN
+                TB_CC_MBR_BASIS         T12
+                ON  T12.CO_CD    = T1.CO_CD
+                AND T12.MBR_ID   = T1.REQR_ID
+                LEFT JOIN
+                TB_CO_MBR_OPRTR_INFO    T13
+                ON  T13.CO_CD    = T1.CO_CD
+                AND T13.OPRTR_ID = T1.DCNR_ID
+                LEFT JOIN
+                TB_CC_MBR_BASIS         T14
+                ON  T14.CO_CD    = T1.CO_CD
+                AND T14.MBR_ID   = T1.DCNR_ID
+                LEFT JOIN
+                TB_CC_MBR_BASIS         T15
+                ON  T15.CO_CD    = T1.CO_CD
+                AND T15.MBR_ID   = T3.ODRPSN_ID
+        --WHERE   T1.RN = 1
+          ORDER BY T1.ODR_CHG_MNG_NO DESC
+          OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+
+    <select id="selectOrderChangeCount" parameterType="HashMap" resultType="int">
+        /* com.ssp.bo.od.orderChange.selectOrderChangeCount 주문수정 카운트 */
+        SELECT  --+PARALLEL(T1 4)
+                COUNT(*)
+        FROM    (
+                SELECT  T1.CO_CD,
+                        T1.BZPLC_ID,
+                        T1.ODR_NO, /*주문번호*/
+                        T2.ODR_ITM_NO, /*주문항목번호*/
+                        T1.ODR_CHG_MNG_NO, /*주문변경관리번호*/
+                        ROW_NUMBER() OVER(PARTITION BY T1.ODR_NO,T2.ODR_ITM_NO ORDER BY T1.ODR_CHG_MNG_NO DESC) RN
+                FROM    TB_OD_ODR_MST T0
+                        JOIN
+                        TB_OD_ODR_CHG_MST_HST   T1
+                        ON  T1.CO_CD = T0.CO_CD
+                        AND T1.BZPLC_ID = T0.BZPLC_ID
+                        AND T1.ODR_NO = T0.ODR_NO
+                        JOIN
+                        TB_OD_ODR_CHG_DTL_HST   T2
+                        ON   T1.CO_CD  = T2.CO_CD
+                        AND  T1.BZPLC_ID = T2.BZPLC_ID
+                        AND  T1.ODR_NO = T2.ODR_NO
+                        AND  T1.ODR_CHG_MNG_NO = T2.ODR_CHG_MNG_NO
+                        <if test=" OPR_UNIT_ID > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T21
+                        ON  T21.SES_ID = #{SES_ID}
+                        AND T21.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T21.COL_ITM = 'OPR_UNIT_ID'
+                        AND T21.COND_DATA_VAL = T0.OPR_UNIT_ID
+                        </if>
+                        <if test=" ODR_NO > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T22
+                        ON  T22.SES_ID = #{SES_ID}
+                        AND T22.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T22.COL_ITM = 'ODR_NO'
+                        AND REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,1) = T2.ODR_NO
+                        AND (CASE WHEN TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR
+                                      TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN
+                                      T2.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2))) END) = T2.ODR_ITM_NO
+                        </if>
+                        <if test=" CHG_ITM_GRP_CD > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T23
+                        ON  T23.SES_ID = #{SES_ID}
+                        AND T23.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T23.COL_ITM = 'CHG_ITM_GRP_CD'
+                        AND T23.COND_DATA_VAL = T1.CHG_ITM_GRP_CD
+                        </if>
+                WHERE   T1.CO_CD = #{CO_CD}
+                  AND   T1.BZPLC_ID LIKE Upper(#{BZPLC_ID})||'%'
+                  AND   T1.REQDT BETWEEN #{FROM_DT} AND #{TO_DT}
+                  AND   NVL(T1.CHG_STATS_CD,'00') LIKE #{CHG_STATUS}||'%'
+                )           T1
+                JOIN
+                TB_OD_ODR_MST           T3          /* 주문마스터 */
+                ON   T3.CO_CD    = T1.CO_CD         /* 회사코드 */
+                AND  T3.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                AND  T3.ODR_NO   = T1.ODR_NO        /* 주문번호 */
+        --WHERE   T1.RN = 1
+    </select>
+
+    <select id="selectOrderChangeListDetail" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectOrderChangeListDetail */
+        SELECT  T1.CHG_ITM_GRP_CD,
+                T1.LVL,
+                T2.CHG_FDS_NM,
+                T1.ORI_CTS,
+                T1.CHG_CTS
+        FROM    (
+                SELECT  T1.CHG_ITM_GRP_CD,
+                        T1.ORI_ODR_CTS,
+                        SUBSTR('|' || T1.ORI_ODR_CTS || '|', INSTR('|' || T1.ORI_ODR_CTS || '|', '|' , 1, T2.LVL) + 1, INSTR('|' || T1.ORI_ODR_CTS || '|', '|', 1, T2.LVL + 1) - INSTR('|' || T1.ORI_ODR_CTS || '|', '|', 1, T2.LVL) - 1) ORI_CTS,
+                        NVL(T1.CHG_DCN_CTS,T1.CHGRQST_CTS)  CHG_DCN_CTS,
+                        SUBSTR('|' || NVL(T1.CHG_DCN_CTS, T1.CHGRQST_CTS) || '|', INSTR('|' || NVL(T1.CHG_DCN_CTS, T1.CHGRQST_CTS) || '|', '|', 1, T2.LVL) + 1, INSTR('|' || NVL(T1.CHG_DCN_CTS, T1.CHGRQST_CTS) || '|', '|', 1, T2.LVL + 1) - INSTR('|' || NVL(T1.CHG_DCN_CTS, T1.CHGRQST_CTS) || '|', '|', 1, T2.LVL) - 1) CHG_CTS,
+                        T2.LVL
+                FROM    TB_OD_ODR_CHG_MST_HST   T0
+                        JOIN
+                        TB_OD_ODR_CHG_DTL_HST       T1
+                        ON  T0.CO_CD = #{CO_CD}
+                        AND T0.BZPLC_ID = #{BZPLC_ID}
+                        AND T0.ODR_NO = #{ODR_NO}
+                        AND T0.ODR_CHG_MNG_NO = T1.ODR_CHG_MNG_NO
+                        CROSS JOIN
+                        (SELECT LEVEL LVL FROM DUAL CONNECT BY 20 >= LEVEL )  T2
+                WHERE   T1.CO_CD = #{CO_CD}
+                  AND   T1.BZPLC_ID = #{BZPLC_ID}
+                  AND   T1.ODR_NO = #{ODR_NO}
+                  AND   T1.ODR_ITM_NO = #{ODR_ITM_NO}
+                )   T1
+                JOIN
+                TB_DL_CHG_CTL_ITM_GRP_DTL   T2
+                ON  T2.CHG_ITM_GRP_CD = T1.CHG_ITM_GRP_CD
+                AND T2.CHG_SEQ = T1.LVL
+        WHERE  (T1.ORI_CTS IS NOT NULL OR T1.CHG_CTS IS NOT NULL)
+        ORDER BY T1.LVL
+    </select>
+
+    <select id="selectOrderChangeDetail" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectOrderChangeDetail */
+        SELECT  T1.CHG_ITM_GRP_CD,
+                T1.LVL,
+                T2.CHG_FDS_NM,
+                T1.ORI_CTS,
+                T1.CHG_CTS
+        FROM    (
+                SELECT  T1.CHG_ITM_GRP_CD,
+                        T1.ORI_ODR_CTS,
+                        SUBSTR('|' || T1.ORI_ODR_CTS || '|', INSTR('|' || T1.ORI_ODR_CTS || '|', '|' , 1, T2.LVL) + 1, INSTR('|' || T1.ORI_ODR_CTS || '|', '|', 1, T2.LVL + 1) - INSTR('|' || T1.ORI_ODR_CTS || '|', '|', 1, T2.LVL) - 1) ORI_CTS,
+                        NVL(T1.CHG_DCN_CTS,T1.CHGRQST_CTS)  CHG_DCN_CTS,
+                        SUBSTR('|' || NVL(T1.CHG_DCN_CTS, T1.CHGRQST_CTS) || '|', INSTR('|' || NVL(T1.CHG_DCN_CTS, T1.CHGRQST_CTS) || '|', '|', 1, T2.LVL) + 1, INSTR('|' || NVL(T1.CHG_DCN_CTS, T1.CHGRQST_CTS) || '|', '|', 1, T2.LVL + 1) - INSTR('|' || NVL(T1.CHG_DCN_CTS, T1.CHGRQST_CTS) || '|', '|', 1, T2.LVL) - 1) CHG_CTS,
+                        T2.LVL
+                FROM    TB_OD_ODR_CHG_DTL_HST       T1
+                        CROSS JOIN
+                        (SELECT LEVEL LVL FROM DUAL CONNECT BY 20 >= LEVEL )  T2
+                WHERE   T1.CO_CD = #{CO_CD}
+                  AND   T1.BZPLC_ID = #{BZPLC_ID}
+                  AND   T1.ODR_NO = #{ODR_NO}
+                  AND   T1.ODR_ITM_NO = #{ODR_ITM_NO}
+                  AND   T1.ODR_CHG_MNG_NO = #{ODR_CHG_MNG_NO}
+                )   T1
+                --JOIN
+                LEFT JOIN
+                TB_DL_CHG_CTL_ITM_GRP_DTL   T2
+                ON  T2.CHG_ITM_GRP_CD = T1.CHG_ITM_GRP_CD
+                AND T2.CHG_SEQ = T1.LVL
+        WHERE  (T1.ORI_CTS IS NOT NULL OR T1.CHG_CTS IS NOT NULL)
+        ORDER BY T1.LVL
+    </select>
+
+    <select id="selectMbrPopupAprv" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectMbrPopupAprv */
+        SELECT  ''      BZPLC_ID,
+                '전체'    BZPLC_NM,
+                0       RN
+        FROM    DUAL
+        UNION ALL
+        SELECT  NVL(T4.BZPLC_ID,NVL(T3.BZPLC_ID,T1.BZPLC_ID))    BZPLC_ID,
+                NVL(T4.BZPLC_NM,NVL(T3.BZPLC_NM,T1.BZPLC_NM))    BZPLC_NM,
+                ROW_NUMBER() OVER(ORDER BY DECODE(T1.BZPLC_ID,NVL(T4.BZPLC_ID,NVL(T3.BZPLC_ID,T1.BZPLC_ID)),1,2))    RN
+        FROM    (
+                SELECT  T1.CO_CD,
+                        T1.BZPLC_ID,
+                        T1.BZPLC_NM,
+                        T1.GRP_ID,
+                        T1.CORP_ID,
+                        CASE WHEN T2.GRP_APRV_USE_YN  = 'Y' THEN 1
+                             WHEN T2.CORP_APRV_USE_YN = 'Y' THEN 2
+                             ELSE 3 END APRV_USE_YN
+                FROM    TB_CC_BZPLC_BASIS   T1
+                        JOIN
+                        TB_CC_BZPLC_CTL_AUTH_INFO   T2
+                        ON   T1.CO_CD = T2.CO_CD
+                        AND  T1.BZPLC_ID = T2.BZPLC_ID
+                WHERE   T1.CO_CD = #{CO_CD}
+                  AND   T1.BZPLC_ID = #{ORI_BZPLC_ID}
+                )       T1
+                LEFT JOIN
+                TB_CC_BZPLC_BASIS   T3
+                ON  T1.APRV_USE_YN = '1'
+                AND T3.USE_YN = 'Y'
+                AND T3.GRP_ID = T1.GRP_ID
+                LEFT JOIN
+                TB_CC_BZPLC_BASIS   T4
+                ON  T1.APRV_USE_YN = '2'
+                AND T4.USE_YN = 'Y'
+                AND T4.CORP_ID = T1.CORP_ID
+        ORDER BY 3
+    </select>
+
+    <select id="selectMbrPopupOrd" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectMbrPopupOrd */
+        SELECT  ''      BZPLC_ID,
+                '전체'    BZPLC_NM,
+                0       RN
+        FROM    DUAL
+        UNION ALL
+        SELECT  NVL(T4.BZPLC_ID,NVL(T3.BZPLC_ID,T1.BZPLC_ID))    BZPLC_ID,
+                NVL(T4.BZPLC_NM,NVL(T3.BZPLC_NM,T1.BZPLC_NM))    BZPLC_NM,
+                ROW_NUMBER() OVER(ORDER BY DECODE(T1.BZPLC_ID,NVL(T4.BZPLC_ID,NVL(T3.BZPLC_ID,T1.BZPLC_ID)),1,2))    RN
+        FROM    (
+                SELECT  T1.CO_CD,
+                T1.BZPLC_ID,
+                T1.BZPLC_NM,
+                T1.GRP_ID,
+                T1.CORP_ID,
+                CASE WHEN T2.GRP_ORD_USE_YN  = 'Y' THEN 1
+                     WHEN T2.CORP_ORD_USE_YN = 'Y' THEN 2
+                     ELSE 3 END ORD_USE_YN
+        FROM    TB_CC_BZPLC_BASIS   T1
+                JOIN
+                TB_CC_BZPLC_CTL_AUTH_INFO   T2
+                ON   T1.CO_CD = T2.CO_CD
+                AND  T1.BZPLC_ID = T2.BZPLC_ID
+                WHERE   T1.CO_CD = #{CO_CD}
+                  AND   T1.BZPLC_ID = #{ORI_BZPLC_ID}
+                )       T1
+                LEFT JOIN
+                TB_CC_BZPLC_BASIS   T3
+                ON  T1.ORD_USE_YN = '1'
+                AND T3.USE_YN = 'Y'
+                AND T3.GRP_ID = T1.GRP_ID
+                LEFT JOIN
+                TB_CC_BZPLC_BASIS   T4
+                ON  T1.ORD_USE_YN = '2'
+                AND T4.USE_YN = 'Y'
+                AND T4.CORP_ID = T1.CORP_ID
+        ORDER BY 3
+    </select>
+
+    <select id="selectMbrPopupMbrList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectMbrPopupMbrList */
+        SELECT T2.BZPLC_ID   MBR_BZPLC_ID,
+               T2.BZPLC_NM   MBR_BZPLC_NM,
+               T4.OPR_UNIT_ID,
+               T4.OPR_UNIT_NM,
+               T3.DEPT_ID,
+               T3.DEPT_NM,
+               T1.MBR_ID,
+               T1.MBR_NM,
+               T1.JBPOS_NM
+        FROM   TB_CC_MBR_BASIS    T1
+               JOIN
+               TB_CC_BZPLC_BASIS  T2
+               ON   T2.CO_CD = T1.CO_CD
+               AND  T2.BZPLC_ID = T1.BZPLC_ID
+               JOIN
+               TB_CC_DEPT_BASIS   T3
+               ON   T3.CO_CD = T1.CO_CD
+               AND  T3.DEPT_ID = T1.DEPT_ID
+               JOIN
+               TB_CC_OPR_UNIT_BASIS  T4
+               ON   T4.CO_CD = T3.CO_CD
+               AND  T4.BZPLC_ID = T3.BZPLC_ID
+               AND  T4.OPR_UNIT_ID = T3.OPR_UNIT_ID
+        WHERE  T1.CO_CD = #{CO_CD}
+          AND  T2.BZPLC_ID LIKE Upper(#{MBR_BZPLC_ID})||'%'
+          AND  Upper(T2.BZPLC_NM) LIKE '%'||Upper(#{MBR_BZPLC_NM})||'%'
+          AND  T4.OPR_UNIT_ID LIKE Upper(#{OPR_UNIT_ID})||'%'
+          AND  Upper(T4.OPR_UNIT_NM) LIKE '%'||Upper(#{OPR_UNIT_NM})||'%'
+          AND  T3.DEPT_ID LIKE Upper(#{DEPT_ID})||'%'
+          AND  Upper(T3.DEPT_NM) LIKE '%'||Upper(#{DEPT_NM})||'%'
+          AND  T1.MBR_ID LIKE Upper(#{MBR_ID})||'%'
+          AND  Upper(T1.MBR_NM) LIKE '%'||Upper(#{MBR_NM})||'%'
+          ORDER BY T2.BZPLC_ID,
+               T4.OPR_UNIT_ID,
+               T3.DEPT_ID,
+               T1.MBR_ID
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+
+    <select id="selectMbrPopupAprvList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectMbrPopupAprvList */
+        WITH BASE_T AS
+        (
+        SELECT  NVL(T4.BZPLC_ID,NVL(T3.BZPLC_ID,T1.BZPLC_ID))    BZPLC_ID,
+                NVL(T4.BZPLC_NM,NVL(T3.BZPLC_NM,T1.BZPLC_NM))    BZPLC_NM
+        FROM    (
+                SELECT  T1.CO_CD,
+                        T1.BZPLC_ID,
+                        T1.BZPLC_NM,
+                        T1.GRP_ID,
+                        T1.CORP_ID,
+                        CASE WHEN T2.GRP_APRV_USE_YN  = 'Y' THEN 1
+                             WHEN T2.CORP_APRV_USE_YN = 'Y' THEN 2
+                             ELSE 3 END APRV_USE_YN
+                FROM    TB_CC_BZPLC_BASIS   T1
+                        JOIN
+                        TB_CC_BZPLC_CTL_AUTH_INFO   T2
+                        ON   T1.CO_CD = T2.CO_CD
+                        AND  T1.BZPLC_ID = T2.BZPLC_ID
+                WHERE   T1.CO_CD = #{CO_CD}
+                  AND   T1.BZPLC_ID = #{ORI_BZPLC_ID}
+                )       T1
+                LEFT JOIN
+                TB_CC_BZPLC_BASIS   T3
+                ON  T1.APRV_USE_YN = '1'
+                AND T3.USE_YN = 'Y'
+                AND T3.GRP_ID = T1.GRP_ID
+                LEFT JOIN
+                TB_CC_BZPLC_BASIS   T4
+                ON  T1.APRV_USE_YN = '2'
+                AND T4.USE_YN = 'Y'
+                AND T4.CORP_ID = T1.CORP_ID
+        WHERE   NVL(T4.BZPLC_ID,NVL(T3.BZPLC_ID,T1.BZPLC_ID)) LIKE Upper(#{BZPLC_ID})||'%'
+        )
+        SELECT T5.BZPLC_ID,
+               T5.BZPLC_NM,
+               T4.OPR_UNIT_ID,
+               T4.OPR_UNIT_NM,
+               T3.DEPT_ID,
+               T3.DEPT_NM,
+               T1.MBR_ID,
+               T1.MBR_NM,
+               T1.JBPOS_NM
+        FROM   BASE_T       T0
+               JOIN
+               TB_CC_MBR_BASIS    T1
+               ON   T1.CO_CD = #{CO_CD}
+               AND  T1.BZPLC_ID = T0.BZPLC_ID
+               JOIN
+               TB_CC_MBR_CTL_AUTH_INFO     T2
+               ON   T2.CO_CD  = T1.CO_CD
+               AND  T2.MBR_ID = T1.MBR_ID
+               AND  T2.APRV_AUTH_USE_YN = 'Y'
+               JOIN
+               TB_CC_DEPT_BASIS   T3
+               ON   T3.CO_CD = T1.CO_CD
+               AND  T3.DEPT_ID = T1.DEPT_ID
+               JOIN
+               TB_CC_OPR_UNIT_BASIS  T4
+               ON   T4.CO_CD = T3.CO_CD
+               AND  T4.BZPLC_ID = T3.BZPLC_ID
+               AND  T4.OPR_UNIT_ID = T3.OPR_UNIT_ID
+               JOIN
+               TB_CC_BZPLC_BASIS  T5
+               ON   T5.CO_CD    = T1.CO_CD
+               AND  T5.BZPLC_ID = T1.BZPLC_ID
+        WHERE  T1.CO_CD = #{CO_CD}
+          AND  T4.OPR_UNIT_ID LIKE Upper(#{OPR_UNIT_ID})||'%'
+          AND  Upper(T4.OPR_UNIT_NM) LIKE '%'||Upper(#{OPR_UNIT_NM})||'%'
+          AND  T3.DEPT_ID LIKE Upper(#{DEPT_ID})||'%'
+          AND  Upper(T3.DEPT_NM) LIKE '%'||Upper(#{DEPT_NM})||'%'
+          AND  T1.MBR_ID LIKE Upper(#{MBR_ID})||'%'
+          AND  Upper(T1.MBR_NM) LIKE '%'||Upper(#{MBR_NM})||'%'
+         ORDER BY T5.BZPLC_ID,
+               T4.OPR_UNIT_ID,
+               T3.DEPT_ID,
+               T1.MBR_ID
+         OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+
+    <select id="selectMbrPopupOrdList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectMbrPopupOrdList */
+        WITH BASE_T AS
+        (
+        SELECT  NVL(T4.BZPLC_ID,NVL(T3.BZPLC_ID,T1.BZPLC_ID))    BZPLC_ID,
+                NVL(T4.BZPLC_NM,NVL(T3.BZPLC_NM,T1.BZPLC_NM))    BZPLC_NM
+        FROM    (
+                SELECT  T1.CO_CD,
+                T1.BZPLC_ID,
+                T1.BZPLC_NM,
+                T1.GRP_ID,
+                T1.CORP_ID,
+                CASE WHEN T2.GRP_ORD_USE_YN  = 'Y' THEN 1
+                     WHEN T2.CORP_ORD_USE_YN = 'Y' THEN 2
+                     ELSE 3 END ORD_USE_YN
+        FROM    TB_CC_BZPLC_BASIS   T1
+                JOIN
+                TB_CC_BZPLC_CTL_AUTH_INFO   T2
+                ON   T1.CO_CD = T2.CO_CD
+                AND  T1.BZPLC_ID = T2.BZPLC_ID
+                WHERE   T1.CO_CD = #{CO_CD}
+                  AND   T1.BZPLC_ID = #{ORI_BZPLC_ID}
+                )       T1
+                LEFT JOIN
+                TB_CC_BZPLC_BASIS   T3
+                ON  T1.ORD_USE_YN = '1'
+                AND T3.USE_YN = 'Y'
+                AND T3.GRP_ID = T1.GRP_ID
+                LEFT JOIN
+                TB_CC_BZPLC_BASIS   T4
+                ON  T1.ORD_USE_YN = '2'
+                AND T4.USE_YN = 'Y'
+                AND T4.CORP_ID = T1.CORP_ID
+        WHERE   NVL(T4.BZPLC_ID,NVL(T3.BZPLC_ID,T1.BZPLC_ID)) LIKE Upper(#{BZPLC_ID})||'%'
+        )
+        SELECT T5.BZPLC_ID,
+               T5.BZPLC_NM,
+               T4.OPR_UNIT_ID,
+               T4.OPR_UNIT_NM,
+               T3.DEPT_ID,
+               T3.DEPT_NM,
+               T1.MBR_ID,
+               T1.MBR_NM,
+               T1.JBPOS_NM
+        FROM   BASE_T       T0
+               JOIN
+               TB_CC_MBR_BASIS    T1
+               ON   T1.CO_CD = #{CO_CD}
+               AND  T1.BZPLC_ID = T0.BZPLC_ID
+               JOIN
+               TB_CC_MBR_CTL_AUTH_INFO     T2
+               ON   T2.CO_CD  = T1.CO_CD
+               AND  T2.MBR_ID = T1.MBR_ID
+               AND  T2.ORD_AUTH_USE_YN = 'Y'
+               JOIN
+               TB_CC_DEPT_BASIS   T3
+               ON   T3.CO_CD = T1.CO_CD
+               AND  T3.DEPT_ID = T1.DEPT_ID
+               JOIN
+               TB_CC_OPR_UNIT_BASIS  T4
+               ON   T4.CO_CD = T3.CO_CD
+               AND  T4.BZPLC_ID = T3.BZPLC_ID
+               AND  T4.OPR_UNIT_ID = T3.OPR_UNIT_ID
+               JOIN
+               TB_CC_BZPLC_BASIS  T5
+               ON   T5.CO_CD    = T1.CO_CD
+               AND  T5.BZPLC_ID = T1.BZPLC_ID
+        WHERE  T1.CO_CD = #{CO_CD}
+          AND  T4.OPR_UNIT_ID LIKE Upper(#{OPR_UNIT_ID})||'%'
+          AND  Upper(T4.OPR_UNIT_NM) LIKE '%'||Upper(#{OPR_UNIT_NM})||'%'
+          AND  T3.DEPT_ID LIKE Upper(#{DEPT_ID})||'%'
+          AND  Upper(T3.DEPT_NM) LIKE '%'||Upper(#{DEPT_NM})||'%'
+          AND  T1.MBR_ID LIKE Upper(#{MBR_ID})||'%'
+          AND  Upper(T1.MBR_NM) LIKE '%'||Upper(#{MBR_NM})||'%'
+         ORDER BY T5.BZPLC_ID,
+               T4.OPR_UNIT_ID,
+               T3.DEPT_ID,
+               T1.MBR_ID
+    </select>
+
+    <select id="selectRefCdPopupList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectRefCdPopupList */
+
+        WITH BASE_T AS
+        (
+        SELECT  T0.CO_CD,
+                T0.BZPLC_ID,
+                T0.ODR_NO,
+                T0.ODR_ITM_NO,
+                T1.OPR_UNIT_ID,
+                T1.DEPT_ID,
+                T2.REF_CD_SEQ_1,
+                T2.REF_CD_SEQ_2,
+                T2.REF_CD_SEQ_3,
+                T2.REF_CD_SEQ_4,
+                T2.REF_CD_SEQ_5
+        FROM    TB_OD_ODR_DTL               T0
+                JOIN
+                TB_OD_ODR_MST               T1
+                ON   T0.CO_CD    = T1.CO_CD     --회사코드
+                AND  T0.BZPLC_ID = T1.BZPLC_ID  --사업장ID
+                AND  T0.ODR_NO   = T1.ODR_NO    --주문번호
+                LEFT JOIN
+                TB_OD_ODR_DTL_REF_CD        T2
+                ON   T0.CO_CD    = T2.CO_CD     --회사코드
+                AND  T0.BZPLC_ID = T2.BZPLC_ID  --사업장ID
+                AND  T0.ODR_NO   = T2.ODR_NO    --주문번호
+                AND  T0.ODR_ITM_NO = T2.ODR_ITM_NO
+        WHERE   1 = 1
+          AND  T0.CO_CD = #{CO_CD}
+          AND  T0.BZPLC_ID = #{BZPLC_ID}
+          AND  T0.ODR_NO = #{ODR_NO}
+          AND  T0.ODR_ITM_NO = #{ODR_ITM_NO}
+        )
+        SELECT  T0.BZPLC_ID,
+                T2.DEPT_OPR_UNIT_SPR_CD,
+                T5.COM_DTL_CD_NM  DEPT_OPR_UNIT_SPR_NM,
+                T2.DEPT_OPR_UNIT_ID,
+                NVL(T6.OPR_UNIT_NM,T7.DEPT_NM)  DEPT_OPR_UNIT_NM,
+                T2.REF_CD_GRP_SEQ,
+                T3.REF_CD_GRP_NM,
+                T2.REF_CD_SEQ,
+                T2.REF_CD,
+                T2.REF_CD_NM,
+                CASE WHEN T2.REF_CD_SEQ = T1.REF_CD_SEQ THEN 1 ELSE 0 END IS_SELECTED
+        FROM    BASE_T              T0
+                JOIN
+                TB_CC_CCO_REF_CD_DTL        T2
+                ON   T2.CO_CD    = T0.CO_CD     --회사코드
+                AND  T2.BZPLC_ID = T0.BZPLC_ID  --사업장ID
+                AND  T2.OPR_UNIT_ID = T0.OPR_UNIT_ID
+                AND  T2.DEPT_OPR_UNIT_ID = ( CASE WHEN T2.DEPT_OPR_UNIT_SPR_CD = 'DEP' THEN T0.DEPT_ID ELSE T0.OPR_UNIT_ID END )
+                JOIN
+                TB_CC_CCO_REF_CD_INFO       T3
+                ON   T3.CO_CD    = T2.CO_CD     --회사코드
+                AND  T3.BZPLC_ID = T2.BZPLC_ID  --사업장ID
+                AND  T3.OPR_UNIT_ID = T2.OPR_UNIT_ID
+                AND  T3.REF_CD_GRP_SEQ = T2.REF_CD_GRP_SEQ
+                LEFT JOIN
+                (
+                SELECT  T1.CO_CD,
+                        T1.BZPLC_ID,
+                        T1.ODR_NO,
+                        T1.ODR_ITM_NO,
+                        T1.OPR_UNIT_ID,
+                        T1.DEPT_ID,
+                        CASE WHEN LVL = 1 THEN REF_CD_SEQ_1
+                             WHEN LVL = 2 THEN REF_CD_SEQ_2
+                             WHEN LVL = 3 THEN REF_CD_SEQ_3
+                             WHEN LVL = 4 THEN REF_CD_SEQ_4
+                             ELSE REF_CD_SEQ_5 END REF_CD_SEQ,
+                        LVL REF_CD_GRP_SEQ
+                FROM    BASE_T      T1
+                        CROSS JOIN
+                        (SELECT LEVEL LVL FROM DUAL CONNECT BY 5 >= LEVEL )       T2
+                )       T1
+                ON   T2.CO_CD    = T1.CO_CD     --회사코드
+                AND  T2.BZPLC_ID = T1.BZPLC_ID  --사업장ID
+                AND  T2.OPR_UNIT_ID = T1.OPR_UNIT_ID
+                AND  T2.REF_CD_SEQ = T1.REF_CD_SEQ
+                AND  T2.REF_CD_GRP_SEQ = T1.REF_CD_GRP_SEQ
+                JOIN
+                SSP_APP.TB_CO_COM_CD_DTL        T5
+                ON   T5.LANG_CD = 'KO'
+                AND  T5.COM_CLSF_CD = 'DEPT_OPR_UNIT_SPR_CD'
+                AND  T5.COM_DTL_CD = T2.DEPT_OPR_UNIT_SPR_CD
+                LEFT JOIN
+                TB_CC_OPR_UNIT_BASIS            T6
+                ON   T6.CO_CD    = T2.CO_CD
+                AND  T6.BZPLC_ID = T2.BZPLC_ID
+                AND  T6.OPR_UNIT_ID = T2.DEPT_OPR_UNIT_ID
+                LEFT JOIN
+                TB_CC_DEPT_BASIS            T7
+                ON   T7.CO_CD    = T2.CO_CD
+                AND  T7.BZPLC_ID = T2.BZPLC_ID
+                AND  T7.DEPT_ID = T2.DEPT_OPR_UNIT_ID
+        WHERE   1=1
+          AND   T2.REF_CD_GRP_SEQ = #{REF_CD_GRP_SEQ}
+
+    </select>
+
+    <select id="selectDstrPathPopup" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.orderChange.selectDstrPathPopup */
+
+
+        WITH BASE_TB AS (
+        SELECT  *
+        FROM    TB_OD_ODR_DTL       T1
+        WHERE   T1.CO_CD = #{CO_CD}
+          AND   T1.BZPLC_ID = #{BZPLC_ID}
+          AND   T1.ODR_NO = #{ODR_NO}
+          AND T1.ODR_ITM_NO = #{ODR_ITM_NO}
+        )
+        SELECT  T2.LVL,
+                T1.DSTRB_PATH_CD,
+                T1.TXTN_TP_CD,
+                T1.TX_CLCD,
+                CASE WHEN T2.LVL = 1 THEN '현 주문 내역' ELSE '변경 주문 내역'                 END SPR_NM,
+                CASE WHEN T2.LVL = 1 THEN T1.DSTRB_PATH_CD||' | '||T4.COM_DTL_CD_NM ELSE '' END     DSTRB_PATH,
+                TO_CHAR(T1.SALE_AMT,'FM9,999,999,999,999')||' | '||T1.CURR_UNIT_CD               SAL_AMT,
+                TO_CHAR(T1.VAT_AMT,'FM9,999,999,999,999')||' | '||T1.CURR_UNIT_CD               VAT_AMT,
+                CASE WHEN T2.LVL = 1 THEN T1.TXTN_TP_CD||' | '||T5.COM_DTL_CD_NM ELSE '' END        TXTN_SPR
+        FROM    BASE_TB                 T1
+                CROSS JOIN
+                (SELECT LEVEL LVL FROM DUAL CONNECT BY 2 >= LEVEL)      T2
+                 LEFT JOIN
+                TB_CO_COM_CD_DTL        T4
+                ON   T4.LANG_CD = 'KO'
+                AND  T4.COM_CLSF_CD = 'DSTRB_PATH_CD'
+                AND  T4.COM_DTL_CD = T1.DSTRB_PATH_CD
+                LEFT JOIN
+                TB_CO_COM_CD_DTL        T5
+                ON   T5.LANG_CD = 'KO'
+                AND  T5.COM_CLSF_CD = 'TXTN_TP_CD'
+                AND  T5.COM_DTL_CD = T1.TXTN_TP_CD
+
+    </select>
+
+    <select id="selectOrderDocOprUnitCount" parameterType="HashMap" resultType="int">
+        /* com.ssp.bo.od.orderChange.selectOrderDocOprUnitCount */
+                WITH BASE_T AS (
+        SELECT  /*+ materialize */
+                T1.CO_CD,
+                T1.CHN_SPR_CD,
+                T2.CATG_KILR_CD,
+                T1.BZPLC_ID,                                /* 사업장ID */
+                T2.ODR_STATS_CD,
+                T2.ODR_NO,                                  /* 주문번호 */
+                T2.ODR_ITM_NO,                              /* 주문항목번호 */
+                T2.MNFR_NO,                                 /* 제조사번호 */
+                T2.PRD_ID,                                  /* 상품ID */
+                T2.REPR_SPEC,                               /* 대표규격 */
+                T2.SSP_REPR_ATTR,                           /* SSP대표규격 */
+                T2.ODR_QTY,                                 /* 주문수량 */
+                T2.SELL_UNIT_CD,                            /* 판매단위코드 */
+                T2.VAT_AMT,                                 /* 부가세금액 */
+                T2.SALSPRC,                                 /* 판매가 */
+                T2.SALE_AMT,                                /* 매출금액 */
+                T2.DLV_FORM_SPR_CD,/* 배송형태구분코드 */
+                T1.OPR_UNIT_ID,                             /* 운영단위ID */
+                T1.DEPT_ID,                                 /* 부서ID */
+                T1.ODRPSN_ID,                               /* 주문자ID */
+                T1.STL_MEAN_CD,  /* 결제수단코드 */
+                T2.RCVR_NM,                                  /* 수령인명 */
+                T2.GDOC_NO,
+                T2.SALE_CLOS_CD,
+                T2.CUST_PURG_ODR_NO,
+                T1.CUST_SPR_CD,
+                T1.SALS_CHR_CD,
+                T1.SALS_TEAM_CD,
+                T1.NRML_RTNGDS_SPR_CD,
+                T2.GI_PLNT_ID,
+                T2.GO_PLNT_ID,
+                T2.SALE_ADJ_STATS_CD,
+                T2.ODR_TMP_LOCK_CD,
+                T2.ACCT_ID,
+                T2.COST_TRNSF_DEPT_ID,
+                T2.QCK_DLV_YN
+        FROM    TB_OD_ODR_MST T1                            /* 주문마스터 */
+                JOIN
+                TB_OD_ODR_DTL T2                        /* 주문상세 */
+                ON   T1.CO_CD    = T2.CO_CD         /* 회사코드 */
+                AND  T1.BZPLC_ID = T2.BZPLC_ID      /* 사업장ID */
+                AND  T1.ODR_NO   = T2.ODR_NO        /* 주문번호 */
+               <if test=" OPR_UNIT_ID > 0 ">
+               JOIN
+               TB_OD_ODR_INQ_TGT_DTLS   T21
+               ON  T21.SES_ID = #{SES_ID}
+               AND T21.INQ_COND_DTLS = #{INQ_COND_DTLS}
+               AND T21.COL_ITM = 'OPR_UNIT_ID'
+               AND T21.COND_DATA_VAL = T1.OPR_UNIT_ID
+               </if>
+               <if test=" ODR_NO > 0 ">
+               JOIN
+               TB_OD_ODR_INQ_TGT_DTLS   T22
+               ON  T22.SES_ID = #{SES_ID}
+               AND T22.INQ_COND_DTLS = #{INQ_COND_DTLS}
+               AND T22.COL_ITM = 'ODR_NO'
+               AND REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,1) = T2.ODR_NO
+               AND (CASE WHEN TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR
+                             TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN
+                             T2.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2))) END) = T2.ODR_ITM_NO
+               </if>
+               <if test=" INQ_PRD == '10' ">
+                    AND  T2.ODR_DCN_DTM BETWEEN TO_DATE(#{FROM_DT} || '000000','YYYYMMDDHH24MISS') AND TO_DATE(#{TO_DT} || '235959','YYYYMMDDHH24MISS')
+               </if>
+        WHERE   1 = 1
+          AND  T1.CO_CD = #{CO_CD}
+        )
+       SELECT  /*+PARALLEL(4)*/
+                COUNT(*)    CNT
+        FROM    (
+                SELECT  DISTINCT T1.OPR_UNIT_ID     OPR_UNIT_ID
+                FROM    BASE_T      T1
+                        LEFT JOIN
+                        TB_PR_MRO_PRD_INFO T3               /* MRO상품정보 */
+                        ON   T3.CO_CD   = T1.CO_CD          /* 회사코드 */
+                        AND  T3.PRD_ID  = T1.PRD_ID         /* 상품ID */
+                        LEFT JOIN
+                        TB_PR_PRD_INFO T4                   /* 상품정보 */
+                        ON   T4.CO_CD   = T1.CO_CD          /* 회사코드 */
+                        AND  T4.PRD_ID  = T1.PRD_ID         /* 상품ID */
+                        <if test=" INQ_PRD = '00' ">
+                        LEFT JOIN
+                        </if>
+                        <if test=" INQ_PRD != '00' ">
+                        JOIN
+                        </if>
+                        TB_DL_ODR_ACP_DLV_PROC T5           /* 주문접수배송처리 */
+                        ON   T5.CO_CD    = T1.CO_CD         /* 회사코드 */
+                        AND  T5.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                        AND  T5.ODR_NO   = T1.ODR_NO        /* 주문번호 */
+                        AND  T5.ODR_ITM_NO = T1.ODR_ITM_NO  /* 주문항목번호 */
+                        <if test=" INQ_PRD == '20' ">
+                        AND  T5.SELL_DOC_CRT_DTM BETWEEN TO_DATE(#{FROM_DT},'YYYYMMDD') AND TO_DATE(#{TO_DT},'YYYYMMDD')
+                        </if>
+                        <if test=" INQ_PRD == '30' ">
+                        AND  T5.DLV_CMPL_DTM BETWEEN TO_DATE(#{FROM_DT},'YYYYMMDD') AND TO_DATE(#{TO_DT},'YYYYMMDD')
+                        </if>
+                        <if test=" INQ_PRD == '40' ">
+                        AND  T5.INTL_ORD_DCN_DTM BETWEEN TO_DATE(#{FROM_DT},'YYYYMMDD') AND TO_DATE(#{TO_DT},'YYYYMMDD')
+                        </if>
+                        <if test="ORD_ERR != null and !ORD_ERR.equals('') ">
+                            JOIN
+                            TB_DL_SMLN_ORD_INFO T6          /* 시뮬레이션발주정보 */
+                            ON   T6.CO_CD    = T1.CO_CD         /* 회사코드 */
+                            AND  T6.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                            AND  T6.ODR_NO   = T1.ODR_NO        /* 주문번호 */
+                            AND  T6.ODR_ITM_NO = T1.ODR_ITM_NO  /* 주문항목번호 */
+                            AND  (CASE WHEN #{ORD_ERR} IS NULL THEN '1'
+                                   WHEN #{ORD_ERR} = '20' AND T6.ORD_REQ_STATS_CD = '2' THEN '1'
+                                   WHEN #{ORD_ERR} != '20' AND T6.ORD_REQ_STATS_CD = '1' THEN '1'
+                                   ELSE '0' END) = '1'
+                        </if>
+                        JOIN
+                        TB_CC_OPR_UNIT_BASIS T7             /* 운영단위기본 */
+                        ON   T7.CO_CD    = T1.CO_CD         /* 회사코드 */
+                        AND  T7.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                        AND  T7.OPR_UNIT_ID   = T1.OPR_UNIT_ID  /* 운영단위 */
+                        <if test="CNSG_CPRTCP_ID != null and !CNSG_CPRTCP_ID.equals('') ">
+                            LEFT JOIN
+                            TB_DL_ORD_ITM_DTL   T8              /* 발주품목상세 */
+                            ON   T8.CO_CD    = T1.CO_CD         /* 회사코드 */
+                            AND  T8.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                            AND  T8.ODR_NO   = T1.ODR_NO        /* 주문번호 */
+                            AND  T8.ODR_ITM_NO = T1.ODR_ITM_NO  /* 주문항목번호 */
+                            AND  T8.CNSG_CPRTCP_ID =  #{CNSG_CPRTCP_ID}            /* 23.협력사 ID */
+                        </if>
+
+                        <if test=" ODR_STATS_CD > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T23
+                        ON  T23.SES_ID = #{SES_ID}
+                        AND T23.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T23.COL_ITM = 'ODR_STATS_CD'
+                        AND T23.COND_DATA_VAL = T1.ODR_STATS_CD
+                        </if>
+                        <if test=" PRD_ID > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T24
+                        ON  T24.SES_ID = #{SES_ID}
+                        AND T24.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T24.COL_ITM = 'PRD_ID'
+                        AND LPAD(T24.COND_DATA_VAL,18,'0') = T1.PRD_ID
+                        </if>
+                        <if test=" DEPT_ID > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T25
+                        ON  T25.SES_ID = #{SES_ID}
+                        AND T25.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T25.COL_ITM = 'DEPT_ID'
+                        AND T25.COND_DATA_VAL = T1.DEPT_ID
+                        </if>
+                        <if test=" GDOC_NO > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T26
+                        ON  T26.SES_ID = #{SES_ID}
+                        AND T26.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T26.COL_ITM = 'GDOC_NO'
+                        AND T26.COND_DATA_VAL = T1.GDOC_NO
+                        </if>
+                        <if test=" ODRPSN_ID > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T27
+                        ON  T27.SES_ID = #{SES_ID}
+                        AND T27.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T27.COL_ITM = 'ODRPSN_ID'
+                        AND T27.COND_DATA_VAL = T1.ODRPSN_ID
+                        </if>
+                        <if test=" CUST_PURG_ODR_NO > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T28
+                        ON  T28.SES_ID = #{SES_ID}
+                        AND T28.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T28.COL_ITM = 'CUST_PURG_ODR_NO'
+                        AND T28.COND_DATA_VAL = T1.CUST_PURG_ODR_NO
+                        </if>
+                        <if test=" ORD_NO > 0 ">
+                        JOIN
+                        TB_DL_ORD_ITM_DTL   T29              /* 발주품목상세 */
+                        ON   T29.CO_CD    = T1.CO_CD         /* 회사코드 */
+                        AND  T29.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                        AND  T29.ODR_NO   = T1.ODR_NO        /* 주문번호 */
+                        AND  T29.ODR_ITM_NO = T1.ODR_ITM_NO  /* 주문항목번호 */
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T30
+                        ON  T30.SES_ID = #{SES_ID}
+                        AND T30.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T30.COL_ITM = 'ORD_NO'
+                        AND T30.COND_DATA_VAL = T29.ORD_NO
+                        </if>
+                WHERE   1 = 1
+                  <if test="CUST_SPR_CD != null and !CUST_SPR_CD.equals('') ">
+                        AND T1.CUST_SPR_CD = #{CUST_SPR_CD}   /* 고객구분코드 4.고객 유형 */
+                  </if>
+                  <if test="CAT_KILLER != null and !CAT_KILLER.equals('') ">
+                      AND   (NVL(T3.MALL_SPR_CD,'20'), NVL(T3.PUB_ONLY_SPR_CD,'P')) IN (
+                            SELECT  S.COM_USR_DEFN_NM_1, S.COM_USR_DEFN_NM_2
+                            FROM    TB_CO_COM_CD_DTL S
+                            WHERE   S.LANG_CD = 'KO'
+                            AND     S.COM_CLSF_CD = 'CATG_KILR_CD'
+                            AND     S.COM_DTL_CD = (CASE WHEN TRIM(#{CAT_KILLER}) IS NULL OR TRIM(#{CAT_KILLER}) = '' THEN S.COM_DTL_CD ELSE #{CAT_KILLER} END )
+                            )
+                  </if>
+                  <if test="SVC_TEAM_CD != null and !SVC_TEAM_CD.equals('') ">
+                        AND  T7.SVC_TEAM_CD = #{SVC_TEAM_CD}                              /* 12.서비스팀 */
+                  </if>
+                  <if test="SALS_CHR_CD != null and !SALS_CHR_CD.equals('') ">
+                        AND  T1.SALS_CHR_CD = #{SALS_CHR_CD}                              /* 13.영업담당 */
+                  </if>
+                  <if test="SALS_TEAM_CD != null and !SALS_TEAM_CD.equals('') ">
+                        AND  T1.SALS_TEAM_CD = #{SALS_TEAM_CD}                           /* 14.영업팀 */
+                  </if>
+                  <if test="DLV_FORM_SPR_CD != null and !DLV_FORM_SPR_CD.equals('') ">
+                        AND  T1.DLV_FORM_SPR_CD = #{DLV_FORM_SPR_CD}            /* 16.배송형태 */
+                  </if>
+                  <if test="BZPLC_ID != null and !BZPLC_ID.equals('') ">
+                        AND  T1.BZPLC_ID = #{BZPLC_ID}                                    /* 17.사업장  */
+                  </if>
+                  <if test="NRML_RTNGDS_SPR_CD != null and !NRML_RTNGDS_SPR_CD.equals('') ">
+                        AND  T1.NRML_RTNGDS_SPR_CD = #{NRML_RTNGDS_SPR_CD}               /* 27.정상반품구분코드 */
+                  </if>
+                  <if test="GI_PLNT_ID != null and !GI_PLNT_ID.equals('') ">
+                        AND  T1.GI_PLNT_ID = #{GI_PLNT_ID}                    /* 20.입고 플랜트 */
+                  </if>
+                  <if test="GO_PLNT_ID != null and !GO_PLNT_ID.equals('') ">
+                        AND  T1.GO_PLNT_ID = #{GO_PLNT_ID}                    /* 21.출고 플랜트 */
+                  </if>
+                  <if test="SALE_ADJ_STATS_CD != null and !SALE_ADJ_STATS_CD.equals('') ">
+                        AND  T1.SALE_ADJ_STATS_CD = #{SALE_ADJ_STATS_CD}        /* 29.정산상태 */
+                  </if>
+                  <if test="ODR_TMP_LOCK_CD != null and !ODR_TMP_LOCK_CD.equals('') ">
+                        AND  T1.ODR_TMP_LOCK_CD = #{ODR_TMP_LOCK_CD}            /* 22.주문 Block */
+                  </if>
+                  <if test="ACCT_ID != null and !ACCT_ID.equals('') ">
+                        AND  T1.ACCT_ID = #{ACCT_ID}                          /* 25.계정ID 조회 */
+                  </if>
+                  <if test="COST_TRNSF_DEPT_ID != null and !COST_TRNSF_DEPT_ID.equals('') ">
+                        AND  T1.COST_TRNSF_DEPT_ID = #{COST_TRNSF_DEPT_ID}    /* 26.비용이체부서 */
+                  </if>
+                  <if test="SALE_CLOS_CD != null and SALE_CLOS_CD.equals('2') ">
+                       NVL(T1.SALE_CLOS_CD,'00') IN ('C1','C2')
+                  </if>
+                  <if test="SALE_CLOS_CD != null and SALE_CLOS_CD.equals('3') ">
+                       NVL(T1.SALE_CLOS_CD,'00') NOT IN ('C1','C2')
+                  </if>
+                  <if test="QCK_DLV_YN != null and !QCK_DLV_YN.equals('') ">
+                        AND  NVL(T1.QCK_DLV_YN,'N') = #{QCK_DLV_YN}                       /* 33.빠른배송여부, 나중에 바인딩 */
+                  </if>
+                  <if test="STL_MEAN_CD != null and !STL_MEAN_CD.equals('') ">
+                        AND  T1.STL_MEAN_CD = #{STL_MEAN_CD}                 /* 30.결제수단 */
+                  </if>
+                  <if test=" DLV_CMPL_YN == '20' ">
+                  AND (T1.ODR_STATS_CD = 'Z10' OR T1.ODR_STATS_CD LIKE 'E%')
+                  </if>
+                  <if test=" DLV_CMPL_YN == '30' ">
+                  AND T1.ODR_STATS_CD = 'D31'
+                  </if>
+                  <if test=" DLV_CMPL_YN == '40' ">
+                  AND ('D31' > T1.ODR_STATS_CD OR T1.ODR_STATS_CD IN ('X01','X02'))
+                  </if>
+            )       T1
+    </select>
+
+
+    <insert id="insertOrderDoc" parameterType="HashMap">
+        /* com.ssp.bo.od.orderChange.insertOrderDoc */
+                INSERT INTO TB_OD_ODR_INQ_TGT_DTLS
+        (
+           SES_ID
+         , INQ_COND_DTLS
+         , COL_ITM
+         , COND_DATA_VAL
+         , REGPSN_ID
+         , REG_DTM
+        )
+        WITH BASE_T AS (
+        SELECT  /*+ materialize */
+                T1.CO_CD,
+                T1.CHN_SPR_CD,
+                T2.CATG_KILR_CD,
+                T1.BZPLC_ID,                                /* 사업장ID */
+                T2.ODR_STATS_CD,
+                T2.ODR_NO,                                  /* 주문번호 */
+                T2.ODR_ITM_NO,                              /* 주문항목번호 */
+                T2.MNFR_NO,                                 /* 제조사번호 */
+                T2.PRD_ID,                                  /* 상품ID */
+                T2.REPR_SPEC,                               /* 대표규격 */
+                T2.SSP_REPR_ATTR,                           /* SSP대표규격 */
+                T2.ODR_QTY,                                 /* 주문수량 */
+                T2.SELL_UNIT_CD,                            /* 판매단위코드 */
+                T2.VAT_AMT,                                 /* 부가세금액 */
+                T2.SALSPRC,                                 /* 판매가 */
+                T2.SALE_AMT,                                /* 매출금액 */
+                T2.DLV_FORM_SPR_CD,/* 배송형태구분코드 */
+                T1.OPR_UNIT_ID,                             /* 운영단위ID */
+                T1.DEPT_ID,                                 /* 부서ID */
+                T1.ODRPSN_ID,                               /* 주문자ID */
+                T1.STL_MEAN_CD,  /* 결제수단코드 */
+                T2.RCVR_NM,                                  /* 수령인명 */
+                T2.GDOC_NO,
+                T2.SALE_CLOS_CD,
+                T2.CUST_PURG_ODR_NO,
+                T1.CUST_SPR_CD,
+                T1.SALS_CHR_CD,
+                T1.SALS_TEAM_CD,
+                T1.NRML_RTNGDS_SPR_CD,
+                T2.GI_PLNT_ID,
+                T2.GO_PLNT_ID,
+                T2.SALE_ADJ_STATS_CD,
+                T2.ODR_TMP_LOCK_CD,
+                T2.ACCT_ID,
+                T2.COST_TRNSF_DEPT_ID,
+                T2.QCK_DLV_YN
+        FROM    TB_OD_ODR_MST T1                            /* 주문마스터 */
+                JOIN
+                TB_OD_ODR_DTL T2                        /* 주문상세 */
+                ON   T1.CO_CD    = T2.CO_CD         /* 회사코드 */
+                AND  T1.BZPLC_ID = T2.BZPLC_ID      /* 사업장ID */
+                AND  T1.ODR_NO   = T2.ODR_NO        /* 주문번호 */
+               <if test=" OPR_UNIT_ID > 0 ">
+               JOIN
+               TB_OD_ODR_INQ_TGT_DTLS   T21
+               ON  T21.SES_ID = #{SES_ID}
+               AND T21.INQ_COND_DTLS = #{INQ_COND_DTLS}
+               AND T21.COL_ITM = 'OPR_UNIT_ID'
+               AND T21.COND_DATA_VAL = T1.OPR_UNIT_ID
+               </if>
+               <if test=" ODR_NO > 0 ">
+               JOIN
+               TB_OD_ODR_INQ_TGT_DTLS   T22
+               ON  T22.SES_ID = #{SES_ID}
+               AND T22.INQ_COND_DTLS = #{INQ_COND_DTLS}
+               AND T22.COL_ITM = 'ODR_NO'
+               AND REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,1) = T2.ODR_NO
+               AND (CASE WHEN TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR
+                             TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN
+                             T2.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T22.COND_DATA_VAL,'[^-]+',1,2))) END) = T2.ODR_ITM_NO
+               </if>
+               <if test=" INQ_PRD == '10' ">
+                    AND  T2.ODR_DCN_DTM BETWEEN TO_DATE(#{FROM_DT} || '000000','YYYYMMDDHH24MISS') AND TO_DATE(#{TO_DT} || '235959','YYYYMMDDHH24MISS')
+               </if>
+        WHERE   1 = 1
+          AND  T1.CO_CD = #{CO_CD}
+        )
+        SELECT  /*+PARALLEL(4)*/
+                #{SES_ID},
+                #{INQ_COND_DTLS} || '_TMP', /*SSP-2458.성진우.화면조회된값기준으로별도관리하기위해TMP추가*/
+                #{COL_ITM},
+                T1.ODR_NO || '-' || T1.ODR_ITM_NO AS COND_DATA_VAL,    /* 주문품목번호 */
+                #{REGPSN_ID},
+                SYSDATE
+        FROM    (
+                SELECT  T1.ODR_NO,
+                        T1.ODR_ITM_NO
+                FROM    BASE_T      T1
+                        LEFT JOIN
+                        TB_PR_MRO_PRD_INFO T3               /* MRO상품정보 */
+                        ON   T3.CO_CD   = T1.CO_CD          /* 회사코드 */
+                        AND  T3.PRD_ID  = T1.PRD_ID         /* 상품ID */
+                        LEFT JOIN
+                        TB_PR_PRD_INFO T4                   /* 상품정보 */
+                        ON   T4.CO_CD   = T1.CO_CD          /* 회사코드 */
+                        AND  T4.PRD_ID  = T1.PRD_ID         /* 상품ID */
+                        <if test=" INQ_PRD = '00' ">
+                        LEFT JOIN
+                        </if>
+                        <if test=" INQ_PRD != '00' ">
+                        JOIN
+                        </if>
+                        TB_DL_ODR_ACP_DLV_PROC T5           /* 주문접수배송처리 */
+                        ON   T5.CO_CD    = T1.CO_CD         /* 회사코드 */
+                        AND  T5.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                        AND  T5.ODR_NO   = T1.ODR_NO        /* 주문번호 */
+                        AND  T5.ODR_ITM_NO = T1.ODR_ITM_NO  /* 주문항목번호 */
+                        <if test=" INQ_PRD == '20' ">
+                        AND  T5.SELL_DOC_CRT_DTM BETWEEN TO_DATE(#{FROM_DT},'YYYYMMDD') AND TO_DATE(#{TO_DT},'YYYYMMDD')
+                        </if>
+                        <if test=" INQ_PRD == '30' ">
+                        AND  T5.DLV_CMPL_DTM BETWEEN TO_DATE(#{FROM_DT},'YYYYMMDD') AND TO_DATE(#{TO_DT},'YYYYMMDD')
+                        </if>
+                        <if test=" INQ_PRD == '40' ">
+                        AND  T5.INTL_ORD_DCN_DTM BETWEEN TO_DATE(#{FROM_DT},'YYYYMMDD') AND TO_DATE(#{TO_DT},'YYYYMMDD')
+                        </if>
+                        <if test="ORD_ERR != null and !ORD_ERR.equals('') ">
+                            JOIN
+                            TB_DL_SMLN_ORD_INFO T6          /* 시뮬레이션발주정보 */
+                            ON   T6.CO_CD    = T1.CO_CD         /* 회사코드 */
+                            AND  T6.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                            AND  T6.ODR_NO   = T1.ODR_NO        /* 주문번호 */
+                            AND  T6.ODR_ITM_NO = T1.ODR_ITM_NO  /* 주문항목번호 */
+                            AND  (CASE WHEN #{ORD_ERR} IS NULL THEN '1'
+                                   WHEN #{ORD_ERR} = '20' AND T6.ORD_REQ_STATS_CD = '2' THEN '1'
+                                   WHEN #{ORD_ERR} != '20' AND T6.ORD_REQ_STATS_CD = '1' THEN '1'
+                                   ELSE '0' END) = '1'
+                        </if>
+                        JOIN
+                        TB_CC_OPR_UNIT_BASIS T7             /* 운영단위기본 */
+                        ON   T7.CO_CD    = T1.CO_CD         /* 회사코드 */
+                        AND  T7.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                        AND  T7.OPR_UNIT_ID   = T1.OPR_UNIT_ID  /* 운영단위 */
+                        <if test="CNSG_CPRTCP_ID != null and !CNSG_CPRTCP_ID.equals('') ">
+                            LEFT JOIN
+                            TB_DL_ORD_ITM_DTL   T8              /* 발주품목상세 */
+                            ON   T8.CO_CD    = T1.CO_CD         /* 회사코드 */
+                            AND  T8.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                            AND  T8.ODR_NO   = T1.ODR_NO        /* 주문번호 */
+                            AND  T8.ODR_ITM_NO = T1.ODR_ITM_NO  /* 주문항목번호 */
+                            AND  T8.CNSG_CPRTCP_ID =  #{CNSG_CPRTCP_ID}            /* 23.협력사 ID */
+                        </if>
+
+                        <if test=" ODR_STATS_CD > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T23
+                        ON  T23.SES_ID = #{SES_ID}
+                        AND T23.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T23.COL_ITM = 'ODR_STATS_CD'
+                        AND T23.COND_DATA_VAL = T1.ODR_STATS_CD
+                        </if>
+                        <if test=" PRD_ID > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T24
+                        ON  T24.SES_ID = #{SES_ID}
+                        AND T24.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T24.COL_ITM = 'PRD_ID'
+                        AND LPAD(T24.COND_DATA_VAL,18,'0') = T1.PRD_ID
+                        </if>
+                        <if test=" DEPT_ID > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T25
+                        ON  T25.SES_ID = #{SES_ID}
+                        AND T25.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T25.COL_ITM = 'DEPT_ID'
+                        AND T25.COND_DATA_VAL = T1.DEPT_ID
+                        </if>
+                        <if test=" GDOC_NO > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T26
+                        ON  T26.SES_ID = #{SES_ID}
+                        AND T26.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T26.COL_ITM = 'GDOC_NO'
+                        AND T26.COND_DATA_VAL = T1.GDOC_NO
+                        </if>
+                        <if test=" ODRPSN_ID > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T27
+                        ON  T27.SES_ID = #{SES_ID}
+                        AND T27.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T27.COL_ITM = 'ODRPSN_ID'
+                        AND T27.COND_DATA_VAL = T1.ODRPSN_ID
+                        </if>
+                        <if test=" CUST_PURG_ODR_NO > 0 ">
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T28
+                        ON  T28.SES_ID = #{SES_ID}
+                        AND T28.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T28.COL_ITM = 'CUST_PURG_ODR_NO'
+                        AND T28.COND_DATA_VAL = T1.CUST_PURG_ODR_NO
+                        </if>
+                        <if test=" ORD_NO > 0 ">
+                        JOIN
+                        TB_DL_ORD_ITM_DTL   T29              /* 발주품목상세 */
+                        ON   T29.CO_CD    = T1.CO_CD         /* 회사코드 */
+                        AND  T29.BZPLC_ID = T1.BZPLC_ID      /* 사업장ID */
+                        AND  T29.ODR_NO   = T1.ODR_NO        /* 주문번호 */
+                        AND  T29.ODR_ITM_NO = T1.ODR_ITM_NO  /* 주문항목번호 */
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T30
+                        ON  T30.SES_ID = #{SES_ID}
+                        AND T30.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T30.COL_ITM = 'ORD_NO'
+                        AND T30.COND_DATA_VAL = T29.ORD_NO
+                        </if>
+                        <if test=" MD_TEAM_CD != null or MD_OPRTR_ID != null">
+                        JOIN
+                        (
+                        SELECT  B.CO_CD,
+                                D.PRD_ID
+                        FROM    TB_CO_MBR_OPRTR_INFO A          /* 회원운영자정보 */
+                                JOIN
+                                TB_PR_PRD_CLSF_CHRPSN_INFO B    /* 상품분류담당자정보, MD담당자 */
+                                ON  B.CO_CD = A.CO_CD
+                                AND B.PRD_CLSF_CHRPSN_ID = A.OPRTR_ID
+                                JOIN
+                                TB_CO_MBR_OPRTR_ORG_INFO  C     /* 회원운영자조직정보 */
+                                ON  C.CO_CD = A.CO_CD
+                                AND C.ORG_CD = A.ORG_CD
+                                AND C.ORG_CD LIKE #{MD_TEAM_CD} || '%'
+                                JOIN
+                                TB_PR_PRD_INFO D
+                                ON   B.CO_CD = D.CO_CD
+                                AND  B.PRD_CLCD = D.PRD_CLCD
+                        WHERE   B.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                        AND     B.PRD_CLSF_CHRPSN_TP_CD = '20'
+                        AND     B.PRD_CLSF_CHRPSN_USEYN = 'Y'
+                        AND     B.MNFR_NO = '*'
+                        AND     A.OPRTR_ID LIKE #{MD_OPRTR_ID} || '%'
+                        ) T31
+                        ON  T31.CO_CD = T1.CO_CD
+                        AND T31.PRD_ID = T1.PRD_ID
+                        </if>
+                WHERE   1 = 1
+                  <if test="CUST_SPR_CD != null and !CUST_SPR_CD.equals('') ">
+                        AND T1.CUST_SPR_CD = #{CUST_SPR_CD}   /* 고객구분코드 4.고객 유형 */
+                  </if>
+                  <if test="CAT_KILLER != null and !CAT_KILLER.equals('') ">
+                      AND   (NVL(T3.MALL_SPR_CD,'20'), NVL(T3.PUB_ONLY_SPR_CD,'P')) IN (
+                            SELECT  S.COM_USR_DEFN_NM_1, S.COM_USR_DEFN_NM_2
+                            FROM    TB_CO_COM_CD_DTL S
+                            WHERE   S.LANG_CD = 'KO'
+                            AND     S.COM_CLSF_CD = 'CATG_KILR_CD'
+                            AND     S.COM_DTL_CD = (CASE WHEN TRIM(#{CAT_KILLER}) IS NULL OR TRIM(#{CAT_KILLER}) = '' THEN S.COM_DTL_CD ELSE #{CAT_KILLER} END )
+                            )
+                  </if>
+                  <if test="SVC_TEAM_CD != null and !SVC_TEAM_CD.equals('') ">
+                        AND  T7.SVC_TEAM_CD = #{SVC_TEAM_CD}                              /* 12.서비스팀 */
+                  </if>
+                  <if test="SALS_CHR_CD != null and !SALS_CHR_CD.equals('') ">
+                        AND  T1.SALS_CHR_CD = #{SALS_CHR_CD}                              /* 13.영업담당 */
+                  </if>
+                  <if test="SALS_TEAM_CD != null and !SALS_TEAM_CD.equals('') ">
+                        AND  T1.SALS_TEAM_CD = #{SALS_TEAM_CD}                           /* 14.영업팀 */
+                  </if>
+                  <if test="DLV_FORM_SPR_CD != null and !DLV_FORM_SPR_CD.equals('') ">
+                        AND  T1.DLV_FORM_SPR_CD = #{DLV_FORM_SPR_CD}            /* 16.배송형태 */
+                  </if>
+                  <if test="BZPLC_ID != null and !BZPLC_ID.equals('') ">
+                        AND  T1.BZPLC_ID = #{BZPLC_ID}                                    /* 17.사업장  */
+                  </if>
+                  <if test="NRML_RTNGDS_SPR_CD != null and !NRML_RTNGDS_SPR_CD.equals('') ">
+                        AND  T1.NRML_RTNGDS_SPR_CD = #{NRML_RTNGDS_SPR_CD}               /* 27.정상반품구분코드 */
+                  </if>
+                  <if test="GI_PLNT_ID != null and !GI_PLNT_ID.equals('') ">
+                        AND  T1.GI_PLNT_ID = #{GI_PLNT_ID}                    /* 20.입고 플랜트 */
+                  </if>
+                  <if test="GO_PLNT_ID != null and !GO_PLNT_ID.equals('') ">
+                        AND  T1.GO_PLNT_ID = #{GO_PLNT_ID}                    /* 21.출고 플랜트 */
+                  </if>
+                  <if test="SALE_ADJ_STATS_CD != null and !SALE_ADJ_STATS_CD.equals('') ">
+                        AND  T1.SALE_ADJ_STATS_CD = #{SALE_ADJ_STATS_CD}        /* 29.정산상태 */
+                  </if>
+                  <if test="ODR_TMP_LOCK_CD != null and !ODR_TMP_LOCK_CD.equals('') ">
+                        AND  T1.ODR_TMP_LOCK_CD = #{ODR_TMP_LOCK_CD}            /* 22.주문 Block */
+                  </if>
+                  <if test="ACCT_ID != null and !ACCT_ID.equals('') ">
+                        AND  T1.ACCT_ID = #{ACCT_ID}                          /* 25.계정ID 조회 */
+                  </if>
+                  <if test="COST_TRNSF_DEPT_ID != null and !COST_TRNSF_DEPT_ID.equals('') ">
+                        AND  T1.COST_TRNSF_DEPT_ID = #{COST_TRNSF_DEPT_ID}    /* 26.비용이체부서 */
+                  </if>
+                  <if test="SALE_CLOS_CD != null and SALE_CLOS_CD.equals('2') ">
+                       NVL(T1.SALE_CLOS_CD,'00') IN ('C1','C2')
+                  </if>
+                  <if test="SALE_CLOS_CD != null and SALE_CLOS_CD.equals('3') ">
+                       NVL(T1.SALE_CLOS_CD,'00') NOT IN ('C1','C2')
+                  </if>
+                  <if test="QCK_DLV_YN != null and !QCK_DLV_YN.equals('') ">
+                        AND  NVL(T1.QCK_DLV_YN,'N') = #{QCK_DLV_YN}                       /* 33.빠른배송여부, 나중에 바인딩 */
+                  </if>
+                  <if test="STL_MEAN_CD != null and !STL_MEAN_CD.equals('') ">
+                        AND  T1.STL_MEAN_CD = #{STL_MEAN_CD}                 /* 30.결제수단 */
+                  </if>
+                  <if test=" DLV_CMPL_YN == '20' ">
+                  AND (T1.ODR_STATS_CD = 'Z10' OR T1.ODR_STATS_CD LIKE 'E%')
+                  </if>
+                  <if test=" DLV_CMPL_YN == '30' ">
+                  AND T1.ODR_STATS_CD = 'D31'
+                  </if>
+                  <if test=" DLV_CMPL_YN == '40' ">
+                  AND ('D31' > T1.ODR_STATS_CD OR T1.ODR_STATS_CD IN ('X01','X02'))
+                  </if>
+            )       T1
+    </insert>
+
+    <select id="selectOrderDoc" parameterType="HashMap" resultType="HashMap">
+    /* com.ssp.bo.od.orderChange.selectOrderDoc */
+        SELECT   COND_DATA_VAL
+               , #{SES_ID}  SES_ID
+               , #{INQ_COND_DTLS}   INQ_COND_DTLS
+               , #{COL_ITM}     COL_ITM
+        FROM   TB_OD_ODR_INQ_TGT_DTLS
+        WHERE  SES_ID = #{SES_ID}
+          AND  INQ_COND_DTLS = #{INQ_COND_DTLS} || '_TMP' /*SSP-2458.성진우.화면조회된값기준으로별도관리하기위해TMP추가*/
+          AND  COL_ITM = #{COL_ITM}
+          AND  TRIM(REGEXP_SUBSTR(COND_DATA_VAL,'[^-]+',1,2)) IS NOT NULL
+    </select>
+
+
+
+    <select id="selectChgCtlItmGrpCdList" parameterType="HashMap" resultType="HashMap">
+    /* com.ssp.bo.od.orderChange.selectChgCtlItmGrpCdList */
+        SELECT
+                T1.CHG_ITM_GRP_CD,      /* 변경항목그룹코드 */
+                T1.CHG_ITM_GRP_NM,      /* 변경항목그룹명 */
+                T1.UPD_MTD_CD,          /* 수정방법코드 */
+                T2.COM_DTL_CD_NM    UPD_MTD_CD_NM,  /* 수정방법코드명 */
+                T1.UPD_MTD_CD || ' | ' || T2.COM_DTL_CD_NM  JNT_UPD_MTD_CD_NM,
+                T1.AUTH_APLY_YN,        /* 권한적용여부 */
+                T1.USE_YN,              /* 사용여부 */
+                T1.REGPSN_ID,           /* 등록자ID */
+                T1.REG_DTM,             /* 등록일시 */
+                T1.UPDPSN_ID,           /* 수정자ID */
+                T1.UPD_DTM              /* 수정일시 */
+        FROM    TB_DL_CHG_CTL_ITM_GRP_CD    T1      /* 변경제어항목그룹코드 */
+                LEFT JOIN
+                TB_CO_COM_CD_DTL    T2
+                ON  T2.COM_CLSF_CD = 'UPD_MTD_CD'
+                AND T2.COM_DTL_CD = T1.UPD_MTD_CD
+        WHERE   T1.USE_YN = 'Y'
+        ORDER BY T1.CHG_ITM_GRP_CD
+    </select>
+
+    <select id="selectChgCtlItmGrpAuthList" parameterType="HashMap" resultType="HashMap">
+    /* com.ssp.bo.od.orderChange.selectChgCtlItmGrpAuthList */
+        SELECT
+                T1.CHG_ITM_GRP_CD,  /* 변경항목그룹코드 */
+                T1.ITM_SEQ,         /* 항목순번 */
+                T1.OPRTR_ID,        /* 운영자ID */
+                T2.OPRTR_NM,        /* 운영자명 */
+                T1.AUTH_CLSF_CD,    /* 권한분류코드 */
+                T1.APLY_STR_DT,     /* 적용시작일자 */
+                T1.APLY_END_DT,     /* 적용종료일자 */
+                T1.REGPSN_ID,       /* 등록자ID */
+                T1.REG_DTM,         /* 등록일시 */
+                T1.UPDPSN_ID,       /* 수정자ID */
+                T1.UPD_DTM          /* 수정일시 */
+        FROM    TB_DL_CHG_CTL_ITM_GRP_AUTH_INFO T1  /* 변경제어항목그룹권한정보 */
+                LEFT JOIN
+                TB_CO_MBR_OPRTR_INFO    T2
+                ON  T2.CO_CD   = #{CO_CD}
+                AND T2.OPRTR_ID = T1.OPRTR_ID
+        WHERE   T1.CHG_ITM_GRP_CD = #{CHG_ITM_GRP_CD}
+        ORDER BY CHG_ITM_GRP_CD,
+                 ITM_SEQ
+    </select>
+
+    <select id="selectChgCtlItmGrpDtlList" parameterType="HashMap" resultType="HashMap">
+    /* com.ssp.bo.od.orderChange.selectChgCtlItmGrpDtlList */
+        SELECT
+                T1.CHG_ITM_GRP_CD,      /* 변경항목그룹코드 */
+                T1.CHG_SEQ,             /* 변경순번 */
+                T1.CHG_FDS_ID,          /* 변경필드ID */
+                T1.REF_TBL_ID,          /* 변경필드ID */
+                T1.CHG_FDS_NM,          /* 변경필드명 */
+                T1.INQ_IPT_SPR_CD,      /* 조회입력구분코드 */
+                T2.COM_DTL_CD_NM    INQ_IPT_SPR_CD_NM,  /* 조회입력구분코드명 */
+                T1.INQ_IPT_SPR_CD || ' | ' || T2.COM_DTL_CD_NM  JNT_INQ_IPT_SPR_CD_NM,  /* 조회입력구분코드명 */
+                T1.TBL_NM,              /* 테이블명 */
+                T3.COMMENTS TBL_NM_ALS, /* 테이블별칭 */
+                T1.COL_NM,              /* 컬럼명 */
+                T1.COL_ALS,             /* 컬럼별칭 */
+                T1.SRCH_COND_CTS,       /* 검색조건내용 */
+                T1.RECALC_YN,           /* 재계산여부 */
+                T1.EXCE_CTS,            /* 실행내용 */
+                T1.REGPSN_ID,           /* 등록자ID */
+                T1.REG_DTM,             /* 등록일시 */
+                T1.UPDPSN_ID,           /* 수정자ID */
+                T1.UPD_DTM              /* 수정일시 */
+        FROM    TB_DL_CHG_CTL_ITM_GRP_DTL   T1  /* 변경제어항목그룹상세 */
+                LEFT JOIN
+                TB_CO_COM_CD_DTL    T2
+                ON  T2.COM_CLSF_CD = 'INQ_IPT_SPR_CD'
+                AND T2.COM_DTL_CD = T1.INQ_IPT_SPR_CD
+                LEFT JOIN
+                ALL_TAB_COMMENTS    T3
+                ON  T3.TABLE_NAME = T1.TBL_NM
+                AND T3.OWNER = 'SSP_APP'
+        WHERE   T1.CHG_ITM_GRP_CD = #{CHG_ITM_GRP_CD}
+        ORDER BY CHG_ITM_GRP_CD,
+                 CHG_SEQ
+    </select>
+
+
+    <!-- ******************************************************************************
+        * UPDATE : 변경제어항목그룹코드 수정 * 작성자 : neonlee * 작성 일자 : 2022-05-06
+         ****************************************************************************** -->
+    <update id="saveChgCtlItmGrpCd" parameterType="HashMap">
+        /* com.ssp.bo.od.orderChange.saveChgCtlItmGrpCd */
+        UPDATE SSP_APP.TB_DL_CHG_CTL_ITM_GRP_CD
+            SET
+                UPD_MTD_CD =  #{UPD_MTD_CD},
+                AUTH_APLY_YN = #{AUTH_APLY_YN},
+                UPDPSN_ID = #{UPDPSN_ID},
+                UPD_DTM = SYSDATE
+        WHERE USE_YN = 'Y'
+          AND CHG_ITM_GRP_NM = #{CHG_ITM_GRP_NM}
+          AND CHG_ITM_GRP_CD = #{CHG_ITM_GRP_CD}
+    </update>
+
+    <!-- ******************************************************************************
+        * UPDATE : 변경제어항목그룹권한 수정 * 작성자 : neonlee * 작성 일자 : 2022-05-06
+         ****************************************************************************** -->
+    <update id="saveChgCtlItmGrpAuthInfo" parameterType="HashMap">
+        /* com.ssp.bo.od.orderChange.saveChgCtlItmGrpAuthInfo */
+        MERGE INTO SSP_APP.TB_DL_CHG_CTL_ITM_GRP_AUTH_INFO A
+        USING DUAL
+        ON (
+            A.CHG_ITM_GRP_CD = #{CHG_ITM_GRP_CD}
+            AND A.ITM_SEQ = #{ITM_SEQ}
+           )
+        WHEN MATCHED THEN
+        UPDATE SET
+              OPRTR_ID = #{OPRTR_ID}            /* 운영자ID */
+            <if test="AUTH_CLSF_CD != null and !AUTH_CLSF_CD.equals('') ">
+            , AUTH_CLSF_CD = #{AUTH_CLSF_CD}    /* 권한분류코드 */
+            </if>
+            , APLY_STR_DT = #{APLY_STR_DT}      /* 적용시작일자 */
+            , APLY_END_DT = #{APLY_END_DT}      /* 적용종료일자 */
+            , UPDPSN_ID = #{UPDPSN_ID}
+            , UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+        INSERT
+        (
+           CHG_ITM_GRP_CD
+         , ITM_SEQ
+         , OPRTR_ID
+         , AUTH_CLSF_CD
+         , APLY_STR_DT
+         , APLY_END_DT
+         , REGPSN_ID
+         , REG_DTM
+         , UPD_DTM
+        )
+        VALUES
+        (
+           #{CHG_ITM_GRP_CD}
+         , (SELECT NVL(MAX(ITM_SEQ), 0) + 1 FROM SSP_APP.TB_DL_CHG_CTL_ITM_GRP_AUTH_INFO WHERE CHG_ITM_GRP_CD = #{CHG_ITM_GRP_CD})
+         , #{OPRTR_ID}
+         , #{AUTH_CLSF_CD}
+         , #{APLY_STR_DT}
+         , #{APLY_END_DT}
+         , #{REGPSN_ID}
+         , SYSDATE
+         , SYSDATE
+        )
+    </update>
+
+    <!-- ******************************************************************************
+        * DELETE : 변경제어항목그룹권한 삭제 * 작성자 : neonlee * 작성 일자 : 2022-05-09
+        ****************************************************************************** -->
+    <delete id="deleteChgCtlItmGrpAuthInfo" parameterType="HashMap">
+        /* com.ssp.bo.od.orderChange.deleteChgCtlItmGrpAuthInfo */
+        DELETE FROM SSP_APP.TB_DL_CHG_CTL_ITM_GRP_AUTH_INFO
+        WHERE CHG_ITM_GRP_CD = #{CHG_ITM_GRP_CD}
+        AND ITM_SEQ = #{ITM_SEQ}
+    </delete>
+
+    <!-- ******************************************************************************
+        * UPDATE : 변경제어항목그룹상세 수정 * 작성자 : neonlee * 작성 일자 : 2022-05-06
+         ****************************************************************************** -->
+    <update id="saveChgCtlItmGrpDtl" parameterType="HashMap">
+        /* com.ssp.bo.od.orderChange.saveChgCtlItmGrpDtl */
+        UPDATE SSP_APP.TB_DL_CHG_CTL_ITM_GRP_DTL
+            SET
+                COL_NM = #{COL_NM},    /* 컬럼명 */
+                COL_ALS = #{COL_ALS},    /* 컬럼별칭 */
+                SRCH_COND_CTS = #{SRCH_COND_CTS},    /* 검색조건내용 */
+                EXCE_CTS = #{EXCE_CTS},    /* 실행내용 */
+                INQ_IPT_SPR_CD =  #{INQ_IPT_SPR_CD},
+                RECALC_YN = #{RECALC_YN},
+                UPDPSN_ID = #{UPDPSN_ID},
+                UPD_DTM = SYSDATE
+        WHERE CHG_ITM_GRP_CD = #{CHG_ITM_GRP_CD}
+          AND CHG_SEQ = #{CHG_SEQ}
+    </update>
+
+    <!-- ******************************************************************************
+        * INSERT : 주문일괄변경 주문엑셀업로드마스터 추가 * 작성자 : neonlee * 작성 일자 : 2022-05-11
+         ****************************************************************************** -->
+    <insert id="insertOdrExcelUpldMst" parameterType="HashMap">
+        /* com.ssp.bo.od.orderChange.insertOdrExcelUpldMst */
+        INSERT INTO SSP_APP.TB_OD_ODR_EXCEL_UPLD_MST
+        (
+           CO_CD
+         , USR_ID
+         , UPLD_PGM_IDT_NM
+         , CHG_ITM_GRP_CD
+         , UPLD_CNT
+         , REGPSN_ID
+         , REG_DTM
+         , UPD_DTM
+        )
+        VALUES
+        (
+           #{CO_CD}
+         , #{USR_ID}
+         , #{UPLD_PGM_IDT_NM}
+         , #{CHG_ITM_GRP_CD}
+         , #{UPLD_CNT}
+         , #{REGPSN_ID}
+         , SYSDATE
+         , SYSDATE
+        )
+    </insert>
+
+    <!-- ******************************************************************************
+        * INSERT : 주문일괄변경 엑셀업로드내역 추가 * 작성자 : neonlee * 작성 일자 : 2022-05-11
+         ****************************************************************************** -->
+    <insert id="insertExcelUpldDtls" parameterType="HashMap">
+        /* com.ssp.bo.od.orderChange.insertExcelUpldDtls */
+        INSERT INTO SSP_APP.TB_OD_EXCEL_UPLD_DTLS
+        (
+           CO_CD
+         , USR_ID
+         , UPLD_PGM_IDT_NM
+         , EXCEL_ROW_NO
+         , CHG_ITM_GRP_CD
+         , EXCEL_DATA_VAL_36
+         , CHG_MEMO_CTS
+         , EXCEL_DATA_VAL_01
+         , EXCEL_DATA_VAL_02
+         , EXCEL_DATA_VAL_03
+         , EXCEL_DATA_VAL_04
+         , EXCEL_DATA_VAL_05
+         , REGPSN_ID
+         , REG_DTM
+        )
+        VALUES
+        (
+           #{CO_CD}
+         , #{USR_ID}
+         , #{UPLD_PGM_IDT_NM}
+         , #{EXCEL_ROW_NO}
+         , #{CHG_ITM_GRP_CD}
+         , #{ODR_NO_ITM_NO}
+         , #{CHG_MEMO_CTS}
+         , #{EXCEL_DATA_VAL_01}
+         , #{EXCEL_DATA_VAL_02}
+         , #{EXCEL_DATA_VAL_03}
+         , #{EXCEL_DATA_VAL_04}
+         , #{EXCEL_DATA_VAL_05}
+         , #{REGPSN_ID}
+         , SYSDATE
+        )
+    </insert>
+
+    <!-- ******************************************************************************
+        * SELECT : 주문일괄변경 업로드된 엑셀정보 조회 * 작성자 : neonlee * 작성 일자 : 2022-05-11
+         ****************************************************************************** -->
+    <select id="selectExcelUpldDtls" parameterType="HashMap" resultMap="getExceluploadResultTypeA">
+    /* com.ssp.bo.od.orderChange.selectExcelUpldDtls */
+            WITH BASE_T AS (
+            SELECT  /*+ materialize */
+                    T1.CO_CD,
+                    T1.ODR_NO,
+                    T1.ODR_ITM_NO,
+                    T1.EXCEL_ROW_NO,
+                    T1.USR_ID,
+                    T1.UPLD_PGM_IDT_NM,
+                    T1.CHG_MEMO_CTS,
+                    T1.CHG_ITM_GRP_CD,
+                    T1.BZPLC_ID,
+                    T1.OPR_UNIT_ID,
+                    T1.ERR_OCUR_CD,
+                    FN_OD_GET_EXCEL_ERRORS(T1.CO_CD, T1.USR_ID, T1.UPLD_PGM_IDT_NM, T1.EXCEL_ROW_NO)  ERR_OCUR_CTS,
+                    T1.EXCEL_DATA_VAL_01,
+                    T1.EXCEL_DATA_VAL_02,
+                    T1.EXCEL_DATA_VAL_03,
+                    T1.EXCEL_DATA_VAL_04,
+                    T1.EXCEL_DATA_VAL_05,
+                    T1.EXCEL_DATA_VAL_06,
+                    T1.EXCEL_DATA_VAL_07,
+                    T1.EXCEL_DATA_VAL_08,
+                    T1.EXCEL_DATA_VAL_09,
+                    T1.EXCEL_DATA_VAL_10,
+                    T1.EXCEL_DATA_VAL_11,
+                    T1.EXCEL_DATA_VAL_12,
+                    T1.EXCEL_DATA_VAL_13,
+                    T1.EXCEL_DATA_VAL_14,
+                    T1.EXCEL_DATA_VAL_15,
+                    T1.EXCEL_DATA_VAL_16,
+                    T1.EXCEL_DATA_VAL_17,
+                    T1.EXCEL_DATA_VAL_18,
+                    T1.EXCEL_DATA_VAL_19,
+                    T1.EXCEL_DATA_VAL_20,
+                    T1.EXCEL_DATA_VAL_21,
+                    T1.EXCEL_DATA_VAL_22,
+                    T1.EXCEL_DATA_VAL_23,
+                    T1.EXCEL_DATA_VAL_24,
+                    T1.EXCEL_DATA_VAL_25,
+                    T1.EXCEL_DATA_VAL_26,
+                    T1.EXCEL_DATA_VAL_27,
+                    T1.EXCEL_DATA_VAL_28,
+                    T1.EXCEL_DATA_VAL_29,
+                    T1.EXCEL_DATA_VAL_30,
+                    T1.EXCEL_DATA_VAL_31,
+                    T1.EXCEL_DATA_VAL_32,
+                    T1.EXCEL_DATA_VAL_33,
+                    T1.EXCEL_DATA_VAL_38  ODRPSN_ID,
+                    T1.EXCEL_DATA_VAL_39  OLD_ODR_STATS_CD,
+                    T1.EXCEL_DATA_VAL_40  OLD_SALE_ADJ_STATS_CD,
+                    T1.REGPSN_ID,
+                    T1.REG_DTM
+            FROM    TB_OD_EXCEL_UPLD_DTLS T1
+            WHERE   T1.CO_CD = #{CO_CD}
+              AND   T1.UPLD_PGM_IDT_NM = #{UPLD_PGM_IDT_NM}
+              AND   T1.USR_ID = #{USR_ID}
+            )
+            SELECT
+                    CASE WHEN T1.ERR_OCUR_CD = 'S' THEN '1' ELSE '0' END CHK,
+                    T1.CO_CD,
+                    T1.CHG_ITM_GRP_CD,
+                    T1.UPLD_PGM_IDT_NM,
+                    T1.EXCEL_ROW_NO,
+                    T1.USR_ID,
+                    T1.REGPSN_ID,
+                    T1.ERR_OCUR_CD,
+                    T1.ERR_OCUR_CTS,
+                    T1.ODR_NO || '-' || T1.ODR_ITM_NO  ODR_NO_ITM_NO,
+                    T1.ODR_NO,
+                    T1.ODR_ITM_NO,
+                    T1.CHG_MEMO_CTS,
+                    T3.SALE_ADJ_STATS_CD ||'-'|| T10.COM_DTL_CD_NM SALE_ADJ_STATS_CD,
+                    T3.ODR_STATS_CD ||'-'|| T7.COM_USR_DEFN_NM_2 ODR_STATS_CD,
+                    T1.BZPLC_ID,
+                    T1.OPR_UNIT_ID,
+                    T4.OPR_UNIT_NM,
+                    LTRIM(T3.PRD_ID,'0')  PRD_ID,
+                    T5.PRD_NM,
+                    T3.REPR_SPEC||T3.SSP_REPR_ATTR  REPR_SPEC,
+                    T1.EXCEL_DATA_VAL_01,
+                    T1.EXCEL_DATA_VAL_02,
+                    T1.EXCEL_DATA_VAL_03,
+                    T1.EXCEL_DATA_VAL_04,
+                    T1.EXCEL_DATA_VAL_05,
+                    T1.EXCEL_DATA_VAL_06,
+                    T1.EXCEL_DATA_VAL_07,
+                    T1.EXCEL_DATA_VAL_08,
+                    T1.EXCEL_DATA_VAL_09,
+                    T1.EXCEL_DATA_VAL_10,
+                    T1.EXCEL_DATA_VAL_11,
+                    T1.EXCEL_DATA_VAL_12,
+                    T1.EXCEL_DATA_VAL_13,
+                    T1.EXCEL_DATA_VAL_14,
+                    T1.EXCEL_DATA_VAL_15,
+                    T1.EXCEL_DATA_VAL_16,
+                    T1.EXCEL_DATA_VAL_17,
+                    T1.EXCEL_DATA_VAL_18,
+                    T1.EXCEL_DATA_VAL_19,
+                    T1.EXCEL_DATA_VAL_20,
+                    T1.EXCEL_DATA_VAL_21,
+                    T1.EXCEL_DATA_VAL_22,
+                    T1.EXCEL_DATA_VAL_23,
+                    T1.EXCEL_DATA_VAL_24,
+                    T1.EXCEL_DATA_VAL_25,
+                    T1.EXCEL_DATA_VAL_26,
+                    T1.EXCEL_DATA_VAL_27,
+                    T1.EXCEL_DATA_VAL_28,
+                    T1.EXCEL_DATA_VAL_29,
+                    T1.EXCEL_DATA_VAL_30,
+                    T1.EXCEL_DATA_VAL_31  MRO_RSLT_CD,
+                    T1.EXCEL_DATA_VAL_32  MRO_RSLT_MSG,
+                    T1.EXCEL_DATA_VAL_33  MRO_TRANS_DTM,
+                    T1.ODRPSN_ID,
+                    T1.OLD_ODR_STATS_CD,
+                    T1.OLD_SALE_ADJ_STATS_CD
+            FROM    BASE_T T1
+                    LEFT JOIN
+                    TB_OD_ODR_DTL T3
+                    ON  T3.CO_CD = T1.CO_CD
+                    AND T3.BZPLC_ID = T1.BZPLC_ID
+                    AND T3.ODR_NO = T1.ODR_NO
+                    AND T3.ODR_ITM_NO = T1.ODR_ITM_NO
+                    LEFT JOIN
+                    TB_CC_OPR_UNIT_BASIS T4
+                    ON  T4.CO_CD = T1.CO_CD
+                    AND T4.BZPLC_ID = T1.BZPLC_ID
+                    AND T4.OPR_UNIT_ID = T1.OPR_UNIT_ID
+                    LEFT JOIN
+                    TB_PR_PRD_INFO T5
+                    ON  T5.CO_CD = T3.CO_CD
+                    AND T5.PRD_ID = T3.PRD_ID
+                    LEFT JOIN
+                    TB_CO_COM_CD_DTL T7
+                    ON  T7.LANG_CD = 'KO'
+                    AND T7.COM_CLSF_CD = 'ODR_STATS_CD'
+                    AND T7.COM_DTL_CD = T3.ODR_STATS_CD
+                    LEFT JOIN
+                    TB_CO_COM_CD_DTL T10
+                    ON  T10.LANG_CD = 'KO'
+                    AND T10.COM_CLSF_CD = 'SALE_ADJ_STATS_CD'
+                    AND T10.COM_DTL_CD = T3.SALE_ADJ_STATS_CD
+            ORDER BY T1.EXCEL_ROW_NO
+    </select>
+
+    <!-- ******************************************************************************
+        * UPDATE : 주문일괄변경 콤보 선택 * 작성자 : neonlee * 작성 일자 : 2022-05-11
+         ****************************************************************************** -->
+    <select id="selectExcelUpldItmGrp" parameterType="HashMap" resultType="HashMap">
+    /* com.ssp.bo.od.orderChange.selectExcelUpldItmGrp */
+        SELECT
+                T1.CHG_ITM_GRP_CD,      /* 변경항목그룹코드 */
+                T1.CHG_ITM_GRP_CD ||' | '||T1.CHG_ITM_GRP_NM   CHG_ITM_GRP_NM,      /* 변경항목그룹명 */
+                T3.IS_SUPPER
+        FROM    TB_DL_CHG_CTL_ITM_GRP_CD    T1      /* 변경제어항목그룹코드 */
+                JOIN
+                (
+                 SELECT  T1.CHG_ITM_GRP_CD
+                 FROM    TB_DL_CHG_CTL_ITM_GRP_CD  T1
+                 WHERE   T1.USE_YN = 'Y'
+                   AND   NVL(T1.AUTH_APLY_YN,'N') = 'N'
+                 UNION
+                 SELECT  T2.CHG_ITM_GRP_CD
+                 FROM    TB_DL_CHG_CTL_ITM_GRP_CD  T1
+                         JOIN
+                         TB_DL_CHG_CTL_ITM_GRP_AUTH_INFO  T2
+                         ON  T2.CHG_ITM_GRP_CD = T1.CHG_ITM_GRP_CD
+                 WHERE   TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN T2.APLY_STR_DT AND T2.APLY_END_DT
+                   AND   T2.OPRTR_ID = #{OPRTR_ID}
+                   AND   T1.USE_YN = 'Y'
+                   AND   NVL(T1.AUTH_APLY_YN,'N') = 'Y'
+                )       T2
+                ON  T2.CHG_ITM_GRP_CD = T1.CHG_ITM_GRP_CD
+                CROSS JOIN
+                (
+                SELECT  CASE WHEN COUNT(*) != 0 THEN 'Y' ELSE 'N' END IS_SUPPER
+                FROM    TB_DL_CHG_CTL_ITM_GRP_AUTH_INFO
+                WHERE   CHG_ITM_GRP_CD = 'G54'
+                  AND   OPRTR_ID = #{OPRTR_ID}
+                )   T3
+        WHERE T1.CHG_ITM_GRP_CD NOT IN ('G11','G21','G22','G26','S17')
+        ORDER BY T1.CHG_ITM_GRP_CD
+    </select>
+
+    <!-- ******************************************************************************
+        * UPDATE : 주문일괄변경 팝업 콤보 선택 * 작성자 : neonlee * 작성 일자 : 2022-07-04
+         ****************************************************************************** -->
+    <select id="selectExcelUpldItmGrp2" parameterType="HashMap" resultType="HashMap">
+    /* com.ssp.bo.od.orderChange.selectExcelUpldItmGrp2 */
+        SELECT
+                T1.CHG_ITM_GRP_CD,      /* 변경항목그룹코드 */
+                T1.CHG_ITM_GRP_NM,      /* 변경항목그룹명 */
+                T3.IS_SUPPER
+        FROM    (
+                SELECT  ''    CHG_ITM_GRP_CD,      /* 변경항목그룹코드 */
+                        '전체' CHG_ITM_GRP_NM      /* 변경항목그룹명 */
+                FROM    DUAL
+                UNION ALL
+                SELECT
+                        T1.CHG_ITM_GRP_CD,      /* 변경항목그룹코드 */
+                        T1.CHG_ITM_GRP_CD ||' | '||T1.CHG_ITM_GRP_NM   CHG_ITM_GRP_NM      /* 변경항목그룹명 */
+                FROM    TB_DL_CHG_CTL_ITM_GRP_CD    T1      /* 변경제어항목그룹코드 */
+                        JOIN
+                        (
+                         SELECT  T1.CHG_ITM_GRP_CD
+                         FROM    TB_DL_CHG_CTL_ITM_GRP_CD  T1
+                         WHERE   T1.USE_YN = 'Y'
+                           AND   NVL(T1.AUTH_APLY_YN,'N') = 'N'
+                         UNION
+                         SELECT  T2.CHG_ITM_GRP_CD
+                         FROM    TB_DL_CHG_CTL_ITM_GRP_CD  T1
+                                 JOIN
+                                 TB_DL_CHG_CTL_ITM_GRP_AUTH_INFO  T2
+                                 ON  T2.CHG_ITM_GRP_CD = T1.CHG_ITM_GRP_CD
+                         WHERE   TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN T2.APLY_STR_DT AND T2.APLY_END_DT
+                           AND   T2.OPRTR_ID = #{OPRTR_ID}
+                           AND   T1.USE_YN = 'Y'
+                           AND   NVL(T1.AUTH_APLY_YN,'N') = 'Y'
+                        )       T2
+                        ON  T2.CHG_ITM_GRP_CD = T1.CHG_ITM_GRP_CD
+                WHERE T1.CHG_ITM_GRP_CD NOT IN ('G11','G21','G22','G26','S17')
+                )       T1
+                CROSS JOIN
+                (
+                SELECT  CASE WHEN COUNT(*) != 0 THEN 'Y' ELSE 'N' END IS_SUPPER
+                FROM    TB_DL_CHG_CTL_ITM_GRP_AUTH_INFO
+                WHERE   CHG_ITM_GRP_CD = 'G54'
+                  AND   OPRTR_ID = #{OPRTR_ID}
+                )   T3
+        ORDER BY T1.CHG_ITM_GRP_CD NULLS FIRST
+    </select>
+
+    <insert id="checkExcelUpldDtls" statementType="CALLABLE">
+        /* com.ssp.bo.od.orderChange.checkExcelUpldDtls */
+        { Call SP_OD_UPLOAD_ORDER_CHECK(
+                     #{RTN_CD,          mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴코드 */
+                   , #{RTN_MSG,        mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴메시지 */
+                   , #{REGPSN_ID,        mode=IN, jdbcType=VARCHAR}
+                   , #{CO_CD,          mode=IN, jdbcType=VARCHAR}
+                   , #{USR_ID,          mode=IN, jdbcType=VARCHAR}
+                   , #{UPLD_PGM_IDT_NM,       mode=IN, jdbcType=VARCHAR}
+                   , #{CHG_ITM_GRP_CD,         mode=IN, jdbcType=VARCHAR}
+        )}
+    </insert>
+
+    <update id="updateExcelUpldMst" parameterType="HashMap">
+        /* com.ssp.bo.od.orderChange.updateExcelUpldMst */
+        UPDATE  TB_OD_ODR_EXCEL_UPLD_MST    T1
+        SET     (UPLD_NRML_CNT,UPLD_ERR_CNT) =
+                (
+                SELECT  NVL(SUM(CASE WHEN T2.ERR_OCUR_CD = 'S' THEN 1 END),0),
+                        NVL(SUM(CASE WHEN T2.ERR_OCUR_CD = 'E' THEN 1 END),0)
+                FROM    TB_OD_EXCEL_UPLD_DTLS   T2
+                WHERE   T2.CO_CD = T1.CO_CD
+                  AND   T2.UPLD_PGM_IDT_NM = T1.UPLD_PGM_IDT_NM
+                  AND   T2.USR_ID = T1.USR_ID
+                )
+        WHERE   T1.UPLD_PGM_IDT_NM = #{UPLD_PGM_IDT_NM}
+          AND   T1.USR_ID = #{USR_ID}
+          AND   T1.CO_CD = #{CO_CD}
+    </update>
+
+    <update id="updateExcelUpldMstAfterSave" parameterType="HashMap">
+        /* com.ssp.bo.od.orderChange.updateExcelUpldMstAfterSave */
+        UPDATE  TB_OD_ODR_EXCEL_UPLD_MST    T1
+        SET      UPLD_STOR_YN = 'Y'
+                ,UPDPSN_ID = #{REGPSN_ID}
+                ,UPD_DTM = SYSDATE
+        WHERE   T1.UPLD_PGM_IDT_NM = #{UPLD_PGM_IDT_NM}
+          AND   T1.USR_ID = #{USR_ID}
+          AND   T1.CO_CD = #{CO_CD}
+    </update>
+
+    <update id="updateExcelUpldAfterSave" parameterType="HashMap">
+        /* com.ssp.bo.od.orderChange.updateExcelUpldAfterSave */
+        UPDATE  TB_OD_EXCEL_UPLD_DTLS    T1
+        SET      EXCEL_DATA_VAL_31 = #{RTN_CD}
+                ,EXCEL_DATA_VAL_32 = #{RTN_MSG}
+                ,EXCEL_DATA_VAL_33 = #{ODR_CHG_MNG_NO}
+        WHERE   T1.UPLD_PGM_IDT_NM = #{UPLD_PGM_IDT_NM}
+          AND   T1.USR_ID = #{USR_ID}
+          AND   T1.CO_CD = #{CO_CD}
+          AND   T1.EXCEL_ROW_NO = #{EXCEL_ROW_NO}
+    </update>
+
+</mapper>

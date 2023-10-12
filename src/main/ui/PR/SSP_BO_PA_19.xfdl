@@ -1,0 +1,265 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="dlvPopup" width="500" height="305" titletext="SSP속성 상세 팝업" onload="fn_onLoad" onkeyup="dlvPopup_onkeyup">
+    <Layouts>
+      <Layout height="305" mobileorientation="landscape" width="500" stepindex="">
+        <Button id="btn_cancel" taborder="0" text="닫기" left="157" width="100" height="32" onclick="btn_clear_onclick" bottom="20"/>
+        <Button id="btn_insert" taborder="1" text="저장" left="260" width="100" height="32" onclick="insert_btn_onclick" cssclass="btn_WF_select" bottom="20"/>
+        <Div id="divDetail" taborder="2" left="20" top="48" height="210" border="0px solid darkblue" text="" right="20">
+          <Layouts>
+            <Layout>
+              <Static id="Static29_00_00" taborder="6" left="125" top="6" height="32" cssclass="sta_cm_box02L_tdt" onclick="Div_top_info_Static29_00_00_onclick" right="0"/>
+              <Edit id="PRD_ATTR_CD" taborder="0" top="10" height="24" enable="true" enableevent="true" readonly="true" left="150" right="10"/>
+              <Static id="Static00" taborder="7" text="SSP속성코드" left="0" top="6" width="140" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static07" taborder="8" left="100" top="68" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static00_01" taborder="9" text="사용여부" left="0" top="68" width="140" height="32" cssclass="sta_cm_box01L"/>
+              <Radio id="USE_YN" taborder="2" top="72" width="246" height="24" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" rowcount="1" onitemchanged="Div01_o_onitemchanged" index="0" text="기본 배송지" value="Y" left="150">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">Y</Col>
+                      <Col id="datacolumn">사용</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">N</Col>
+                      <Col id="datacolumn">미사용</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Radio>
+              <Static id="Static29_00_00_00" taborder="10" left="125" top="37" height="32" cssclass="sta_cm_box02L" onclick="Div_top_info_Static29_00_00_onclick" right="0"/>
+              <Edit id="PRNM" taborder="1" top="41" height="24" enable="true" enableevent="true" left="150" maxlength="50" right="10"/>
+              <Static id="staPrnm" taborder="11" text="SSP속성명 " left="0" top="37" width="140" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static07_00" taborder="12" left="100" top="99" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static00_01_00" taborder="13" text="SSP속성사용 상품군수" left="0" top="99" width="140" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static07_00_00" taborder="14" left="100" top="130" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static00_01_00_00" taborder="15" text="등록일" left="0" top="130" width="140" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static07_00_00_00" taborder="16" left="100" top="161" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static00_01_00_00_00" taborder="17" text="최종수정일" left="0" top="161" width="140" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="PRD_CLCD_CNT" taborder="3" top="103" height="24" enable="false" enableevent="true" left="150" right="10"/>
+              <Edit id="REG_DTM" taborder="4" top="134" height="24" enable="false" enableevent="true" left="150" right="10"/>
+              <Edit id="UPD_DTM" taborder="5" top="165" height="24" enable="false" enableevent="true" left="150" right="10"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Static id="Static1" taborder="3" text="| SSP속성 상세" left="20" top="20" height="21" cssclass="sta_WF_title02" width="300"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP속성 상세 팝업
+CREATION DATES : 2021.01.19
+*******************************************************/
+// 공통형 스크립트 인클루드
+include "CO::coUtils.xjs";
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+//부모창에서 넘긴 파라미터
+this.attrCd = this.parent.attrCd;
+
+this.valiFormIds = [
+	   {"name" : "SSP속성명"     , "id" : "PRNM"}
+];
+
+this.coCd = this.parent.coCd;
+this.mallSprCd = "10";
+this.prNmCnt = 0;
+this.oldPrNm = null;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	this.fn_search();
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회
+this.fn_search = function()
+{	
+	var sSvcId = "selectProperty";    
+	var sUrl   = "/pr/ctg-mng/select-property.do";  
+	var inDs   = "ds_search=ds_search";
+	var outDs  = "ds_detail=ds_output";
+	var arg    = "";
+	
+	this.ds_search.setColumn(0, "CO_CD", this.coCd);
+	this.ds_search.setColumn(0, "PRD_ATTR_CD", this.attrCd);
+	this.ds_search.setColumn(0, "MALL_SPR_CD", this.mallSprCd);
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+// 속성명 중복여부 확인
+this.fn_prNm = function()
+{	
+	var sSvcId = "selectPropertyPrNm";    
+	var sUrl   = "/pr/ctg-mng/select-property-prnm.do";  
+	var inDs   = "ds_search=ds_search";
+	var outDs  = "";
+	var arg    = "";
+	
+	this.ds_search.setColumn(0, "CO_CD", this.coCd);
+	this.ds_search.setColumn(0, "MALL_SPR_CD", this.mallSprCd);
+	this.ds_search.setColumn(0, "PRNM", this.divDetail.form.PRNM.value);
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//계정 등록
+this.fn_regist = function()
+{	
+	if( !this.fn_dataCheck(this.ds_detail)  ) {
+		//alert("변경된 내용이 없습니다.");
+		this.alert(this.fn_getMessage("ERRP000129"));
+		return false;
+	} else {
+		var validation = this.fn_validationForm(this.divDetail, this.valiFormIds, this.ds_detail);
+		
+		if( validation ) {
+			var sSvcId = "saveProperty";
+			var sUrl   = "/pr/ctg-mng/save-property.do";
+			var inDs   = "ds_detail=ds_detail:U";
+			var outDs  = "";
+			var arg    = "";
+			
+			if( this.confirm(this.fn_getMessage("ERRP000006")) ) {
+				this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+			}
+		}
+	}
+};
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(errorCode != 0)
+	{
+		this.alert(errorMsg);
+		return;
+	}
+	
+	switch(svcID)
+	{
+	case "selectProperty":		
+		// SSP속성사용 상품군이 없는 경우에만 미사용' 선택이 가능
+		if(this.ds_detail.getColumn(0,"PRD_CLCD_CNT") > 0){
+			this.divDetail.form.USE_YN.set_enable(false);
+		}
+		
+		this.oldPrNm = this.ds_detail.getColumn(0,"PRNM");
+		break;
+	
+	case "selectPropertyPrNm" :
+		// 속성명 중복여부 확인
+		if(this.prNmCnt > 0 ){
+			//this.alert("입력한 속성명은 이미 존재하는 속성명입니다.");
+			this.alert(this.fn_getMessage("ERRP000274"));
+			this.divDetail.form.PRNM.setFocus();
+			return false;
+		}else{
+			this.fn_regist();		
+		}
+		break;
+		
+	case "saveProperty":
+			//this.alert("수정 되었습니다.");
+			this.close(true);
+		break;
+	default: 
+		break;
+	}
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+
+	//static 필수값 표시 초기 설정
+	this.divDetail.form.staPrnm.uEssentiel = "true";
+	
+}
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+//등록 버튼
+this.insert_btn_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.oldPrNm != this.ds_detail.getColumn(0,"PRNM")){
+		this.fn_prNm();
+	}else{
+		this.fn_regist();
+	}
+};
+//취소 버튼
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close(false);
+};
+
+// 단축키
+this.dlvPopup_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	// CTRL + s
+	if (e.keycode == 83 && e.ctrlkey == true) {
+		// 저장
+		this.insert_btn_onclick();
+	}
+	
+	// ESC
+	if (e.keycode == 27) {
+		// 팝업 화면 닫기
+		this.btn_clear_onclick();
+	}
+};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ATTR_CD" type="STRING" size="256"/>
+          <Column id="MALL_SPR_CD" type="STRING" size="256"/>
+          <Column id="PRNM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_detail">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ATTR_CD" type="STRING" size="256"/>
+          <Column id="PRNM" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+          <Column id="ATTR_CNT" type="STRING" size="256"/>
+          <Column id="PRD_CLCD_CNT" type="INT" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item6" compid="divDetail.form.PRD_ATTR_CD" propid="value" datasetid="ds_detail" columnid="PRD_ATTR_CD"/>
+      <BindItem id="item7" compid="divDetail.form.USE_YN" propid="value" datasetid="ds_detail" columnid="USE_YN"/>
+      <BindItem id="item8" compid="divDetail.form.PRNM" propid="value" datasetid="ds_detail" columnid="PRNM"/>
+      <BindItem id="item0" compid="divDetail.form.PRD_CLCD_CNT" propid="value" datasetid="ds_detail" columnid="PRD_CLCD_CNT"/>
+      <BindItem id="item4" compid="divDetail.form.REG_DTM" propid="value" datasetid="ds_detail" columnid="REG_DTM"/>
+      <BindItem id="item5" compid="divDetail.form.UPD_DTM" propid="value" datasetid="ds_detail" columnid="UPD_DTM"/>
+    </Bind>
+  </Form>
+</FDL>

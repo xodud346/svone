@@ -1,0 +1,1301 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form" width="1244" height="950" titletext="R&amp;D 화학물질정보 상세" onclose="form_onclose" onload="form_onload" background="black">
+    <Layouts>
+      <Layout description="R&amp;D 화학물질정보 상세" height="950" mobileorientation="landscape" width="1244">
+        <Button id="btn_close" taborder="24" top="0" text="X" visible="true" onclick="btn_close_onclick" background="black" cursor="pointer" height="20" width="20" right="0"/>
+        <Static id="sta_bg" taborder="25" left="0" top="22" right="0" bottom="0" background="white" text=""/>
+        <Static id="Static07_00" taborder="18" left="20" top="147" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+        <Static id="Static07" taborder="17" left="20" top="116" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+        <Static id="Static03" taborder="16" left="20" top="85" height="32" cssclass="sta_cm_box02L_tdt" right="20" text=""/>
+        <Static id="stc_cprtcpId" taborder="13" text="협력사" left="20" top="85" height="32" cssclass="sta_cm_box01L_tdt" textAlign="left" width="130" uEssentiel="true"/>
+        <Static id="stc_09_00" taborder="14" left="20" top="328" height="22" text="화학물질정보" width="330" cssclass="sta_WF_title02"/>
+        <Static id="Static60_00" taborder="15" text="MSDS정보" left="20" top="61" height="16" cssclass="sta_WF_title02" width="155"/>
+        <Static id="stc_09_00_01" taborder="19" left="20" top="609" height="22" text="추가규제정보 (&lt;fc v='red'&gt;&lt;b v='true'&gt;*&lt;/b&gt;&lt;/fc&gt;는 체크 시 취급불가)" width="330" cssclass="sta_WF_title02" usedecorate="true"/>
+        <Button id="btn_save" taborder="11" text="저장" left="617" top="897" width="67" height="24" cssclass="btn_WF_Crud" enable="false" onclick="btn_save_onclick"/>
+        <Button id="btn_exit" taborder="10" text="취소" top="897" height="24" right="631" onclick="btn_exit_onclick" width="68"/>
+        <Edit id="edt_cprtcpId" taborder="0" left="156" top="89" height="24" enable="true" width="129" autoselect="true" readonly="true"/>
+        <Static id="Static01_00_01_00_01" taborder="20" left="0" top="304" width="100.00%" height="20" color="#000000" background="aqua" visible="false" text="20" textAlign="center"/>
+        <Grid id="grd_chmMtlList" taborder="6" left="20" top="364" height="199" cssclass="grd_WF_list" autofittype="col" autoenter="select" right="20" nodatatext="화학물질 정보가 존재하지 않습니다." binddataset="ds_chmMtlList">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="20"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell rowspan="2"/>
+                <Cell col="1" rowspan="2" text="화학물질명"/>
+                <Cell col="2" rowspan="2" text="CAS No."/>
+                <Cell col="3" colspan="5" text="유해화학물질구분"/>
+                <Cell col="8" colspan="3" text="함량"/>
+                <Cell row="1" col="3" text="유독물질"/>
+                <Cell row="1" col="4" text="제한물질"/>
+                <Cell row="1" col="5" text="사고대비물질"/>
+                <Cell row="1" col="6" text="금지물질"/>
+                <Cell row="1" col="7" text="허가물질"/>
+                <Cell row="1" col="8" text="FROM"/>
+                <Cell row="1" col="9" text="TO"/>
+                <Cell row="1" col="10" text="AVG"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox" text="bind:CHK"/>
+                <Cell col="1" text="bind:CHM_MTL_NM" textAlign="left"/>
+                <Cell col="2" text="bind:CAS_NO" displaytype="expr:dataset.getRowType(currow) == &quot;2&quot; ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:dataset.getRowType(currow) == &quot;2&quot; ? &quot;normal&quot; : &quot;none&quot;" editautoselect="true"/>
+                <Cell col="3" text="bind:TOXIC_MTL1"/>
+                <Cell col="4" text="bind:LMT_MTL1"/>
+                <Cell col="5" text="bind:ACCD_PSB_MTL1"/>
+                <Cell col="6" text="bind:PHBT_MTL1"/>
+                <Cell col="7" text="bind:PERMIT_MTL1"/>
+                <Cell col="8" text="bind:MIN_CONTENT" textAlign="right" displaytype="maskeditcontrol" edittype="mask" editautoselect="true" maskeditformat="!###,###,###,###,##0.###" maskeditautoselect="true" maskeditlimitbymask="both"/>
+                <Cell col="9" text="bind:MAX_CONTENT" textAlign="right" displaytype="maskeditcontrol" edittype="mask" editautoselect="true" maskeditformat="!###,###,###,###,##0.###" maskeditautoselect="true" maskeditlimitbymask="both"/>
+                <Cell col="10" text="bind:AVG_CONTENT" textAlign="right"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="Static01_00_01_01_00" taborder="21" left="0" top="353" width="100.00%" height="10" color="#000000" background="aqua" visible="false" text="10" textAlign="center"/>
+        <Button id="btn_del" taborder="5" text="- 삭제" top="327" height="24" cssclass="btn_WF_Crud" right="20" width="68" onclick="btn_del_onclick"/>
+        <Button id="btn_add" taborder="4" text="+ 추가" top="327" width="67" height="24" right="btn_del:4" onclick="btn_add_onclick"/>
+        <Static id="Static01_00_01_00_01_00" taborder="22" left="0" top="599" width="100.00%" height="10" color="#000000" background="aqua" visible="false" text="20" textAlign="center"/>
+        <Static id="Static01_00_01_01_00_00" taborder="23" left="0" top="631" width="100.00%" height="10" color="#000000" background="aqua" visible="false" text="10" textAlign="center"/>
+        <Static id="Static03_00" taborder="26" left="20" top="845" height="32" cssclass="sta_cm_box02L_tdt" right="20" text=""/>
+        <Static id="stc_fileName" taborder="27" text="시약정보요약서" left="20" top="845" height="32" cssclass="sta_cm_box01L_tdt" textAlign="left" width="130"/>
+        <Grid id="grd_chmMtlAddList" taborder="12" left="20" top="641" height="194" cssclass="grd_WF_list" autofittype="col" autoenter="select" right="20" nodatatext="추가규제 정보가 존재하지 않습니다." binddataset="ds_chmMtlAddList">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="15"/>
+                <Column size="150"/>
+                <Column size="15"/>
+                <Column size="150"/>
+                <Column size="15"/>
+                <Column size="150"/>
+                <Column size="15"/>
+                <Column size="150"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell colspan="2" text="화평/화관법"/>
+                <Cell col="2" colspan="2" text="산업안전보건법"/>
+                <Cell col="4" colspan="2" text="마약류관리법"/>
+                <Cell col="6" colspan="2" text="위험물안전관리법"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:A_LAW2_VAL" displaytype="expr:A_LAW2_NM != null ? &quot;checkboxcontrol&quot; : &quot;none&quot;" border="1px solid #d4d4d4,0px solid #d4d4d4,1px solid #d4d4d4,1px solid #d4d4d4"/>
+                <Cell col="1" text="bind:A_LAW2_NM" textAlign="left" displaytype="decoratetext"/>
+                <Cell col="2" text="bind:B_LAW2_VAL" displaytype="expr:B_LAW2_NM != null ? &quot;checkboxcontrol&quot; : &quot;none&quot;" border="1px solid #d4d4d4,0px solid #d4d4d4,1px solid #d4d4d4,1px solid #d4d4d4"/>
+                <Cell col="3" text="bind:B_LAW2_NM" textAlign="left" displaytype="decoratetext"/>
+                <Cell col="4" text="bind:C_LAW2_VAL" displaytype="expr:C_LAW2_NM != null ? &quot;checkboxcontrol&quot; : &quot;none&quot;" border="1px solid #d4d4d4,0px solid #d4d4d4,1px solid #d4d4d4,1px solid #d4d4d4"/>
+                <Cell col="5" text="bind:C_LAW2_NM" textAlign="left" displaytype="decoratetext"/>
+                <Cell col="6" text="bind:D_LAW2_VAL" displaytype="expr:D_LAW2_NM != null ? &quot;checkboxcontrol&quot; : &quot;none&quot;" border="1px solid #d4d4d4,0px solid #d4d4d4,1px solid #d4d4d4,1px solid #d4d4d4"/>
+                <Cell col="7" text="bind:D_LAW2_NM" textAlign="left" displaytype="decoratetext"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="Static01_00_01_00_01_00_00" taborder="28" left="0" top="835" width="100.00%" height="10" color="#000000" background="aqua" visible="false" text="20" textAlign="center"/>
+        <Button id="btn_rgntInfo" taborder="9" text="시약정보 URL" top="849" height="24" cssclass="btn_WF_Crud" right="611" width="86" onclick="btn_rgntInfo_onclick" enable="false"/>
+        <Edit id="edt_fileName2" taborder="7" left="153" top="849" height="24" text="파일명" width="315" autoselect="true" readonly="true" onchanged="edt_fileName_onchanged" oneditclick="edt_fileName_oneditclick" color="royalblue" textDecoration="underline"/>
+        <Static id="Static01_00_01_00_01_00_00_00" taborder="29" left="0" top="877" width="100.00%" height="20" color="#000000" background="aqua" visible="false" text="20" textAlign="center"/>
+        <Button id="btn_regulation" taborder="30" text="규제정보 확인" top="574" height="24" cssclass="btn_WF_Crud" right="20" width="100" onclick="btn_regulation_onclick"/>
+        <Static id="Static01_00_01_01_00_01" taborder="31" left="0" top="563" width="100.00%" height="10" color="#000000" background="aqua" visible="false" text="10" textAlign="center"/>
+        <Button id="btn_file2" taborder="8" text="파일 등록" left="475" top="849" height="24" right="btn_rgntInfo:4" onclick="btn_file_onclick"/>
+        <Static id="stc_title" taborder="32" left="20" top="3" height="16" cssclass="sta_WF_title02" width="155" color="white"/>
+        <FileUpload id="FileUploadSingle" taborder="33" left="720" top="852" width="290" height="19" visible="false" onitemchanged="FileUploadSingle_onitemchanged" onsuccess="FileUploadSingle_onsuccess"/>
+        <FileDownload id="FileDownload" taborder="34" text="FileDownload" left="1014" top="852" width="98" height="19" visible="false" onerror="FileDownload_onerror" onsuccess="FileDownload_onsuccess"/>
+        <Static id="Static60_00_02" taborder="35" text="화학물질정보 상세" left="20" top="20" height="36" cssclass="sta_WF_title04" width="300"/>
+        <Static id="Static01_00_01_01_00_02" taborder="36" left="0" top="47" width="100.00%" height="10" color="#000000" background="aqua" visible="false" text="10" textAlign="center"/>
+        <Static id="Static01_00_01_00_01_01" taborder="37" left="0" top="221" width="100.00%" height="20" color="#000000" background="aqua" visible="false" text="20" textAlign="center"/>
+        <Static id="Static03_01" taborder="38" left="20" top="270" height="32" cssclass="sta_cm_box02L_tdt" right="20" text=""/>
+        <Static id="stc_prdNm00" taborder="39" text="성상" left="625" top="270" height="32" cssclass="sta_cm_box01L_tdt" textAlign="left" width="130" uEssentiel="true"/>
+        <Static id="stc_mtlGravity" taborder="40" text="물질비중" left="20" top="270" height="32" cssclass="sta_cm_box01L_tdt" textAlign="left" width="130" uEssentiel="true"/>
+        <Static id="Static60_00_00" taborder="41" text="MSDS정보" left="20" top="246" height="16" cssclass="sta_WF_title02" width="155"/>
+        <MaskEdit id="msk_mtlGravity" taborder="2" left="156" top="274" height="24" autoselect="true" right="837" readonly="false" format="###.####" limitbymask="both"/>
+        <Combo id="cbo_phaseSprCd" taborder="3" text="Combo00" left="766" top="274" width="124" height="24" innerdataset="ds_phaseSprCdCombo" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" autoselect="true"/>
+        <Edit id="edt_cprtcpKorNm" taborder="1" left="290" top="89" height="24" enable="true" width="319" autoselect="true" readonly="true"/>
+        <Static id="Static07_00_00" taborder="42" left="20" top="178" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+        <Static id="stc_fileAtflNm" taborder="43" text="MSDS 파일" left="20" top="116" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130"/>
+        <Edit id="edt_fileName1" taborder="44" left="156" top="120" height="24" width="244" autoselect="true" readonly="true" onchanged="edt_fileName_onchanged" oneditclick="edt_fileName_oneditclick" color="royalblue" textDecoration="underline"/>
+        <Button id="btn_file1" taborder="45" text="파일 등록" left="408" top="120" width="67" height="24" onclick="btn_file_onclick"/>
+        <Static id="stc_rndMsdsUrl" taborder="46" text="MSDS 경로" left="20" top="178" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130"/>
+        <Edit id="edt_rndMsdsUrl" taborder="47" left="156" top="182" height="24" width="319" autoselect="true" maxlength="10" limitbymask="both"/>
+        <Static id="stc_msdsFnlChgDtm" taborder="48" text="MSDS 최종개정일 &lt;fc v='red'&gt;&lt;b v='true'&gt;* &lt;/b&gt;&lt;/fc&gt;" left="20" top="147" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130" usedecorate="true"/>
+        <Calendar id="cal_msdsFnlChgDtm" taborder="49" left="156" top="151" height="24" autoselect="true" right="964" readonly="false" dateformat="yyyy-MM-dd"/>
+        <Edit id="edt_fileName3" taborder="50" left="616" top="120" height="24" enable="true" width="220" readonly="true" oneditclick="edt_fileName_oneditclick" textDecoration="underline" color="royalblue" autoselect="true" onchanged="edt_fileName_onchanged"/>
+        <Button id="btn_file3" taborder="51" text="파일 등록" left="840" top="121" width="67" height="23" onclick="btn_file_onclick"/>
+        <Calendar id="cal_locFnlChgDt" taborder="52" left="615" top="151" width="105" height="24" dateformat="yyyy-MM-dd"/>
+        <Calendar id="cal_svronCertFnlChgDt" taborder="53" left="1049" top="151" width="104" height="24" dateformat="yyyy-MM-dd"/>
+        <Edit id="edt_locUpdDt" taborder="54" left="615" top="182" width="140" height="24" readonly="true" value="2023-01-01 00:00:00" text="2023-01-01 00:00:00"/>
+        <Edit id="edt_svronCertUpdDt" taborder="55" left="1049" top="182" width="140" height="24" readonly="true"/>
+        <Radio id="rdo_svronCertYn" taborder="56" left="1049" top="122" width="144" height="22" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" direction="vertical" columncount="0" initvalueid="N" text="미사용" index="1" onitemchanged="rdo_svronCertYn_onitemchanged">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">Y</Col>
+                <Col id="datacolumn">사용</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">N</Col>
+                <Col id="datacolumn">미사용</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Radio>
+        <Static id="stc_ltterFile" taborder="57" text="레터파일" left="479" top="116" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130"/>
+        <Static id="stc_svronCertYn" taborder="58" text="자체증빙여부" left="913" top="116" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130"/>
+        <Static id="stc_lttrFnlChgDt" taborder="59" text="레터파일 최종개정일" left="479" top="147" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130"/>
+        <Static id="stc_svronCertFnlChgDt" taborder="60" text="자체증빙일" left="913" top="147" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130"/>
+        <Static id="stc_svronCertUpdDtPsn" taborder="61" text="자체증빙 수정일시" left="913" top="178" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130"/>
+        <Static id="stc_ltterUpdDtPsn" taborder="62" text="레터파일 수정일시" left="479" top="178" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130"/>
+        <Static id="Static07_00_00_01_00_00_00_00_00" taborder="63" left="480" top="209" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+        <Edit id="edt_svronCertUpdpsn" taborder="64" left="1049" top="213" width="170" height="24" readonly="true"/>
+        <Static id="stc_svronCertUpdDtPsn00" taborder="65" text="자체증빙 수정자" left="913" top="209" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130"/>
+        <Static id="stc_ltterUpdDtPsn00" taborder="66" text="레터파일 수정자" left="479" top="209" height="32" cssclass="sta_cm_box01L" textAlign="left" width="130"/>
+        <Edit id="edt_locUpdpsn" taborder="67" left="615" top="213" width="170" height="24" readonly="true"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset enableevent="true" id="ds_master" preload="true" updatecontrol="true" useclientlayout="false" oncolumnchanged="ds_master_oncolumnchanged">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="32"/>
+          <Column id="CONT_CHG_DGRCNT" type="BIGDECIMAL" size="16"/>
+          <Column id="FILE1_ATFL_NM" type="STRING" size="256"/>
+          <Column id="CPRTCP_KOR_NM" type="STRING" size="32"/>
+          <Column id="MSDS_FNL_CHG_DTM" type="STRING" size="256"/>
+          <Column id="CONT_NO" type="STRING" size="32"/>
+          <Column id="CPRTCP_ID" type="STRING" size="32"/>
+          <Column id="FILE1_ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="FILE2_ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="PHASE_SPR_NM" type="STRING" size="256"/>
+          <Column id="PHASE_SPR_CD" type="STRING" size="256"/>
+          <Column id="MTL_GRAVITY" type="STRING" size="256"/>
+          <Column id="FILE2_ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="DOC_ID1" type="STRING" size="256"/>
+          <Column id="RND_MSDS_URL" type="STRING" size="256"/>
+          <Column id="FILE2_ATFL_NM" type="STRING" size="256"/>
+          <Column id="FILE1_ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="32"/>
+          <Column id="DOC_ID2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search" firefirstcount="0" firenextcount="0" useclientlayout="false" updatecontrol="true" enableevent="true" loadkeymode="keep" loadfiltermode="keep" reversesubsum="false">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="CPRTCP_ID" type="STRING" size="256"/>
+          <Column id="CUST_PREQNO" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CO_CD"/>
+            <Col id="CPRTCP_ID"/>
+            <Col id="CUST_PREQNO"/>
+            <Col id="PRD_ID"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_phaseSprCdCombo" firefirstcount="0" firenextcount="0" useclientlayout="false" updatecontrol="true" enableevent="true" loadkeymode="keep" loadfiltermode="keep" reversesubsum="false">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="32"/>
+          <Column id="COM_USR_DEFN_NM_2" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="32"/>
+          <Column id="COM_USR_DEFN_NM_1" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="COM_CLSF_CD" type="STRING" size="256"/>
+          <Column id="SRT_SO" type="BIGDECIMAL" size="16"/>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_4" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_3" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_5" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_chmMtlList" useclientlayout="true" oncolumnchanged="ds_chmMtlList_oncolumnchanged">
+        <ColumnInfo>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="CHM_MTL_NM" type="STRING" size="256"/>
+          <Column id="CAS_NO" type="STRING" size="256"/>
+          <Column id="TOXIC_MTL1" type="STRING" size="256"/>
+          <Column id="LMT_MTL1" type="STRING" size="256"/>
+          <Column id="ACCD_PSB_MTL1" type="STRING" size="256"/>
+          <Column id="PHBT_MTL1" type="STRING" size="256"/>
+          <Column id="PERMIT_MTL1" type="STRING" size="256"/>
+          <Column id="MIN_CONTENT" type="STRING" size="256"/>
+          <Column id="MAX_CONTENT" type="STRING" size="256"/>
+          <Column id="AVG_CONTENT" type="STRING" size="256"/>
+          <Column id="CAS_RN" type="STRING" size="256"/>
+          <Column id="CAS_RN_DUP_ORDER" type="STRING" size="256"/>
+          <Column id="ENG_CHM_MTL_NM" type="STRING" size="256"/>
+          <Column id="CHM_MTL_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_chmMtlAddList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="PK_ORDER" type="STRING" size="256"/>
+          <Column id="LAW2_ORDER" type="STRING" size="256"/>
+          <Column id="A_LAW2_VAL" type="STRING" size="256"/>
+          <Column id="A_LAW2_NM" type="STRING" size="256"/>
+          <Column id="B_LAW2_VAL" type="STRING" size="256"/>
+          <Column id="B_LAW2_NM" type="STRING" size="256"/>
+          <Column id="C_LAW2_VAL" type="STRING" size="256"/>
+          <Column id="C_LAW2_NM" type="STRING" size="256"/>
+          <Column id="D_LAW2_VAL" type="STRING" size="256"/>
+          <Column id="D_LAW2_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_saveFileList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CHK" type="string" size="32"/>
+          <Column id="DOC_REG_ID" type="string" size="32"/>
+          <Column id="DOC_REG_SEQ" type="string" size="32"/>
+          <Column id="ATFL_NM" type="string" size="32"/>
+          <Column id="ORI_ATFL_NM" type="string" size="32"/>
+          <Column id="ATFL_LEN" type="bigdecimal" size="8"/>
+          <Column id="ATFL_STOR_PATH" type="string" size="32"/>
+          <Column id="FILE_TYPE" type="string" size="32"/>
+          <Column id="ETC_FDS_1" type="string" size="32"/>
+          <Column id="ETC_FDS_2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_uploadResult" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CHK" type="string" size="32"/>
+          <Column id="DOC_REG_ID" type="string" size="32"/>
+          <Column id="DOC_REG_SEQ" type="string" size="32"/>
+          <Column id="ATFL_NM" type="string" size="32"/>
+          <Column id="ORI_ATFL_NM" type="string" size="32"/>
+          <Column id="ATFL_LEN" type="bigdecimal" size="8"/>
+          <Column id="ATFL_STOR_PATH" type="string" size="32"/>
+          <Column id="FILE_TYPE" type="string" size="32"/>
+          <Column id="ETC_FDS_1" type="string" size="32"/>
+          <Column id="ETC_FDS_2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_downLoad" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CHK" type="string" size="32"/>
+          <Column id="DOC_REG_ID" type="string" size="32"/>
+          <Column id="DOC_REG_SEQ" type="string" size="32"/>
+          <Column id="ATFL_NM" type="string" size="32"/>
+          <Column id="ORI_ATFL_NM" type="string" size="32"/>
+          <Column id="ATFL_LEN" type="bigdecimal" size="8"/>
+          <Column id="ATFL_STOR_PATH" type="string" size="32"/>
+          <Column id="FILE_TYPE" type="string" size="32"/>
+          <Column id="ETC_FDS_1" type="string" size="32"/>
+          <Column id="ETC_FDS_2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_chmMtlListTemp" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="CHM_MTL_NM" type="STRING" size="256"/>
+          <Column id="CAS_NO" type="STRING" size="256"/>
+          <Column id="TOXIC_MTL1" type="STRING" size="256"/>
+          <Column id="LMT_MTL1" type="STRING" size="256"/>
+          <Column id="ACCD_PSB_MTL1" type="STRING" size="256"/>
+          <Column id="PHBT_MTL1" type="STRING" size="256"/>
+          <Column id="PERMIT_MTL1" type="STRING" size="256"/>
+          <Column id="MIN_CONTENT" type="STRING" size="256"/>
+          <Column id="MAX_CONTENT" type="STRING" size="256"/>
+          <Column id="AVG_CONTENT" type="STRING" size="256"/>
+          <Column id="CAS_RN" type="STRING" size="256"/>
+          <Column id="CAS_RN_DUP_ORDER" type="STRING" size="256"/>
+          <Column id="CHM_MTL_ID" type="STRING" size="256"/>
+          <Column id="ENG_CHM_MTL_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_chmMtlAddListTemp" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="PK_ORDER" type="STRING" size="256"/>
+          <Column id="LAW2_ORDER" type="STRING" size="256"/>
+          <Column id="A_LAW2_VAL" type="STRING" size="256"/>
+          <Column id="A_LAW2_NM" type="STRING" size="256"/>
+          <Column id="B_LAW2_VAL" type="STRING" size="256"/>
+          <Column id="B_LAW2_NM" type="STRING" size="256"/>
+          <Column id="C_LAW2_VAL" type="STRING" size="256"/>
+          <Column id="C_LAW2_NM" type="STRING" size="256"/>
+          <Column id="D_LAW2_VAL" type="STRING" size="256"/>
+          <Column id="D_LAW2_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="edt_cprtcpId" propid="value" datasetid="ds_master" columnid="CPRTCP_ID"/>
+      <BindItem id="item1" compid="edt_cprtcpKorNm" propid="value" datasetid="ds_master" columnid="CPRTCP_KOR_NM"/>
+      <BindItem id="item3" compid="msk_mtlGravity" propid="value" datasetid="ds_master" columnid="MTL_GRAVITY"/>
+      <BindItem id="item5" compid="cbo_phaseSprCd" propid="value" datasetid="ds_master" columnid="PHASE_SPR_CD"/>
+      <BindItem id="item4" compid="edt_rndMsdsUrl" propid="value" datasetid="ds_master" columnid="RND_MSDS_URL"/>
+      <BindItem id="item2" compid="cal_msdsFnlChgDtm" propid="value" datasetid="ds_master" columnid="MSDS_FNL_CHG_DTM"/>
+      <BindItem id="item6" compid="edt_fileName3" propid="value" datasetid="ds_master" columnid="LOC_ATTC_FILENM"/>
+      <BindItem id="item7" compid="cal_locFnlChgDt" propid="value" datasetid="ds_master" columnid="LOC_ATFL_FNL_CHG_DT"/>
+      <BindItem id="item8" compid="cal_svronCertFnlChgDt" propid="value" datasetid="ds_master" columnid="SRVON_CERT_FNL_CHG_DT"/>
+      <BindItem id="item9" compid="edt_locUpdDt" propid="value" datasetid="ds_master" columnid="LOC_ATFL_UPD_DATE"/>
+      <BindItem id="item10" compid="edt_svronCertUpdDt" propid="value" datasetid="ds_master" columnid="SRVON_CERT_UPD_DATE"/>
+      <BindItem id="item11" compid="rdo_svronCertYn" propid="value" datasetid="ds_master" columnid="SRVON_CERT_YN"/>
+      <BindItem id="item12" compid="edt_svronCertUpdpsn" propid="value" datasetid="ds_master" columnid="SRVON_CERT_UPDPSN_IDNM"/>
+      <BindItem id="item13" compid="edt_locUpdpsn" propid="value" datasetid="ds_master" columnid="LOC_ATTC_FILE_UPDPSN_IDNM"/>
+      <BindItem id="item14" compid="edt_fileName3" propid="tooltiptext" datasetid="ds_master" columnid="LOC_ATTC_FILENM"/>
+    </Bind>
+    <Script type="xscript5.1"><![CDATA[/**********************************************************************
+* FormID(화면   ID명): SSP_BO_RD_45.xfdl(화학물질정보등록수정팝업)
+* 작 성         일 명: 오왕표
+* 작 성         일 자: 2022/05/16
+* 변 경         일 자:
+* 변 경         자 명:
+* 변경 및 수정 로그 : 일자별로 변경자 및 변경사항을 간략히 기술
+*/
+/**********************************************************************
+        01. 전처리 공통 함수 선언
+***********************************************************************/
+include "RD::rdMain.xjs";
+/**********************************************************************
+        02. 폼 변수 정의
+***********************************************************************/
+this.fv_oApp        = nexacro.getApplication();			 // application object
+this.lv_coCd        = this.gfn_nvl(this.fv_oApp.gds_userInfo.getColumn(0,"CO_CD"),"") == "" ? "1000" : this.gfn_nvl(this.fv_oApp.gds_userInfo.getColumn(0,"CO_CD"),"");
+this.lv_orgCd       = this.gfn_nvl(this.fv_oApp.gds_userInfo.getColumn(0,"ORG_CD"),"");
+this.lv_btnChkYn    = "";
+this.sOptinoArg1    = "";
+this.sOptinoArg2    = "";
+this.sParamArg1     = "";
+this.sParamArg2     = "";
+this.sParamArg3     = "";
+this.sParamArg4     = "";
+
+this.imageViewerId  = "";								 // 이미지파일 뷰어 표시를 위한 변수 값
+this.fileIndex      = "";								 // 파일 index 값을 저장을 위한 변수 값
+this.lv_casNo       = "";
+this.lvchkColidDs   = "CAS_NO$MIN_CONTENT$MAX_CONTENT";                        // 필수 입력사항 칼럼ID  예)  "commSmcd$commName"
+this.lvchkColNameDs = "CAS_NO$함량 FROM$함량 TO";
+
+this.atflTpCd = ['','95', 'S2', '9A'];  // 95: MSDS, S2: 시양정보요약서, 9A: LOC
+this.upldAuthExts = [
+	  'PPTX', 'PPT', 'DOCX', 'DOC', 'XLSX', 'XLS', 'PDF', 'HWP'  // Office
+	, 'GIF', 'PNG' , 'JPG', 'JPEG'                               // Image
+	, 'TEXT', 'TXT', 'ZIP'                                       // Normal
+];
+/**********************************************************************
+        03. 폼 로드 및 닫을때(폼이 포커스 갈때)
+***********************************************************************/
+/**
+ * 기능 : 폼 로드 완료후 초기값 Setting
+ */
+this.form_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+    // 폼에 공통으로 로드시 사용하는 함수.
+    this.gfn_formOnLoad(this);
+
+    // 사용자 화면  초기화 함수
+    this.fn_formInit();
+};
+
+/**
+ * 기능 : 폼언 로드(닫기전 셋팅)  Setting
+ */
+this.form_onclose = function(obj:nexacro.Form,e:nexacro.CloseEventInfo)
+{
+
+};
+/**********************************************************************
+        04. 공통 코드 및 콤보 데이타 조회
+***********************************************************************/
+this.fn_formInit = function()
+{
+	/******************* 기본셋팅 *********************/
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sOp01))
+	{
+		 this.sOptinoArg1 = this.getOwnerFrame().pv_sOp01;        
+	}
+
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sOp02))
+	{
+		 this.sOptinoArg2 = this.getOwnerFrame().pv_sOp02;        
+	}
+
+	/******************* 넘어온 인자값 *********************/
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal01))
+	{
+		 this.sParamArg1 = this.getOwnerFrame().pv_sVal01;        
+	}
+
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal02))
+	{
+		 this.sParamArg2 = this.getOwnerFrame().pv_sVal02;        
+	}
+
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal03))
+	{
+		 this.sParamArg3 = this.getOwnerFrame().pv_sVal03;        
+	}
+
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal04))
+	{
+		 this.sParamArg4 = this.getOwnerFrame().pv_sVal04;        
+	}
+
+    var strDs    = "ds_phaseSprCdCombo";                    // 데이터를 받을 데이터셋리스트     예) "DS_CODE01|DS_CODE02|DS_CODE03"
+    var strLgcd  = "PHASE_SPR_CD";                          // 공통코드 중분류 코드, 데이터셋 개수와 같아야 한다. 예) "Z01|Z02|Z03"
+    var strComb  = "S";                                     // 콤보옵션 (T:전체, S:선택, N:공백, X:해당사항없음)
+    var strOptn  = "";                                      // 조건문 " AND COMM_IT02 = '" + vip + "'|||";
+    var svcId    = "Init";
+
+    // fn_CmmnMultiComboLoad(데이터셋 리스트, 대분류코드 , 콤보 옵션);
+    // 서비스 ID : 코드 조회 실행 후 CALLBACK 함수 지정.
+    this.fn_CmmnMultiComboLoad(strDs
+                              , strLgcd
+                              , strComb
+                              , strOptn
+                              , svcId);
+};
+
+this.fn_PostformInit = function()
+{
+	this.ds_master.setColumn(0,"PHASE_SPR_CD",null);
+
+	this.ds_search.setColumn(0,"CO_CD",      this.sParamArg1);
+	this.ds_search.setColumn(0,"CUST_PREQNO",this.sParamArg2);
+	this.ds_search.setColumn(0,"CPRTCP_ID",  this.sParamArg3);
+	this.ds_search.setColumn(0,"PRD_ID",     this.sParamArg4);
+
+	// 조회 호출
+	this.fn_Ret();
+};
+
+/**
+ * 기능 : 콜백함수(후처리)
+ */
+this.fn_callBack = function(sSvcId,nErrorCode, sErrorMsg)
+{
+    if(nErrorCode != 0)
+    {
+        this.fn_alert(sErrorMsg,"에러정보","","error");
+        return false;
+    }
+	else
+    {
+        /*sSvcId (Transaction Id)*/
+        switch(sSvcId)
+        {
+            case "Init":
+                    this.fn_PostformInit();
+                break;
+            case "Ret":
+                    this.fn_PostRet();
+                break;
+			case "CasNoCnfYn":
+					this.fn_PostCasNoCnfYn();
+				break;
+            case "Save":
+                    this.fn_PostSave();
+                break;
+            case "New":
+                    this.fn_PostNew();
+                break;
+            case "Del":
+                    this.fn_PostDel();
+                break;
+            default:
+                break;
+        }
+    }
+};
+
+this.fn_compontAllControl = function ()
+{
+	var btnEnableTreu   = {
+							btn_exit   : this.btn_exit
+						  , btn_close  : this.btn_close
+						  , btn_chgHst : this.btn_chgHst
+	                      };
+	var btnVisibleFalse = {
+							btn_save : this.btn_save
+	                      };
+
+	this.fn_componentInitViewControl(this,btnEnableTreu,btnVisibleFalse);
+};
+/**********************************************************************
+        05. 조회 함수 선언(마스터 함수)
+***********************************************************************/
+/**
+ * 기능 : 조회 전 실행
+ */
+this.fn_PreRet = function()
+{
+    // 조회조건 셋팅
+    return true;
+};
+
+/**
+ * 기능 : 마스터 조회 실행
+ */
+this.fn_Ret = function()
+{
+    if(!this.fn_PreRet())
+    {
+        return false;
+    }
+    var strSvc      = "Ret";
+    var strUrl      = "/rd/cprtcp-estm-req-mng/select-estm-req-chm-mtl-info-inq.do";
+    var strInDs     = "ds_search=ds_search";
+    var strOutDs    = "ds_master=ds_master"
+	                + " ds_chmMtlList=ds_chmMtlList"
+					+ " ds_chmMtlAddList=ds_chmMtlAddList"
+					+ " ds_saveFileList=ds_saveFileList";
+    var strArg      = "";
+    var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack
+    var strASync    = true;             //생략이나 공백일시에는 ASync=true,싱크시는 false로
+    this.gfn_transaction(strSvc
+                       , strUrl
+                       , strInDs
+                       , strOutDs
+                       , strArg
+                       , strCallBack
+                       , strASync);
+};
+
+/**
+ * 기능 : 조회 후 실행
+ */
+this.fn_PostRet = function()
+{
+	// 수정 모드인 경우
+	if(this.sOptinoArg2 == "R")
+	{
+		this.fn_compontAllControl();
+	}
+
+	// MSDS첨부파일 or 시약요약정보 첨부파일 존재시
+	if(this.ds_saveFileList.getRowCount() > 0)
+	{
+		for(var idx=0; idx<this.ds_saveFileList.rowcount; idx++)
+		{ 
+			var filePath    = this.ds_saveFileList.getColumn(idx,"ATFL_STOR_PATH");
+			var fileName    = this.ds_saveFileList.getColumn(idx,"ORI_ATFL_NM");
+			var fileOrgName = this.ds_saveFileList.getColumn(idx,"ATFL_NM");
+			var strEtcFds2  = this.ds_saveFileList.getColumn(idx,"ETC_FDS_2");
+			var strAtflNm   = this.ds_saveFileList.getColumn(idx,"ATFL_NM");
+			var strCnt      = this.atflTpCd.indexOf(strEtcFds2);  // strEtcFds2 == "95" ? "1" : "2";
+
+			this["edt_fileName"+strCnt].set_value(fileOrgName);
+			this.edt_fileName_onchanged(this["edt_fileName"+strCnt],new nexacro.ChangeEventInfo());
+		}
+	}
+};
+
+/**
+ * 규제정보 확인 버튼 클릭시 onclick 이벤트 발생 처리
+ */
+this.btn_regulation_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	// 규제정보 확인 호출
+	this.fn_CasNoCnfYn();
+};
+
+/**
+ * 기능 : 규제정보 조회 전 실행
+ */
+this.fn_PreCasNoCnfYn = function()
+{
+	if(this.ds_chmMtlList.getRowCount() == 0)
+	{
+		this.fn_alert("화학물질 리스트 정보가 존재하지 않습니다.","규제정보","","warning"); // 선택된 값이 없습니다.
+        return false;
+	}
+
+	for(var idx=0; idx<this.ds_chmMtlList.getRowCount(); idx++)
+	{
+		var strCasNo      = this.gfn_nvl(this.ds_chmMtlList.getColumn(idx,"CAS_NO"),     "");
+		var strMinContent = this.gfn_nvl(this.ds_chmMtlList.getColumn(idx,"MIN_CONTENT"),"");
+		var strMaxContent = this.gfn_nvl(this.ds_chmMtlList.getColumn(idx,"MAX_CONTENT"),"");
+
+		if(this.ds_chmMtlList.getCaseCount("CAS_NO == '" + strCasNo + "'") > 1)
+		{
+			this.fn_alert((idx+1) + "번째 화학물질 CAS_NO가 중복으로 존재 합니다.","규제정보","","question");
+			this.ds_chmMtlList.set_rowposition(idx);
+			this.grd_chmMtlList.setCellPos(this.grd_chmMtlList.getBindCellIndex("body","CAS_NO"));
+			this.grd_chmMtlList.showEditor();
+			return false;
+		}
+		else if(strCasNo == "")
+		{
+			this.fn_alert((idx+1) + "번째 화학물질 CAS_NO를 입력 하셔야 합니다.","규제정보","","question");
+			this.ds_chmMtlList.set_rowposition(idx);
+			this.grd_chmMtlList.setCellPos(this.grd_chmMtlList.getBindCellIndex("body","CAS_NO"));
+			this.grd_chmMtlList.showEditor();
+			return false;
+		}
+		else if(strMinContent == "")
+		{
+			this.fn_alert((idx+1) + "번째 화학물질 함량 FROM를 입력 하셔야 합니다.","규제정보","","question");
+			this.ds_chmMtlList.set_rowposition(idx);
+			this.grd_chmMtlList.setCellPos(this.grd_chmMtlList.getBindCellIndex("body","MIN_CONTENT"));
+			this.grd_chmMtlList.showEditor();
+			return false;
+		}
+		else if(strMaxContent == "")
+		{
+			this.fn_alert((idx+1) + "번째 화학물질 함량 TO를 입력 하셔야 합니다.","규제정보","","question");
+			this.ds_chmMtlList.set_rowposition(idx);
+			this.grd_chmMtlList.setCellPos(this.grd_chmMtlList.getBindCellIndex("body","MAX_CONTENT"));
+			this.grd_chmMtlList.showEditor();
+			return false;
+		}
+	}
+
+	this.ds_chmMtlListTemp.copyData(this.ds_chmMtlList);
+
+    // 조회조건 셋팅
+    return true;
+};
+
+/**
+ * 기능 : 규제정보 조회 실행
+ */
+this.fn_CasNoCnfYn = function()
+{
+    if(!this.fn_PreCasNoCnfYn())
+    {
+        return false;
+    }
+    var strSvc      = "CasNoCnfYn";
+    var strUrl      = "/rd/chm-mtl-info-mng/select-regulation-info-cnf-yn.do";
+    var strInDs     = "ds_chmMtlList=ds_chmMtlListTemp:a";
+    var strOutDs    = "ds_chmMtlListTemp=ds_chmMtlList"
+	                + " ds_chmMtlAddListTemp=ds_chmMtlAddList";
+    var strArg      = "PRD_ID="       + nexacro.wrapQuote(this.ds_search.getColumn(this.ds_search.rowposition,"PRD_ID"))
+					+ " CO_CD="       + nexacro.wrapQuote(this.ds_search.getColumn(this.ds_search.rowposition,"CO_CD"))
+    var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack
+    var strASync    = true;             //생략이나 공백일시에는 ASync=true,싱크시는 false로
+    this.gfn_transaction(strSvc
+                       , strUrl
+                       , strInDs
+                       , strOutDs
+                       , strArg
+                       , strCallBack
+                       , strASync);
+}
+
+/**
+ * 기능 : 규제정보 조회 후 실행
+ */
+this.fn_PostCasNoCnfYn = function()
+{
+	if(this.gfn_nvl(this.lv_casNo,"") != "Y")
+	{
+		var findRow = this.ds_chmMtlList.findRow("CAS_NO",this.lv_casNo);
+		this.fn_alert((findRow+1) + "번째 화학물질 CAS_NO가 잘못 기재되었습니다.","규제정보","","question");
+		this.ds_chmMtlList.set_rowposition(findRow);
+		this.grd_chmMtlList.setCellPos(this.grd_chmMtlList.getBindCellIndex("body","CAS_NO"));
+		this.grd_chmMtlList.showEditor();
+		return false;
+	}
+	else
+	{
+		this.ds_chmMtlList.set_updatecontrol(false);
+		for(var idx=0; idx<this.ds_chmMtlListTemp.getRowCount(); idx++)
+		{
+			var strCasNo      = this.ds_chmMtlListTemp.getColumn(idx,"CAS_NO");
+			var strMinContent = this.ds_chmMtlListTemp.getColumn(idx,"MIN_CONTENT");
+			var strMaxContent = this.ds_chmMtlListTemp.getColumn(idx,"MAX_CONTENT");
+			var findRow       = this.ds_chmMtlList.findRowExpr("CAS_NO == '"+ strCasNo +"' && MIN_CONTENT == '" + strMinContent + "' && MAX_CONTENT == '" + strMaxContent + "'");
+
+			for(var jdx=0; jdx<this.ds_chmMtlListTemp.getColCount(); jdx++)
+			{
+				var colId  = this.ds_chmMtlListTemp.getColID(jdx);
+				var colVal = this.ds_chmMtlListTemp.getColumn(idx,colId);
+				this.ds_chmMtlList.setColumn(findRow,colId,colVal);
+			}
+		}
+		this.ds_chmMtlList.set_updatecontrol(true);
+		this.ds_chmMtlAddList.copyData(this.ds_chmMtlAddListTemp);
+		this.btn_rgntInfo.set_enable(true);
+		this.btn_save.set_enable(true);
+	}
+};
+/**********************************************************************
+        06. 추가 함수 선언
+***********************************************************************/
+/**
+ * 기능 : 추가 버튼 클릭시
+ */
+this.btn_add_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    this.fn_New();
+};
+
+/**
+ * 기능 : 추가 전 실행(기본체크사항)
+ */
+this.fn_PreNew = function()
+{
+    return true;
+};
+
+/**
+ * 기능 : 마스터 추가 실행
+ */
+this.fn_New = function()
+{
+    if(!this.fn_PreNew())
+    {
+        return false;
+    }
+    var nRow = this.ds_chmMtlList.addRow();
+    this.ds_chmMtlList.setColumn(nRow,"CHK","0");           // 업체코드
+};
+
+/**
+ * 기능 : 처리 후 실행
+ */
+this.fn_PostNew = function()
+{
+
+};
+
+/**********************************************************************
+        07. 삭제 함수 선언
+***********************************************************************/
+/**
+ * 기능 : 삭제 버튼 클릭시
+ */
+this.btn_del_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    this.fn_Del();
+};
+
+/**
+ * 기능 : 삭제 버튼 실행
+ */
+this.fn_PreDel = function()
+{
+    // 멀티삭제용도
+    if(this.ds_chmMtlList.rowcount < 1 || this.ds_chmMtlList.findRow("CHK",1) == -1)
+    {
+        this.fn_alert("ERRR000011","삭제정보","","warning"); // 선택된 값이 없습니다.
+        return false;
+    }
+
+    var result = this.fn_confirm("현재선택행을 삭제하시겠습니까?", "삭제정보","","question" ); // 현재선택행을 삭제하시겠습니까?
+
+    if(result == 0)
+    {
+        return false;
+    }
+
+    // 멀티 삭제 처리
+    for(var i = this.ds_chmMtlList.rowcount-1; 0 <= i; i--)
+    {
+        if(this.ds_chmMtlList.getColumn(i,"CHK") == 1)
+        {
+            this.ds_chmMtlList.deleteRow(i);
+        }
+    }
+
+    return true;
+};
+
+/**
+ * 기능 : Row 삭제 또는 Transaction 삭제 처리
+ */
+this.fn_Del = function()
+{
+    if(!this.fn_PreDel())
+    {
+        return false;
+    }
+	this.btn_save.set_enable(true);
+};
+
+this.fn_PostDel = function()
+{
+
+};
+/**********************************************************************
+        08. 저장 함수 선언
+***********************************************************************/
+/**
+ * 기능 : 저장 버튼 클릭시
+ */
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    this.fn_Save();
+};
+
+/**
+ * 기능 : 저장 전 실행
+ */
+this.fn_PreSave = function()
+{
+    // 필수 입력사항 체크 =>grid 필수항목체크할거냐:true,일반 컴포넌트에 필수항목을 할거냐false)
+    var chkFocusFlg = true;
+    var result      = this.fn_cmmnChkEssentialItem(this.ds_chmMtlList, this.lvchkColidDs, this.lvchkColNameDs, this.grd_chmMtlList, chkFocusFlg, this);
+
+    if(result[0] != "success")
+    {
+        this.fn_alert(result[0],"저장정보","","question");
+        this.ds_master.set_rowposition(result[1]); //데이터셋 변경
+        return false;
+    }
+
+	// MSDS첨부파일 혹은 MSDS경로 모두 미존재시
+	if(this.gfn_isNull(this.edt_fileName1.value) && this.gfn_isNull(this.edt_rndMsdsUrl.value))
+	{
+		this.fn_alert("ERRR000160","저장정보","","question");   // MSDS 파일등록 또는 MSDS 경로 입력을 해주세요
+		this.edt_rndMsdsUrl.setFocus();
+		return false;
+	}
+
+	var regex = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+
+	// MSDS URL 경로 정합성 체크
+	if(!this.gfn_isNull(this.edt_rndMsdsUrl.value) && !regex.test(this.edt_rndMsdsUrl.value))
+	{
+        this.fn_alert("ERRR000231","저장","MSDS 경로","question");      // &1 URL 주소가 잘못 입력 되었습니다. 해당 URL 주소를 확인 해주세요.
+        this.edt_rndMsdsUrl.setFocus();
+        return false;
+	}
+
+	// MSDS최종개정일 필수 입력 체크
+	if(this.gfn_isNull(this.cal_msdsFnlChgDtm.value))
+	{
+		this.fn_alert("ERRS000144","저장정보","MSDS최종개정일","question");   // &1은(는) 필수입력사항입니다.
+		this.cal_msdsFnlChgDtm.setFocus();
+		return false;
+	}
+	
+	// 2023.02.07 sg.park - AI-009 MSDS파일 2년경과 갱신처리
+	// 레터파일(첨부파일 + 최종변경일), 자체증빙(여부 + 최종변경일)
+	var lns={
+		  todayYmd : this.gfn_getDate()
+		, locFile  : { attcFl: this.ds_master.getColumn(0, 'LOC_ATTC_FILENM'), fnlChgDt: this.ds_master.getColumn(0, 'LOC_ATFL_FNL_CHG_DT'  ) }
+		, svronCert: { certYn: this.ds_master.getColumn(0, 'SRVON_CERT_YN'  ), fnlChgDt: this.ds_master.getColumn(0, 'SRVON_CERT_FNL_CHG_DT') }
+	};
+	// 레터(첨부파일 + 최종변경일)
+	if ( !this.gfn_isNull( lns.locFile.attcFl ) || !this.gfn_isNull( lns.locFile.fnlChgDt ) ) {
+		
+		if (  this.gfn_isNull( lns.locFile.attcFl ) ) {
+			this.fn_alert('ERRS000144', '저장', '레터파일 ', 'question');
+			return false;
+		}
+		if (  this.gfn_isNull( lns.locFile.fnlChgDt ) ) {
+			this.fn_alert('ERRS000144', '저장', '레터파일 최종개정일 ', 'question');
+			return false;
+		}
+		if ( !this.gfn_isNull( lns.locFile.fnlChgDt ) && lns.todayYmd < lns.locFile.fnlChgDt ) {
+			alert('레터파일 최종개정일은 미래날짜 입력이 불가능 합니다.');
+			return false;
+		}
+	}
+	
+	// 자체증빙(여부 + 최종변경일)
+	if ( (!this.gfn_isNull( lns.svronCert.certYn ) && 'Y' == lns.svronCert.certYn) || !this.gfn_isNull( lns.svronCert.fnlChgDt ) ) {
+		
+		if (  this.gfn_isNull( lns.svronCert.certYn ) || 'Y' != lns.svronCert.certYn ) {
+			this.fn_alert('ERRS000144', '저장', '자체증빙여부 ', 'question');
+			return false;
+		}
+		if (  this.gfn_isNull( lns.svronCert.fnlChgDt ) ) {
+			this.fn_alert('ERRS000144', '저장', '자체증빙일 ', 'question');
+			return false;
+		}
+		if ( !this.gfn_isNull( lns.svronCert.fnlChgDt ) && lns.todayYmd < lns.svronCert.fnlChgDt ) {
+			alert('자체증빙일은 미래날짜 입력이 불가능 합니다.');
+			return false;
+		}
+	}
+	// /2023.02.07 sg.park - AI-009 MSDS파일 2년경과 갱신처리
+
+	// 유해화학물질 존재시 시약정보요약서 파일 필수 체크
+	if(this.ds_chmMtlList.getCaseCount("TOXIC_MTL1 == 'Y'")    > 0       /*유독물질*/
+	|| this.ds_chmMtlList.getCaseCount("LMT_MTL1 == 'Y'")      > 0       /*제한물질*/
+	|| this.ds_chmMtlList.getCaseCount("ACCD_PSB_MTL1 == 'Y'") > 0       /*사고대비물질*/
+	|| this.ds_chmMtlList.getCaseCount("PHBT_MTL1 == 'Y'")     > 0       /*금지물질*/
+	|| this.ds_chmMtlList.getCaseCount("PERMIT_MTL1 == 'Y'")   > 0)      /*허가물질*/
+	{
+		if(this.gfn_isNull(this.edt_fileName2.value))
+		{
+			this.fn_alert("ERRR000206","저장정보","","question");   // 유해화학물질이 존재하여 시약정보요약서 파일은 필수로 등록 하셔야 합니다.
+			this.edt_fileName2.setFocus();
+			return false;
+		}
+	}
+
+	// 30 * 1,024 * 1,024 = 31,457,280 size
+	// 1 * 1,024 * 1,024  =  1,048,576 size
+	if(this.ds_saveFileList.getRowCount() > 0)
+	{
+		for(var idx=0; idx<this.ds_saveFileList.getRowCount(); idx++)
+		{
+			if(this.ds_saveFileList.getColumn(idx,"ETC_FDS_2") == "del")
+			{
+				continue;
+			}
+
+			if(this.ds_saveFileList.getColumn(idx,"ATFL_LEN") > 31457280)
+			{
+				this.fn_alert("해당 파일 사이즈가 30M를 초과 합니다.","저장정보","","question"); // 해당 파일 사이즈가 {#1}를 초과 합니다.
+				return false;
+			}
+		}
+	}
+
+     var result = this.fn_confirm( "ERRR000098", "저장","", "question" ); // 저장 하시겠습니까?
+
+     if(result == 0)
+     {
+         return false;
+     }
+     return true;
+};
+
+/**
+ * 기능 : 저장 실행
+ */
+this.fn_Save = function()
+{
+    if(!this.fn_PreSave())
+    {
+        return false;
+    }
+
+    var strSvc      = "Save";
+    var strUrl      = "/rd/cprtcp-estm-req-mng/save-chm-mtl-info-cnf.do";
+    var strInDs     = "ds_search=ds_search:a"
+	                + " ds_master=ds_master:a"
+                    + " ds_chmMtlList=ds_chmMtlList:u"
+		            + " ds_saveFileList=ds_saveFileList:u";
+    var strOutDs    = "ds_chmMtlListTemp=ds_chmMtlList"
+	                + " ds_chmMtlAddListTemp=ds_chmMtlAddList";
+    var strArg      = "";
+    var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack
+    var strASync    = true;             //생략이나 공백일시에는 ASync=true,싱크시는 false로
+    this.gfn_transaction(strSvc
+                       , strUrl
+                       , strInDs
+                       , strOutDs
+                       , strArg
+                       , strCallBack
+                       , strASync);
+};
+
+/**
+ * 기능 : 저장시 후처리
+ */
+this.fn_PostSave = function()
+{
+	this.fn_alert("ERRR000007","저장","","question"); // 정상적으로 저장되었습니다
+
+	this.close("SAVE");
+};
+/**********************************************************************
+        09. 초기화
+***********************************************************************/
+/**********************************************************************
+        10. 출력 함수 선언
+***********************************************************************/
+/**********************************************************************
+        11. ExcelDnwn 엑셀로 출력
+***********************************************************************/
+/**********************************************************************
+        13. Get, Set Method
+***********************************************************************/
+/**********************************************************************
+        14. 기타 Control Event
+***********************************************************************/
+/**
+ * 상품정보 [상품ID & 물질비중 & 성상] 컬럼 값 변경시 oncolumnchanged 이벤트 발생 처리
+ */
+this.ds_master_oncolumnchanged = function(obj:nexacro.NormalDataset,e:nexacro.DSColChangeEventInfo)
+{
+	if(e.columnid == "MTL_GRAVITY" || e.columnid == "PHASE_SPR_CD"
+	|| e.columnid == "RND_MSDS_URL")
+	{
+		this.btn_save.set_enable(true);
+	}
+};
+
+/**
+ * 화학물질정보 데이터셋 값 변경시 oncolumnchanged 이벤트 발생 처리
+ */
+this.ds_chmMtlList_oncolumnchanged = function(obj:nexacro.NormalDataset,e:nexacro.DSColChangeEventInfo)
+{
+	// CAS_NO or MIN_CONTENT or MAX_CONTENT
+	if(e.columnid == "CAS_NO" || e.columnid == "MIN_CONTENT" || e.columnid == "MAX_CONTENT")
+	{
+		this.btn_rgntInfo.set_enable(false);
+		this.btn_save.set_enable(false);
+	}
+};
+
+/**
+ * 파일등록 버튼 클릭시 onclick 이벤트 발생 처리
+ */
+this.btn_file_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var atflTrgtId=obj.id, atflTyIdx=atflTrgtId.substr(atflTrgtId.length-1), atflTyColId='DOC_ID'+atflTyIdx;
+	this.fileIndex     = this.atflTpCd[atflTyIdx];
+	this.imageViewerId = this["edt_fileName"+atflTyIdx];
+	this.imageFileYn   = false;
+
+	if(obj.text == "파일 등록")
+	{
+		this.FileUploadSingle.deleteItem(0);
+		this.FileUploadSingle.appendItem();
+		this.FileUploadSingle.filefindbuttons[0].click();
+	}
+	else
+	{
+		var result = this.fn_confirm( "ERRR000134", "파일 삭제","", "question" ); // 등록된 파일을 삭제하시겠습니까?
+		if(result)
+		{
+			var delRow = this.ds_saveFileList.findRow("ETC_FDS_2",this.fileIndex);
+			this.ds_saveFileList.setColumn(delRow,"ETC_FDS_2","del");
+			this.imageViewerId.set_value("");
+			this.edt_fileName_onchanged(this.imageViewerId,new nexacro.ChangeEventInfo());
+		}
+	}
+};
+
+/**
+ * 이미지등록 아이템 값 변경시 onitemchanged 이벤트 발생 처리
+ */
+this.FileUploadSingle_onitemchanged = function(obj:nexacro.FileUpload,e:nexacro.FileUploadItemChangeEventInfo)
+{
+	var sCompValue = this.FileUploadSingle.value; // 파일 업로드 로컬패스(전용브라우저 가능)
+	var start = sCompValue.lastIndexOf(".");	   						// [object Grid]
+
+	if( start > -1)
+	{
+		sCompValue = sCompValue.substr(start + 1, sCompValue.length);  // 확장자명
+	}
+
+// 	if(!(sCompValue.toUpperCase() == "PPTX" || sCompValue.toUpperCase() == "PPT"
+// 	  || sCompValue.toUpperCase() == "DOCX" || sCompValue.toUpperCase() == "DOC"
+// 	  || sCompValue.toUpperCase() == "XLS"  || sCompValue.toUpperCase() == "XLSX"
+// 	  || sCompValue.toUpperCase() == "TEXT" || sCompValue.toUpperCase() == "ZIP"
+// 	  || sCompValue.toUpperCase() == "TXT"  || sCompValue.toUpperCase() == "PDF"
+// 	  || sCompValue.toUpperCase() == "PNG"  || sCompValue.toUpperCase() == "JPG"
+// 	  || sCompValue.toUpperCase() == "GIF"  || sCompValue.toUpperCase() == "JPEG"
+// 	  || sCompValue.toUpperCase() == "HWP"))
+// 	{
+	if ( this.upldAuthExts.indexOf( sCompValue.toUpperCase() ) < 0 ) {
+		this.fn_alert("파일형식이 아닙니다.","파일 정보","","information");  // 파일형식이 아닙니다.
+		return false;
+	}
+
+	var sFilePath = this.FileUploadSingle.value; 						// 파이로 로컬풀패스
+	var dirExpt   = nexacro.toNumber(sFilePath.lastIndexOf("\\"))+1;    // 파일이름 시작위치
+	var sFileName = sFilePath.substr(dirExpt);                          // 파일명
+	
+//	var docRegId  = this.fileIndex == "95" ? this.gfn_nvl(this.ds_master.getColumn(0,"DOC_ID1"),"") : this.gfn_nvl(this.ds_master.getColumn(0,"DOC_ID2"),"");
+	var atflTrgt  = this.imageViewerId, atflTyIdx = atflTrgt.id.substr(atflTrgt.id.length-1), atflTyColId = 'DOC_ID'+atflTyIdx;
+	var docRegId  = this.gfn_nvl(this.ds_msdsMaster.getColumn(0, ('3'==atflTyIdx ? 'DOC_ID1' : atflTyColId)), '');  // MSDS파일과 동일한 파일등록ID를 사용하게 변경
+
+	var objEnv  = nexacro.getEnvironment();
+	var svcUrl  = objEnv.services["svcUrl"].url;               			        	 // web서버 URL ex)http://localhost:8080/
+	var strUrl  = svcUrl + "rd/file-upload-dowload/save-file-upload-dowload.do?";    // BLOB변환 && 파일업로드 기능
+		strUrl += "&docRegId="+ docRegId;
+		strUrl += "&etcFds2=" + this.fileIndex;
+
+	var bSucc = this.FileUploadSingle.upload(strUrl);		 // 파일 업로드
+};
+
+/**
+ * 이미지 첨부파일 업로드 성공후 onsuccess 이벤트 발생 처리
+ */
+this.FileUploadSingle_onsuccess = function(obj:nexacro.FileUpload,e:nexacro.FileUploadEventInfo)
+{
+	this.ds_uploadResult.assign(e.datasets[0]);
+	this.ds_uploadResult.clear();
+	this.ds_uploadResult.copyData(e.datasets[0]);
+
+	var delRow = this.ds_saveFileList.findRow("ETC_FDS_2", this.fileIndex);
+	this.ds_saveFileList.setColumn(delRow,"ETC_FDS_2","del");
+
+	var strAtflNm = this.ds_uploadResult.getColumn(0,"ATFL_NM");
+	var textArry  = "";
+
+	for(var idx=0; idx<strAtflNm.length; idx++)
+	{
+		if(strAtflNm.charCodeAt(idx) != "32")
+		{
+		    textArry += String.fromCharCode(strAtflNm.charCodeAt(idx));
+		}
+	}
+
+	if(!this.gfn_isNull(textArry))
+	{
+		this.ds_uploadResult.setColumn(0,"ATFL_NM",textArry);
+	}
+
+	var nRow = this.ds_saveFileList.addRow();
+	this.ds_saveFileList.copyRow(nRow,this.ds_uploadResult);         	// 싱글 파일 패스
+
+// 	if(this.fileIndex == "95")
+// 	{
+// 		// 최초 파일 등록시 상품문서등록ID Set
+// 		if(this.gfn_nvl(this.ds_master.getColumn(0,"DOC_ID1"),"") == "")
+// 		{
+// 			this.ds_master.setColumn(0,"DOC_ID1",this.ds_uploadResult.getColumn(0,"DOC_REG_ID"));
+// 		}
+// 	}
+// 	else
+// 	{
+// 		// 최초 파일 등록시 상품문서등록ID Set
+// 		if(this.gfn_nvl(this.ds_master.getColumn(0,"DOC_ID2"),"") == "")
+// 		{
+// 			this.ds_master.setColumn(0,"DOC_ID2",this.ds_uploadResult.getColumn(0,"DOC_REG_ID"));
+// 		}
+// 	}
+	var atflTrgt  = this.imageViewerId, atflTyIdx = atflTrgt.id.substr(atflTrgt.id.length-1), atflTyColId='DOC_ID'+atflTyIdx;
+	
+	// 최초 파일 등록시 상품문서등록ID Set
+	var sDocRegId = this.ds_uploadResult.getColumn(0, 'DOC_REG_ID');
+	if (this.gfn_nvl(this.ds_master.getColumn(0, atflTyColId), '') == '') {
+		this.ds_master.setColumn(0, atflTyColId, this.ds_uploadResult.getColumn(0, "DOC_REG_ID"));
+	}
+	if ('3'==atflTyIdx) { this.ds_msdsMaster.setColumn(0, 'LOC_ATTC_FILEID', sDocRegId); }
+	
+	this.btn_save.set_enable(true);
+	this.imageViewerId.set_value(this.ds_saveFileList.getColumn(nRow,"ATFL_NM"));
+	this.edt_fileName_onchanged(this.imageViewerId,new nexacro.ChangeEventInfo());
+};
+
+/**
+ * 첨부파일 다운로드 클릭시 oneditclick  이벤트 발생 처리
+ */
+this.edt_fileName_oneditclick = function(obj:nexacro.Edit,e:nexacro.EditClickEventInfo)
+{
+	var atflTrgtId=obj.id, atflTyIdx=atflTrgtId.substr(atflTrgtId.length-1), atflTyColId='DOC_ID'+atflTyIdx;
+	this.imageViewerId = this['edt_fileName'+ atflTyIdx];
+	this.fileIndex     = this.atflTpCd[atflTyIdx];
+	var findRow        = this.ds_saveFileList.findRow("ETC_FDS_2",this.fileIndex);
+
+	if(this.gfn_nvl(this.imageViewerId.value, '') != '') {
+		this.ds_uploadResult.clearData();
+		var nRow = this.ds_uploadResult.addRow();
+		this.ds_uploadResult.copyRow(nRow, this.ds_saveFileList, findRow);
+
+		this.fn_fileDownload(this.ds_uploadResult,this.ds_downLoad,this.FileDownload);
+	}
+};
+
+/**
+ * 파일 첨부파일 변경시 onchanged 이벤트 발생 처리
+ */
+this.edt_fileName_onchanged = function(obj:nexacro.Edit,e:nexacro.ChangeEventInfo)
+{
+	var atflTrgtId=obj.id, atflTyIdx = atflTrgtId.substr(atflTrgtId.length-1);
+	this['btn_file'+atflTyIdx].set_text('파일 등록');
+	obj.set_cursor('');
+
+	if (obj.value != undefined && obj.value != '') {
+		obj.set_cursor('pointer');
+		this['btn_file'+atflTyIdx].set_text('삭제');
+	}
+};
+
+/**
+ * 시약정보URL 버튼 클릭시 onclick  이벤트 발생 처리
+ */
+this.btn_rgntInfo_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var strCasNo = "";
+	var strTo    = "";
+
+	for(var idx=0; idx<this.ds_chmMtlList.getRowCount(); idx++)
+	{
+		if(strCasNo != "")
+		{
+			strCasNo += ",";
+			strTo    += ",";
+		}
+
+		strCasNo += this.ds_chmMtlList.getColumn(idx,"CAS_NO");
+		strTo    += this.ds_chmMtlList.getColumn(idx,"MAX_CONTENT");
+	}
+
+	var objApp = nexacro.getApplication();
+    var appUrl      = objApp.xadl;
+    var appUrlSplit = appUrl.split("/");
+	var objEnv 		= nexacro.getEnvironment();
+ 	var service     = objEnv.services["svcurl"];	// TypeDefinition 접근하기위한객체
+	var protocol 	= appUrlSplit[0];   			// 프로토콜이 : RUNTIME(file:),WEB(http)
+	var url         = "http://121.50.29.169:18080";
+
+    if(appUrlSplit[2] == "adminssp.serveone.co.kr")
+    {
+        // 운영 시약정보 Site
+		url = "https://cms.serveone.co.kr:18081";
+    }
+
+	// 시약정보 Site
+	system.execBrowser(url+"/nextMsds/business/interface/reagentView?reagent_key=copa&cas_no="+strCasNo+"&cas_ratio="+strTo);
+};
+
+/**
+ * 닫기 버튼 클릭시 onclick 이벤트 발생 처리
+ */
+this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	// ERRR000060 : 수정을 취소하고 목록으로 이동하시겠습니까?
+	// ERRC000087 : 취소하시겠습니까?
+	var strMsg = this.sOptinoArg2 == "U" ? "ERRR000060" : "ERRC000087";
+	var result = this.fn_confirm(strMsg, "취소","", "question" );
+
+    if(result == 0)
+    {
+        return false;
+    }
+
+	 this.fn_saveMultiFileDelUpdate("CLOSE");
+};
+
+/**
+ * 취소 버튼 클릭시 onclick 이벤트 발생 처리
+ */
+this.btn_exit_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	// ERRR000060 : 수정을 취소하고 목록으로 이동하시겠습니까?
+	// ERRC000087 : 취소하시겠습니까?
+	var strMsg = this.sOptinoArg2 == "U" ? "ERRR000060" : "ERRC000087";
+	var result = this.fn_confirm(strMsg, "취소","", "question" );
+
+    if(result == 0)
+    {
+        return false;
+    }
+
+	this.fn_saveMultiFileDelUpdate("EXIT");
+};]]></Script>
+  </Form>
+</FDL>

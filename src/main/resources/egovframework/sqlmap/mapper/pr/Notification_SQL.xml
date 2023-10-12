@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+******************************************************************************
+* SELECT : 상품알림목록관리
+* 작성자 : 
+* 작성 일자 : 2023.03.27
+******************************************************************************
+-->
+<mapper namespace="PrNotification">
+    
+    <sql id="notificationList">
+    SELECT 0 CHK
+         , A.CO_CD                                                                                                        -- 회사코드
+         , F.BZPLC_ID                                                                                                     -- 사업장ID
+         , G.BZPLC_NM                                                                                                     -- 사업장명
+         , U.CUST_SPR_CD                                                                                                  -- 회원구분코드
+         , FN_COM_DTL_CDNM('KO', 'CUST_SPR_CD', U.CUST_SPR_CD) CUST_SPR_NM                                          	  -- 회원구분명
+         , A.MBR_ID                                                                                                       -- 회원ID
+         , CASE WHEN LENGTH(F.MBR_NM) = 2 THEN SUBSTR(F.MBR_NM,1,1) || LPAD('*',(LENGTH(F.MBR_NM)-1),'*')
+				WHEN LENGTH(F.MBR_NM) = 3 THEN SUBSTR(F.MBR_NM,1,1) || LPAD('*',(LENGTH(F.MBR_NM)-2),'*') || SUBSTR(F.MBR_NM,3,1)
+				ELSE SUBSTR(F.MBR_NM,1,2) || LPAD('*',(LENGTH(F.MBR_NM)-2),'*')
+            END AS MSKD_MBR_NM                                                                                            -- 회원명
+         , CASE WHEN A.NOTC_STATS_YN != 'Y'
+                THEN F.CHAR_RCV_AGRE_YN
+                ELSE CASE WHEN A.NOTC_RCV_MTD_CD = '20' OR A.NOTC_RCV_MTD_CD = '30'
+                          THEN 'Y'
+                          ELSE 'N'
+                      END 
+            END CHAR_RCV_AGRE_YN                                                                                          -- 업무용 SMS 수신여부
+         , CASE WHEN A.NOTC_STATS_YN != 'Y'
+                THEN F.MAIL_RCV_AGRE_YN
+                ELSE CASE WHEN A.NOTC_RCV_MTD_CD = '10' OR A.NOTC_RCV_MTD_CD = '30'
+                          THEN 'Y'
+                          ELSE 'N'
+                      END 
+            END MAIL_RCV_AGRE_YN                                                                                          -- 업무용 E-MAIL 수신여부
+         , A.PRD_ID                                                                                                       -- 상품ID
+         , TO_CHAR(TO_NUMBER(A.PRD_ID)) AS PRD_ID_VIEW                                                                    -- 고객노출상품ID
+         , B.PRD_NM                                                                                                       -- 상품명
+         , SSP_APP.FN_PR_ATTR_VAL_LIST(A.CO_CD, A.PRD_ID) AS ATTR_VAL                                                     -- 상품규격
+         , C.SELL_UNIT_CD                                                                                                 -- 주문단위
+         , SSP_APP.FN_PC_EXPS_SALSPRC(A.CO_CD , A.PRD_ID, F.BZPLC_ID ,H.OPR_UNIT_ID, U.CUST_SPR_CD) AS SALS_PRC           -- 상품가격
+         , B.PRD_USE_YN                                                                                                   -- 상품상태여부
+         , SSP_APP.FN_COM_DTL_CDNM('KO','USE_YN', B.PRD_USE_YN) PRD_USE_NM                                                -- 상품상태명
+         , E.DISP_STATS_CD                                                                                                -- 진열상태코드
+         , FN_COM_DTL_CDNM('KO', 'DISP_STATS_CD', E.DISP_STATS_CD) DISP_STATS_NM                                          -- 진열상태명
+         , A.NOTC_RCV_MTD_CD                                                                                              -- 수신방법코드
+         , FN_COM_DTL_CDNM('KO', 'NOTC_RCV_MTD_CD', A.NOTC_RCV_MTD_CD) NOTC_RCV_MTD_NM                                    -- 수신방법명
+         , A.REG_DTM                                                                                                      -- 요청일시
+         , CASE WHEN A.NOTC_STATS_YN = 'Y' OR A.NOTC_STATS_YN = 'D'
+                THEN TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS')
+                ELSE ''
+           END SEND_DTM                                                                                                   -- 알림일시
+         , A.NOTC_STATS_YN                                                                                                -- 알림상태여부
+         , FN_COM_DTL_CDNM('KO', 'NOTC_STATS_YN', A.NOTC_STATS_YN) NOTC_STATS_NM                                          -- 알림상태명
+         , A.UPDPSN_ID                                                                                                    -- 최종수정자ID
+         
+         , H.OPR_UNIT_ID
+         , H.DEPT_ID
+         
+         , A.SEQ                                                                                                          -- 순번
+         , SSP_APP.FN_RD_EXPS_SALSPRC_ORIGIN(A.CO_CD, A.PRD_ID, F.BZPLC_ID ,H.OPR_UNIT_ID, U.CUST_SPR_CD) AS ORI_PRICE      -- 할인전가격
+      FROM TB_PR_CUST_REQ_PRD_GI_NOTC_INFO A
+      JOIN TB_CC_MBR_BASIS F
+        ON ( A.CO_CD = F.CO_CD AND A.MBR_ID = F.MBR_ID)
+      JOIN TB_CC_BZPLC_BASIS G
+        ON (F.CO_CD = G.CO_CD AND F.BZPLC_ID = G.BZPLC_ID)
+      JOIN TB_CC_OPR_UNIT_BASIS U
+        ON (F.CO_CD = U.CO_CD AND G.BZPLC_ID = U.BZPLC_ID)
+      JOIN TB_CC_DEPT_BASIS H
+        ON (F.CO_CD = H.CO_CD AND U.OPR_UNIT_ID = H.OPR_UNIT_ID AND F.DEPT_ID = H.DEPT_ID)
+      JOIN TB_PR_PRD_INFO B
+        ON (A.CO_CD = B.CO_CD AND A.PRD_ID = B.PRD_ID)
+      JOIN TB_PR_MRO_PRD_INFO C
+        ON( B.CO_CD = C.CO_CD AND B.PRD_ID = C.PRD_ID)
+      JOIN TB_PR_PRD_CLSF_INFO D
+        ON( B.CO_CD = D.CO_CD AND B.PRD_CLCD = D.PRD_CLCD )
+      JOIN TB_DP_PRD_DISP_STATS_INFO E
+        ON ( B.CO_CD = E.CO_CD AND B.PRD_ID = E.PRD_ID
+        	AND (
+        			(
+	                    C.PUB_ONLY_SPR_CD = 'P' --공용
+	                AND E.BZPLC_ID = '*'
+	                AND E.OPR_UNIT_ID = '*'
+	                )
+	                OR 
+	                (
+	                    C.PUB_ONLY_SPR_CD = 'E' --공용
+	                AND E.BZPLC_ID = F.BZPLC_ID
+	                AND E.OPR_UNIT_ID = H.OPR_UNIT_ID
+	                )
+        	)
+        ) 
+      
+    </sql>
+    
+    <select id="selectNotificationCount" parameterType="HashMap" resultType="Integer">
+        /* PrNotification.selectNotificationCount */
+        SELECT
+            COUNT(*)
+        FROM (
+        	<include refid="notificationList"/>
+        	<include refid="notificationWhere"/>
+        )
+    </select>
+    
+    <!-- 상품알림목록 -->
+    <select id="selectNotificationList" parameterType="HashMap" resultType="HashMap">
+        /* PrNotification.selectNotificationList */
+        SELECT *
+          FROM (
+          	<include refid="notificationList"/>
+        
+        	<include refid="notificationWhere"/>
+          ) A
+        <choose>
+            <when test="SORT_COLUMN != null and SORT_COLUMN != ''">
+                ORDER BY A.${SORT_COLUMN} ${SORT_TYPE}
+            </when>
+            <otherwise>
+                ORDER BY A.REG_DTM DESC
+            </otherwise>
+        </choose>
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+    
+    <sql id="notificationWhere">
+    WHERE 1=1 
+      AND A.CO_CD = #{CO_CD}
+      <if test="CUST_SPR_CD != null and CUST_SPR_CD != ''">
+          AND U.CUST_SPR_CD = #{CUST_SPR_CD}
+      </if>
+      <if test="MBR_ID != null and MBR_ID != ''">
+	      <if test="MBR_ID_MULTI > 0 ">
+	          AND EXISTS (
+	              SELECT 'X'
+	                FROM TB_OD_ODR_INQ_TGT_DTLS
+	               WHERE SES_ID = #{sesId}
+	                 AND INQ_COND_DTLS = #{INQ_COND_DTLS}
+	                 AND COL_ITM = 'MBR_ID_MULTI'
+	                 AND COND_DATA_VAL = A.MBR_ID
+	          )
+	      </if>
+      </if>
+      <if test="BZPLC_ID != null and BZPLC_ID != ''">
+	      <if test="BZPLC_ID_MULTI > 0 ">
+	          AND EXISTS (
+	              SELECT 'X'
+	                FROM TB_OD_ODR_INQ_TGT_DTLS
+	               WHERE SES_ID = #{sesId}
+	                 AND INQ_COND_DTLS = #{INQ_COND_DTLS}
+	                 AND COL_ITM = 'BZPLC_ID_MULTI'
+	                 AND COND_DATA_VAL = F.BZPLC_ID
+	          )
+	      </if>
+      </if>
+      <if test="OPR_UNIT_ID != null and OPR_UNIT_ID != ''">
+	      <if test="OPR_UNIT_ID_MULTI > 0 ">
+	          AND EXISTS (
+	              SELECT 'X'
+	                FROM TB_OD_ODR_INQ_TGT_DTLS
+	               WHERE SES_ID = #{sesId}
+	                 AND INQ_COND_DTLS = #{INQ_COND_DTLS}
+	                 AND COL_ITM = 'OPR_UNIT_ID_MULTI'
+	                 AND COND_DATA_VAL = H.OPR_UNIT_ID
+	          )
+	      </if>
+      </if>
+      <if test="PRD_ID != null and PRD_ID != ''">
+	      <if test="PRD_ID_MULTI > 0 ">
+	          AND EXISTS (
+	              SELECT 'X'
+	                FROM TB_OD_ODR_INQ_TGT_DTLS
+	               WHERE SES_ID = #{sesId}
+	                 AND INQ_COND_DTLS = #{INQ_COND_DTLS}
+	                 AND COL_ITM = 'PRD_ID_MULTI'
+	                 AND LPAD(COND_DATA_VAL, 18, '0') = A.PRD_ID
+	          )
+	      </if>
+      </if>
+      <if test="NOTC_STATS_YN != null and NOTC_STATS_YN != ''">
+          AND A.NOTC_STATS_YN = #{NOTC_STATS_YN}
+      </if>
+      <if test="START_DTM != null and START_DTM != ''">
+        <choose>
+           <when test=' "1".equals(DATE_TYPE)'>
+               AND TO_CHAR(A.REG_DTM,'YYYYMMDD') BETWEEN #{START_DTM} AND #{END_DTM}
+           </when>
+           <otherwise>
+               AND TO_CHAR(A.UPD_DTM,'YYYYMMDD') BETWEEN #{START_DTM} AND #{END_DTM}
+           </otherwise>
+        </choose>
+      </if> 
+    </sql>
+    
+</mapper>

@@ -1,0 +1,460 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_MF_28" width="1336" height="720" titletext="상품고시정보관리" onload="fn_onLoad" onbeforeclose="work04_onbeforeclose" onclose="work04_onclose" ondeactivate="work04_ondeactivate" onsize="work04_onsize">
+    <Layouts>
+      <Layout height="720" mobileorientation="landscape" width="1336">
+        <Static id="static_noticeList" taborder="0" text="상품고시정보 관리" left="20" top="10" height="30" cssclass="sta_WF_title01" onclick="Static00_onclick" width="300"/>
+        <Button id="btn_new" taborder="1" text="신규품목 추가" left="260" top="42" width="112" height="28" onclick="btn_new_onclick"/>
+        <Grid id="grd_noticeList" taborder="2" left="21" top="80" width="352" binddataset="ds_noticeList" autofittype="col" scrollbartype="none auto" oncellclick="grd_noticeList_oncellclick" height="51" selecttype="multiarea">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="48"/>
+                <Column size="218"/>
+                <Column size="80"/>
+                <Column size="0"/>
+                <Column size="0"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="No" controlautosizingtype="none" autosizecol="limitmax"/>
+                <Cell col="1" text="품목" controlautosizingtype="both" autosizecol="default" autosizerow="default"/>
+                <Cell col="2" text="사용여부" controlautosizingtype="both" autosizecol="default" autosizerow="default"/>
+                <Cell col="3" text="ID" displaytype="none"/>
+                <Cell col="4"/>
+              </Band>
+              <Band id="body">
+                <Cell expr="currow+1" textAlign="center"/>
+                <Cell col="1" text="bind:NOTI_ITM_NM" autosizecol="default" controlautosizingtype="both" autosizerow="default" color="blue" textDecoration="underline"/>
+                <Cell col="2" edittype="none" displaytype="normal" autosizecol="default" controlautosizingtype="both" autosizerow="default" checkboxfalsevalue="N" checkboxtruevalue="Y" textAlign="center" expr="USE_YN==&quot;Y&quot;?&quot;사용&quot;:&quot;미사용&quot;"/>
+                <Cell col="3" text="bind:NOTI_ITM_ID" displaytype="none"/>
+                <Cell col="4" text="bind:USE_YN"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="div_detail" taborder="3" left="380" top="5" background="transparent" visible="false" bottom="30" right="0" text="" onkeydown="fn_onkeydown">
+          <Layouts>
+            <Layout>
+              <Button id="btn_del" taborder="0" text="삭제" top="37" height="28" visible="true" onclick="btn_del_onclick" width="60" right="148"/>
+              <Button id="btn_add" taborder="1" text="추가" top="37" height="28" onclick="btn_add_onclick" visible="true" width="60" right="84"/>
+              <Button id="btn_save" taborder="2" text="저장" top="37" height="28" visible="true" cssclass="btn_WF_select" right="20" width="60" onclick="div_detail_btn_save_onclick"/>
+              <Static id="static_noticeDetail" taborder="3" text="품목정보 (   필수 항목)" left="11" top="5" height="30" cssclass="sta_WF_title01" width="300"/>
+              <Static id="Static26" taborder="4" text="품목명" left="12" top="75" width="130" height="32" cssclass="sta_cm_box01L_tdt_necessary" onclick="div_detail_Static26_onclick"/>
+              <Static id="Static27" taborder="5" left="141" top="75" height="32" cssclass="sta_cm_box02L_tdt" text="" right="20" onclick="div_detail_Static27_onclick"/>
+              <Static id="Static26_00" taborder="6" text="품목ID" left="12" top="106" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="sta_notiItmId" taborder="7" left="141" top="106" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+              <Edit id="edit_notiItmNm" taborder="8" left="152" top="79" height="24" right="330"/>
+              <Static id="Static26_00_00" taborder="9" text="상세항목" left="12" top="136" width="130" cssclass="sta_cm_box01L" height="86"/>
+              <Static id="Static27_00_00" taborder="10" left="141" top="136" cssclass="sta_cm_box02L" text="" right="20" height="86"/>
+              <Grid id="grd_noticeDetail" taborder="11" left="152" top="147" autofittype="col" scrollbartype="none auto" binddataset="ds_noticeDetail" oncellclick="grd_noticeDetail_oncellclick" right="30" height="53" autoenter="select" autosizingtype="none" extendsizetype="none" cssclass="grd_WF_list" selecttype="multiarea" enableevent="true">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="31"/>
+                      <Column size="28"/>
+                      <Column size="0"/>
+                      <Column size="113"/>
+                      <Column size="182"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="31" band="head"/>
+                      <Row size="31"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell text="No"/>
+                      <Cell col="1"/>
+                      <Cell col="2" text="ID"/>
+                      <Cell col="3" text="항목" cssclass="grd_WF_bg_image"/>
+                      <Cell col="4" text="항목상세"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell edittype="none" displaytype="normal" expr="currow+1" textAlign="center"/>
+                      <Cell col="1" edittype="checkbox" displaytype="checkboxcontrol" text="bind:CHK"/>
+                      <Cell col="2" text="bind:NOTI_ITM_DTL_NO" textAlign="center"/>
+                      <Cell col="3" text="bind:NOTI_ITM_DTL_NM" edittype="text" wordWrap="char"/>
+                      <Cell col="4" text="bind:NOTI_ITM_DTL_CTS" displaytype="normal" edittype="text" wordWrap="char"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Static id="Static26_01" taborder="12" text="사용여부" top="75" height="32" cssclass="sta_cm_box01L_tdt_necessary" onclick="div_detail_Static26_onclick" right="190" width="130"/>
+              <Radio id="rdo_useYn" taborder="13" top="79" height="24" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" direction="vertical" right="14" width="166" onitemchanged="div_detail_rdo_useYn_onitemchanged" value="Y" text="사용" index="0">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">Y</Col>
+                      <Col id="datacolumn">사용</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">N</Col>
+                      <Col id="datacolumn">미사용</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Radio>
+              <Static id="Static00" taborder="14" text="*" left="static_noticeDetail:-228" top="static_noticeDetail:-21" width="static_noticeDetail:3.33%" height="static_noticeDetail:40.00%" color="red"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_noticeList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="NOTI_ITM_NM" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_noticeDetail" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="NOTI_ITM_ID" type="STRING" size="5"/>
+          <Column id="NOTI_ITM_DTL_NO" type="INT" size="6"/>
+          <Column id="NOTI_ITM_DTL_NM" type="STRING" size="180"/>
+          <Column id="NOTI_ITM_DTL_CTS" type="STRING" size="2000"/>
+          <Column id="DEL_YN" type="STRING" size="1"/>
+          <Column id="CHK" type="STRING" size="1"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_deleteRow">
+        <ColumnInfo>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_DTL_NO" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="NO" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="NO">0</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_changeRow">
+        <ColumnInfo>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_DTL_NO" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_DTL_NM" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_DTL_CTS" type="STRING" size="256"/>
+          <Column id="DEL_YN" type="STRING" size="256"/>
+          <Column id="CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_noticeInfo">
+        <ColumnInfo>
+          <Column id="NO" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_NM" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="NO">1</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 
+*******************************************************/
+include "CO::coUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+this.checkedRow = new Array();
+
+this.valiGridIds = [
+	  {"name" : "고시항목", "id" : "NOTI_ITM_DTL_NM"}
+];
+
+this.selectedRow = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+    //공통 함수 호출(필수)
+    this.gfn_formOnLoad(this);
+    
+    this.fn_list(true);
+};
+
+// 화면 단축키
+this.fn_onkeydown = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	// CTRL + s
+	if (e.keycode == 83 && e.ctrlkey == true) {
+		// 저장
+		this.div_detail_btn_save_onclick();
+		event.preventDefault();
+	}
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_list = function (bInit){
+    
+    var sSvcId = "list";    
+    var sUrl = "/pr/prd-ntc/select-product-notice-list.do";  
+    var inDs = "ds_search=ds_search";
+    var outDs = "ds_noticeList=noticeList";
+    var arg = "";
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+    
+};
+
+this.fn_detail = function (bInit){
+    
+    var sSvcId = "detail";
+    var sUrl = "/pr/prd-ntc/select-product-notice-detail.do";  
+    var inDs = "ds_search=ds_search";
+    var outDs = "ds_noticeDetail=noticeDetail";
+    var arg = "";
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+    
+};
+
+this.fn_save = function (bInit){
+    
+    var sSvcId = "save";
+    var sUrl = "/pr/prd-ntc/save-product-notice.do";  
+    var inDs = "ds_noticeInfo=ds_noticeInfo ds_changeRow=ds_changeRow ds_deleteRow=ds_deleteRow";
+    var outDs = "";
+    var arg = "";
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+    
+};
+
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+    switch(svcID) {
+        case "list" :
+            this.refreshGridScroll();
+            break;
+            
+        case "detail" :
+            this.refreshDetailGridScroll();
+            break;
+            
+        case "save" :
+            this.fn_list(true);
+            this.fn_detail();
+            this.ds_deleteRow.clearData();
+            break;
+            
+    }
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.refreshGridScroll = function() {   //그리드 사이즈 새로고침
+    var nH = this.grd_noticeList.getRealRowFullSize();
+    var divH = this.div_detail.getOffsetHeight()-190;
+    if(nH <= divH){
+        this.grd_noticeList.set_height(nH + 2);
+    }else{
+		this.grd_noticeList.set_height(divH);
+	}
+}
+this.refreshDetailGridScroll = function() { //그리드 사이즈 새로고침
+    var nH = this.div_detail.form.grd_noticeDetail.getRealRowFullSize();
+    var divH = this.div_detail.getOffsetHeight()-276;
+    if(nH <= divH){
+        this.div_detail.form.grd_noticeDetail.set_height(nH + 2);
+        this.div_detail.form.Static26_00_00.set_height(nH+25);
+        this.div_detail.form.Static27_00_00.set_height(nH+25);
+    }else{
+        this.div_detail.form.grd_noticeDetail.set_height(divH);
+		this.div_detail.form.Static26_00_00.set_height(divH+25);
+        this.div_detail.form.Static27_00_00.set_height(divH+25);
+	}
+    
+}
+this.checkChanged = function() {    //변경사항 체크
+    var check = false;
+    var nRowCntDetail = this.ds_noticeDetail.getRowCount();
+    for(var i = 0; i<nRowCntDetail; i++){
+        if(this.ds_noticeDetail.getRowType(i) == 2 || this.ds_noticeDetail.getRowType(i) == 4){
+            check = true;
+        }
+    }
+    if(this.ds_deleteRow.getRowCount() > 0){
+        check = true;
+    }
+	return check;
+}
+//필수값 체크
+this.fn_validation = function(){
+	var result = true;
+	var obj = this.div_detail.form.edit_notiItmNm;
+	if(this.gfn_isNull(obj.value)){
+		result = false;
+		alert('품목명을 입력하세요');
+		obj.setFocus();
+	}
+	return result;
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//신규품목추가 버튼
+this.btn_new_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    if(this.checkChanged()){
+        var sReturn = this.confirm("변경된 내용이 저장되지 않습니다.");
+        if(!sReturn){
+            return false;
+        }
+    }
+    
+    this.div_detail.set_visible(true);
+    this.div_detail.form.edit_notiItmNm.set_value("");
+    this.div_detail.form.sta_notiItmId.set_text("");
+	this.div_detail.form.rdo_useYn.set_value("Y");
+    this.ds_noticeDetail.clearData();
+    this.refreshDetailGridScroll();
+    
+    this.ds_noticeInfo.setColumn(0, "NOTI_ITM_ID", "");
+    this.ds_noticeInfo.setColumn(0, "NOTI_ITM_NM", "");
+};
+
+//추가 버튼
+this.btn_add_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    this.ds_noticeDetail.addRow();
+    this.refreshDetailGridScroll();
+};
+
+//삭제 버튼
+this.btn_del_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    this.checkedRow = new Array();
+    for(var i=0; i<this.ds_noticeDetail.rowcount; i++)
+    {
+        if(this.ds_noticeDetail.getColumn(i, "CHK") == "1"){
+            this.checkedRow.push(i);
+            if(this.ds_noticeDetail.getColumn(i, "NOTI_ITM_DTL_NO") != null){//삭제항목
+                var nRow = this.ds_deleteRow.addRow();
+                this.ds_deleteRow.copyRow(nRow, this.ds_noticeDetail, i);
+            }
+        }
+    }
+    if(this.checkedRow.length==0){
+        alert("항목을 선택하세요");
+        return;
+    }
+    this.ds_noticeDetail.deleteMultiRows(this.checkedRow);
+    this.refreshDetailGridScroll();
+};
+
+//품목클릭
+this.grd_noticeList_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{   
+    if(obj.getCellPos() == 1){
+        if(this.checkChanged()){
+            var sReturn = this.confirm("변경된 내용이 저장되지 않았습니다.");
+            if(!sReturn){
+                return false;
+            }
+        }
+        this.div_detail.set_visible(true);
+        this.ds_search.setColumn(0, "NOTI_ITM_ID", obj.getCellValue(e.row, 3));
+        this.div_detail.form.edit_notiItmNm.set_value(obj.getCellValue(e.row, 1));
+        this.div_detail.form.rdo_useYn.set_value(obj.getCellValue(e.row, 4));
+        this.div_detail.form.sta_notiItmId.set_text(obj.getCellValue(e.row, 3));
+        this.fn_detail();
+        
+        this.ds_noticeInfo.setColumn(0, "NOTI_ITM_NM", obj.getCellValue(e.row, 1));
+        this.ds_noticeInfo.setColumn(0, "USE_YN", obj.getCellValue(e.row, 4));
+        this.ds_noticeInfo.setColumn(0, "NOTI_ITM_ID", obj.getCellValue(e.row, 3));
+		
+		this.selectedRow = e.row;
+    }
+};
+
+//저장 버튼
+this.div_detail_btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	var NOTI_ITM_NM = this.div_detail.form.edit_notiItmNm.value;
+	for(var i=0; i<this.ds_noticeList.rowcount; i++){
+		var NOTI_ITM_NMS = this.ds_noticeList.getColumn(i, "NOTI_ITM_NM");
+		if(NOTI_ITM_NMS == NOTI_ITM_NM && this.selectedRow!=i){
+			alert('중복되는 품목명입니다.');
+			return;
+		}
+	}
+	
+	//필수값 체크
+	if(!this.fn_validation()){
+		return;
+	}
+	var validation = this.fn_validationGrid(this.div_detail.form.grd_noticeDetail, this.valiGridIds, this.ds_noticeDetail);
+	if(!validation){
+		return;
+	}
+
+	this.ds_changeRow.clearData();
+	this.ds_noticeInfo.setColumn(0, "NOTI_ITM_NM", NOTI_ITM_NM);
+	var nRowCntDetail = this.ds_noticeDetail.getRowCount();
+	for(var i = 0; i<nRowCntDetail; i++){
+		if(this.ds_noticeDetail.getRowType(i) == 2 || this.ds_noticeDetail.getRowType(i) == 4){//생성
+			var nRow = this.ds_changeRow.addRow();
+			this.ds_changeRow.copyRow(nRow, this.ds_noticeDetail, i);
+		}
+	}
+	
+	var bReturn = this.confirm("변경된 내용을 적용합니다.");
+	if(bReturn){
+		this.fn_save();
+	}
+};
+
+this.work04_onbeforeclose = function(obj:nexacro.Form,e:nexacro.CloseEventInfo)
+{
+    trace('beforeclose');
+};
+
+this.div_detail_rdo_useYn_onitemchanged = function(obj:nexacro.Radio,e:nexacro.ItemChangeEventInfo)
+{
+    this.ds_noticeInfo.setColumn(0, "USE_YN", obj.value);
+};
+
+this.work04_onsize = function(obj:nexacro.Form,e:nexacro.SizeEventInfo)
+{
+    //var nH = this.div_detail.form.grd_noticeDetail.getRealRowFullSize();
+    //var h = obj.getOffsetHeight();
+    //if(nH >= (h-190)){
+    //    this.div_detail.form.grd_noticeDetail.set_height(h-230);
+    //    this.div_detail.form.Static26_00_00.set_height(h-203);
+    //    this.div_detail.form.Static27_00_00.set_height(h-203);
+    //}
+};
+
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="div_detail.form.rdo_useYn" propid="value" datasetid="ds_noticeInfo" columnid="USE_YN"/>
+    </Bind>
+  </Form>
+</FDL>

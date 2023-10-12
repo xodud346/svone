@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.cust.bgt.chmAprvl">
+
+   <!--
+    ******************************************************************************
+    * SELECT : 
+    * 작성자 : moonjooh
+    * 작성 일자 : 2022-04-13
+    ******************************************************************************
+    -->
+    <select id="selectCustBgtChmAprvl" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.selectCustBgtChmAprvl 화학물질 결재선 관리 목록 조회 */
+        SELECT LL.*
+        	 , LAG(LL.ID_CHK1) OVER (ORDER BY LL.BZPLC_ID, LL.APRVL_SET_SEQ, LL.APRVL_PST_CD, LL.APRV_SEQ) AS ID_CHK2
+			 , CASE WHEN LENGTH(LL.APRVR_NM_N) = 2 THEN SUBSTR(LL.APRVR_NM_N,1,1) || LPAD('*',(LENGTH(LL.APRVR_NM_N)-1),'*')
+			        WHEN LENGTH(LL.APRVR_NM_N) = 3 THEN SUBSTR(LL.APRVR_NM_N,1,1) || LPAD('*',(LENGTH(LL.APRVR_NM_N)-2),'*') || SUBSTR(LL.APRVR_NM_N,3,1)
+			        ELSE SUBSTR(LL.APRVR_NM_N,1,2) || LPAD('*',(LENGTH(LL.APRVR_NM_N)-2),'*')
+			   END AS APRVR_NM
+			 , CASE WHEN LENGTH(LL.UPDPSN_N) = 2 THEN SUBSTR(LL.UPDPSN_N,1,1) || LPAD('*',(LENGTH(LL.UPDPSN_N)-1),'*')
+			        WHEN LENGTH(LL.UPDPSN_N) = 3 THEN SUBSTR(LL.UPDPSN_N,1,1) || LPAD('*',(LENGTH(LL.UPDPSN_N)-2),'*') || SUBSTR(LL.UPDPSN_N,3,1)
+				    ELSE SUBSTR(LL.UPDPSN_N,1,2) || LPAD('*',(LENGTH(LL.UPDPSN_N)-2),'*')
+			   END AS UPDPSN
+          FROM (
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+        	SELECT LIST.CHK
+        		 , LIST.ID_VALUE AS ID_CHK1
+        		 , LIST.CO_CD
+        		 , LIST.APRVL_SPR_CD
+        		 , LIST.APRVL_SET_SEQ
+        		 , LIST.BZPLC_ID
+        		 , LIST.BZPLC_NM
+        		 , LIST.DEPT_ID
+        		 , LIST.DEPT_NM
+        		 , TO_NUMBER(LIST.APRV_SEQ) AS APRV_SEQ
+        		 , LIST.APRVR_ID
+        		 , LIST.APRVR_NM AS APRVR_NM_N
+        		 , LIST.APRVL_PST_CD
+        		 , LIST.UPDPSN AS UPDPSN_ID
+        		 , NVL(M.OPRTR_NM, M2.MBR_NM) AS UPDPSN_N 
+        		 , LIST.UPD_DTM
+        	FROM(
+        		SELECT '0' AS CHK
+	        		 , APR.CO_CD										/* 회사코드 */
+        			 , APR.CO_CD || APR.BZPLC_ID || APR.APRVL_SPR_CD || APR.APRVL_SET_SEQ AS ID_VALUE
+					 , APR.APRVL_SPR_CD									/* 결재선구분코드 */
+					 , APR.APRVL_SET_SEQ								/* 결재선설정순번 */
+					 , APR.BZPLC_ID										/* 사업장ID */
+					 , BZP.BZPLC_NM 									/* 사업장명 */
+					 , APR.DEPT_ID										/* 부서ID */
+					 , DEP.DEPT_NM										/* 부서명 */
+					 , CASE WHEN APRSET.APRV_SEQ > 90000 
+					 			THEN APRSET.APRV_SEQ-90000
+						 	ELSE APRSET.APRV_SEQ
+					   END AS APRV_SEQ									/* 결재 순번 */
+					 , APRSET.APRVR_ID
+					 , NVL( M.MBR_NM, APRSET.APRVR_ID ) AS APRVR_NM		/* 결재자 */
+					 , APRSET.APRVL_PST_CD								/* 최초/최종 */
+					 , NVL(APR.UPDPSN_ID, APR.REGPSN_ID) AS UPDPSN		/* 최종변경자 */
+					 , NVL(APR.UPD_DTM, APR.REG_DTM) AS UPD_DTM			/* 최종변경일시 */
+				FROM TB_CC_APRVL_SET_INFO APR
+				<if test=" bzplcId > 0 ">
+		            JOIN
+		            TB_OD_ODR_INQ_TGT_DTLS   T1
+		            ON  T1.SES_ID = #{sesId}
+		            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+		            AND T1.COL_ITM = 'BZPLC_ID'
+		            AND T1.COND_DATA_VAL = APR.BZPLC_ID
+	            </if>
+				<if test=" deptId > 0 ">
+		            JOIN
+		            TB_OD_ODR_INQ_TGT_DTLS   T2
+		            ON  T2.SES_ID = #{sesId}
+		            AND T2.INQ_COND_DTLS = #{inqCondDtls}
+		            AND T2.COL_ITM = 'DEPT_ID'
+		            AND T2.COND_DATA_VAL = APR.DEPT_ID
+	            </if>
+				<if test=" deptId > 0 ">
+		            JOIN
+		            TB_OD_ODR_INQ_TGT_DTLS   T4
+		            ON  T4.SES_ID = #{sesId}
+		            AND T4.INQ_COND_DTLS = #{inqCondDtls}
+		            AND T4.COL_ITM = 'DEPT_ID'
+		            AND T4.COND_DATA_VAL = APR.DEPT_ID
+	            </if>
+				LEFT OUTER JOIN TB_CC_APRVL_SET_DTL APRSET
+						ON APRSET.CO_CD = APR.CO_CD 
+						AND APRSET.BZPLC_ID = APR.BZPLC_ID
+						AND APRSET.APRVL_SPR_CD = APR.APRVL_SPR_CD
+						AND APRSET.APRVL_SET_SEQ = APR.APRVL_SET_SEQ
+				LEFT OUTER JOIN TB_CC_BZPLC_BASIS BZP
+						ON BZP.CO_CD = APR.CO_CD 
+						AND BZP.BZPLC_ID = APR.BZPLC_ID
+				LEFT OUTER JOIN TB_CC_DEPT_BASIS DEP
+						ON DEP.CO_CD = APR.CO_CD 
+						AND DEP.DEPT_ID = APR.DEPT_ID
+				LEFT OUTER JOIN TB_CC_MBR_BASIS M
+						ON M.CO_CD = APRSET.CO_CD
+					 	AND M.MBR_ID = APRSET.APRVR_ID
+				WHERE APR.APRVL_SPR_CD = '30'
+					AND APR.USE_YN = 'Y'
+        	)LIST
+			<if test=" acctId > 0 ">
+		        JOIN
+		        TB_OD_ODR_INQ_TGT_DTLS   T3
+		        ON  T3.SES_ID = #{sesId}
+		        AND T3.INQ_COND_DTLS = #{inqCondDtls}
+		        AND T3.COL_ITM = 'ACCT_ID'
+		        AND T3.COND_DATA_VAL = LIST.APRVR_ID
+	        </if>
+	        LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO M
+	        	ON ( M.CO_CD = LIST.CO_CD AND M.OPRTR_ID = LIST.UPDPSN )
+	        LEFT OUTER JOIN TB_CC_MBR_BASIS M2
+	        	ON ( M2.CO_CD = LIST.CO_CD AND M2.MBR_ID = LIST.UPDPSN )
+			<if test="sortColumn != null and sortColumn != ''"> 
+	        ORDER BY ${sortColumn} ${sortType} , BZPLC_ID, DEPT_ID, APRVL_SET_SEQ, APRVL_PST_CD, APRV_SEQ
+	        </if> 
+	        <if test="sortColumn == null or sortColumn == ''"> 
+			ORDER BY BZPLC_ID, DEPT_ID, APRVL_SET_SEQ, APRVL_PST_CD, APRV_SEQ
+	        </if>
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+        )LL
+    </select>
+    
+    <update id="deleteCustBgtChmAprvl" parameterType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.deleteCustBgtChmAprvl 화학물질 결재선 관리 삭제 */
+		DELETE FROM TB_CC_APRVL_SET_INFO
+		 WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+		   AND APRVL_SPR_CD = #{aprvlSprCd}
+		   AND APRVL_SET_SEQ = #{aprvlSetSeq}
+	</update>
+	
+	<delete id="deleteCustBgtChmAprvlDetail" parameterType="HashMap">
+		/* com.ssp.bo.cust.bgt.chmAprvl.deleteCustBgtChmAprvlDetail 화학물질 결재선 관리 결재선정보 삭제 */
+		DELETE FROM TB_CC_APRVL_SET_DTL 
+		 WHERE CO_CD = #{coCd}
+		 AND BZPLC_ID = #{bzplcId}
+		 AND APRVL_SPR_CD = #{aprvlSprCd}
+		 AND APRVL_SET_SEQ = #{aprvlSetSeq}
+	</delete>
+    
+    <select id="selectAprvlSetSeq" parameterType="HashMap" resultType="int" flushCache="true" useCache="false">
+        /* com.ssp.bo.cust.bgt.chmAprvl.selectAprvlSetSeq 생성된 결재선 관리 상세 관리정보 APRVL_SET_SEQ 채번 */
+        SELECT NVL(MAX(APRVL_SET_SEQ)+1, 1)
+		  FROM TB_CC_APRVL_SET_DTL
+	     WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+		   AND APRVL_SPR_CD = '30'
+    </select>
+    
+    <select id="selectInsertValidationCheck" parameterType="HashMap" resultType="int">
+        /* com.ssp.bo.cust.bgt.chmAprvl.selectInsertValidationCheck  insert validation */
+        SELECT COUNT(*) 
+		  FROM TB_CC_APRVL_SET_INFO
+		 WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+		   AND DEPT_ID = #{deptId}
+		   AND APRVL_SPR_CD = #{aprvlSprCd}
+    </select>
+    
+    <insert id="insertChmAprvlInfo" parameterType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.insertChmAprvlInfo 화학물질 결재선 관리 상세 관리정보 생성 */
+		INSERT INTO TB_CC_APRVL_SET_INFO(
+        	CO_CD
+		 	, BZPLC_ID 
+		 	, APRVL_SPR_CD
+		 	, APRVL_SET_SEQ
+		   	, DEPT_ID
+		   	, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+        )VALUES(
+        	#{coCd}
+        	, #{bzplcId}
+        	, #{aprvlSprCd}
+        	, #{aprvlSetSeq}
+        	, #{deptId}
+        	, #{useYn}
+        	, #{oprtrId}
+        	, SYSDATE
+		)
+	</insert>
+	
+	<insert id="insertChmAprvlInfoHist" parameterType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.insertChmAprvlInfoHist 화학물질 결재선 관리 상세 관리정보 이력 */
+		INSERT INTO TB_CC_APRVL_SET_INFO_HST(
+        	CO_CD
+			, BZPLC_ID
+			, APRVL_SPR_CD
+			, APRVL_SET_SEQ
+			, HST_SEQ
+			, HST_SPR_CD
+		   	, DEPT_ID
+			, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+        )
+        SELECT A.CO_CD
+			 , A.BZPLC_ID
+			 , A.APRVL_SPR_CD
+			 , A.APRVL_SET_SEQ
+			 , (
+        		SELECT NVL(MAX(HST_SEQ), 0)+1
+				FROM TB_CC_APRVL_SET_INFO_HST
+				WHERE CO_CD = #{coCd}
+				AND BZPLC_ID = #{bzplcId}
+				AND APRVL_SPR_CD = #{aprvlSprCd}
+				AND APRVL_SET_SEQ = #{aprvlSetSeq}
+        	 )
+			 , #{hstSprCd}
+			 , A.DEPT_ID
+			 , A.USE_YN
+			 , A.REGPSN_ID
+			 , A.REG_DTM
+			 , A.UPDPSN_ID
+			 , A.UPD_DTM
+		  FROM TB_CC_APRVL_SET_INFO A
+		 WHERE A.CO_CD = #{coCd}
+		   AND A.BZPLC_ID = #{bzplcId}
+		   AND A.APRVL_SPR_CD = #{aprvlSprCd}
+		   AND A.APRVL_SET_SEQ = #{aprvlSetSeq}
+	</insert>
+	
+	<insert id="insertPopApr" parameterType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.insertPopApr 화학물질 결재선 관리 상세 결재선정보 생성 */
+		INSERT INTO TB_CC_APRVL_SET_DTL(
+        	CO_CD
+		 	, BZPLC_ID 
+		 	, APRVL_SPR_CD
+		 	, APRVL_SET_SEQ
+		 	, APRV_SEQ
+			, APRVL_PST_CD
+			, APRVR_ID
+			, REGPSN_ID
+			, REG_DTM
+        )VALUES(
+        	#{coCd}
+        	, #{bzplcId}
+        	, #{aprvlSprCd}
+        	, #{aprvlSetSeq}
+        	, #{dgrCnt}
+        	, #{aprvlPstCd}
+        	, #{mbrId}
+        	, #{oprtrId}
+        	, SYSDATE
+		)
+	</insert>
+	
+	<update id="updateAprvl" parameterType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.updateAprvl 결재선 설정정보 수정 */
+		UPDATE TB_CC_APRVL_SET_INFO
+		   SET UPDPSN_ID = #{oprtrId}
+		   	 , UPD_DTM = SYSDATE
+		 WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+		   AND APRVL_SPR_CD = #{aprvlSprCd}
+		   AND APRVL_SET_SEQ = #{aprvlSetSeq}
+    </update>
+	
+	<update id="updatePopApr" parameterType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.updatePopApr 화학물질 관리 상세 결재선정보 수정 */
+        MERGE INTO TB_CC_APRVL_SET_DTL
+		USING DUAL 
+		ON ( CO_CD = #{coCd}
+		 AND BZPLC_ID = #{bzplcId}
+		 AND APRVL_SPR_CD = #{aprvlSprCd}
+		 AND APRVL_SET_SEQ = #{aprvlSetSeq}
+		 AND APRV_SEQ = #{dgrCnt}
+		)
+		WHEN MATCHED THEN
+		UPDATE SET APRVR_ID = #{mbrId}
+		     , APRVL_PST_CD = #{aprvlPstCd}
+		   	 , UPDPSN_ID = #{oprtrId}
+		   	 , UPD_DTM = SYSDATE
+		WHEN NOT MATCHED THEN
+        INSERT(
+        	CO_CD
+		 	, BZPLC_ID 
+		 	, APRVL_SPR_CD
+		 	, APRVL_SET_SEQ
+		 	, APRV_SEQ
+			, APRVL_PST_CD
+			, APRVR_ID
+			, REGPSN_ID
+			, REG_DTM
+        )VALUES(
+        	#{coCd}
+        	, #{bzplcId}
+        	, #{aprvlSprCd}
+        	, #{aprvlSetSeq}
+        	, #{dgrCnt}
+        	, #{aprvlPstCd}
+        	, #{mbrId}
+        	, #{oprtrId}
+        	, SYSDATE
+		)
+    </update>
+    
+    <delete id="deletePopApr" parameterType="HashMap">
+		/* com.ssp.bo.cust.bgt.chmAprvl.deletePopApr 화학물질 관리 상세 결재선정보 Delete */
+		DELETE FROM TB_CC_APRVL_SET_DTL 
+		 WHERE CO_CD = #{coCd}
+		 AND BZPLC_ID = #{bzplcId}
+		 AND APRVL_SPR_CD = #{aprvlSprCd}
+		 AND APRVL_SET_SEQ = #{aprvlSetSeq}
+	</delete>
+	
+	<select id="selectPopAprInfo" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.selectPopAprInfo 화학물질 결재선 관리 조회 */
+        SELECT CO_CD
+			 , BZPLC_ID
+			 , #{bzplcNm} BZPLC_NM
+			 , APRVL_SPR_CD
+			 , APRVL_SET_SEQ 
+			 , DEPT_ID 
+			 , #{deptNm} AS DEPT_NM
+		FROM TB_CC_APRVL_SET_INFO
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND APRVL_SPR_CD = '30'
+		AND DEPT_ID = #{deptId}
+    </select>
+    
+    <select id="selectPopAprDetail" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.selectPopAprDetail 화학물질 결재선 관리 상세 결재선조회 */
+        SELECT CASE WHEN APRV_SEQ > 90000 THEN APRV_SEQ-90000||''
+			       ELSE APRV_SEQ||''
+			   END AS DGR_CNT								/* 결재 차수 */
+			 , APRVR_ID AS MBR_ID							/* 결재자ID */
+			 , (SELECT M.MBR_NM
+				  FROM TB_CC_MBR_BASIS M
+				 WHERE M.CO_CD = CO_CD
+				   AND M.MBR_ID = APRVR_ID) AS MBR_NM		/* 결재자명 */
+			 , APRVL_PST_CD									/* 최초/최종 */
+			 , '0' AS CHK
+			 , APRVL_SPR_CD									/* 결재선구분코드 */
+			 , APRVL_SET_SEQ								/* 결재선설정순번 */
+			 , #{coCd} AS CO_CD
+			 , #{bzplcId} AS BZPLC_ID
+			 , ROWNUM||'' AS GROW
+		  FROM TB_CC_APRVL_SET_DTL
+		 WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+		   AND APRVL_SPR_CD = #{aprvlSprCd}
+		   AND APRVL_SET_SEQ = #{aprvlSetSeq}
+    </select>
+    
+    <insert id="saveAprvlInfoHist" parameterType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.saveAprvlInfoHist 결재선 관리 상세 결재선정보 이력 */
+		INSERT INTO TB_CC_APRVL_SET_DTL_HST(
+        	CO_CD
+			, BZPLC_ID
+			, APRVL_SPR_CD
+			, APRVL_SET_SEQ
+			, APRV_SEQ
+			, HST_SEQ
+			, HST_SPR_CD
+			, APRVL_PST_CD
+			, APRVR_ID
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+        )
+        SELECT A.CO_CD
+			 , A.BZPLC_ID
+			 , A.APRVL_SPR_CD
+			 , A.APRVL_SET_SEQ
+			 , A.APRV_SEQ
+			 , (
+        		SELECT NVL(MAX(HST_SEQ), 0)+1
+				FROM TB_CC_APRVL_SET_DTL_HST
+				WHERE CO_CD = #{coCd}
+				AND BZPLC_ID = #{bzplcId}
+				AND APRVL_SPR_CD = #{aprvlSprCd}
+				AND APRVL_SET_SEQ = #{aprvlSetSeq}
+        	 )
+			 , #{hstSprCd}
+			 , A.APRVL_PST_CD
+			 , A.APRVR_ID
+			 , A.REGPSN_ID
+			 , A.REG_DTM
+			 , A.UPDPSN_ID
+			 , A.UPD_DTM
+		  FROM TB_CC_APRVL_SET_DTL A
+		 WHERE A.CO_CD = #{coCd}
+		   AND A.BZPLC_ID = #{bzplcId}
+		   AND A.APRVL_SPR_CD = #{aprvlSprCd}
+		   AND A.APRVL_SET_SEQ = #{aprvlSetSeq}
+	</insert>
+    
+</mapper>

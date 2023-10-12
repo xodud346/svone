@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssp.bo.cc.common">
+
+<sql id="sqlPrefixPaging">
+<if test="START_NUM != null and START_NUM > -1">SELECT COUNT(*) OVER()  TOT_CUNT, ROWNUM  ROWN, LST.* FROM (</if>
+</sql>
+
+<sql id="sqlPostfixPaging">
+<if test="START_NUM != null and START_NUM > -1">)  LST  OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY</if>
+</sql>
+
+<sql id="sqlPrefixPagingCamel">
+<if test="startNum != null and startNum > -1">SELECT COUNT(*) OVER()  TOT_CUNT, ROWNUM  ROWN, LST.* FROM (</if>
+</sql>
+
+<sql id="sqlPostfixPagingCamel">
+<if test="startNum != null and startNum > -1">)  LST  OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY</if>
+</sql>
+
+<!-- 
+<include refid="com.ssp.bo.cc.common.sqlBzplcGrdInfo" />
+ -->
+<sql id="sqlBzplcGrdInfo">
+        SELECT *
+          FROM TB_CC_BZPLC_GRD_INFO
+         WHERE (BZPLC_GRD_ID, SEQ) IN (
+                SELECT BZPLC_GRD_ID, SEQ
+                  FROM (SELECT BZPLC_GRD_ID, SEQ
+                             , ROW_NUMBER() OVER(PARTITION BY BZPLC_GRD_ID ORDER BY VLD_PERD_STR_DTM, VLD_PERD_END_DTM)  RNK
+                          FROM TB_CC_BZPLC_GRD_INFO
+                         WHERE USE_YN  =  NVL('Y', 'Y')
+                           AND (TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') BETWEEN VLD_PERD_STR_DTM AND VLD_PERD_END_DTM OR VLD_PERD_STR_DTM >= TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'))
+                       )
+                 WHERE RNK=1
+               )
+</sql>
+
+
+<!-- 
+ 공통코드 조회
+ -->
+<select id="selectComCodeDtl" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.cc.common.selectComCodeDtl */
+<choose>
+<when test='"CURR_DD".equals(comClsfCd)'>
+SELECT TRIM(TO_CHAR(LEVEL, '09'))        CD
+     , TRIM(TO_CHAR(LEVEL, '09'))||' 일'  NM
+  FROM DUAL
+CONNECT BY (SELECT TO_NUMBER(TO_CHAR(LAST_DAY(SYSDATE), 'DD')) FROM DUAL) >= LEVEL
+</when>
+<when test='"CUST_GRD_CD".equals(comClsfCd)'>
+SELECT DISTINCT
+       BZPLC_GRD_ID  COM_DTL_CD   , BZPLC_GRD_ID  CD
+     , BZPLC_GRD_NM  COM_DTL_CD_NM, BZPLC_GRD_NM  NM
+  FROM (
+        <include refid="com.ssp.bo.cc.common.sqlBzplcGrdInfo" />
+       )
+ WHERE USE_YN  =  NVL(#{useYn    }, 'Y')
+ ORDER BY
+       BZPLC_GRD_ID
+</when>
+<otherwise>
+SELECT LANG_CD
+     , COM_CLSF_CD
+     , COM_DTL_CD       , COM_DTL_CD      CD
+     , COM_DTL_CD_NM    , COM_DTL_CD_NM   NM
+     , COM_USR_DEFN_NM_1
+     , COM_USR_DEFN_NM_2
+     , COM_USR_DEFN_NM_3
+     , COM_USR_DEFN_NM_4
+     , COM_USR_DEFN_NM_5
+     , SRT_SO
+     , USE_YN
+     , 0 AS COL_CHK
+  FROM TB_CO_COM_CD_DTL  A
+ WHERE A.COM_CLSF_CD =     #{comClsfCd}
+   AND A.USE_YN      = NVL(#{useYn    }, 'Y')
+ ORDER BY SRT_SO
+</otherwise>
+</choose>
+</select>
+
+
+
+<!-- [SSP_BO_MA_65] 권한 별 운영 단위 설정 조회 팝업용 운영단위 조회 -->
+<select id="selectBzplcOprunit" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.cc.common.selectBzplcOprunit */
+<include refid="sqlPrefixPagingCamel" />
+
+SELECT BZPL.CO_CD
+     , BZPL.GRP_ID           , BGRP.GRP_NM
+     , BZPL.CORP_ID          , BCRP.CORP_NM    , BZPL.CORP_NO
+     , BZPL.BZPLC_ID         , BZPL.BZPLC_NM
+     , OPRU.OPR_UNIT_ID      , OPRU.OPR_UNIT_NM
+     
+  FROM TB_CC_BZPLC_BASIS       BZPL
+     , TB_CC_OPR_UNIT_BASIS    OPRU
+     , TB_CC_BZPLC_GRP_BASIS   BGRP
+     , TB_CC_BZPLC_CORP_BASIS  BCRP
+ WHERE BZPL.CO_CD = OPRU.CO_CD(+) AND BZPL.BZPLC_ID = OPRU.BZPLC_ID (+)
+   AND BZPL.CO_CD = BGRP.CO_CD(+) AND BZPL.GRP_ID   = BGRP.GRP_ID   (+)
+   AND BZPL.CO_CD = BCRP.CO_CD(+) AND BZPL.CORP_ID  = BCRP.CORP_ID  (+)
+   
+   AND BZPL.USE_YN           = 'Y'
+   AND OPRU.USE_YN           = 'Y'
+   
+   AND BZPL.CO_CD            = NVL(#{coCd}, '1000')
+   <if test='grpId     != null and !"".equals(grpId    )'>AND (BZPL.GRP_ID      LIKE '%'||#{grpId    }||'%' OR BGRP.GRP_NM      LIKE #{grpId    }||'%')</if>
+   <if test='corpId    != null and !"".equals(corpId   )'>AND (BZPL.CORP_ID     LIKE '%'||#{corpId   }||'%' OR BCRP.CORP_NM     LIKE #{corpId   }||'%')</if>
+   <if test='bzplcId   != null and !"".equals(bzplcId  )'>AND (BZPL.BZPLC_ID    LIKE '%'||#{bzplcId  }||'%' OR BZPL.BZPLC_NM    LIKE #{bzplcId  }||'%')</if>
+   <if test='oprUnitId != null and !"".equals(oprUnitId)'>AND (OPRU.OPR_UNIT_ID LIKE '%'||#{oprUnitId}||'%' OR OPRU.OPR_UNIT_NM LIKE #{oprUnitId}||'%')</if>
+   <if test='oprUnitNm != null and !"".equals(oprUnitNm)'>AND (OPRU.OPR_UNIT_NM LIKE '%'||#{oprUnitNm}||'%' OR OPRU.OPR_UNIT_NM LIKE #{oprUnitNm}||'%')</if>
+   
+ ORDER BY
+       BZPL.CO_CD       NULLS LAST
+     , BZPL.GRP_ID      NULLS LAST
+     , BZPL.CORP_ID     NULLS LAST
+     , BZPL.BZPLC_ID    NULLS LAST
+     , OPRU.OPR_UNIT_ID NULLS LAST
+     
+<include refid="sqlPostfixPagingCamel" />
+/* /com.ssp.bo.cc.common.selectBzplcOprunit */
+</select>
+
+<select id="checkMbrExist" parameterType="HashMap" resultType="int">
+	   SELECT COUNT(*) 
+		 FROM SSP_APP.TB_CO_MBR_LOGN_INFO A
+	    INNER JOIN SSP_APP.TB_CC_MBR_BASIS B
+	 	    ON A.CO_CD = B.CO_CD
+	 	   AND A.MBR_ID = B.MBR_ID
+	    INNER JOIN SSP_APP.TB_CC_BZPLC_BASIS C	
+		   ON C.BZPLC_ID = A.BZPLC_ID
+		  AND C.CO_CD = A.CO_CD	
+	    INNER JOIN SSP_APP.TB_CC_DEPT_BASIS D
+	  	   ON D.CO_CD = B.CO_CD
+		  AND D.BZPLC_ID = B.BZPLC_ID
+		  AND D.DEPT_ID = B.DEPT_ID
+	    INNER JOIN SSP_APP.TB_CC_OPR_UNIT_BASIS E
+		   ON E.CO_CD = B.CO_CD
+		  AND E.BZPLC_ID = B.BZPLC_ID
+		  AND E.OPR_UNIT_ID = D.OPR_UNIT_ID
+	    LEFT OUTER JOIN TB_CC_MBR_CTL_AUTH_INFO BB
+		   ON B.CO_CD  = BB.CO_CD
+		  AND B.MBR_ID = BB.MBR_ID		  
+	    WHERE B.MBR_NM != '탈퇴'
+		  AND A.CO_CD = #{coCd}
+		  AND C.BZPLC_ID = #{bzplcId}
+		  AND A.MBR_ID = #{mbrId}
+		  AND BB.APRV_AUTH_USE_YN = 'Y'  /* 결재권한사용여부 */
+</select>
+
+</mapper>

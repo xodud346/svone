@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="EdmInfo">
+
+<!--
+	******************************************************************************
+	* SELECT : EDM
+	* 작성자 : YHK
+	* 작성 일자 : 2022-12-13
+	******************************************************************************
+-->
+	
+	<select id="selectEdmInfoList" parameterType="HashMap" resultType="HashMap">
+		/* EDM 타겟 관리 목록 조회 */
+		
+		SELECT A.CO_CD
+				, A.EDM_SEQ
+				
+				, CASE WHEN A.EDM_FORM_CD = 'E' THEN 'E-MAIL'
+					   WHEN A.EDM_FORM_CD = 'S' THEN 'SMS'
+					   ELSE ''
+					   END AS EDM_FORM_CD 	
+					   		
+				, A.EXTR_RSN
+				, A.EVT_ID
+				
+				, CASE WHEN B.DOWN_PROC_STATS_CD = '1' THEN TRIM(TO_CHAR(A.OPCNT,'999,999,999')) || '(추출 중)'
+					   WHEN B.DOWN_PROC_STATS_CD = '2' THEN TRIM(TO_CHAR(A.OPCNT,'999,999,999')) || '(추출 중)'
+					   WHEN B.DOWN_PROC_STATS_CD = '3' THEN TRIM(TO_CHAR(A.OPCNT,'999,999,999')) 
+					   ELSE TRIM(TO_CHAR(A.OPCNT,'999,999,999'))
+					   END AS OPCNT
+					   
+				, A.REGPSN_ID || ' ' || C.OPRTR_NM AS REGPSN_ID
+				, TO_CHAR(A.REG_DTM, 'YYYY.MM.DD HH24:MI:SS') AS REG_DTM
+				
+				, CASE WHEN TRUNC(SYSDATE - A.REG_DTM) <![CDATA[ >= ]]> 7 THEN 'Y'
+					   ELSE 'N' 
+					   END AS EXPIRED_YN
+					   
+				, B.DOWN_PROC_STATS_CD
+				, B.FILE_NM
+				, B.FILE_PATH
+				
+		FROM TB_SA_EDM_INFO A
+		
+		JOIN TB_CO_BVAL_FILE_DOWN_INFO B
+		ON A.REGPSN_ID = B.REGPSN_ID
+		AND A.FILE_SEQ = B.FILE_SEQ
+		AND B.FILE_NM LIKE 'EDM%'
+		
+		JOIN TB_CO_MBR_OPRTR_INFO C
+		ON A.REGPSN_ID = C.OPRTR_ID
+		
+		ORDER BY EDM_SEQ DESC
+		
+		OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+			
+	</select>
+	
+
+	
+	<select id="selectEdmInfoListCnt" parameterType="HashMap" resultType="int">	
+		/* EDM 타겟 관리 목록수 조회 */
+	
+		SELECT COUNT(*) 
+		
+		FROM TB_SA_EDM_INFO
+						
+	</select>
+	
+	
+	
+	<insert id="insertEdmInfo" parameterType="HashMap">
+		/* EDM 타겟 관리 등록 */
+		
+		<selectKey keyProperty="edmSeq" resultType="int" order="BEFORE">
+        	SELECT NVL(MAX(EDM_SEQ),0) + 1 
+        	FROM TB_SA_EDM_INFO
+    	</selectKey>
+    	   	
+		INSERT 
+		
+		INTO TB_SA_EDM_INFO
+			(
+				CO_CD
+			    , EDM_SEQ
+			    , EDM_FORM_CD
+			    , EXTR_RSN
+			    , EVT_ID
+			    , OPCNT
+			    , REGPSN_ID
+			    , REG_DTM
+			)
+		  	
+		VALUES
+			(
+				#{coCd}
+				, #{edmSeq}	
+				, #{edmFormCd}
+				, #{extrRsn}
+				, #{evtId}
+				, #{opcnt}
+				, #{regpsnId}
+				, SYSDATE
+			) 			
+		
+	</insert>
+	
+	<update id="updateEdmInfo" parameterType="HashMap">
+		/* EDM 타겟 관리 수정 */
+		
+		UPDATE TB_SA_EDM_INFO
+    	
+    	SET CO_CD = #{coCd}   		
+			, EDM_SEQ = #{edmSeq}
+			, FILE_SEQ = #{fileSeq}
+			, EDM_FORM_CD = #{edmFormCd}
+			, EXTR_RSN = #{extrRsn}
+			, EVT_ID = #{evtId}
+			, OPCNT = #{opcnt}
+			, REGPSN_ID = #{regpsnId}
+			, REG_DTM = SYSDATE
+		
+		WHERE EDM_SEQ = #{edmSeq}
+           	
+	</update>
+	
+	<select id="selectMbrListCnt" parameterType="HashMap" resultType="Long">	
+		/* EDM 타겟 관리 등록 대상 회원수 조회 */
+	
+		SELECT COUNT(*) AS TOTAL_COUNT
+		
+		FROM (
+				SELECT *
+				
+				FROM TB_CC_MBR_BASIS A
+				
+				JOIN TB_CC_BZPLC_BASIS B
+				ON A.CO_CD = B.CO_CD
+				AND A.BZPLC_ID = B.BZPLC_ID
+				
+				JOIN TB_CC_IDDT_BASIS C
+				ON B.IDDT_ID = C.IDDT_ID	
+				
+				JOIN TB_CC_OPR_UNIT_BASIS D
+				ON A.CO_CD = D.CO_CD
+				AND A.BZPLC_ID = D.BZPLC_ID
+				
+				JOIN TB_CC_DEPT_BASIS E
+				ON A.DEPT_ID = E.DEPT_ID
+				
+				WHERE 1=1
+				AND MBR_USE_CD != 'Q'	
+				
+					<if test="mktgMailRcvAgreYn != null and mktgMailRcvAgreYn != ''">
+						AND A.MKTG_MAIL_RCV_AGRE_YN = #{mktgMailRcvAgreYn}
+					</if>
+					
+					<if test="mktgCharRcvAgreYn != null and mktgCharRcvAgreYn != ''">
+						AND MKTG_CHAR_RCV_AGRE_YN = #{mktgCharRcvAgreYn}
+					</if>	
+					
+					<!-- <if test="mbrIds != null and mbrIds.length > 0">
+						AND (0, A.MBR_ID) 
+						IN <foreach collection="mbrIds" item="item" open="(" close=")" separator=",">
+							(0, #{item})
+						   </foreach>				
+					</if> -->
+					
+					<if test="mbrId != null and mbrId != ''">	
+									
+						<if test="mbrIdMulti > 0">						
+							AND EXISTS (
+										SELECT 'X' 
+                        				FROM TB_OD_ODR_INQ_TGT_DTLS T
+                        				WHERE T.SES_ID = #{sesId}
+                            			AND T.INQ_COND_DTLS = #{inqCondDtls}
+                            			AND T.COL_ITM = 'MBR_ID_MULTI' 
+                            			AND A.MBR_ID = T.COND_DATA_VAL										
+										)			
+						</if>
+					
+					</if>
+					
+			)
+			
+	</select>
+	
+	<insert id="insertEmailTransLogInfo" parameterType="HashMap" >
+		/* 이메일 발송 로그 등록 */
+		
+		<selectKey keyProperty="emailSeq" resultType="String" order="BEFORE">
+	     	SELECT SSP_APP.SQ_CO_EMAIL_TRANS_INFO_MST_01.NEXTVAL AS EMAIL_SEQ  FROM DUAL
+	    </selectKey>
+	    
+		INSERT 
+		
+		INTO TB_CO_EMAIL_TRANS_LOG
+             ( EMAIL_SEQ
+             , EVT_ID
+             , SSP_EVT_ID
+             , ODR_NO
+             , MBR_ID
+             , PRD_ID
+             , IF_RSLT_FLD_1
+             , IF_RSLT_FLD_2
+             , IF_RSLT_FLD_3
+             , IF_RSLT_FLD_4
+             , IF_RSLT_FLD_5
+             , SEND_YN
+             , SEND_DTM
+             , USR_EMAIL_READ_DTM
+             , REG_DTM
+             , UPD_DTM
+             
+             ) VALUES (
+               #{emailSeq}
+             , #{eventId}
+             , #{sspEvtId}
+             , null
+             , null
+             , null
+             , null
+             , null
+             , null
+             , null
+             , null
+             , 'N'
+             , null
+             , null
+             , SYSDATE
+             , SYSDATE
+             )
+	</insert>
+	
+	<select id="selectSecurity" resultType="HashMap">
+	
+		SELECT OPRTR_NM
+				, EMAIL_ADDR
+				, REPLACE(HP_NO,'-','') AS HP_NO
+		FROM TB_CO_MBR_OPRTR_INFO 
+		WHERE OPRTR_NM = '정보보호사무국'
+		
+	
+	</select>
+	
+	<select id="selectRegpsnNm" parameterType="String" resultType="String">
+	
+		SELECT OPRTR_NM
+		FROM TB_CO_MBR_OPRTR_INFO
+		WHERE OPRTR_ID = #{regpsnId}
+	
+	</select>
+
+</mapper>

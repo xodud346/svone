@@ -1,0 +1,664 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.co.coMnuAuthGrpMng">
+   <!--
+    ******************************************************************************
+    * SELECT : 메뉴권한그룹관리
+    * 작성자 :
+    * 작성 일자 : 2022.01.27
+    ******************************************************************************
+    -->
+	<select id="selectMnuMngList" parameterType="HashMap" resultType="HashMap">
+	/*com.ssp.bo.co.coMnuAuthGrpMng.selectMnuMngList  */
+		SELECT DISTINCT 0 AS CHK
+			 		   ,A.MNU_SEQ
+					   ,A.MNU_NM
+					   ,A.MNU_LVL
+					   ,A.SRT_SO
+				  FROM SSP_APP.TB_CO_MNU_INFO A
+				 START WITH A.MNU_SEQ NOT IN (
+											 SELECT MNU_SEQ
+											   FROM SSP_APP.TB_CO_MNU_AUTH_INFO
+											  WHERE AUTH_ROLE_CD = #{authRoleCd}
+											)
+			   CONNECT BY A.MNU_SEQ = PRIOR A.HRNK_MNU_SEQ
+			     ORDER BY A.SRT_SO
+    </select>
+
+
+    <select id="selectMnuAuthInfoList" parameterType="HashMap" resultType="HashMap">
+    /*com.ssp.bo.co.coMnuAuthGrpMng.selectMnuAuthInfoList  */
+       SELECT 0 AS CHK
+      		  , A.MNU_SEQ
+		      ,A.MNU_NM
+		      ,A.MNU_LVL
+		      ,A.SRT_SO
+		      ,C.AUTH_ROLE_CD
+		  FROM SSP_APP.TB_CO_MNU_INFO A
+		  INNER JOIN SSP_APP.TB_CO_MNU_AUTH_INFO C
+		   	ON A.MNU_SEQ = C.MNU_SEQ
+		 WHERE C.AUTH_ROLE_CD = #{authRoleCd}
+		 ORDER BY A.SRT_SO
+    </select>
+    
+    <!--  메뉴권한그룹정보 조회-->
+    <select id="selectMnuAuthGrpInfoList" parameterType="HashMap" resultType="HashMap">
+    /*com.ssp.bo.co.coMnuAuthGrpMng.selectMnuAuthGrpInfoList  */
+         SELECT 0 AS CHK
+      		  , A.AUTH_GRP_CD
+		      , A.AUTH_ROLE_CD
+		      , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+		      , A.REGPSN_ID
+		      , B.OPRTR_NM  AS REGPSN_NM
+		  FROM SSP_APP.TB_CO_MNU_AUTH_GRP_INFO A
+		  LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B 
+		    ON A.REGPSN_ID  = B.OPRTR_ID 
+		 WHERE A.AUTH_GRP_CD= #{authGrpCd}
+		 ORDER BY A.REG_DTM DESC
+    </select>
+
+    <!--  메뉴 권한 정보 등록 -->
+    <insert id="insertMnuAuthInfo" parameterType="HashMap">
+        /*com.ssp.bo.co.coMnuAuthGrpMng.insertMnuAuthInfo  */
+        INSERT INTO
+            SSP_APP.TB_CO_MNU_AUTH_INFO
+            (
+                 AUTH_ROLE_CD
+				,MNU_SEQ
+				,REG_DTM
+				,REGPSN_ID
+            )
+        VALUES
+            (
+                  #{authRoleCd}
+                , #{mnuSeq}
+                , SYSDATE
+                , #{regpsnId}
+            )
+    </insert>
+
+      <!--  메뉴 권한 정보 삭제 -->
+    <delete id="deleteMnuAuthInfo" parameterType="hashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.deleteMnuAuthInfo */
+		DELETE FROM SSP_APP.TB_CO_MNU_AUTH_INFO
+		WHERE AUTH_ROLE_CD = #{authRoleCd}
+		  AND MNU_SEQ = #{mnuSeq}
+	</delete>
+	
+	  <!--  메뉴 권한 그룹 정보 등록 -->
+    <insert id="insertMnuAuthGrpInfo" parameterType="HashMap">
+        /*com.ssp.bo.co.coMnuAuthGrpMng.insertMnuAuthGrpInfo  */
+        INSERT INTO
+            SSP_APP.TB_CO_MNU_AUTH_GRP_INFO
+            (
+            	 AUTH_GRP_CD
+                ,AUTH_ROLE_CD
+				,REG_DTM
+				,REGPSN_ID
+            )
+        VALUES
+            (
+                  #{authGrpCd}
+                , #{authRoleCd}
+                , SYSDATE
+                , #{regpsnId}
+            )
+    </insert>
+
+      <!--  메뉴 권한 그룹 정보  삭제 -->
+    <delete id="deleteMnuAuthGrpInfo" parameterType="hashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.deleteMnuAuthGrpInfo */
+		DELETE FROM SSP_APP.TB_CO_MNU_AUTH_GRP_INFO
+		WHERE AUTH_GRP_CD =  #{authGrpCd}
+		  AND AUTH_ROLE_CD = #{authRoleCd}
+	</delete>
+
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 부서별 권한 목록 조회
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-17
+	******************************************************************************
+	-->
+	<select id="selectDeptAuthMngList" parameterType="HashMap" resultType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.selectDeptAuthMngList */
+		SELECT A.CO_CD
+			 , A.ORG_CD
+			 , A.AUTH_GRP_ROLE_CD
+			 , B.COM_DTL_CD_NM AS AUTH_GRP_ROLE_NM
+			 , A.USE_YN
+			 , A.REG_DTM
+			 , A.REGPSN_ID
+			 , C.OPRTR_NM AS REGPSN_NM
+			 , 0 AS CHK_COL
+		  FROM SSP_APP.TB_CO_OPRTR_ORG_AUTH_GRP_INFO A
+			   INNER JOIN SSP_APP.TB_CO_COM_CD_DTL B
+				  ON  A.AUTH_GRP_ROLE_CD = B.COM_DTL_CD
+				     AND B.LANG_CD = #{langCd}
+			         <choose>
+				         <when test="authGrpRoleClcd.equals('1'.toString())">
+					         AND B.COM_CLSF_CD = 'AUTH_GRP_CD'
+				         </when>
+				         <otherwise>
+					         AND B.COM_CLSF_CD = 'AUTH_ROLE_CD'
+				         </otherwise>
+			         </choose>
+			   LEFT OUTER JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO C
+				 ON A.REGPSN_ID = C.OPRTR_ID
+		WHERE A.CO_CD = #{coCd}
+		  AND A.ORG_CD = #{orgCd}
+     ORDER BY A.AUTH_GRP_ROLE_CD
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 부서별 권한 메뉴 목록
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-17
+	******************************************************************************
+	-->
+	<select id="selectDeptAuthMngMenu" parameterType="HashMap" resultType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.selectDeptAuthMngMenu */
+		SELECT A.*
+		  FROM (
+                SELECT 0 AS CHK
+	                 , A.MNU_SEQ
+	                 , A.MNU_NM
+	                 , A.MNU_LVL
+	                 , A.SRT_SO
+                FROM SSP_APP.TB_CO_MNU_INFO A
+                <choose>
+	                <when test=" authGrpRoleClcd.equals('1'.toString())">
+			                INNER JOIN SSP_APP.TB_CO_MNU_AUTH_INFO B
+			                   ON A.MNU_SEQ = B.MNU_SEQ
+			                INNER JOIN SSP_APP.TB_CO_MNU_AUTH_GRP_INFO C
+			                   ON B.AUTH_ROLE_CD = C.AUTH_ROLE_CD
+		                WHERE C.AUTH_GRP_CD IN
+		                <foreach collection="authClsfCdList" item="item" open="(" close=")" separator=",">
+			                #{item}
+		                </foreach>
+	                </when>
+                	<otherwise>
+		                	INNER JOIN SSP_APP.TB_CO_MNU_AUTH_INFO B
+		                	   ON A.MNU_SEQ = B.MNU_SEQ
+		                 WHERE B.AUTH_ROLE_CD IN
+		                <foreach collection="authClsfCdList" item="item" open="(" close=")" separator=",">
+			                #{item}
+		                </foreach>
+	                </otherwise>
+                </choose>
+               GROUP BY A.SRT_SO, A.MNU_SEQ, A.MNU_NM, A.MNU_LVL
+            ) A
+		ORDER BY A.SRT_SO
+	</select>
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 부서별 권한 메뉴 존재여부 카운트
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-21
+	******************************************************************************
+	-->
+	<select id="selectDeptAuthMngCount" parameterType="HashMap" resultType="int">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.selectDeptAuthMngCount */
+		SELECT COUNT(1) AS CNT
+		FROM SSP_APP.TB_CO_OPRTR_ORG_AUTH_GRP_INFO A
+		WHERE A.CO_CD = #{coCd}
+		  AND A.ORG_CD = #{orgCd}
+		  AND A.AUTH_GRP_ROLE_CD = #{authGrpRoleCd}
+		  AND A.AUTH_GRP_ROLE_CLCD = #{authGrpRoleClcd}
+	</select>
+
+
+	<!--
+	******************************************************************************
+	* INSERT : 부서별 권한 메뉴 등록
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-17
+	******************************************************************************
+	-->
+	<insert id="insertDeptAuthMngMenu" parameterType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.insertDeptAuthMngMenu */
+		INSERT INTO SSP_APP.TB_CO_OPRTR_ORG_AUTH_GRP_INFO (
+			CO_CD
+		  , ORG_CD
+		  , AUTH_GRP_ROLE_CD
+		  , AUTH_GRP_ROLE_CLCD
+		  , USE_YN
+		  , REG_DTM
+		  , REGPSN_ID
+		) VALUES (
+           #{coCd}
+         , #{orgCd}
+         , #{authGrpRoleCd}
+         , #{authGrpRoleClcd}
+         , #{useYn}
+         , SYSDATE
+         , #{regpsnId}
+        )
+	</insert>
+
+	<!--
+	******************************************************************************
+	* UPDATE : 부서별 메뉴권한 수정
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-21
+	******************************************************************************
+	-->
+	<update id="updateDeptAuthMngMenu" parameterType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.updateDeptAuthMngMenu */
+		UPDATE SSP_APP.TB_CO_OPRTR_ORG_AUTH_GRP_INFO
+		   SET UPD_DTM = SYSDATE
+		     , UPDPSN_ID = #{updpsnId}
+	     WHERE CO_CD = #{coCd}
+	       AND ORG_CD = #{orgCd}
+	       AND AUTH_GRP_ROLE_CD = #{authGrpRoleCd}
+	       AND AUTH_GRP_ROLE_CLCD = #{authGrpRoleClcd}
+	</update>
+
+
+	<!--
+	******************************************************************************
+	* DELETE : 부서별 메뉴권한 삭제
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-21
+	******************************************************************************
+	-->
+	<update id="deleteDeptAuthMngMenu" parameterType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.deleteDeptAuthMngMenu */
+		DELETE FROM SSP_APP.TB_CO_OPRTR_ORG_AUTH_GRP_INFO
+		 WHERE CO_CD = #{coCd}
+		   AND ORG_CD = #{orgCd}
+		   AND AUTH_GRP_ROLE_CD = #{authGrpRoleCd}
+		   AND AUTH_GRP_ROLE_CLCD = #{authGrpRoleClcd}
+	</update>
+
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 운영자별 메뉴권한분류코드 목록
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-21
+	******************************************************************************
+	-->
+	<select id="selectOprtrAuthInfoList" parameterType="HashMap" resultType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.selectOprtrAuthInfoList */
+		SELECT A.CO_CD
+		     , A.OPRTR_ID
+		     , A.AUTH_GRP_ROLE_CD
+		     , A.AUTH_GRP_ROLE_CLCD
+		     , B.OPRTR_NM AS REGPSN_NM
+		     , A.REG_DTM
+		     , 0 AS CHK_COL
+		  FROM SSP_APP.TB_CO_OPRTR_AUTH_INFO A
+	       	   LEFT OUTER JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO B
+			     ON A.OPRTR_ID = B.OPRTR_ID
+		 WHERE A.OPRTR_ID = #{oprtrId}
+		   AND A.CO_CD = #{coCd}
+		   AND A.AUTH_GRP_ROLE_CLCD = #{authGrpRoleClcd}
+		   <!-- AND A.AUTH_GRP_ROLE_CD = #{authGrpRoleCd} -->
+	</select>
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 운영자별 메뉴권한분류코드 카운트
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-21
+	******************************************************************************
+	-->
+	<select id="selectOprtrAuthInfoCount" parameterType="HashMap" resultType="int">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.selectOprtrAuthInfoCount */
+		SELECT COUNT(1) AS CNT
+		  FROM SSP_APP.TB_CO_OPRTR_AUTH_INFO A
+		 WHERE A.OPRTR_ID = #{oprtrId}
+		   AND A.CO_CD = #{coCd}
+		   AND A.AUTH_GRP_ROLE_CD = #{authGrpRoleCd}
+		   AND A.AUTH_GRP_ROLE_CLCD = #{authGrpRoleClcd}
+	</select>
+
+
+	<!--
+	******************************************************************************
+	* INSERT : 운영자별 메뉴권한분류 등록
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-21
+	******************************************************************************
+	-->
+	<insert id="insertOprtrAuthInfo" parameterType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.insertOprtrAuthInfo */
+		INSERT INTO SSP_APP.TB_CO_OPRTR_AUTH_INFO (
+	        CO_CD
+	      , OPRTR_ID
+	      , AUTH_GRP_ROLE_CD
+	      , AUTH_GRP_ROLE_CLCD
+	      , USE_YN
+	      , REG_DTM
+	      , REGPSN_ID
+		) VALUES (
+	       #{coCd}
+         , #{oprtrId}
+         , #{authGrpRoleCd}
+         , #{authGrpRoleClcd}
+         , #{useYn}
+         , SYSDATE
+         , #{regpsnId}
+        )
+	</insert>
+
+	<!--
+	******************************************************************************
+	* UPDATE : 운영자별 메뉴권한분류 수정
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-21
+	******************************************************************************
+	-->
+	<update id="updateOprtrAuthInfo" parameterType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.updateOprtrAuthInfo */
+		UPDATE SSP_APP.TB_CO_OPRTR_AUTH_INFO
+		   SET UPD_DTM = SYSDATE
+		     , UPDPSN_ID = #{updpsnId}
+		 WHERE CO_CD = #{coCd}
+		   AND OPRTR_ID = #{oprtrId}
+		   AND AUTH_GRP_ROLE_CD = #{authGrpRoleCd}
+		   AND AUTH_GRP_ROLE_CLCD = #{authGrpRoleClcd}
+	</update>
+
+	<!--
+	******************************************************************************
+	* DELETE : 운영자별 메뉴권한분류 삭제
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-21
+	******************************************************************************
+	-->
+	<update id="deleteOprtrAuthInfo" parameterType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.deleteOprtrAuthInfo */
+		DELETE FROM SSP_APP.TB_CO_OPRTR_AUTH_INFO
+		WHERE CO_CD = #{coCd}
+		  AND OPRTR_ID = #{oprtrId}
+		  AND AUTH_GRP_ROLE_CD = #{authGrpRoleCd}
+		  AND AUTH_GRP_ROLE_CLCD = #{authGrpRoleClcd}
+	</update>
+
+
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 운영자 권한 제외 메뉴 목록
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-22
+	******************************************************************************
+	-->
+	<select id="selectOprtrMnuMngList" parameterType="HashMap" resultType="HashMap">
+		/*com.ssp.bo.co.coMnuAuthGrpMng.selectOprtrMnuMngList  */
+		SELECT DISTINCT 0 AS CHK_COL
+		              ,A.MNU_SEQ
+		              ,A.MNU_NM
+		              ,A.MNU_LVL
+		              ,A.SRT_SO
+		FROM SSP_APP.TB_CO_MNU_INFO A
+		START WITH A.MNU_SEQ NOT IN (
+			SELECT MNU_SEQ
+			  FROM SSP_APP.TB_CO_OPRTR_MNU_AUTH_INFO
+			 WHERE OPRTR_ID = #{oprtrId}
+		)
+		CONNECT BY A.MNU_SEQ = PRIOR A.HRNK_MNU_SEQ
+		  ORDER BY A.SRT_SO
+	</select>
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 운영자별 메뉴 목록
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-22
+	******************************************************************************
+	-->
+	<select id="selectOprtrMnuAuthGrpMngList" parameterType="HashMap" resultType="HashMap">
+		/*com.ssp.bo.co.coMnuAuthGrpMng.selectOprtrMnuAuthGrpMngList  */
+		SELECT 0 AS CHK_COL
+			 , A.MNU_SEQ
+			 , A.MNU_NM
+			 , A.MNU_LVL
+			 , A.SRT_SO
+			 , B.OPRTR_ID
+		  FROM SSP_APP.TB_CO_MNU_INFO A
+			   INNER JOIN SSP_APP.TB_CO_OPRTR_MNU_AUTH_INFO B
+			      ON A.MNU_SEQ = B.MNU_SEQ
+		 WHERE B.OPRTR_ID = #{oprtrId}
+		 ORDER BY A.SRT_SO
+	</select>
+
+
+	<!--
+	******************************************************************************
+	* DELETE : 운영자별 메뉴 목록 삭제
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-22
+	******************************************************************************
+	-->
+	<update id="deleteAuthOprtrMng" parameterType="hashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.deleteAuthOprtrMng */
+		DELETE FROM SSP_APP.TB_CO_OPRTR_MNU_AUTH_INFO
+		WHERE OPRTR_ID = #{oprtrId}
+		  AND MNU_SEQ = #{mnuSeq}
+	</update>
+
+	<!--
+	******************************************************************************
+	* INSERT : 운영자별 메뉴 목록 등록
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-22
+	******************************************************************************
+	-->
+	<insert id="insertAuthOprtrMng" parameterType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.insertAuthOprtrMng */
+		INSERT INTO SSP_APP.TB_CO_OPRTR_MNU_AUTH_INFO
+	    (
+		      CO_CD
+		    , OPRTR_ID
+		    , MNU_SEQ
+		    , USE_YN
+		    , REG_DTM
+		    , REGPSN_ID
+		    , UPD_DTM
+		    , UPDPSN_ID
+	    ) VALUES (
+	          #{coCd}
+	        , #{oprtrId}
+	        , #{mnuSeq}
+	        , #{useYn}
+	        , #{regDtm}
+	        , #{regpsnId}
+	        , #{updDtm}
+	        , #{updpsnId}
+        )
+	</insert>
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 부서별 메뉴권한 관리 엑셀
+	* 작성자 : lee
+	* 작성 일자 : 2022-05-18
+	******************************************************************************
+	-->
+	<select id="selectDeptAuthMngMenuExcel" resultType="HashMap" parameterType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.selectDeptAuthMngMenuExcel */
+		SELECT ORG_NM
+			 , AUTH_GRP_ROLE_NM
+			<!--  , AUTH_GRP_ROLE_CL_NM -->
+			 , REGPSN_NM
+			 , REG_DTM
+			 , MNU_NM_1
+			 , MNU_NM_2
+			 , MNU_NM_3
+		FROM (
+			     SELECT B.ORG_NM
+			          , B.ORG_CD
+				      , ( SELECT COM_DTL_CD_NM FROM SSP_APP.TB_CO_COM_CD_DTL WHERE LANG_CD     = 'KO' AND USE_YN      = 'Y' AND COM_CLSF_CD = 'AUTH_GRP_CD' AND COM_DTL_CD  = D.AUTH_GRP_CD ) AS AUTH_GRP_ROLE_NM
+				     <!--  , ( SELECT COM_DTL_CD_NM FROM SSP_APP.TB_CO_COM_CD_DTL WHERE LANG_CD     = 'KO' AND USE_YN      = 'Y' AND COM_CLSF_CD = 'AUTH_ROLE_CD' AND COM_DTL_CD  = D.AUTH_ROLE_CD ) AS AUTH_GRP_ROLE_CL_NM -->
+				      , (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.OPRTR_ID = A.REGPSN_ID) AS REGPSN_NM
+				      , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+				      , REGEXP_SUBSTR(MNU_NM_LIST, '[^|]+', 1,1) AS MNU_NM_1
+				      , REGEXP_SUBSTR(MNU_NM_LIST, '[^|]+', 1,2) AS MNU_NM_2
+				      , REGEXP_SUBSTR(MNU_NM_LIST, '[^|]+', 1,3) AS MNU_NM_3
+				      , AUTH_GRP_CD
+				      , AUTH_ROLE_CD
+				      , SRT_SO
+			          , A.AUTH_GRP_ROLE_CLCD
+			       FROM SSP_APP.TB_CO_OPRTR_ORG_AUTH_GRP_INFO A
+				        INNER JOIN SSP_APP.TB_CO_MBR_OPRTR_ORG_INFO B
+				           ON A.CO_CD = B.CO_CD
+				              AND A.ORG_CD = B.ORG_CD
+				        INNER JOIN (
+						     SELECT DISTINCT MNU_SEQ
+				                  , AUTH_GRP_CD
+				                  , AUTH_ROLE_CD
+				                  , MNU_NM_LIST
+				                  , SRT_SO
+						       FROM (
+						           <choose>
+							           <when test="authGrpRoleClcd == '1'.toString()">
+								           SELECT A.MNU_SEQ
+									            , A.MNU_NM
+									            , A.MNU_TP_CD
+									            , C.AUTH_GRP_CD
+									            , C.AUTH_ROLE_CD
+									            , A.SRT_SO
+									            , SUBSTR(SYS_CONNECT_BY_PATH(A.MNU_NM, '|'), 2) AS MNU_NM_LIST
+								             FROM SSP_APP.TB_CO_MNU_INFO A
+								             	  INNER JOIN SSP_APP.TB_CO_MNU_AUTH_INFO B
+								           			 ON A.MNU_SEQ = B.MNU_SEQ
+								           		  INNER JOIN SSP_APP.TB_CO_MNU_AUTH_GRP_INFO C
+								           			 ON B.AUTH_ROLE_CD = C.AUTH_ROLE_CD
+								            START WITH HRNK_MNU_SEQ = 0
+								          CONNECT BY PRIOR A.MNU_SEQ = HRNK_MNU_SEQ
+							           </when>
+						           	   <otherwise>
+								            SELECT A.MNU_SEQ
+									            , A.MNU_NM
+									            , A.MNU_TP_CD
+									            , '' AS AUTH_GRP_CD
+									            , B.AUTH_ROLE_CD
+									            , A.SRT_SO
+									            , SUBSTR(SYS_CONNECT_BY_PATH(A.MNU_NM, '|'), 2) AS MNU_NM_LIST
+								             FROM SSP_APP.TB_CO_MNU_INFO A
+								             	  INNER JOIN SSP_APP.TB_CO_MNU_AUTH_INFO B
+								           			 ON A.MNU_SEQ = B.MNU_SEQ
+								            START WITH HRNK_MNU_SEQ = 0
+								          CONNECT BY PRIOR A.MNU_SEQ = HRNK_MNU_SEQ
+							           </otherwise>
+						           </choose>
+						          ) A
+						    WHERE MNU_TP_CD = '02'
+					    ) D
+	                   ON ( A.AUTH_GRP_ROLE_CD = D.AUTH_GRP_CD OR A.AUTH_GRP_ROLE_CD = D.AUTH_ROLE_CD )
+			     WHERE A.CO_CD = #{coCd}
+			       AND A.AUTH_GRP_ROLE_CLCD = #{authGrpRoleClcd}
+			     <if test="orgCd != null and orgCd != ''">
+				     AND A.ORG_CD = #{orgCd}
+			     </if>
+		     )
+		GROUP BY ORG_CD, ORG_NM, AUTH_GRP_ROLE_NM, <!-- AUTH_GRP_ROLE_CL_NM, --> REGPSN_NM, REG_DTM, MNU_NM_1, MNU_NM_2, MNU_NM_3, SRT_SO
+		ORDER BY ORG_CD, SRT_SO
+	</select>
+
+
+
+	<!--
+	******************************************************************************
+	* SELECT: 운영자별 메뉴권한 엑셀 다운로드
+	* 작성자 : lee
+	* 작성 일자 : 2022-05-19
+	******************************************************************************
+	-->
+	<select id="selectOprtrAuthMngMenuExcel" resultType="HashMap" parameterType="HashMap">
+		/* com.ssp.bo.co.coMnuAuthGrpMng.selectOprtrAuthMngMenuExcel */
+		SELECT OPRTR_NM
+			 , AUTH_GRP_ROLE_NM
+		<!-- 	 , AUTH_GRP_ROLE_CL_NM -->
+			 , REGPSN_NM
+			 , REG_DTM
+			 , MNU_NM_1
+			 , MNU_NM_2
+			 , MNU_NM_3
+		FROM (
+			     SELECT C.OPRTR_NM
+			          , C.ORG_CD
+				      , ( SELECT COM_DTL_CD_NM FROM SSP_APP.TB_CO_COM_CD_DTL WHERE LANG_CD     = 'KO' AND USE_YN      = 'Y' AND COM_CLSF_CD = 'AUTH_GRP_CD' AND COM_DTL_CD  = D.AUTH_GRP_CD ) AS AUTH_GRP_ROLE_NM
+				  <!--     , ( SELECT COM_DTL_CD_NM FROM SSP_APP.TB_CO_COM_CD_DTL WHERE LANG_CD     = 'KO' AND USE_YN      = 'Y' AND COM_CLSF_CD = 'AUTH_ROLE_CD' AND COM_DTL_CD  = D.AUTH_ROLE_CD ) AS AUTH_GRP_ROLE_CL_NM -->
+				      , C.OPRTR_NM AS REGPSN_NM
+				      , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+				      , REGEXP_SUBSTR(MNU_NM_LIST, '[^|]+', 1,1) AS MNU_NM_1
+				      , REGEXP_SUBSTR(MNU_NM_LIST, '[^|]+', 1,2) AS MNU_NM_2
+				      , REGEXP_SUBSTR(MNU_NM_LIST, '[^|]+', 1,3) AS MNU_NM_3
+				      , AUTH_GRP_CD
+				      , AUTH_ROLE_CD
+				      , MNU_LVL_SPR_CD
+			     FROM SSP_APP.TB_CO_OPRTR_AUTH_INFO A
+			          INNER JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO C
+				         ON A.OPRTR_ID = C.OPRTR_ID
+			          INNER JOIN (
+						     SELECT DISTINCT MNU_SEQ
+				                  , AUTH_GRP_CD
+				                  , AUTH_ROLE_CD
+				                  , MNU_NM_LIST
+				                  , MNU_LVL_SPR_CD
+						       FROM (
+							          <choose>
+								           <when test="authGrpRoleClcd == '1'.toString()">
+									           SELECT A.MNU_SEQ
+										            , A.MNU_NM
+										            , A.MNU_TP_CD
+										            , C.AUTH_GRP_CD
+										            , C.AUTH_ROLE_CD
+										            , A.MNU_LVL_SPR_CD
+										            , SUBSTR(SYS_CONNECT_BY_PATH(A.MNU_NM, '|'), 2) AS MNU_NM_LIST
+									             FROM SSP_APP.TB_CO_MNU_INFO A
+									                  INNER JOIN SSP_APP.TB_CO_MNU_AUTH_INFO B
+									                     ON A.MNU_SEQ = B.MNU_SEQ
+									                  INNER JOIN SSP_APP.TB_CO_MNU_AUTH_GRP_INFO C
+									                     ON B.AUTH_ROLE_CD = C.AUTH_ROLE_CD
+									            START WITH HRNK_MNU_SEQ = 0
+									          CONNECT BY PRIOR A.MNU_SEQ = HRNK_MNU_SEQ
+								           </when>
+							               <otherwise>
+									            SELECT A.MNU_SEQ
+										            , A.MNU_NM
+										            , A.MNU_TP_CD
+										            , '' AS AUTH_GRP_CD
+										            , B.AUTH_ROLE_CD
+										            , A.SRT_SO
+										            , SUBSTR(SYS_CONNECT_BY_PATH(A.MNU_NM, '|'), 2) AS MNU_NM_LIST
+									             FROM SSP_APP.TB_CO_MNU_INFO A
+									                  INNER JOIN SSP_APP.TB_CO_MNU_AUTH_INFO B
+									                     ON A.MNU_SEQ = B.MNU_SEQ
+									            START WITH HRNK_MNU_SEQ = 0
+									          CONNECT BY PRIOR A.MNU_SEQ = HRNK_MNU_SEQ
+								           </otherwise>
+							          </choose>
+						          ) A
+							     WHERE MNU_TP_CD = '02'
+				      ) D
+                      ON ( A.AUTH_GRP_ROLE_CD = D.AUTH_GRP_CD OR A.AUTH_GRP_ROLE_CD = D.AUTH_ROLE_CD )
+				   WHERE A.CO_CD = #{coCd}
+				     AND A.AUTH_GRP_ROLE_CLCD = #{authGrpRoleClcd}
+				   <if test="oprtrId != null and oprtrId != ''">
+				   		AND A.OPRTR_ID = #{oprtrId}
+				   </if>
+		     )
+		GROUP BY ORG_CD, OPRTR_NM, AUTH_GRP_ROLE_NM,<!--  AUTH_GRP_ROLE_CL_NM, --> REGPSN_NM, REG_DTM, MNU_NM_1, MNU_NM_2, MNU_NM_3, MNU_LVL_SPR_CD
+		ORDER BY ORG_CD, MNU_LVL_SPR_CD
+	</select>
+
+
+
+
+</mapper>

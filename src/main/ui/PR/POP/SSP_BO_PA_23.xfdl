@@ -1,0 +1,305 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PA_23" width="800" height="280" titletext="담당자 생성" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="280" width="800" stepindex="">
+        <Div id="div" taborder="0" left="20" top="44" height="132" border="" background="#ffffff" text="" right="20">
+          <Layouts>
+            <Layout>
+              <Static id="Static03" taborder="0" left="0" top="6" height="32" cssclass="sta_cm_box02L_tdt" right="0" text=""/>
+              <Edit id="edt_prdClcd" taborder="1" left="138" top="10" width="100" height="24" onkeyup="Div00_edit_MNFR_NO_onkeyup" enable="false"/>
+              <Static id="Static00" taborder="2" text="카테고리" left="0" top="6" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static03_00_01" taborder="3" left="0" top="37" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Edit id="edt_oprtrNm" taborder="4" left="244" top="41" width="184" height="24" enable="false"/>
+              <Edit id="edt_empNo" taborder="5" left="139" top="41" width="101" height="24" onkeyup="Div00_edit_MNFR_NO_onkeyup" enable="false"/>
+              <Static id="Static00_00" taborder="6" text="담당자" left="0" top="37" width="130" height="32" cssclass="sta_cm_box01L_necessary"/>
+              <Static id="Static03_00" taborder="7" left="0" top="68" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static00_01" taborder="8" text="담당자구분" left="0" top="68" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_prdClsfNm" taborder="9" left="138" top="10" width="590" height="24" enable="false"/>
+              <Static id="sta_info" taborder="10" text="* 정담당자는 1명만 등록 가능하며, 부담당자는 1명 이상 등록할 수 있습니다" left="0" top="102" width="469" height="26" style="linespace:2;"/>
+              <Button id="btn_person_popup" taborder="11" top="41" height="24" cssclass="btn_WF_search02" text="" width="24" left="432" onclick="btn_person_popup_onclick"/>
+              <Button id="btn_category_popup" taborder="12" top="10" height="24" cssclass="btn_WF_search02" text="" width="24" left="732" onclick="btn_cate_popup_onclick"/>
+              <Radio id="rdo_chrpsnSpr" taborder="13" left="140" top="72" width="180" height="24" direction="vertical" innerdataset="ds_prdClsfChrpsnSprCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Static id="sta_title" taborder="1" text="담당자 등록" left="20" top="21" width="182" height="22" font="bold 14pt &quot;Arial&quot;"/>
+        <Button id="btn_cancel" taborder="2" text="취소" left="298" width="100" onclick="btn_clear_onclick" bottom="50" height="32"/>
+        <Button id="btn_insert" taborder="3" text="등록" left="401" width="100" onclick="insert_btn_onclick" cssclass="btn_WF_select" bottom="50" height="32"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP속성 생성 팝업
+CREATION DATES : 2021.01.19
+*******************************************************/
+// 공통형 스크립트 인클루드
+include "CO::coUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.sprCd = "";
+this.sPrdClcd = "";
+this.psnDupChk = "";
+this.sEmpNo = "";
+this.sOprtrNm = "";
+this.chrpsnTpCd = '';
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+    //공통 함수 호출(필수)
+    this.gfn_formOnLoad(this);
+	this.fn_commonCodeSearch();
+	this.chrpsnTpCd = this.parent.chrpsnTpCd;
+	this.ds_search.setColumn(0, "PRD_CLSF_CHRPSN_TP_CD", this.chrpsnTpCd);
+};
+
+// 화면 단축키
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	// CTRL + s
+	if (e.keycode == 83 && e.ctrlkey == true) {
+		// 저장
+		this.insert_btn_onclick();
+		event.preventDefault();
+	}
+	
+		// ESC
+	if (e.keycode == 27) {
+		// 팝업 화면 닫기
+		//this.btn_clear_onclick();
+		this.close();
+	}
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function(){  
+
+    var sSvcId = "commonCodeSearch";    
+    var sUrl = "/co/select-common-code-list.do";  
+    var inDs = "ds_search=ds_search";
+    var outDs = "ds_prdClsfChrpsnSprCd=ds_output1";
+    var arg = "";
+    
+    this.ds_search.setColumn(0, "CODE_LIST", "PRD_CLSF_CHRPSN_SPR_CD");
+    this.ds_search.setColumn(0, "LANG_CD", "KO");
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+this.fn_personSprCd = function ()
+{
+    var sSvcId = "selectPersonSprCd";    
+    var sUrl = "/pr/prs-mng/select-person-sprcd.do";
+    var inDs = "ds_search=ds_search";
+    var outDs = "";
+    var arg = "";
+
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//담당자 등록
+this.fn_registPerson = function (bInit)
+{
+    var sSvcId = "registPerson";    
+    var sUrl = "/pr/prs-mng/insert-person.do";  
+    var inDs = "ds_insertData=ds_insertData";
+    var outDs = "";
+    var arg = "";
+
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//담당자 중복체크
+this.fn_personDuplicateCheck = function ()
+{
+    var sSvcId = "personDuplicateCheck";    
+    var sUrl = "/pr/prs-mng/select-person-duplicate-check.do";
+    var inDs = "ds_search=ds_search";
+    var outDs = "";
+    var arg = "";
+
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+    switch(svcID) {
+        case "selectPersonSprCd" :
+			if(this.sprCd=='20'){
+				//alert("AM-BO-029  해당 상품군에는 정 담당자가 이미 존재합니다.");
+				if(this.div.form.rdo_chrpsnSpr.value!='20'){	//이미 부를 선택한경우 부를 등록할수밖에 없을 경우에는 알럿 안띄움
+					alert(this.gfn_getMessage('ERRP000029'));
+				}
+				this.div.form.rdo_chrpsnSpr.set_readonly(true);
+			}else{
+				this.div.form.rdo_chrpsnSpr.set_readonly(false);
+			}
+			this.div.form.rdo_chrpsnSpr.set_value(this.sprCd);
+
+            break;
+			
+		case "registPerson" :
+			//alert('등록 되었습니다.');
+			this.close(true);
+			
+            break;
+			
+		case "personDuplicateCheck" :
+			if(this.psnDupChk == "0"){
+				this.div.form.edt_empNo.set_value(this.sEmpNo);
+				this.div.form.edt_oprtrNm.set_value(this.sOprtrNm);
+			}else{
+				//alert("AM-BO-051 신규 담당자와 원래 담당자가 동일합니다. ");
+				alert(this.gfn_getMessage('ERRP000051'));
+			}
+			
+            break;
+            
+    }
+};
+
+//팝업콜백
+this.fn_popupCallback = function(svcID, args){
+    switch(svcID) {
+        case "btn_category_popup" :
+            var jsonData = JSON.parse(args);
+            this.div.form.edt_prdClcd.set_value(jsonData.PRD_CLCD);
+            this.div.form.edt_prdClsfNm.set_value(jsonData.FULL_PRD_CLSF_NM);
+			this.sPrdClcd = jsonData.PRD_CLCD;
+			
+			//정/부 구분 호출
+			//this.div.form.rdo_chrpsnSpr.set_value('');
+			this.ds_search.setColumn(0, "PRD_CLCD", jsonData.PRD_CLCD);
+			this.fn_personSprCd();
+			
+			//담당자 초기화
+			this.div.form.edt_empNo.set_value("");
+			this.sEmpNo = "";
+			this.div.form.edt_oprtrNm.set_value("");
+			this.sOprtrNm = "";
+            
+            break;
+			
+		case "btn_person_popup" :
+			var jsonData = JSON.parse(args);
+			this.sEmpNo = jsonData.EMP_NO;
+			this.sOprtrNm = jsonData.OPRTR_NM;
+			this.ds_search.setColumn(0, "EMP_NO", jsonData.EMP_NO);
+			this.fn_personDuplicateCheck();
+            
+            break;
+            
+    }
+}
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_regist = function(){
+	if(this.gfn_isNull(this.sPrdClcd)){
+		//alert("AM-BO-023 상품군을 선택해 주세요");
+		alert(this.gfn_getMessage('ERRP000023'));
+		return false;
+	}
+	if(this.gfn_isNull(this.sEmpNo)){
+		//alert("AM-BO-022 담당자를 지정해 주세요");
+		alert(this.gfn_getMessage('ERRP000022'));
+		return false;
+	}
+	this.ds_insertData.clearData();
+	this.ds_insertData.addRow();
+	this.ds_insertData.setColumn(0, "PRD_CLSF_CHRPSN_ID", this.sEmpNo);	//담당자
+	this.ds_insertData.setColumn(0, "PRD_CLCD", this.sPrdClcd);	//카테고리ID
+	this.ds_insertData.setColumn(0, "MALL_SPR_CD", '10');	//몰구분(SSP 10)
+	this.ds_insertData.setColumn(0, "PRD_CLSF_CHRPSN_TP_CD", this.chrpsnTpCd);	//분류담당자(상품 10, MD 20)
+	this.ds_insertData.setColumn(0, "PRD_CLSF_CHRPSN_USEYN", 'Y');
+	this.ds_insertData.setColumn(0, "PRD_CLSF_CHRPSN_SPR_CD", this.sprCd);	//정/부 구분
+	
+	//AM-BO-032 입력된 정보로 등록처리 하시겠습니까?
+	var sResult = this.confirm(this.gfn_getMessage('ERRP000032'));
+	if(sResult){
+		this.fn_registPerson();
+	}
+	
+}
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//등록 버튼
+this.insert_btn_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_regist();
+};
+
+//취소 버튼
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	//var bResult = this.confirm("AM-BO-013 등록을 취소하시겠습니까?");
+	var bResult = this.confirm(this.gfn_getMessage('ERRP000013'));
+	if(bResult){
+		this.close(false);
+	}
+};
+
+//카테고리팝업
+this.btn_cate_popup_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = {mallSprCd:'10',coCd:this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD")};	//ssp
+    var options = {};
+    this.gfn_openPopup(e.fromobject.id, "PR_POP::SSP_BO_PP_10.xfdl", params,  "fn_popupCallback", options);
+};
+
+//담당자팝업
+this.btn_person_popup_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.gfn_isNull(this.sPrdClcd)){
+		//alert("AM-BO-023 상품군을 선택해 주세요");
+		alert(this.gfn_getMessage('ERRP000023'));
+		return false;
+	}
+    var params = {coCd:this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD")};
+    var options = {};
+    this.gfn_openPopup(e.fromobject.id, "CO_POP::SSP_BO_PP_27.xfdl", params,  "fn_popupCallback", options);
+};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="PRD_CLSF_CHRPSN_TP_CD" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_insertData">
+        <ColumnInfo>
+          <Column id="PRD_CLSF_CHRPSN_ID" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="MALL_SPR_CD" type="STRING" size="256"/>
+          <Column id="PRD_CLSF_CHRPSN_TP_CD" type="STRING" size="256"/>
+          <Column id="PRD_CLSF_CHRPSN_USEYN" type="STRING" size="256"/>
+          <Column id="PRD_CLSF_CHRPSN_SPR_CD" type="STRING" size="256"/>
+          <Column id="UPD_RSN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_prdClsfChrpsnSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

@@ -1,0 +1,2199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="daDashBoard">
+
+	<!-- SSP / R&D 조직 체크 -->
+	<select id="selectOprType" parameterType="HashMap" resultType="sspMap">
+	/* com.ssp.bo.da.daDashBoard.sselectOprType */
+	SELECT *
+	FROM TB_CO_COM_CD_DTL
+	WHERE USE_YN = 'Y'
+	AND   COM_CLSF_CD = #{comClsfCd}
+	AND   COM_DTL_CD  = #{comDtlCd}
+	</select>
+	
+	<!-- SSP / R&D 하위 조직의 팀 리더인지 체크 ( 공통코드 이용 ) -->
+	<select id="selectChildTeamReader" parameterType="HashMap" resultType="string">
+	/* com.ssp.bo.da.daDashBoard.selectChildTeamReader */
+	SELECT NVL((
+		SELECT COM_USR_DEFN_NM_1
+		FROM TB_CO_COM_CD_DTL
+		WHERE USE_YN = 'Y'
+		AND   COM_CLSF_CD = #{comClsfCd}
+		AND   COM_DTL_CD  = #{comDtlCd}
+		), ''
+	) AS OPR_TYPE FROM DUAL
+	</select>
+	
+	<!-- 메뉴 트리 구성 -->
+	<select id="selectMenuList" parameterType="HashMap" resultType="HashMap">
+	WITH TB_MENU_MASTER
+	AS (
+		SELECT
+			  A.MNU_SEQ
+			, A.MNU_NM
+			, A.MNU_LVL
+			, A.MNU_LVL_SPR_CD
+			, A.MNU_TP_CD
+			, A.HRNK_MNU_SEQ
+			, B.PGM_TP_CD
+			, A.SRT_SO
+			, 0 AS DELAY_CNT
+			, 0 AS OK_CNT
+			, 0 AS SUM_CNT
+		FROM SSP_APP.TB_CO_MNU_INFO A
+			, SSP_APP.TB_CO_SYS_PGM_INFO B
+		WHERE A.PGM_ID = B.PGM_ID (+)
+		AND   A.USE_YN = 'Y'
+		START WITH HRNK_MNU_SEQ = 0
+		CONNECT BY PRIOR A.MNU_SEQ = HRNK_MNU_SEQ
+		ORDER BY SRT_SO
+	)
+	SELECT A.*
+	FROM TB_MENU_MASTER A
+	<if test="mnuSeqs != null and !mnuSeqs.equals('')"  >
+	WHERE MNU_SEQ IN (${mnuSeqs})
+	</if>
+	</select>
+	
+	<!-- 상품관리 - 전시상품관리 - 견적요청관리 -->
+	<select id="selectBoardEstimateCntLst" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectBoardEstimateCnt */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, CASE WHEN STATUS = '10' THEN 1000000
+		       WHEN STATUS = '50' THEN 5000000
+		                          ELSE 9000000
+		  END AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{estmReqProcStatsCd} AS STATUS
+			, '' AS STATUS2
+			, 12 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				  T1.*
+				, CASE WHEN SYSDATE -T1.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL /* 지연기준 : 3일 */
+				, (SELECT ESTM_REQ_PROC_STATS_CD FROM (SELECT SEQ, ESTM_REQ_PROC_STATS_CD FROM TB_PR_DISP_ESTM_STATS_DTLS WHERE CO_CD = T1.CO_CD AND ESTM_REQ_NO = T1.ESTM_REQ_NO ORDER BY SEQ DESC) WHERE ROWNUM = 1) AS ESTM_REQ_PROC_STATS_CD
+			FROM (
+				SELECT
+					  S1.CO_CD, S1.ORG_CD, S1.ORG_NM, S1.OPRTR_ID, S1.OPRTR_NM
+					, S3.REG_DTM, S3.ESTM_REQ_NO
+				FROM TB_CO_MBR_OPRTR_INFO       S1 /* 회원운영자정보 */
+				JOIN TB_PR_PRD_CLSF_CHRPSN_INFO S2 /* 상품분류담당자정보 */
+					ON S1.CO_CD = S2.CO_CD AND S1.OPRTR_ID = S2.PRD_CLSF_CHRPSN_ID
+				JOIN TB_PR_DISP_ESTM_REQ_DTLS   S3 /* 전시견적요청내역 */
+					ON S1.CO_CD = S3.CO_CD AND S2.PRD_CLCD = S3.PRD_CLCD
+					<if test="period != null and period eq '1'">
+						AND S3.REG_DTM
+							BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+							AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+					</if>
+				WHERE S1.CO_CD                  = #{coCd}
+				<if test="orgCd   != null and !orgCd.equals('')"  >AND   S1.ORG_CD                 = #{orgCd}   /* 팀장 */</if>
+				<if test="oprtrId != null and !oprtrId.equals('')">AND   S1.OPRTR_ID               = #{oprtrId} /* 본인 */</if>
+				AND   S2.PRD_CLSF_CHRPSN_TP_CD  = #{prdClsfChrpsnTpCd}
+				AND   S2.PRD_CLSF_CHRPSN_SPR_CD = '10'
+				AND   S2.PRD_CLSF_CHRPSN_USEYN  = 'Y'
+			) T1
+		) Y
+		WHERE ESTM_REQ_PROC_STATS_CD = #{estmReqProcStatsCd}
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	
+	<!-- 상품관리 - 상품등록 - 신규상품요청처리 -->
+	<select id="selectBoardNewProductCntLst" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectBoardNewProductCntLst */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, CASE WHEN STATUS = '22' THEN 2200000
+		       WHEN STATUS = '25' THEN 2500000
+		       WHEN STATUS = '32' THEN 3200000
+		       WHEN STATUS = '35' THEN 3500000
+		       WHEN STATUS = '27' THEN 2700000
+		                          ELSE 9000000
+		  END AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{newPrdReqStatsCd} AS STATUS
+			, '' AS STATUS2
+			, 3 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				T1.*
+				, T2.REG_DTM, T3.MALL_SPR_CD
+				, CASE WHEN SYSDATE - T2.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL /* 지연기준 : 3일 */
+				, (
+					SELECT NEW_PRD_REQ_STATS_CD FROM (
+						SELECT SEQ, NEW_PRD_REQ_STATS_CD FROM TB_PR_NEW_PRD_REQ_STATS_DTLS
+						WHERE CO_CD = T1.CO_CD AND NEW_PRD_REQ_NO = T2.NEW_PRD_REQ_NO AND MALL_SPR_CD = T3.MALL_SPR_CD ORDER BY SEQ DESC
+					) WHERE ROWNUM = 1
+				) AS NEW_PRD_REQ_STATS_CD
+			FROM (
+				SELECT
+					  S1.CO_CD, S1.ORG_CD, S1.ORG_NM, S1.OPRTR_ID, S1.OPRTR_NM
+					  , S2.PRD_CLCD
+				FROM TB_CO_MBR_OPRTR_INFO        S1 /* 회원운영자정보 */
+				JOIN TB_PR_PRD_CLSF_CHRPSN_INFO  S2 /* 상품분류담당자정보 */
+					ON S1.CO_CD = S2.CO_CD AND S1.OPRTR_ID = S2.PRD_CLSF_CHRPSN_ID
+				WHERE S1.CO_CD                  = #{coCd}
+				<if test="orgCd   != null and !orgCd.equals('')"  >AND   S1.ORG_CD                 = #{orgCd}  /* 팀장 */</if>
+				<if test="oprtrId != null and !oprtrId.equals('')">AND   S1.OPRTR_ID               = #{oprtrId}/* 본인 */</if>
+				AND   S2.PRD_CLSF_CHRPSN_TP_CD  = #{prdClsfChrpsnTpCd}
+				AND   S2.PRD_CLSF_CHRPSN_SPR_CD = '10'
+				AND   S2.PRD_CLSF_CHRPSN_USEYN  = 'Y'
+			) T1
+			JOIN TB_PR_NEW_PRD_CUST_REQ_INFO T2 /* 신규상품고객요청정보 */
+				ON T1.CO_CD = T2.CO_CD AND T1.PRD_CLCD = T2.PRD_CLCD
+				<if test="period != null and period != ''">
+					AND T2.REG_DTM
+						BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+						AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+			JOIN TB_PR_NEW_PRD_REQ_PROC      T3 /* 신규상품고객요청정보 */
+				ON T1.CO_CD = T3.CO_CD AND T1.PRD_CLCD = T3.PRD_CLCD AND T2.NEW_PRD_REQ_NO = T3.NEW_PRD_REQ_NO
+			WHERE REGEXP_LIKE(T2.NEW_PRD_REQ_NO, '^[R][0-9]')
+		) Y
+		WHERE NEW_PRD_REQ_STATS_CD = #{newPrdReqStatsCd}
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	<!-- 상품관리 - 상품등록 - 상품추가 -->
+	<select id="selectBoardProductCntList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectBoardProductCntList */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, CASE WHEN STATUS = 'REQ'    THEN 1000000
+		       WHEN STATUS = 'ACCEPT' THEN 2000000
+		                              ELSE 9000000
+		  END AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{regProdPrdStatsCd} AS STATUS
+			, '' AS STATUS2
+			, 4  AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				  T1.*
+				, CASE WHEN SYSDATE - T3.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+			FROM (
+				SELECT
+					  S1.CO_CD, S1.ORG_CD, S1.ORG_NM, S1.OPRTR_ID, S1.OPRTR_NM, S3.PRD_ID
+					, S3.REG_DTM
+					, DECODE(S3.REG_PROC_PRD_STATS_CD, NULL, 'REQ', '10', 'ACCEPT', '20', 'COMP') REG_PROC_PRD_STATS_CD
+				FROM TB_CO_MBR_OPRTR_INFO       S1 /* 회원운영자정보 */
+				JOIN TB_PR_PRD_CLSF_CHRPSN_INFO S2 /* 상품분류담당자정보 */
+					ON S1.CO_CD = S2.CO_CD AND S1.OPRTR_ID = S2.PRD_CLSF_CHRPSN_ID
+				JOIN TB_PR_REG_PROC_PRD_INFO     S3 /* 등록처리상품정보 */
+					ON S1.CO_CD = S3.CO_CD AND S2.PRD_CLCD = S3.PRD_CLCD
+				WHERE S1.CO_CD                  = #{coCd}
+				<if test="orgCd   != null and !orgCd.equals('')"  >AND   S1.ORG_CD                 = #{orgCd}  /* 팀장 */ </if>
+				<if test="oprtrId != null and !oprtrId.equals('')">AND   S1.OPRTR_ID               = #{oprtrId}/* 본인 */ </if>
+				AND   S2.PRD_CLSF_CHRPSN_TP_CD  = #{prdClsfChrpsnTpCd}
+				AND   S2.PRD_CLSF_CHRPSN_SPR_CD = '10'
+				AND   S2.PRD_CLSF_CHRPSN_USEYN  = 'Y'
+				<if test="regProdPrdStatsCd != null and regProdPrdStatsCd.equals('REQ')"   >AND   S3.REG_PROC_PRD_STATS_CD IS NULL</if>
+				<if test="regProdPrdStatsCd != null and regProdPrdStatsCd.equals('ACCEPT')">AND   S3.REG_PROC_PRD_STATS_CD = '10'</if>
+			) T1
+			JOIN TB_PR_MRO_PRD_INFO          T2 /* MRO상품정보 */
+				ON T1.CO_CD = T2.CO_CD AND T1.PRD_ID = T2.PRD_ID
+			JOIN TB_PR_REPR_PRD_MNG_DTL      T3 /* 대표상품관리상세 */
+				ON T2.CO_CD = T3.CO_CD AND T2.PRD_ID = T3.PRD_ID AND T3.SSP_PRD_YN = 'Y'
+			JOIN TB_PR_REPR_PRD_MNG_BASIS    T4 /* 대표상품관리기본 */
+				ON T3.CO_CD = T4.CO_CD AND T3.REPR_PRD_GRP_ID = T4.REPR_PRD_GRP_ID AND T4.REPR_PRD_GRP_USEYN = 'Y'
+				<if test="period != null and period != ''">
+					AND T3.REG_DTM
+						BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+						AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+			AND   T2.PUB_ONLY_SPR_CD        = 'P' /* 공용전용구분  'P'공용 'E'전용 */
+		) Y
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	<!-- 
+	가격/진열관리 - 가격/진열관리 - 공용상품가격관리
+		일시품절         (TB_DP_PRD_DISP_STATS_INFO  . DISP_STATS_CD) : 30
+		공급불가상태     (TB_PC_CPRTCP_LWST_PRC_INFO . PCPRC_INC_YN ) : NULL
+		                 (VW_IV_PRD_INVN_DTLS        . NVL(DECODE(INVN_TP_CD,'C','Y','N'),'N')  ) : N
+		판매유효기간만료 (TB_PC_PRD_PRC_HST          . PRD_ID )       : NULL
+		안전재고이하     (VW_IV_PRD_INVN_DTLS        . INVN_STATS_CD  : 2
+		매입가인상       (TB_PC_CPRTCP_LWST_PRC_INFO . PCPRC_INC_YN ) : Y
+	 -->
+	<select id="selectPubCntList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectPubCntList SQL */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, CASE WHEN STATUS = '30' AND STATUS2 = '20' THEN 1000000
+		       WHEN STATUS = '30' AND STATUS2 = '30' THEN 2000000
+		       WHEN STATUS = '30' AND STATUS2 = '40' THEN 3000000
+		       WHEN STATUS = ''   AND STATUS2 = '10' THEN 4000000
+		       WHEN STATUS = ''   AND STATUS2 = '20' THEN 5000000
+		                                             ELSE 9000000
+		  END AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{dispStatsCd} AS STATUS
+			, #{dispAbno} AS STATUS2
+			, 28 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				D.*, CASE WHEN SYSDATE - D.UPD_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+			FROM (
+				SELECT
+					  C.*
+					, (SELECT UPD_DTM FROM (SELECT UPD_DTM FROM TB_PC_PRD_PRC_HST WHERE CO_CD = C.CO_CD AND BZPLC_ID = C.BZPLC_ID AND PRD_ID = C.PRD_ID ORDER BY UPD_DTM DESC ) WHERE ROWNUM = 1) AS UPD_DTM
+					, (SELECT PRD_ID  FROM (SELECT PRD_ID  FROM TB_PC_PRD_PRC_HST WHERE CO_CD = C.CO_CD AND BZPLC_ID = C.BZPLC_ID AND PRD_ID = C.PRD_ID ORDER BY UPD_DTM DESC ) WHERE ROWNUM = 1) AS HST_PRD_ID
+				FROM (
+					SELECT
+						  T1.CO_CD, T1.BZPLC_ID, T1.PRD_ID, T5.PRD_CLSF_CHRPSN_ID
+						, T6.ORG_CD, T6.ORG_NM, T6.OPRTR_ID, T6.OPRTR_NM
+					FROM TB_DP_PRD_DISP_STATS_INFO  T1 /* 상품진열상태정보 */
+					JOIN TB_PC_CPRTCP_LWST_PRC_INFO T2 /* 협력사최저가격정보 */
+						ON T1.CO_CD = T2.CO_CD AND T1.PRD_ID = T2.PRD_ID
+						<if test='"20" eq dispAbno'>AND T2.PCPRC_INC_YN IS NULL /* 공급불가상태 */</if>
+						<if test='"10" eq dispAbno'>AND T2.PCPRC_INC_YN = 'Y'   /* 매입가인상 */</if>
+					JOIN TB_PR_PRD_INFO             T3 /* 상품정보 */
+						ON T1.CO_CD = T3.CO_CD AND T1.PRD_ID = T3.PRD_ID AND T3.MALL_SPR_CD = '10'
+					JOIN TB_PR_MRO_PRD_INFO         T4 /* MRO상품정보 */
+						ON T1.CO_CD = T4.CO_CD AND T1.PRD_ID = T4.PRD_ID AND T4.PUB_ONLY_SPR_CD = 'P' /* 공용상품 */
+					JOIN TB_PR_PRD_CLSF_CHRPSN_INFO T5 /* 상품분류담당자정보 */
+						ON T1.CO_CD = T5.CO_CD AND T3.PRD_CLCD = T5.PRD_CLCD
+						AND T5.PRD_CLSF_CHRPSN_SPR_CD = '10'
+						AND T5.PRD_CLSF_CHRPSN_TP_CD  = #{prdClsfChrpsnTpCd}
+					JOIN TB_CO_MBR_OPRTR_INFO       T6
+						ON T5.CO_CD = T6.CO_CD AND T5.PRD_CLSF_CHRPSN_ID = T6.OPRTR_ID
+						<if test="orgCd   != null and !orgCd.equals('')"  >AND   T6.ORG_CD                 = #{orgCd}  /* 팀장 */</if>
+						<if test="oprtrId != null and !oprtrId.equals('')">AND   T6.OPRTR_ID               = #{oprtrId}/* 본인 */</if>
+					JOIN VW_IV_PRD_INVN_DTLS        T7 /* 재고마스터 */
+						ON T1.CO_CD = T7.CO_CD AND T1.PRD_ID = T7.PRD_ID
+						<if test='"20" eq dispAbno'>AND NVL(DECODE(T7.INVN_TP_CD,'C','Y','N'),'N') = 'N' /* 공급불가상태 */</if>
+						<if test='"40" eq dispAbno'>AND T7.INVN_STATS_CD = '2' /* 안전재고이하 */</if>
+					WHERE T1.CO_CD = #{coCd}
+					AND   T1.PRD_ID LIKE '000000000%'
+					<if test="period != null and period != ''">
+						AND T1.REG_DTM
+							BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+							AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+					</if>
+					<if test="dispStatsCd != null and !dispStatsCd.equals('')"   >AND   T1.DISP_STATS_CD = #{dispStatsCd} /* 일시품절 */</if>
+				) C
+			) D
+			<if test='"30" eq dispAbno'>WHERE PRD_ID IS NULL /* 판매유효기간만료 */</if>
+		) Y
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	<!-- 고객관리 - 고객조회/변경 - 일반고객 종결대상 사업장 -->
+	<select id="selectCustTrmnTgEndtBzplc" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectCustTrmnTgEndtBzplc */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, 9000000 AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM, OPR_UNIT_ID
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{trmnProcDtm} AS STATUS
+			, LISTAGG(OPR_UNIT_ID,',') AS STATUS2
+			, 914 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				  S4.CO_CD, S4.ORG_CD, S4.ORG_NM, S4.OPRTR_ID, S4.OPRTR_NM
+				, S3.OPR_UNIT_ID
+				, CASE WHEN SYSDATE - S2.BAT_PROC_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL /* 지연기준 : 3일 */
+			FROM TB_CC_BZPLC_BASIS         S1
+			JOIN TB_CC_BZPLC_TRMN_TGT_DTLS S2
+				ON S1.CO_CD = S2.CO_CD AND S1.BZPLC_ID = S2.BZPLC_ID
+			JOIN TB_CC_OPR_UNIT_BASIS      S3 
+				ON S2.CO_CD = S3.CO_CD AND S3.BZPLC_ID = S3.BZPLC_ID AND S2.OPR_UNIT_ID = S3.OPR_UNIT_ID 
+			JOIN TB_CO_MBR_OPRTR_INFO      S4
+				ON S2.CO_CD = S4.CO_CD AND S2.TRMN_PROC_REQR_ID = S4.OPRTR_ID
+				<if test="orgCd   != null and !orgCd.equals('')"  >AND S4.ORG_CD   = #{orgCd}  /* 팀장 */</if>
+				<if test="oprtrId != null and !oprtrId.equals('')">AND S4.OPRTR_ID = #{oprtrId}/* 본인 */</if>
+			WHERE S1.CUST_SPR_CD = '30'
+			AND   S2.TRMN_PROC_DTM IS NULL /* 종결대기 */
+			<if test="period != null and period != ''">
+				AND S2.BAT_PROC_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+			</if>
+		) T1
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM, OPR_UNIT_ID
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	<!-- 정산관리 - 고객사입고처리 -->
+	<select id="selectWarehousingList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectWarehousingList   */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, 9000000 AS MNU_SEQ
+	FROM (
+		SELECT 
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{giStatsCd} AS STATUS
+			, LISTAGG(OPR_UNIT_ID,',') AS STATUS2
+			, 113 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				  S6.CO_CD, S6.ORG_CD, S6.ORG_NM, S6.OPRTR_ID, S6.OPRTR_NM
+				, S5.OPR_UNIT_ID
+				, CASE WHEN SYSDATE - S4.DLV_CMPL_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+			FROM TB_OD_ODR_MST          S1
+			JOIN TB_OD_ODR_DTL          S2
+				ON S2.CO_CD = S1.CO_CD AND S2.BZPLC_ID = S1.BZPLC_ID AND S2.ODR_NO = S1.ODR_NO
+			JOIN TB_AD_GI_DCN_PROC      S3
+				ON S3.CO_CD = S2.CO_CD AND S3.BZPLC_ID = S2.BZPLC_ID AND S3.ODR_NO = S2.ODR_NO AND S3.ODR_ITM_NO = S2.ODR_ITM_NO
+			JOIN TB_DL_ODR_ACP_DLV_PROC S4
+				ON S4.CO_CD = S2.CO_CD AND S4.BZPLC_ID = S2.BZPLC_ID AND S4.ODR_NO = S2.ODR_NO AND S4.ODR_ITM_NO = S2.ODR_ITM_NO
+				<if test="period != null and period != ''">
+					AND S4.DLV_CMPL_DTM
+						BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+						AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+			JOIN TB_CC_OPR_UNIT_BASIS   S5
+				ON S5.CO_CD = S1.CO_CD AND S5.BZPLC_ID = S1.BZPLC_ID AND S5.OPR_UNIT_ID = S1.OPR_UNIT_ID
+			JOIN TB_CO_MBR_OPRTR_INFO   S6
+				ON S6.CO_CD = S5.CO_CD AND S5.SVC_CHRPSN_ID = S6.OPRTR_ID
+				<if test="orgCd   != null and !orgCd.equals('')"  >AND S6.ORG_CD   = #{orgCd}  /* 팀장 */</if>
+				<if test="oprtrId != null and !oprtrId.equals('')">AND S6.OPRTR_ID = #{oprtrId}/* 본인 */</if>
+			WHERE S1.CO_CD = #{coCd}
+			AND   S3.GI_STATS_CD In ('01','10') /* 입고대기, 입고 */
+			AND   S3.GI_STATS_CD != '01'        /* 입고 미완료 */
+		) T1
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM, OPR_UNIT_ID
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	<!-- 주문관리 - 주문조회/변경 - 주문조회 -->
+	<select id="selectOrderOprList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectOrderOPRList */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, 9000000 AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{odrStatsCd} AS STATUS
+			, '' AS STATUS2
+			, 105 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				  T3.CO_CD, T3.ORG_CD, T3.ORG_NM, T3.OPRTR_ID, T3.OPRTR_NM
+				, CASE WHEN SYSDATE  - T1.ODR_DCN_DTM > 30 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+			FROM TB_OD_ODR_MST T1             /* 주문마스터 */
+			JOIN TB_OD_ODR_DTL T2             /* 주문상세 */
+				ON  T1.CO_CD    = T2.CO_CD    /* 회사코드 */
+				AND T1.BZPLC_ID = T2.BZPLC_ID /* 사업장ID */
+				AND T1.ODR_NO   = T2.ODR_NO   /* 주문번호 */
+				AND T2.ODR_STATS_CD IN ('A00','A25','A31','B12')
+				<if test="period != null and period != ''">
+					AND T1.ODR_DCN_DTM
+						BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+						AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+			JOIN TB_CO_MBR_OPRTR_INFO      T3
+				ON T2.CO_CD = T3.CO_CD AND T2.OPR_CHRPSN_ID = T3.OPRTR_ID
+				<if test="orgCd   != null and !orgCd.equals('')"  >AND T3.ORG_CD   = #{orgCd}  /* 팀장 */</if>
+				<if test="oprtrId != null and !oprtrId.equals('')">AND T3.OPRTR_ID = #{oprtrId}/* 본인 */</if>
+			WHERE T1.CO_CD = #{coCd}
+			AND   T1.CUST_SPR_CD LIKE NULL
+		) Y
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	
+	<select id="selectPcPubPrdProcStbCntList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectPcPubPrdProcStbCntList */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, 9000000 AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM, OPR_UNIT_ID
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{prcProcStatsCd} AS STATUS
+			, #{pubOnlySprCd} AS STATUS2
+			, 1204 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				T8.CO_CD, T8.ORG_CD, T8.ORG_NM, T8.OPRTR_ID, T8.OPRTR_NM, T7.OPR_UNIT_ID
+				, CASE WHEN SYSDATE - T1.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+			FROM TB_PC_NEW_PRD_REQ_PRC_INFO  T1
+			JOIN TB_PR_PRD_INFO              T2 --상품마스터
+				ON T1.CO_CD = T2.CO_CD AND T1.PRD_ID = T2.PRD_ID AND T2.MALL_SPR_CD = '10'
+			JOIN TB_PR_MRO_PRD_INFO          T3 --MRO상품 마스터
+				ON T2.CO_CD = T3.CO_CD AND T2.PRD_ID = T3.PRD_ID
+			JOIN TB_PR_NEW_PRD_CUST_REQ_INFO T4 -- 신규상품
+				ON T1.CO_CD = T4.CO_CD AND T1.NEW_PRD_REQ_NO = T4.NEW_PRD_REQ_NO
+			JOIN TB_CC_MBR_BASIS             T5 --회원
+				ON T4.CO_CD = T5.CO_CD AND T4.REGPSN_ID = T5.MBR_ID
+			JOIN TB_CC_DEPT_BASIS            T6 --부서
+				ON T5.CO_CD = T6.CO_CD AND T5.DEPT_ID = T6.DEPT_ID
+			JOIN TB_CC_OPR_UNIT_BASIS        T7 --운영단위
+				ON T6.CO_CD = T7.CO_CD AND T6.OPR_UNIT_ID = T7.OPR_UNIT_ID
+			JOIN TB_CO_MBR_OPRTR_INFO        T8
+				ON T7.CO_CD = T8.CO_CD AND T7.SALS_CHRPSN_ID = T8.OPRTR_ID
+				<if test="orgCd   != null and !orgCd.equals('')"  >AND T8.ORG_CD   = #{orgCd}  /* 팀장 */</if>
+				<if test="oprtrId != null and !oprtrId.equals('')">AND T8.OPRTR_ID = #{oprtrId}/* 본인 */</if>
+			JOIN TB_PR_REPR_PRD_MNG_DTL      T9 --대표상품
+				ON T9.CO_CD = T2.CO_CD AND T9.PRD_ID = T2.PRD_ID AND T9.SSP_PRD_YN = 'Y'
+			WHERE  T3.PUB_ONLY_SPR_CD   = #{pubOnlySprCd}   /* 전용 */
+			AND    T1.PRC_PROC_STATS_CD = #{prcProcStatsCd} /* 가격등록요청 */
+			<if test="period != null and period != ''">
+				AND T1.REG_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+			</if>
+		) Y
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM, OPR_UNIT_ID
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	
+	<select id="selectNewPrdReqCntList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectNewPrdReqCntList */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, CASE WHEN STATUS = '22,33' THEN 1000000
+		       WHEN STATUS = '34' THEN 2000000
+		                          ELSE 9000000
+		  END AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{newPrdReqStatsCd} AS STATUS
+			, '' AS STATUS2
+			, 43 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				*
+			FROM (
+				SELECT
+					  S1.CO_CD
+					, S3.ORG_CD, S3.ORG_NM, S3.OPRTR_ID, S3.OPRTR_NM
+					, CASE WHEN SYSDATE - S1.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL /* 지연기준 : 3일 */
+					, (SELECT NEW_PRD_REQ_STATS_CD FROM (SELECT SEQ, NEW_PRD_REQ_STATS_CD FROM TB_PR_NEW_PRD_REQ_STATS_DTLS WHERE CO_CD = S1.CO_CD AND NEW_PRD_REQ_NO = S1.NEW_PRD_REQ_NO ORDER BY SEQ DESC) WHERE ROWNUM = 1) AS NEW_PRD_REQ_STATS_CD
+				FROM TB_PR_NEW_PRD_REQ_PROC S1
+				JOIN (
+					SELECT
+						*
+					FROM (
+						SELECT
+							  CO_CD, MNFR_NO, PRD_CLCD, PRD_CLSF_CHRPSN_ID
+						FROM TB_PR_PRD_CLSF_CHRPSN_INFO
+						WHERE CO_CD                  = '1000'
+						AND   PRD_CLSF_CHRPSN_TP_CD  = '30'                 /* 상품분류담당자유형코드 */
+						AND   PRD_CLSF_CHRPSN_SPR_CD = '10'                 /* 정담당자 */
+						AND   PRD_CLSF_CHRPSN_USEYN  = 'Y'                  /* 사용 */
+						AND   MALL_SPR_CD            = '20'                 /* RND */
+						<if test="oprtrId != null and !oprtrId.equals('')">AND   PRD_CLSF_CHRPSN_ID = #{oprtrId} /* 본인 */</if>
+						<if test="orgCd   != null and !orgCd.equals('')"  >AND   PURG_CHRPSN_ID IN (SELECT OPRTR_ID FROM TB_CO_MBR_OPRTR_INFO WHERE ORG_CD = #{orgCd}) /* 팀장 */</if>
+					)
+				) S2
+					ON  S1.CO_CD    = S2.CO_CD
+					AND S1.PRD_CLCD = S2.PRD_CLCD /* 상품분류코드 */
+					AND (S1.MNFR_NO = S2.MNFR_NO OR S2.MNFR_NO = '*') /* 제조사 번호 */
+				JOIN TB_CO_MBR_OPRTR_INFO S3
+					ON  S2.CO_CD = S3.CO_CD AND S2.PRD_CLSF_CHRPSN_ID = S3.OPRTR_ID
+				WHERE S1.CO_CD       = '1000'
+				AND   S1.MALL_SPR_CD = '20'
+				AND   S1.NEW_PRD_REQ_NO NOT IN (SELECT /*+full(z)*/ NEW_PRD_REQ_NO FROM TB_RD_CPRTCP_PKG_LINE_PRPS_DTL Z)
+				<if test="period != null and period != ''">
+				AND S1.REG_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+			) T
+			<if test="newPrdReqStatsCd != null and newPrdReqStatsCd eq '22,33'">
+			WHERE T.NEW_PRD_REQ_STATS_CD IN ('22','33') /* 요청 */
+			</if>
+			<if test="newPrdReqStatsCd != null and newPrdReqStatsCd eq '34'">
+			WHERE T.NEW_PRD_REQ_STATS_CD IN ('34')     /* SSP반려 */
+			</if>
+		) Y
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	
+	<!-- R&D상품관리 - R&D상품등록 - 신규상품일괄등록요청목록  -->
+	<select id="selectNewPrdMltReqList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectNewPrdMltReqList  구매담당자 */
+	SELECT CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+           , NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+           , NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+           , #{menuNm} AS MNU_NM
+           , #{newPrdReqStatsCd} AS STATUS
+           , '' AS STATUS2
+          , 1400 AS HRNK_MNU_SEQ
+    FROM (  SELECT  S1.CO_CD, S1.ORG_CD, S1.ORG_NM, S1.OPRTR_ID, S1.OPRTR_NM
+               , S2.REG_DTM, S2.NEW_PRD_REQ_STATS_CD
+                , CASE WHEN SYSDATE - S2.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+        FROM TB_CO_MBR_OPRTR_INFO       S1 /* 회원운영자정보 */
+        JOIN TB_RD_CPRTCP_PKG_LINE_PRPS_MST S2 
+        ON S1.CO_CD = S2.CO_CD AND S1.OPRTR_ID = S2.DEALR_ID
+       <if test='period != null and period eq "1"'>
+          AND S2.REG_DTM
+          	BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+			AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+        </if>
+        WHERE S1.CO_CD = #{coCd}
+        <if test="orgCd   != null and !orgCd.equals('')"  >AND   S1.ORG_CD                 = #{orgCd}  /* 팀장 */</if>
+        <if test="oprtrId != null and !oprtrId.equals('')">AND   S1.OPRTR_ID               = #{oprtrId}/* 본인 */</if>
+        AND S2.NEW_PRD_REQ_STATS_CD IN( '22' , '33') /* 요청 */
+     ) T1
+     GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+	</select>
+	
+	<!-- R&D상품관리 - R&D전시상품관리  - 전시상품견적요청목록 -->
+	<select id="selectProductEstimateList" parameterType="HashMap" resultType="HashMap">
+    /* daDashBoard.selectProductEstimateList */
+    SELECT
+            CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+           , NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+           , NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+           , #{menuNm} AS MNU_NM
+           , #{procStatsCd} AS STATUS
+           , '' AS STATUS2
+           , 60 AS HRNK_MNU_SEQ
+             FROM (
+                    SELECT
+                         T1.CO_CD
+                         , T1.PRD_CLCD
+                         , T1.DISP_PRD_NM
+                         , T1.REPR_PRD_ID
+                         , T2.ESTM_REQ_NO
+                         , TO_CHAR(T2.REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                         , CASE WHEN SYSDATE - T2.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+                         , TO_CHAR(TO_DATE(T2.ESTM_REQDT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS ESTM_REQDT
+                         ,(
+                            CASE
+                               WHEN (
+                                    SELECT ESTM_REQ_PROC_STATS_CD
+                                    FROM (
+                                         SELECT
+                                           S1.SEQ, S1.ESTM_REQ_PROC_STATS_CD
+                                         FROM TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                         WHERE S1.CO_CD = T2.CO_CD
+                                         AND S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                         ORDER BY SEQ DESC
+                                    )
+                                   WHERE ROWNUM = 1
+                               ) = '70'
+                               THEN (
+                                   SELECT TO_CHAR(UPD_DTM, 'YYYY-MM-DD')
+                                   FROM TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                   WHERE S1.CO_CD = T2.CO_CD
+                                   AND S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                   AND S1.ESTM_REQ_PROC_STATS_CD = '70'
+                               )
+                               ELSE TO_CHAR(TO_DATE(T2.ESTM_CMPL_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+                            END
+                         ) AS ESTM_CMPL_DT
+                         , TO_CHAR(TO_DATE(T2.ESTM_VLD_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS ESTM_VLD_DT
+                         , (
+                            SELECT  ESTM_REQ_PROC_STATS_CD
+                            FROM    (
+                                      SELECT  S1.SEQ, S1.ESTM_REQ_PROC_STATS_CD
+                                      FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                      WHERE   S1.CO_CD = T2.CO_CD
+                                      AND     S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                      ORDER BY SEQ DESC
+                                      )
+                            WHERE   ROWNUM = 1
+                         ) AS ESTM_REQ_PROC_STATS_CD
+                          , CASE
+                             WHEN '20' >= T9.ESTM_INFO_STATS_CD AND T9.ESTM_CUNT > 0 THEN '30'
+                             ELSE T9.ESTM_INFO_STATS_CD
+                         END AS ESTM_INFO_STATS_CD
+                         , T5.NEW_PRD_REQ_NO
+                         , T5.MRO_REQ_NO
+                         , T6.OPRTR_ID
+                         , T6.OPRTR_NM
+                         , T6.ORG_CD
+                         , T6.ORG_NM
+                    FROM    TB_RD_RND_DISP_BASIS T1
+                          , TB_RD_RND_DISP_ESTM_REQ_DTLS T2
+                          , TB_CC_MBR_BASIS T3
+                          , TB_CC_DEPT_BASIS T4
+                          , TB_PR_NEW_PRD_REQ_PROC T5
+                          , (
+                             SELECT  S1.CO_CD
+                                  , S1.PRD_CLCD
+                                  , S2.ORG_CD
+                                  , S2.OPRTR_ID
+                                  , S2.OPRTR_NM
+                                  , S2.ORG_NM
+                              FROM    TB_PR_PRD_CLSF_CHRPSN_INFO S1
+                                  , TB_CO_MBR_OPRTR_INFO S2
+                              WHERE   S1.CO_CD = S2.CO_CD
+                              AND     S1.PRD_CLSF_CHRPSN_ID = S2.OPRTR_ID
+                              AND     S1.PRD_CLSF_CHRPSN_TP_CD = '30'
+                              AND     S1.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                              AND     S1.PRD_CLSF_CHRPSN_USEYN = 'Y'
+                          ) T6
+                          , TB_PR_MRO_PRD_INFO T7
+                          , TB_PR_PRD_INFO T8
+                          , (
+                            SELECT  CO_CD
+                                  , ESTM_REQ_NO
+                                  , MAX(ESTM_DTL_STATS_CD) KEEP(DENSE_RANK LAST ORDER BY SEQ) ESTM_INFO_STATS_CD
+                                  , MAX(UPDPSN_ID ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPDPSN_ID
+                                  , MAX(UPD_DTM ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPD_DTM
+                                  , (
+                                      SELECT COUNT(CASE WHEN ESTM_DTL_STATS_CD IN ('20', '40') THEN 1 END) ESTM_CUNT
+                                      FROM TB_RD_REQ_CPRTCP_DISP_ESTM_DTL D
+                                      WHERE D.CO_CD = K.CO_CD
+                                      AND D.ESTM_REQ_NO = K.ESTM_REQ_NO
+                                  ) ESTM_CUNT
+                             FROM   TB_RD_REQ_CPRTCP_DISP_ESTM_STATS_DTLS K
+                              GROUP BY CO_CD, ESTM_REQ_NO
+                          ) T9
+                    WHERE   T1.CO_CD = T2.CO_CD
+                    AND     T1.DISP_GRP_ID = T2.DISP_GRP_ID
+                    AND     T1.PRD_CLCD = T2.PRD_CLCD
+                    AND     T2.CO_CD = T9.CO_CD
+                    AND     T2.ESTM_REQ_NO = T9.ESTM_REQ_NO
+                    AND     T2.CO_CD = T3.CO_CD(+)
+                    AND     T2.REGPSN_ID = T3.MBR_ID(+)
+                    AND     T3.CO_CD = T4.CO_CD(+)
+                    AND     T3.DEPT_ID = T4.DEPT_ID(+)
+                    AND     T2.ESTM_REQ_NO = T5.ESTM_REQ_NO(+)
+                    AND     T1.CO_CD = T6.CO_CD(+)
+                    AND     T1.PRD_CLCD = T6.PRD_CLCD(+)
+                    AND     T1.CO_CD = T7.CO_CD(+)
+                    AND     T1.REPR_PRD_ID = T7.PRD_ID(+)
+                    AND     T1.CO_CD = T8.CO_CD(+)
+                    AND     T1.REPR_PRD_ID = T8.PRD_ID(+)
+                    AND     T7.CO_CD = T5.CO_CD(+)
+                    AND     T7.SSP_PRD_REG_REQ_ID = T5.NEW_PRD_REQ_NO(+)
+                   <if test='period != null and period eq "1"'>
+                      AND T2.REG_DTM
+                      	BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+						AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+                   </if>
+                   <if test="orgCd   != null and !orgCd.equals('')"  >AND   T6.ORG_CD                 = #{orgCd}  /* 팀장 */</if>
+                   <if test="oprtrId != null and !oprtrId.equals('')">AND   T6.OPRTR_ID               = #{oprtrId}/* 본인 */</if>
+             ) MST
+             WHERE CO_CD = #{coCd}
+             AND (
+                      ESTM_REQ_PROC_STATS_CD = '10' /*  요청  */
+                 OR ( ESTM_REQ_PROC_STATS_CD != '10' AND ESTM_INFO_STATS_CD = '10' ) /* 접수 */
+                 OR ( ESTM_REQ_PROC_STATS_CD != '10' AND ESTM_INFO_STATS_CD = '20' ) /* 견적중 */
+                 OR ( ESTM_REQ_PROC_STATS_CD != '10' AND ESTM_INFO_STATS_CD = '30' ) /* 견적제출 */
+                 OR ( ESTM_REQ_PROC_STATS_CD != '10' AND ESTM_INFO_STATS_CD = '60' ) /* 구매정보 등록완료 */
+             )
+              GROUP BY  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+    </select>
+    
+	
+	
+	<!-- R&D가격관리 - 처리대기목록  - 전용상품처리대기  -->
+	<select id="selectOnlyPrdProcStbList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectOnlyPrdProcStbList  */
+	 SELECT CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+           , NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+           , NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+           , #{menuNm} AS MNU_NM
+           , #{prcProcStatsCd} AS STATUS
+           , #{pubOnlySprCd} AS STATUS2
+           , 1213 AS HRNK_MNU_SEQ
+       FROM (SELECT 0 AS CHK,
+                     A.CO_CD,
+                             A.PRD_ID,
+                             TO_NUMBER(A.PRD_ID) AS PRD_ID_NUM,
+                             Z.NEW_PRD_REQ_NO AS NEW_PRD_REQ_NO, --신규상품요청번호
+                             A.PRD_CLCD,
+                             B.PUB_ONLY_SPR_CD,
+                             Z.REG_DTM,
+                             CASE WHEN SYSDATE - Z.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL,
+                             I.BZPLC_ID AS BZPLC_ID,
+                             K.SALS_CHRPSN_ID AS OPRTR_ID,
+                             P.ORG_CD,
+                             P.OPRTR_NM,
+                             P.ORG_NM
+                             ,CASE WHEN C.PRD_ID IS NULL THEN '10' ELSE '20' END AS PRC_STATE_CD
+                            ,CASE WHEN C.PRD_ID IS NULL THEN '가격등록요청' ELSE '가격등록완료' END AS PRC_STATE_NM
+                      FROM TB_PR_NEW_PRD_REQ_PROC Z
+                     INNER JOIN TB_PR_PRD_INFO A --상품마스터
+                        ON Z.CO_CD = A.CO_CD
+                       AND Z.RND_REQ_PRD_ID = A.PRD_ID
+                       AND A.MALL_SPR_CD = '20'
+                     INNER JOIN TB_PR_MRO_PRD_INFO B --MRO상품 마스터
+                        ON A.CO_CD = B.CO_CD
+                       AND A.PRD_ID = B.PRD_ID
+                       AND B.MALL_SPR_CD = '20'
+                     LEFT OUTER JOIN TB_PC_PRD_PRC_HST L
+                        ON L.CO_CD = Z.CO_CD 
+                        AND L.PRD_ID = Z.RND_REQ_PRD_ID
+                        AND TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN L.BSS_SALSPRC_STR_DTM AND L.BSS_SALSPRC_END_DTM
+                    JOIN
+                    (
+                      SELECT
+                            A.CO_CD,
+                            A.CPRTCP_ID,
+                            C.CPRTCP_KOR_NM AS CPRTCP_NM,
+                            A.CURR_UNIT_CD,
+                            A.PRD_ID,
+                            A.PRD_PRC,
+                            FN_PC_MIN_ODR_QTY(A.CO_CD,A.PRD_ID)  MIN_ODR_QTY,
+                            A.PCPRC_INC_YN,
+                            A.VLD_STR_DT,
+                            A.VLD_END_DT
+                        FROM TB_PC_CPRTCP_LWST_PRC_INFO  A
+                            INNER JOIN
+                            TB_CP_CPRTCP_BASIS C
+                            ON  C.CO_CD = A.CO_CD
+                            AND C.CPRTCP_ID = A.CPRTCP_ID
+                    )    N
+                    ON N.CO_CD = A.CO_CD  
+                   AND N.PRD_ID = A.PRD_ID	
+                   LEFT OUTER JOIN TB_PR_NEW_PRD_CUST_REQ_INFO G -- 신규상품
+                     ON Z.CO_CD = G.CO_CD
+                    AND Z.NEW_PRD_REQ_NO = G.NEW_PRD_REQ_NO
+                 LEFT OUTER JOIN TB_CC_MBR_BASIS H --회원
+                    ON G.CO_CD = H.CO_CD
+                   AND G.REGPSN_ID = H.MBR_ID
+                 LEFT OUTER JOIN TB_CC_BZPLC_BASIS I --사업장
+                    ON H.CO_CD = I.CO_CD
+                   AND H.BZPLC_ID = I.BZPLC_ID
+                 LEFT OUTER JOIN TB_CC_DEPT_BASIS J --부서
+                    ON H.CO_CD = J.CO_CD
+                   AND H.DEPT_ID = J.DEPT_ID
+                 LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS K --운영단위
+                    ON J.CO_CD = K.CO_CD
+                   AND J.OPR_UNIT_ID = K.OPR_UNIT_ID
+                LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO P
+                    ON K.CO_CD = P.CO_CD
+                   AND K.SALS_CHRPSN_ID = P.OPRTR_ID
+                 LEFT OUTER JOIN TB_DP_PRD_DISP_STATS_INFO C -- 진열정보
+                    ON A.CO_CD = C.CO_CD
+                   AND A.PRD_ID = C.PRD_ID
+                   AND ((B.PUB_ONLY_SPR_CD = 'P' AND C.BZPLC_ID = '*' AND C.OPR_UNIT_ID = '*')
+                    OR (B.PUB_ONLY_SPR_CD = 'E' AND C.BZPLC_ID = I.BZPLC_ID AND C.OPR_UNIT_ID = K.OPR_UNIT_ID))
+                 LEFT OUTER JOIN TB_PC_SALS_DSGN_SALSPRC_HST O
+                    ON O.CO_CD = C.CO_CD
+                   AND O.BZPLC_ID = C.BZPLC_ID
+                   AND O.PRD_ID = C.PRD_ID
+                   AND  TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN O.SALS_DSGN_SALSPRC_STR_DTM AND O.SALS_DSGN_SALSPRC_END_DTM	
+               WHERE 1=1
+               <if test='period != null and period eq "1"'>
+                    AND Z.REG_DTM
+                    	BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+						AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+               </if>	
+              )A1	         
+              WHERE 1=1
+                AND A1.PUB_ONLY_SPR_CD = #{pubOnlySprCd}   /* E : 전용 */
+                AND A1.BZPLC_ID IS NOT NULL      
+                AND A1.PRC_STATE_CD = #{prcProcStatsCd}    /* 가격등록요청 */
+              <if test="orgCd   != null and !orgCd.equals('')"  >AND   A1.ORG_CD                 = #{orgCd}  /* 팀장 */</if>
+              <if test="oprtrId != null and !oprtrId.equals('')">AND   A1.OPRTR_ID               = #{oprtrId}/* 본인 */</if>
+               GROUP BY  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+	</select>
+	
+	<!-- R&D가격관리 - 처리대기목록  - 공용상품처리대기  -->
+	<select id="selectPubPrdProcStbList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectPubPrdProcStbList  */
+	 SELECT CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+           , NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+           , NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+           , #{menuNm} AS MNU_NM
+           , #{prcProcStatsCd} AS STATUS
+           , #{pubOnlySprCd} AS STATUS2
+           , 1212 AS HRNK_MNU_SEQ
+      FROM (SELECT 0 AS CHK,
+                    A.CO_CD,
+                    A.PRD_ID,
+                    TO_NUMBER(A.PRD_ID) AS PRD_ID_NUM,
+                    Z.NEW_PRD_REQ_NO AS NEW_PRD_REQ_NO, --신규상품요청번호
+                    A.PRD_CLCD,
+                    B.PUB_ONLY_SPR_CD,
+                    Z.REG_DTM,
+                    CASE WHEN SYSDATE - Z.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL,
+                    K.SALS_CHRPSN_ID AS OPRTR_ID,
+                    P.ORG_CD,
+                    P.OPRTR_NM,
+                    P.ORG_NM,
+                    CASE WHEN C.PRD_ID IS NULL THEN '10' ELSE '20' END AS PRC_STATE_CD,
+                    CASE WHEN C.PRD_ID IS NULL THEN '가격등록요청' ELSE '가격등록완료' END AS PRC_STATE_NM
+              FROM TB_PR_NEW_PRD_REQ_PROC Z
+              INNER JOIN TB_PR_PRD_INFO A --상품마스터
+               ON Z.CO_CD = A.CO_CD
+               AND Z.RND_REQ_PRD_ID = A.PRD_ID
+               AND A.MALL_SPR_CD = '20'
+              INNER JOIN TB_PR_MRO_PRD_INFO B --MRO상품 마스터
+               ON A.CO_CD = B.CO_CD
+               AND A.PRD_ID = B.PRD_ID
+               AND B.MALL_SPR_CD = '20'
+              LEFT OUTER JOIN TB_PR_NEW_PRD_CUST_REQ_INFO G -- 신규상품
+                ON Z.CO_CD = G.CO_CD
+                AND Z.NEW_PRD_REQ_NO = G.NEW_PRD_REQ_NO
+              LEFT OUTER JOIN TB_CC_MBR_BASIS H --회원
+               ON G.CO_CD = H.CO_CD
+               AND G.REGPSN_ID = H.MBR_ID
+              LEFT OUTER JOIN TB_CC_BZPLC_BASIS I --사업장
+                ON H.CO_CD = I.CO_CD
+                AND H.BZPLC_ID = I.BZPLC_ID
+                LEFT OUTER JOIN TB_CC_DEPT_BASIS J --부서
+                ON H.CO_CD = J.CO_CD
+                AND H.DEPT_ID = J.DEPT_ID
+              LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS K --운영단위
+                 ON J.CO_CD = K.CO_CD
+                AND J.OPR_UNIT_ID = K.OPR_UNIT_ID
+              LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO P
+                    ON K.CO_CD = P.CO_CD
+                   AND K.SALS_CHRPSN_ID = P.OPRTR_ID
+              LEFT OUTER JOIN TB_DP_PRD_DISP_STATS_INFO C -- 진열정보
+                 ON A.CO_CD = C.CO_CD
+                AND A.PRD_ID = C.PRD_ID
+                AND ((B.PUB_ONLY_SPR_CD = 'P' AND C.BZPLC_ID = '*' AND C.OPR_UNIT_ID = '*')
+                  OR (B.PUB_ONLY_SPR_CD = 'E' AND C.BZPLC_ID = I.BZPLC_ID AND C.OPR_UNIT_ID = K.OPR_UNIT_ID))
+               JOIN
+                     (
+                     SELECT
+                           A.CO_CD,
+                           A.CPRTCP_ID,
+                           C.CPRTCP_KOR_NM AS CPRTCP_NM,
+                           A.CURR_UNIT_CD,
+                           A.PRD_ID,
+                           A.PRD_PRC,
+                           FN_PC_MIN_ODR_QTY(A.CO_CD,A.PRD_ID)  MIN_ODR_QTY,
+                           A.PCPRC_INC_YN,
+                           A.VLD_STR_DT,
+                           A.VLD_END_DT
+                       FROM TB_PC_CPRTCP_LWST_PRC_INFO  A
+                           INNER JOIN
+                           TB_CP_CPRTCP_BASIS C
+                           ON  C.CO_CD = A.CO_CD
+                           AND C.CPRTCP_ID = A.CPRTCP_ID
+                   )    N
+                    ON N.CO_CD = A.CO_CD  
+                   AND N.PRD_ID = A.PRD_ID
+                   LEFT JOIN TB_CP_CPRTCP_BASIS O
+                    ON O.CO_CD = Z.CO_CD
+                   AND O.CPRTCP_ID = Z.REGPSN_ID
+                 WHERE NOT EXISTS ( SELECT 'X' FROM TB_PR_NEW_PRD_CUST_REQ_INFO WHERE CO_CD = Z.CO_CD AND NEW_PRD_REQ_NO = Z.NEW_PRD_REQ_NO AND REQ_SBJ_CD = '20' )
+                  <if test='period != null and period eq "1"'>
+                    AND Z.REG_DTM
+                    	BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+						AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+                  </if>
+              )A1	         
+              WHERE 1=1
+                AND A1.PUB_ONLY_SPR_CD = #{pubOnlySprCd}      /* P : 공용 */
+                AND A1.PRC_STATE_CD = #{prcProcStatsCd}    /* 가격등록요청 */
+              <if test="orgCd   != null and !orgCd.equals('')"  >AND   A1.ORG_CD                 = #{orgCd}  /* 팀장 */</if>
+              <if test="oprtrId != null and !oprtrId.equals('')">AND   A1.OPRTR_ID               = #{oprtrId}/* 본인 */</if>
+               GROUP BY  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+	</select>
+	
+	<!-- R&D상품관리 - R&D등록상품관리 - 견적요청목록 -->
+	<select id="selectCprtcpEstmReqMngNotCntList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectCprtcpEstmReqMngNotCntList  */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, CASE WHEN STATUS = '22,33' THEN 1000000
+		       WHEN STATUS = '34'    THEN 2000000
+		                             ELSE 9000000
+		  END AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{estmInfoStatsCd} AS STATUS
+			, '' AS STATUS2
+			, 1208 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				A1.CO_CD, A2.ORG_CD, A2.ORG_NM, A2.OPRTR_ID, A2.OPRTR_NM, A1.CNT_VAL
+			FROM (
+				SELECT /*+ INDEX_USE(A TB_RD_REQ_CPRTCP_ESTM_INFO_PK) */
+					  A.CO_CD                                                                                        AS CO_CD              /*회사코드 PK*/
+					, A.CUST_PREQNO	                                                                                 AS CUST_PREQNO        /*고객구매요청번호 PK*/
+					, TO_CHAR(A.ODR_REQ_DTM,'YYYY-MM-DD HH24:MI:SS')                                                 AS ODR_REQ_DTM        /*주문신청일시*/
+					, CASE WHEN '20'>=J.ESTM_INFO_STATS_CD AND J.ESTM_CUNT>0 THEN '30' ELSE J.ESTM_INFO_STATS_CD END AS ESTM_INFO_STATS_CD /*견적정보상태코드*/
+					, TO_CHAR(TO_NUMBER(A.PRD_ID))                                                                   AS PRD_ID             /*상품ID*/
+					, B.PRD_CLCD                                                                                     AS PRD_CLCD           /*상품분류코드*/
+					, C.MNFR_NO                                                                                      AS MNFR_NO            /*제조원번호*/
+					, D.MNFR_NM                                                                                      AS MNFR_NM            /*제조원명*/
+					, E.BZPLC_ID                                                                                     AS BZPLC_ID           /*사업장ID*/
+					, F.BZPLC_NM                                                                                     AS BZPLC_NM           /*사업장명*/
+					, G.OPR_UNIT_ID                                                                                  AS OPR_UNIT_ID        /*운영단위ID*/
+					, H.OPR_UNIT_NM                                                                                  AS OPR_UNIT_NM        /*운영단위명*/
+					, (SELECT SSP_APP.FN_RD_CHRPSN_ID(C.CO_CD, C.MNFR_NO, B.PRD_CLCD, '30') FROM DUAL)               AS PURG_CHRPSN_ID     /*구매담당자ID*/
+					, CASE WHEN SYSDATE - A.ODR_REQ_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+				FROM SSP_APP.TB_RD_REQ_CPRTCP_ESTM_INFO  A
+				LEFT JOIN SSP_APP.TB_PR_PRD_INFO         B
+					ON B.CO_CD  = A.CO_CD AND B.PRD_ID = A.PRD_ID
+				LEFT JOIN SSP_APP.TB_PR_MRO_PRD_INFO     C
+					ON C.CO_CD  = B.CO_CD AND C.PRD_ID = B.PRD_ID
+				LEFT JOIN SSP_APP.TB_PR_MNFR_INFO        D
+					ON D.CO_CD   = C.CO_CD AND D.MNFR_NO = C.MNFR_NO
+				LEFT JOIN SSP_APP.TB_CC_MBR_BASIS        E
+					ON E.CO_CD  = A.CO_CD AND E.MBR_ID = A.CUST_ID
+				LEFT JOIN SSP_APP.TB_CC_BZPLC_BASIS      F --사업장
+					ON F.CO_CD    = E.CO_CD AND F.BZPLC_ID = E.BZPLC_ID
+				LEFT OUTER JOIN SSP_APP.TB_CC_DEPT_BASIS G --부서
+					ON G.CO_CD   = E.CO_CD AND G.DEPT_ID = E.DEPT_ID
+				LEFT JOIN SSP_APP.TB_CC_OPR_UNIT_BASIS   H --운영단위
+					ON H.CO_CD       = G.CO_CD AND H.OPR_UNIT_ID = G.OPR_UNIT_ID
+				LEFT OUTER JOIN (
+					SELECT CO_CD
+						 , CUST_PREQNO
+						 , MAX(ESTM_INFO_STATS_CD)  KEEP(DENSE_RANK LAST ORDER BY SEQ)  ESTM_INFO_STATS_CD
+						 , MAX(UPDPSN_ID         )  KEEP(DENSE_RANK LAST ORDER BY SEQ)  UPDPSN_ID
+						 , MAX(UPD_DTM           )  KEEP(DENSE_RANK LAST ORDER BY SEQ)  UPD_DTM
+						 , (SELECT COUNT(CASE WHEN ESTM_DTL_STATS_CD IN ( '20', '40' ) THEN 1 END)  ESTM_CUNT
+							FROM TB_RD_REQ_CPRTCP_ESTM_DTL   D
+							WHERE D.CO_CD       = K.CO_CD
+							AND D.CUST_PREQNO = K.CUST_PREQNO
+						 )   ESTM_CUNT
+					FROM TB_RD_REQ_CPRTCP_ESTM_STATS_DTLS    K
+					GROUP BY CO_CD, CUST_PREQNO
+				)  J
+					ON J.CO_CD=A.CO_CD AND J.CUST_PREQNO=A.CUST_PREQNO
+				WHERE A.CO_CD       = '1000'
+				AND   A.CUST_PREQNO NOT LIKE 'RE%'
+				AND   B.MALL_SPR_CD = '20'
+				<if test='period != null and period eq "1"'>
+				AND   A.ODR_REQ_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+			) A1
+			JOIN TB_CO_MBR_OPRTR_INFO A2
+				ON A1.CO_CD = A2.CO_CD AND A1.PURG_CHRPSN_ID = A2.OPRTR_ID
+			WHERE A1.ESTM_INFO_STATS_CD IN ('10','20','30','60')
+			<if test="orgCd   != null and !orgCd.equals('')"  >AND   A1.PURG_CHRPSN_ID IN (SELECT OPRTR_ID FROM TB_CO_MBR_OPRTR_INFO WHERE ORG_CD = #{orgCd}) /* 팀장 */</if>
+			<if test="oprtrId != null and !oprtrId.equals('')">AND   A1.PURG_CHRPSN_ID = #{oprtrId}/* 본인 */</if>
+		) Y
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<select id="selectPubPrc30PcprcList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectPubPrc30PcprcList  MD담당자 */
+    WITH BASE_PRC_T AS
+                    (
+                        SELECT  A.*
+                        FROM    (
+                                SELECT A.CO_CD,
+									   A.PRD_ID,
+									   A.BZPLC_ID,
+									   MAX(A.BSS_SALSPRC_STR_DTM) BSS_SALSPRC_STR_DTM,
+									   MAX(A.BSS_SALSPRC_END_DTM) BSS_SALSPRC_END_DTM,
+									   MAX(A.UPD_DTM) UPD_DTM
+								FROM TB_PC_PRD_PRC_HST A        
+                                WHERE   1=1
+                                  AND  A.CO_CD = '1000'
+                                  AND  A.PRD_ID LIKE '000000000%'
+
+					                 GROUP BY A.CO_CD, A.PRD_ID, A.BZPLC_ID
+                                )   A
+                        WHERE 1=1      
+                    ),
+        BASE_T AS (
+            SELECT /*+ materialize */
+                    *
+            FROM    (
+                SELECT
+                    A.PRD_ID,--상품ID
+                    C.PRD_CLCD, --SSP카테고리 ID
+                    D.PUB_ONLY_SPR_CD,   --  공용
+                    C.PRC_APLY_SPR_CD,
+                    Z.PCPRC_INC_YN,
+                    N.PRD_ID AS PRC_PRD_ID,
+                    J.INVN_STATS_CD,
+                    A.DISP_STATS_CD,   -- SSP진열상태
+                    C.PRD_NM,     --상품명
+                    D.PURG_CHRPSN_ID AS PURG_CHRPSN_ID,   --구매담당자
+           --         SSP_APP.FN_PC_PRD_PRC_REG_DTM(X.CO_CD,A.PRD_ID) AS PRC_REG_DTM, --SSP가격등록일 /*변경해야함*/
+                    K.OPRTR_ID AS OPRTR_ID, --MD담당자
+                    K.OPRTR_NM AS OPRTR_NM, --MD담당자 이름
+                    X.UPD_DTM,   -- 가격갱신일
+                    CASE WHEN SYSDATE - X.UPD_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+                FROM  BASE_PRC_T    X
+                      INNER JOIN
+                      TB_DP_PRD_DISP_STATS_INFO A --진열정보
+                    ON   A.CO_CD = X.CO_CD
+                    AND  A.PRD_ID = X.PRD_ID
+                    AND  A.BZPLC_ID = X.BZPLC_ID
+                    INNER JOIN TB_PR_PRD_INFO C --SSP상품정보
+                    ON   C.CO_CD = X.CO_CD
+                    AND  C.PRD_ID = X.PRD_ID
+                    AND  C.MALL_SPR_CD = '10'
+                    INNER JOIN TB_PR_MRO_PRD_INFO D --MRO상품정보
+                    ON   D.CO_CD = X.CO_CD
+                    AND  D.PRD_ID = X.PRD_ID
+                    AND  D.PUB_ONLY_SPR_CD = 'P'  --  공용상품
+                    LEFT JOIN
+                    TB_PC_PRD_PRC_HST N --가격정보
+                    ON   N.CO_CD =  X.CO_CD
+                    AND  N.PRD_ID = X.PRD_ID
+                    AND  N.BZPLC_ID = X.BZPLC_ID
+                    AND  TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN N.BSS_SALSPRC_STR_DTM AND N.BSS_SALSPRC_END_DTM
+                    LEFT OUTER JOIN
+                    (
+                    SELECT A.CO_CD, A.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD ,B.ORG_CD
+                    FROM    TB_PR_PRD_CLSF_CHRPSN_INFO A
+                            INNER JOIN TB_CO_MBR_OPRTR_INFO B
+                           ON A.CO_CD = B.CO_CD
+                           AND A.PRD_CLSF_CHRPSN_ID = B.OPRTR_ID
+                    WHERE A.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                    AND A.PRD_CLSF_CHRPSN_TP_CD = '20'
+                    )   K -- MD담당자
+                    ON  K.CO_CD = C.CO_CD
+                    AND K.PRD_CLCD = C.PRD_CLCD
+                    LEFT OUTER JOIN
+                    (
+                      SELECT
+                            A.CPRTCP_ID,
+                            C.CPRTCP_KOR_NM AS CPRTCP_NM,
+                            A.CURR_UNIT_CD,
+                            A.PRD_ID,
+                            A.PRD_PRC,
+                            FN_PC_MIN_ODR_QTY(A.CO_CD,A.PRD_ID)  MIN_ODR_QTY,
+                            A.PCPRC_INC_YN
+                        FROM TB_PC_CPRTCP_LWST_PRC_INFO  A
+                            INNER JOIN
+                            TB_CP_CPRTCP_BASIS C
+                            ON  C.CO_CD = A.CO_CD
+                            AND C.CPRTCP_ID = A.CPRTCP_ID
+                    )    Z
+                    ON   Z.PRD_ID = X.PRD_ID
+                    LEFT OUTER 
+
+                WHERE 1=1     
+                AND A.DISP_STATS_CD = '30'      /*  일시품절 */
+                AND Z.PCPRC_INC_YN IS NULL      /*  공급불가상태 */
+                <if test='period != null and period eq "1"'>
+				AND X.UPD_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+               AND K.OPRTR_ID =  #{oprtrId}     /*  MD 담당자 */
+                )   A
+        ) --첫번째 WITH
+        SELECT COUNT(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END) AS DELAY_CNT
+          , COUNT(CASE WHEN CNT_VAL = 'OK' THEN 1 END) AS OK_CNT
+          , '일시품절(공급불가상태)' AS STATUS
+          , '공용상품가격관리(일시품절(공급불가상태))' AS MNU_NM
+          , 28 AS MNU_SEQ
+          , 'staus' AS PARAM
+        FROM BASE_T  A
+	</select>
+	
+	<select id="selectPubPrc30PrdList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectPubPrc30PrdList  MD담당자 */
+    WITH BASE_PRC_T AS
+                    (
+                        SELECT  A.*
+                        FROM    (
+                                SELECT A.CO_CD,
+									   A.PRD_ID,
+									   A.BZPLC_ID,
+									   MAX(A.BSS_SALSPRC_STR_DTM) BSS_SALSPRC_STR_DTM,
+									   MAX(A.BSS_SALSPRC_END_DTM) BSS_SALSPRC_END_DTM,
+									   MAX(A.UPD_DTM) UPD_DTM
+								FROM TB_PC_PRD_PRC_HST A        
+                                WHERE   1=1
+                                  AND  A.CO_CD = '1000'
+                                  AND  A.PRD_ID LIKE '000000000%'
+
+					                 GROUP BY A.CO_CD, A.PRD_ID, A.BZPLC_ID
+                                )   A
+                        WHERE 1=1      
+                    ),
+        BASE_T AS (
+            SELECT /*+ materialize */
+                    *
+            FROM    (
+                SELECT
+                    A.PRD_ID,--상품ID
+                    C.PRD_CLCD, --SSP카테고리 ID
+                    D.PUB_ONLY_SPR_CD,   --  공용
+                    C.PRC_APLY_SPR_CD,
+                    Z.PCPRC_INC_YN,
+                    N.PRD_ID AS PRC_PRD_ID,
+                    J.INVN_STATS_CD,
+                    A.DISP_STATS_CD,   -- SSP진열상태
+                    C.PRD_NM,     --상품명
+                    D.PURG_CHRPSN_ID AS PURG_CHRPSN_ID,   --구매담당자
+           --         SSP_APP.FN_PC_PRD_PRC_REG_DTM(X.CO_CD,A.PRD_ID) AS PRC_REG_DTM, --SSP가격등록일 /*변경해야함*/
+                    K.OPRTR_ID AS OPRTR_ID, --MD담당자
+                    K.OPRTR_NM AS OPRTR_NM, --MD담당자 이름
+                    X.UPD_DTM,   -- 가격갱신일
+                    CASE WHEN SYSDATE - X.UPD_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+                FROM  BASE_PRC_T    X
+                      INNER JOIN
+                      TB_DP_PRD_DISP_STATS_INFO A --진열정보
+                    ON   A.CO_CD = X.CO_CD
+                    AND  A.PRD_ID = X.PRD_ID
+                    AND  A.BZPLC_ID = X.BZPLC_ID
+                    INNER JOIN TB_PR_PRD_INFO C --SSP상품정보
+                    ON   C.CO_CD = X.CO_CD
+                    AND  C.PRD_ID = X.PRD_ID
+                    AND  C.MALL_SPR_CD = '10'
+                    INNER JOIN TB_PR_MRO_PRD_INFO D --MRO상품정보
+                    ON   D.CO_CD = X.CO_CD
+                    AND  D.PRD_ID = X.PRD_ID
+                    AND  D.PUB_ONLY_SPR_CD = 'P'  --  공용상품
+                    LEFT JOIN
+                    TB_PC_PRD_PRC_HST N --가격정보
+                    ON   N.CO_CD =  X.CO_CD
+                    AND  N.PRD_ID = X.PRD_ID
+                    AND  N.BZPLC_ID = X.BZPLC_ID
+                    AND  TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN N.BSS_SALSPRC_STR_DTM AND N.BSS_SALSPRC_END_DTM
+                    LEFT OUTER JOIN
+                    (
+                    SELECT A.CO_CD, A.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD ,B.ORG_CD
+                    FROM    TB_PR_PRD_CLSF_CHRPSN_INFO A
+                            INNER JOIN TB_CO_MBR_OPRTR_INFO B
+                           ON A.CO_CD = B.CO_CD
+                           AND A.PRD_CLSF_CHRPSN_ID = B.OPRTR_ID
+                    WHERE A.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                    AND A.PRD_CLSF_CHRPSN_TP_CD = '20'
+                    )   K -- MD담당자
+                    ON  K.CO_CD = C.CO_CD
+                    AND K.PRD_CLCD = C.PRD_CLCD
+                    LEFT OUTER JOIN
+                    (
+                      SELECT
+                            A.CPRTCP_ID,
+                            C.CPRTCP_KOR_NM AS CPRTCP_NM,
+                            A.CURR_UNIT_CD,
+                            A.PRD_ID,
+                            A.PRD_PRC,
+                            FN_PC_MIN_ODR_QTY(A.CO_CD,A.PRD_ID)  MIN_ODR_QTY,
+                            A.PCPRC_INC_YN
+                        FROM TB_PC_CPRTCP_LWST_PRC_INFO  A
+                            INNER JOIN
+                            TB_CP_CPRTCP_BASIS C
+                            ON  C.CO_CD = A.CO_CD
+                            AND C.CPRTCP_ID = A.CPRTCP_ID
+                    )    Z
+                    ON   Z.PRD_ID = X.PRD_ID
+                    LEFT OUTER JOIN VW_IV_PRD_INVN_DTLS J -- 재고마스터
+                    ON A.CO_CD = J.CO_CD
+                    AND A.PRD_ID = J.PRD_ID
+                WHERE 1=1     
+                AND A.DISP_STATS_CD = '30'      /*  일시품절 */
+                AND N.PRD_ID IS NULL            /*  판매유효기간만료 */
+                <if test='period != null and period eq "1"'>
+				AND X.UPD_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if> 
+               AND K.OPRTR_ID =  #{oprtrId}     /*  MD 담당자 */
+                )   A
+        ) --첫번째 WITH
+        SELECT COUNT(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END) AS DELAY_CNT
+          , COUNT(CASE WHEN CNT_VAL = 'OK' THEN 1 END) AS OK_CNT
+          , '일시품절(판매유효기간만료)' AS STATUS
+          , '공용상품가격관리(일시품절(판매유효기간만료))' AS MNU_NM
+          , 28 AS MNU_SEQ
+          , 'staus' AS PARAM
+        FROM BASE_T  A
+	</select>
+	
+	<select id="selectPubPrc30InvnList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectPubPrc30InvnList  MD담당자 */
+    WITH BASE_PRC_T AS
+                    (
+                        SELECT  A.*
+                        FROM    (
+                                SELECT A.CO_CD,
+									   A.PRD_ID,
+									   A.BZPLC_ID,
+									   MAX(A.BSS_SALSPRC_STR_DTM) BSS_SALSPRC_STR_DTM,
+									   MAX(A.BSS_SALSPRC_END_DTM) BSS_SALSPRC_END_DTM,
+									   MAX(A.UPD_DTM) UPD_DTM
+								FROM TB_PC_PRD_PRC_HST A        
+                                WHERE   1=1
+                                  AND  A.CO_CD = '1000'
+                                  AND  A.PRD_ID LIKE '000000000%'
+
+					                 GROUP BY A.CO_CD, A.PRD_ID, A.BZPLC_ID
+                                )   A
+                        WHERE 1=1      
+                    ),
+        BASE_T AS (
+            SELECT /*+ materialize */
+                    *
+            FROM    (
+                SELECT
+                    A.PRD_ID,--상품ID
+                    C.PRD_CLCD, --SSP카테고리 ID
+                    D.PUB_ONLY_SPR_CD,   --  공용
+                    C.PRC_APLY_SPR_CD,
+                    Z.PCPRC_INC_YN,
+                    N.PRD_ID AS PRC_PRD_ID,
+                    J.INVN_STATS_CD,
+                    A.DISP_STATS_CD,   -- SSP진열상태
+                    C.PRD_NM,     --상품명
+                    D.PURG_CHRPSN_ID AS PURG_CHRPSN_ID,   --구매담당자
+           --         SSP_APP.FN_PC_PRD_PRC_REG_DTM(X.CO_CD,A.PRD_ID) AS PRC_REG_DTM, --SSP가격등록일 /*변경해야함*/
+                    K.OPRTR_ID AS OPRTR_ID, --MD담당자
+                    K.OPRTR_NM AS OPRTR_NM, --MD담당자 이름
+                    X.UPD_DTM,   -- 가격갱신일
+                    CASE WHEN SYSDATE - X.UPD_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+                FROM  BASE_PRC_T    X
+                      INNER JOIN
+                      TB_DP_PRD_DISP_STATS_INFO A --진열정보
+                    ON   A.CO_CD = X.CO_CD
+                    AND  A.PRD_ID = X.PRD_ID
+                    AND  A.BZPLC_ID = X.BZPLC_ID
+                    INNER JOIN TB_PR_PRD_INFO C --SSP상품정보
+                    ON   C.CO_CD = X.CO_CD
+                    AND  C.PRD_ID = X.PRD_ID
+                    AND  C.MALL_SPR_CD = '10'
+                    INNER JOIN TB_PR_MRO_PRD_INFO D --MRO상품정보
+                    ON   D.CO_CD = X.CO_CD
+                    AND  D.PRD_ID = X.PRD_ID
+                    AND  D.PUB_ONLY_SPR_CD = 'P'  --  공용상품
+                    LEFT JOIN
+                    TB_PC_PRD_PRC_HST N --가격정보
+                    ON   N.CO_CD =  X.CO_CD
+                    AND  N.PRD_ID = X.PRD_ID
+                    AND  N.BZPLC_ID = X.BZPLC_ID
+                    AND  TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN N.BSS_SALSPRC_STR_DTM AND N.BSS_SALSPRC_END_DTM
+                    LEFT OUTER JOIN
+                    (
+                    SELECT A.CO_CD, A.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD ,B.ORG_CD
+                    FROM    TB_PR_PRD_CLSF_CHRPSN_INFO A
+                            INNER JOIN TB_CO_MBR_OPRTR_INFO B
+                           ON A.CO_CD = B.CO_CD
+                           AND A.PRD_CLSF_CHRPSN_ID = B.OPRTR_ID
+                    WHERE A.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                    AND A.PRD_CLSF_CHRPSN_TP_CD = '20'
+                    )   K -- MD담당자
+                    ON  K.CO_CD = C.CO_CD
+                    AND K.PRD_CLCD = C.PRD_CLCD
+                    LEFT OUTER JOIN
+                    (
+                      SELECT
+                            A.CPRTCP_ID,
+                            C.CPRTCP_KOR_NM AS CPRTCP_NM,
+                            A.CURR_UNIT_CD,
+                            A.PRD_ID,
+                            A.PRD_PRC,
+                            FN_PC_MIN_ODR_QTY(A.CO_CD,A.PRD_ID)  MIN_ODR_QTY,
+                            A.PCPRC_INC_YN
+                        FROM TB_PC_CPRTCP_LWST_PRC_INFO  A
+                            INNER JOIN
+                            TB_CP_CPRTCP_BASIS C
+                            ON  C.CO_CD = A.CO_CD
+                            AND C.CPRTCP_ID = A.CPRTCP_ID
+                    )    Z
+                    ON   Z.PRD_ID = X.PRD_ID
+                    LEFT OUTER JOIN VW_IV_PRD_INVN_DTLS J -- 재고마스터
+                    ON A.CO_CD = J.CO_CD
+                    AND A.PRD_ID = J.PRD_ID
+                WHERE 1=1     
+                AND A.DISP_STATS_CD = '30'       /*  일시품절 */
+                AND J.INVN_STATS_CD = '2'        /*  안전재고이하 */
+                <if test='period != null and period eq "1"'>
+				AND X.UPD_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+               AND K.OPRTR_ID =  #{oprtrId}      /*  MD 담당자 */
+                )   A
+        ) --첫번째 WITH
+        SELECT COUNT(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END) AS DELAY_CNT
+          , COUNT(CASE WHEN CNT_VAL = 'OK' THEN 1 END) AS OK_CNT
+          , '일시품절(안전재고이하)' AS STATUS
+          , '공용상품가격관리(일시품절(안전재고이하))' AS MNU_NM
+          , 28 AS MNU_SEQ
+          , 'staus' AS PARAM
+        FROM BASE_T  A
+	</select>
+	
+	<select id="selectPubPrcIncYList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectPubPrcIncYList  MD담당자 */
+    WITH BASE_PRC_T AS
+                    (
+                        SELECT  A.*
+                        FROM    (
+                                SELECT A.CO_CD,
+									   A.PRD_ID,
+									   A.BZPLC_ID,
+									   MAX(A.BSS_SALSPRC_STR_DTM) BSS_SALSPRC_STR_DTM,
+									   MAX(A.BSS_SALSPRC_END_DTM) BSS_SALSPRC_END_DTM,
+									   MAX(A.UPD_DTM) UPD_DTM
+								FROM TB_PC_PRD_PRC_HST A        
+                                WHERE   1=1
+                                  AND  A.CO_CD = '1000'
+                                  AND  A.PRD_ID LIKE '000000000%'
+
+					                 GROUP BY A.CO_CD, A.PRD_ID, A.BZPLC_ID
+                                )   A
+                        WHERE 1=1      
+                    ),
+        BASE_T AS (
+            SELECT /*+ materialize */
+                    *
+            FROM    (
+                SELECT
+                    A.PRD_ID,--상품ID
+                    C.PRD_CLCD, --SSP카테고리 ID
+                    D.PUB_ONLY_SPR_CD,   --  공용
+                    C.PRC_APLY_SPR_CD,
+                    Z.PCPRC_INC_YN,
+                    N.PRD_ID AS PRC_PRD_ID,
+                    J.INVN_STATS_CD,
+                    A.DISP_STATS_CD,   -- SSP진열상태
+                    C.PRD_NM,     --상품명
+                    D.PURG_CHRPSN_ID AS PURG_CHRPSN_ID,   --구매담당자
+           --         SSP_APP.FN_PC_PRD_PRC_REG_DTM(X.CO_CD,A.PRD_ID) AS PRC_REG_DTM, --SSP가격등록일 /*변경해야함*/
+                    K.OPRTR_ID AS OPRTR_ID, --MD담당자
+                    K.OPRTR_NM AS OPRTR_NM, --MD담당자 이름
+                    X.UPD_DTM,   -- 가격갱신일
+                    CASE WHEN SYSDATE - X.UPD_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+                FROM  BASE_PRC_T    X
+                      INNER JOIN
+                      TB_DP_PRD_DISP_STATS_INFO A --진열정보
+                    ON   A.CO_CD = X.CO_CD
+                    AND  A.PRD_ID = X.PRD_ID
+                    AND  A.BZPLC_ID = X.BZPLC_ID
+                    INNER JOIN TB_PR_PRD_INFO C --SSP상품정보
+                    ON   C.CO_CD = X.CO_CD
+                    AND  C.PRD_ID = X.PRD_ID
+                    AND  C.MALL_SPR_CD = '10'
+                    INNER JOIN TB_PR_MRO_PRD_INFO D --MRO상품정보
+                    ON   D.CO_CD = X.CO_CD
+                    AND  D.PRD_ID = X.PRD_ID
+                    AND  D.PUB_ONLY_SPR_CD = 'P'  --  공용상품
+                    LEFT JOIN
+                    TB_PC_PRD_PRC_HST N --가격정보
+                    ON   N.CO_CD =  X.CO_CD
+                    AND  N.PRD_ID = X.PRD_ID
+                    AND  N.BZPLC_ID = X.BZPLC_ID
+                    AND  TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN N.BSS_SALSPRC_STR_DTM AND N.BSS_SALSPRC_END_DTM
+                    LEFT OUTER JOIN
+                    (
+                    SELECT A.CO_CD, A.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD ,B.ORG_CD
+                    FROM    TB_PR_PRD_CLSF_CHRPSN_INFO A
+                            INNER JOIN TB_CO_MBR_OPRTR_INFO B
+                           ON A.CO_CD = B.CO_CD
+                           AND A.PRD_CLSF_CHRPSN_ID = B.OPRTR_ID
+                    WHERE A.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                    AND A.PRD_CLSF_CHRPSN_TP_CD = '20'
+                    )   K -- MD담당자
+                    ON  K.CO_CD = C.CO_CD
+                    AND K.PRD_CLCD = C.PRD_CLCD
+                    LEFT OUTER JOIN
+                    (
+                      SELECT
+                            A.CPRTCP_ID,
+                            C.CPRTCP_KOR_NM AS CPRTCP_NM,
+                            A.CURR_UNIT_CD,
+                            A.PRD_ID,
+                            A.PRD_PRC,
+                            FN_PC_MIN_ODR_QTY(A.CO_CD,A.PRD_ID)  MIN_ODR_QTY,
+                            A.PCPRC_INC_YN
+                        FROM TB_PC_CPRTCP_LWST_PRC_INFO  A
+                            INNER JOIN
+                            TB_CP_CPRTCP_BASIS C
+                            ON  C.CO_CD = A.CO_CD
+                            AND C.CPRTCP_ID = A.CPRTCP_ID
+                    )    Z
+                    ON   Z.PRD_ID = X.PRD_ID
+                    LEFT OUTER JOIN VW_IV_PRD_INVN_DTLS J -- 재고마스터
+                    ON A.CO_CD = J.CO_CD
+                    AND A.PRD_ID = J.PRD_ID
+                WHERE 1=1     
+                AND Z.PCPRC_INC_YN = 'Y'          /*  매입가인상 */
+                <if test='period != null and period eq "1"'>
+				AND X.UPD_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+                AND K.OPRTR_ID =  #{oprtrId}      /*  MD 담당자 */
+                )   A
+        ) --첫번째 WITH
+        SELECT COUNT(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END) AS DELAY_CNT
+          , COUNT(CASE WHEN CNT_VAL = 'OK' THEN 1 END) AS OK_CNT
+          , '매입가인상' AS STATUS
+          , '공용상품가격관리(매입가인상)' AS MNU_NM
+          , 28 AS MNU_SEQ
+          , 'staus' AS PARAM
+        FROM BASE_T  A
+	</select>
+	
+	<select id="selectPubPrcPcprcList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectPubPrcPcprcList  MD담당자 */
+    WITH BASE_PRC_T AS
+                    (
+                        SELECT  A.*
+                        FROM    (
+                                SELECT A.CO_CD,
+									   A.PRD_ID,
+									   A.BZPLC_ID,
+									   MAX(A.BSS_SALSPRC_STR_DTM) BSS_SALSPRC_STR_DTM,
+									   MAX(A.BSS_SALSPRC_END_DTM) BSS_SALSPRC_END_DTM,
+									   MAX(A.UPD_DTM) UPD_DTM
+								FROM TB_PC_PRD_PRC_HST A        
+                                WHERE   1=1
+                                  AND  A.CO_CD = '1000'
+                                  AND  A.PRD_ID LIKE '000000000%'
+
+					                 GROUP BY A.CO_CD, A.PRD_ID, A.BZPLC_ID
+                                )   A
+                        WHERE 1=1      
+                    ),
+        BASE_T AS (
+            SELECT /*+ materialize */
+                    *
+            FROM    (
+                SELECT
+                    A.PRD_ID,--상품ID
+                    C.PRD_CLCD, --SSP카테고리 ID
+                    D.PUB_ONLY_SPR_CD,   --  공용
+                    C.PRC_APLY_SPR_CD,
+                    Z.PCPRC_INC_YN,
+                    N.PRD_ID AS PRC_PRD_ID,
+                    J.INVN_STATS_CD,
+                    A.DISP_STATS_CD,   -- SSP진열상태
+                    C.PRD_NM,     --상품명
+                    D.PURG_CHRPSN_ID AS PURG_CHRPSN_ID,   --구매담당자
+           --         SSP_APP.FN_PC_PRD_PRC_REG_DTM(X.CO_CD,A.PRD_ID) AS PRC_REG_DTM, --SSP가격등록일 /*변경해야함*/
+                    K.OPRTR_ID AS OPRTR_ID, --MD담당자
+                    K.OPRTR_NM AS OPRTR_NM, --MD담당자 이름
+                    X.UPD_DTM,   -- 가격갱신일
+                    CASE WHEN SYSDATE - X.UPD_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+                FROM  BASE_PRC_T    X
+                      INNER JOIN
+                      TB_DP_PRD_DISP_STATS_INFO A --진열정보
+                    ON   A.CO_CD = X.CO_CD
+                    AND  A.PRD_ID = X.PRD_ID
+                    AND  A.BZPLC_ID = X.BZPLC_ID
+                    INNER JOIN TB_PR_PRD_INFO C --SSP상품정보
+                    ON   C.CO_CD = X.CO_CD
+                    AND  C.PRD_ID = X.PRD_ID
+                    AND  C.MALL_SPR_CD = '10'
+                    INNER JOIN TB_PR_MRO_PRD_INFO D --MRO상품정보
+                    ON   D.CO_CD = X.CO_CD
+                    AND  D.PRD_ID = X.PRD_ID
+                    AND  D.PUB_ONLY_SPR_CD = 'P'  --  공용상품
+                    LEFT JOIN
+                    TB_PC_PRD_PRC_HST N --가격정보
+                    ON   N.CO_CD =  X.CO_CD
+                    AND  N.PRD_ID = X.PRD_ID
+                    AND  N.BZPLC_ID = X.BZPLC_ID
+                    AND  TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN N.BSS_SALSPRC_STR_DTM AND N.BSS_SALSPRC_END_DTM
+                    LEFT OUTER JOIN
+                    (
+                    SELECT A.CO_CD, A.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD ,B.ORG_CD
+                    FROM    TB_PR_PRD_CLSF_CHRPSN_INFO A
+                            INNER JOIN TB_CO_MBR_OPRTR_INFO B
+                           ON A.CO_CD = B.CO_CD
+                           AND A.PRD_CLSF_CHRPSN_ID = B.OPRTR_ID
+                    WHERE A.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                    AND A.PRD_CLSF_CHRPSN_TP_CD = '20'
+                    )   K -- MD담당자
+                    ON  K.CO_CD = C.CO_CD
+                    AND K.PRD_CLCD = C.PRD_CLCD
+                    LEFT OUTER JOIN
+                    (
+                      SELECT
+                            A.CPRTCP_ID,
+                            C.CPRTCP_KOR_NM AS CPRTCP_NM,
+                            A.CURR_UNIT_CD,
+                            A.PRD_ID,
+                            A.PRD_PRC,
+                            FN_PC_MIN_ODR_QTY(A.CO_CD,A.PRD_ID)  MIN_ODR_QTY,
+                            A.PCPRC_INC_YN
+                        FROM TB_PC_CPRTCP_LWST_PRC_INFO  A
+                            INNER JOIN
+                            TB_CP_CPRTCP_BASIS C
+                            ON  C.CO_CD = A.CO_CD
+                            AND C.CPRTCP_ID = A.CPRTCP_ID
+                    )    Z
+                    ON   Z.PRD_ID = X.PRD_ID
+                    LEFT OUTER JOIN VW_IV_PRD_INVN_DTLS J -- 재고마스터
+                    ON A.CO_CD = J.CO_CD
+                    AND A.PRD_ID = J.PRD_ID
+                WHERE 1=1     
+                AND Z.PCPRC_INC_YN IS NULL      /*  공급불가상태 */
+                <if test='period != null and period eq "1"'>
+				AND X.UPD_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+               AND K.OPRTR_ID =  #{oprtrId}     /*  MD 담당자 */
+                )   A
+        ) --첫번째 WITH
+        SELECT COUNT(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END) AS DELAY_CNT
+          , COUNT(CASE WHEN CNT_VAL = 'OK' THEN 1 END) AS OK_CNT
+          , '공급불가상태' AS STATUS
+          , '공용상품가격관리(공급불가상태)' AS MNU_NM
+          , 28 AS MNU_SEQ
+          , 'staus' AS PARAM
+        FROM BASE_T  A
+	</select>
+	
+	
+	
+	
+	
+	<select id="selectNewPrdMlt2233ReqList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectNewPrdMlt2233ReqList  구매담당자 */
+	SELECT COUNT(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END) AS DELAY_CNT
+          , COUNT(CASE WHEN CNT_VAL = 'OK' THEN 1 END) AS OK_CNT
+          , '요청' AS STATUS
+          , '신규상품일괄등록요청목록(요청)' AS MNU_NM
+          , 1400 AS MNU_SEQ
+          , 'NEW_PRD_REQ_STATS_CD:22,33|REG_DTM:3|PURG_CHRPSN_ID:${oprtrId}|PURG_CHRPSN_NM:${oprtrNm}' AS PARAM
+     FROM (
+            SELECT NEW_PRD_REQ_GRP_NO
+                     ,CPRTCP_ID
+                     ,NEW_PRD_REQ_STATS_CD
+                     ,A.REG_DTM
+                     , CASE WHEN SYSDATE - A.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+              FROM TB_RD_CPRTCP_PKG_LINE_PRPS_MST A
+              WHERE 1=1
+              AND A.NEW_PRD_REQ_STATS_CD IN( '22' , '33') /* 요청 */
+              <if test='period != null and period eq "1"'>
+				AND A.REG_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+     AND A.DEALR_ID = #{oprtrId}
+     )
+	</select>
+	
+	
+	
+	<select id="selectPurgInfoPkgChgCntList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectPurgInfoPkgChgCntList */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, 9000000 AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{elcContApprStatsCd} AS STATUS
+			, '' AS STATUS2
+			, 46 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT * FROM (
+				SELECT
+					  S3.CO_CD, S3.ORG_CD, S3.ORG_NM, S3.OPRTR_ID, S3.OPRTR_NM
+					, CASE WHEN SYSDATE - S1.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL /* 지연기준 : 3일 */
+					, (SELECT ELC_CONT_APPR_STATS_CD FROM (
+						SELECT SEQ, ELC_CONT_APPR_STATS_CD FROM TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS
+						WHERE CO_CD = S1.CO_CD AND CONT_NO = S1.CONT_NO AND CONT_CHG_DGRCNT = S1.CONT_CHG_DGRCNT
+						ORDER BY SEQ DESC) WHERE ROWNUM = 1
+					  ) AS ELC_CONT_APPR_STATS_CD
+				FROM TB_RD_REQ_CPRTCP_CONSN_INFO S1
+				JOIN TB_CP_CPRTCP_BASIS          S2
+					ON S1.CO_CD = S2.CO_CD AND S1.CPRTCP_ID = S2.CPRTCP_ID
+				JOIN TB_CO_MBR_OPRTR_INFO        S3
+					ON S1.CO_CD = S3.CO_CD AND S1.PURG_CHRPSN_ID = S3.OPRTR_ID
+					<if test="orgCd   != null and !orgCd.equals('')"  >AND S3.ORG_CD   = #{orgCd}  /* 팀장 */</if>
+					<if test="oprtrId != null and !oprtrId.equals('')">AND S3.OPRTR_ID = #{oprtrId}/* 본인 */</if>
+				WHERE S1.CO_CD       = '1000'
+				AND   S1.CUST_PREQNO LIKE 'RA%' /*고정*/
+				AND   S1.PRPS_SPR_CD IN ('10','20')
+				AND   S1.REQ_SBJ_CD = '30'
+				<if test='period != null and period eq "1"'>
+				AND   S1.REG_DTM
+						BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+						AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+				</if>
+			) X
+			WHERE ELC_CONT_APPR_STATS_CD = '22'
+		) Y
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	<select id="selectCmsErrRepairCntList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectCmsErrRepairCntList */
+	SELECT
+		  ROWNUM
+		, Z.*
+		, 9000000 AS MNU_SEQ
+	FROM (
+		SELECT
+			  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+			, NVL(SUM(CASE WHEN CNT_VAL = 'DELAY' THEN 1 END), 0) AS DELAY_CNT
+			, NVL(SUM(CASE WHEN CNT_VAL = 'OK'    THEN 1 END), 0) AS OK_CNT
+			, #{menuNm} AS MNU_NM
+			, #{estmInfoStatsCd} AS STATUS
+			, '' AS STATUS2
+			, 52 AS HRNK_MNU_SEQ
+		FROM (
+			SELECT
+				A1.CO_CD, A2.ORG_CD, A2.ORG_NM, A2.OPRTR_ID, A2.OPRTR_NM
+				, CASE WHEN SYSDATE - A1.REQ_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL /* 지연기준 : 3일 */
+			FROM (
+				SELECT /*+ USE_INDEX(A TB_RD_REQ_CPRTCP_ESTM_INFO_PK) */
+					  A.CO_CD	                                              AS CO_CD	                   /*회사코드 PK*/
+					, A.REG_DTM                                               AS REQ_DTM                   /*오류발생일*/
+					, (
+						SELECT /*+ INDEX_DESC(Z TB_RD_REQ_CPRTCP_ESTM_STATS_DTLS_PK) */
+							Z.ESTM_INFO_STATS_CD
+						FROM SSP_APP.TB_RD_REQ_CPRTCP_ESTM_STATS_DTLS Z
+						WHERE Z.CO_CD       = A.CO_CD
+						AND   Z.CUST_PREQNO = A.CUST_PREQNO
+						AND   ROWNUM        = 1
+					  )                                                       AS ESTM_INFO_STATS_CD        /*상태코드*/
+					, TO_CHAR(TO_NUMBER(A.PRD_ID))                            AS PRD_ID	                   /*상품ID*/
+					, B.PRD_NM                                                AS PRD_NM                    /*상품명*/
+					, B.PRD_CLCD                                              AS PRD_CLCD                  /*카테고리ID*/
+					, C.MNFR_NO                                               AS MNFR_NO                   /*제조원NO*/
+					, E.BZPLC_ID	                                          AS BZPLC_ID                  /*사업장ID*/
+					, G.OPR_UNIT_ID                                           AS OPR_UNIT_ID               /*운영단위ID*/
+					, (SELECT SSP_APP.FN_RD_CHRPSN_ID(C.CO_CD, C.MNFR_NO, B.PRD_CLCD, '30') FROM DUAL) AS PURG_CHRPSN_ID /*구매담당자ID*/
+				FROM SSP_APP.TB_RD_REQ_CPRTCP_ESTM_INFO   A
+				LEFT JOIN SSP_APP.TB_PR_PRD_INFO          B
+					ON B.CO_CD  = A.CO_CD AND B.PRD_ID = A.PRD_ID
+				LEFT JOIN SSP_APP.TB_PR_MRO_PRD_INFO      C
+					ON C.CO_CD  = B.CO_CD AND C.PRD_ID = B.PRD_ID
+				LEFT JOIN SSP_APP.TB_PR_MNFR_INFO         D
+					ON D.CO_CD   = C.CO_CD AND D.MNFR_NO = C.MNFR_NO
+				LEFT JOIN SSP_APP.TB_CC_MBR_BASIS         E
+					ON E.CO_CD  = A.CO_CD AND E.MBR_ID = A.CUST_ID
+				LEFT JOIN SSP_APP.TB_CC_BZPLC_BASIS       F --사업장
+					ON F.CO_CD    = E.CO_CD AND F.BZPLC_ID = E.BZPLC_ID
+				LEFT OUTER JOIN SSP_APP.TB_CC_DEPT_BASIS G --부서
+					ON G.CO_CD   = E.CO_CD AND G.DEPT_ID = E.DEPT_ID
+				LEFT JOIN SSP_APP.TB_CC_OPR_UNIT_BASIS   H --운영단위
+					ON H.CO_CD       = G.CO_CD AND H.OPR_UNIT_ID = G.OPR_UNIT_ID
+				LEFT JOIN SSP_APP.TB_CP_CPRTCP_BASIS     I
+					ON I.CO_CD     = A.CO_CD AND I.CPRTCP_ID = A.PRPS_CPRTCP_ID
+				LEFT JOIN SSP_APP.TB_PC_CPRTCP_PRD_INFO  J
+					ON J.CO_CD     = A.CO_CD AND J.CPRTCP_ID = A.PRPS_CPRTCP_ID AND J.PRD_ID    = A.PRD_ID
+				WHERE A.CO_CD       = '1000'
+				AND   A.CUST_PREQNO LIKE 'RE%'
+				AND   B.MALL_SPR_CD = '20'
+			) A1
+			JOIN TB_CO_MBR_OPRTR_INFO A2
+				ON A1.CO_CD = A2.CO_CD AND A1.PURG_CHRPSN_ID = A2.OPRTR_ID
+			WHERE A1.ESTM_INFO_STATS_CD IN ('10','20','30','50')
+			<if test="orgCd   != null and !orgCd.equals('')"  >AND   A1.PURG_CHRPSN_ID IN (SELECT OPRTR_ID FROM TB_CO_MBR_OPRTR_INFO WHERE ORG_CD = #{orgCd}) /* 팀장 */</if>
+			<if test="oprtrId != null and !oprtrId.equals('')">AND   A1.PURG_CHRPSN_ID = #{oprtrId}/* 본인 */</if>
+			<if test='period != null and period eq "1"'>
+			AND   A1.REQ_DTM
+					BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+					AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+			</if>
+		) Y
+		GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+		ORDER BY OPRTR_NM ASC
+	) Z
+	</select>
+	
+	
+
+	<select id="selectRndPrdCprtcpCntList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.selectRndPrdCprtcpCntList 구매정보현황 */
+	SELECT 
+		  CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+		, NVL(SUM(CASE WHEN MONTH_TERM >= 1    THEN 1 ELSE 0 END), 0) AS A_CNT /* 유효 */
+		, NVL(SUM(CASE WHEN MONTH_TERM <![CDATA[<]]> 1    THEN 1 ELSE 0 END), 0) AS B_CNT /* 만료예정 */
+		, NVL(SUM(CASE WHEN MONTH_TERM IS NULL THEN 1 ELSE 0 END), 0) AS C_CNT /* 미존재 */
+	FROM (
+		SELECT
+			  Y.*
+			, MONTHS_BETWEEN(TO_DATE(REGEXP_SUBSTR(
+				(SELECT M_D
+					FROM (
+						SELECT VLD_STR_DT||'|'||VLD_END_DT||'|'||VLD_STR_DT||' ~ '||VLD_END_DT||'|'||PRD_PRC AS M_D
+						FROM TB_PC_CPRTCP_PRD_PRC_INFO
+						WHERE CO_CD     = Y.CO_CD
+						AND   CPRTCP_ID = Y.CPRTCP_ID
+						AND   PRD_ID    = LPAD(Y.PRD_ID, 18, 0)
+						AND   TO_CHAR(SYSDATE,'YYYYMMDD') >= VLD_STR_DT
+						ORDER BY PRD_PRC_SEQ DESC
+					)
+					WHERE ROWNUM = 1
+				), '[^|]+', 1, 2),'YYYYMMDD'),SYSDATE
+			  ) AS MONTH_TERM
+		FROM (
+			SELECT
+				T1.*, T3.CPRTCP_ID
+			FROM (
+				SELECT
+					  S1.CO_CD, S1.PRD_ID, S2.PRD_CLCD
+					, S3.ORG_CD, S3.ORG_NM, S3.OPRTR_ID, S3.OPRTR_NM
+				FROM (
+					SELECT CO_CD, MALL_SPR_CD, MRO_PRD_STATS_CD, PRD_ID, MNFR_NO
+					FROM TB_PR_MRO_PRD_INFO /* MRO상품정보   */
+					WHERE CO_CD            = #{coCd}
+					AND   MALL_SPR_CD      = '20'
+					AND   MRO_PRD_STATS_CD = '00'
+					<if test="period != null and period eq '1'">
+					AND REG_DTM
+						BETWEEN TO_DATE(TO_CHAR(ADD_MONTHS(SYSDATE + 1, -3), 'YYYYMMDD')||'000000','YYYYMMDDHH24MISS')
+						AND TO_DATE('20231011'||'235959','YYYYMMDDHH24MISS') /* 최근 3개월 기준 */
+					</if>
+				) S1
+				JOIN (
+					SELECT
+						CO_CD, MNFR_NO, PRD_CLCD, PRD_CLSF_CHRPSN_ID
+					FROM TB_PR_PRD_CLSF_CHRPSN_INFO
+					WHERE CO_CD                  = #{coCd}
+					AND   PRD_CLSF_CHRPSN_TP_CD  = '30' /* 상품분류담당자유형코드 */
+					AND   PRD_CLSF_CHRPSN_SPR_CD = '10' /* 정담당자 */
+					AND   PRD_CLSF_CHRPSN_USEYN  = 'Y'  /* 사용 */
+					AND   MALL_SPR_CD            = '20' /* RND */
+				) S2
+					ON  S1.CO_CD     = S2.CO_CD
+					AND (S1.MNFR_NO  = S2.MNFR_NO  OR S1.MNFR_NO  = '*') /* 제조사 번호 */
+				JOIN TB_CO_MBR_OPRTR_INFO  S3
+				ON S2.CO_CD = S3.CO_CD AND S2.PRD_CLSF_CHRPSN_ID = S3.OPRTR_ID
+				<if test="orgCd   != null and !orgCd.equals('')"  >AND S3.ORG_CD   = #{orgCd}   /* 팀장 */</if>
+				<if test="oprtrId != null and !oprtrId.equals('')">AND S3.OPRTR_ID = #{oprtrId} /* 본인 */</if>
+			) T1
+			
+			LEFT JOIN TB_PC_CPRTCP_PRD_INFO T3 /* 협력사상품정보 */
+				ON T1.CO_CD = T3.CO_CD AND T1.PRD_ID = T3.PRD_ID
+		) Y
+	) Z
+	GROUP BY CO_CD, ORG_CD, ORG_NM, OPRTR_ID, OPRTR_NM
+	ORDER BY OPRTR_NM ASC
+	</select>
+	
+	<select id="selectNewItemList" parameterType="HashMap" resultType="HashMap">
+	/* daDashBoard.NewItemList 신규상품현황 코드 작성 */
+	SELECT PURG_CHRPSN_ID
+     , PURG_CHRPSN_NM
+     , SUM(ESTM_CNT) AS ESTM_CNT
+     , SUM(NEW_PRD_CNT) AS NEW_PRD_CNT
+     , SUM(RND_ESTM_CNT) AS RND_ESTM_CNT
+    FROM (
+         SELECT  PURG_CHRPSN_ID
+              , PURG_CHRPSN_NM
+              , SUM(CNT) AS ESTM_CNT
+              , 0 AS NEW_PRD_CNT
+              , 0 AS RND_ESTM_CNT
+         FROM (
+                  SELECT /*+ INDEX_USE(A TB_RD_REQ_CPRTCP_ESTM_INFO_PK) */
+                      A.CO_CD	                                                                     AS CO_CD                     /*회사코드 PK*/
+                       , A.CUST_PREQNO	                                                             AS CUST_PREQNO               /*고객구매요청번호 PK*/
+                       , 1 AS CNT
+                       , TO_CHAR(A.ODR_REQ_DTM,'YYYY-MM-DD HH24:MI:SS')                                AS ODR_REQ_DTM               /*주문신청일시*/
+                       , CASE WHEN '20'>=J.ESTM_INFO_STATS_CD AND J.ESTM_CUNT>0 THEN '30' ELSE J.ESTM_INFO_STATS_CD END    AS ESTM_INFO_STATS_CD        /*견적정보상태코드*/
+                       , TO_CHAR(TO_NUMBER(A.PRD_ID))                                                                      AS PRD_ID	                  /*상품ID*/
+                       , (
+                      SELECT SSP_APP.FN_RD_CHRPSN_ID
+                                 (
+                                     C.CO_CD
+                                 , C.MNFR_NO
+                                 , B.PRD_CLCD
+                                 , '10'
+                                 )
+                      FROM DUAL
+                  )                                                                             AS PURG_CHRPSN_ID            /*구매담당자ID*/
+                       , (
+                      SELECT S3.OPRTR_NM
+                      FROM SSP_APP.TB_CO_MBR_OPRTR_INFO S3
+                      WHERE S3.CO_CD    = A.CO_CD
+                        AND S3.OPRTR_ID = (
+                          SELECT SSP_APP.FN_RD_CHRPSN_ID
+                                     (
+                                         C.CO_CD
+                                     , C.MNFR_NO
+                                     , B.PRD_CLCD
+                                     , '10'
+                                     )
+                          FROM DUAL
+                      )
+                  )                                                                             AS PURG_CHRPSN_NM            /*구매담당자명*/
+                  FROM SSP_APP.TB_RD_REQ_CPRTCP_ESTM_INFO  A
+                           LEFT JOIN SSP_APP.TB_PR_PRD_INFO         B
+                                     ON 1=1
+                                         AND B.CO_CD  = A.CO_CD
+                                         AND B.PRD_ID = A.PRD_ID
+                           LEFT JOIN SSP_APP.TB_PR_MRO_PRD_INFO     C
+                                     ON 1=1
+                                         AND C.CO_CD  = B.CO_CD
+                                         AND C.PRD_ID = B.PRD_ID
+                           LEFT JOIN SSP_APP.TB_PR_MNFR_INFO        D
+                                     ON 1=1
+                                         AND D.CO_CD   = C.CO_CD
+                                         AND D.MNFR_NO = C.MNFR_NO
+                           LEFT JOIN SSP_APP.TB_CC_MBR_BASIS        E
+                                     ON 1=1
+                                         AND E.CO_CD  = A.CO_CD
+                                         AND E.MBR_ID = A.CUST_ID
+                           LEFT JOIN SSP_APP.TB_CC_BZPLC_BASIS      F --사업장
+                                     ON 1=1
+                                         AND F.CO_CD    = E.CO_CD
+                                         AND F.BZPLC_ID = E.BZPLC_ID
+                           LEFT OUTER JOIN SSP_APP.TB_CC_DEPT_BASIS G --부서
+                                           ON 1=1
+                                               AND G.CO_CD   = E.CO_CD
+                                               AND G.DEPT_ID = E.DEPT_ID
+                           LEFT JOIN SSP_APP.TB_CC_OPR_UNIT_BASIS   H --운영단위
+                                     ON 1=1
+                                         AND H.CO_CD       = G.CO_CD
+                                         AND H.OPR_UNIT_ID = G.OPR_UNIT_ID
+
+
+                           LEFT OUTER JOIN (
+                      SELECT CO_CD
+                           , CUST_PREQNO
+                           , MAX(ESTM_INFO_STATS_CD)  KEEP(DENSE_RANK LAST ORDER BY SEQ)  ESTM_INFO_STATS_CD
+                           , MAX(UPDPSN_ID         )  KEEP(DENSE_RANK LAST ORDER BY SEQ)  UPDPSN_ID
+                           , MAX(UPD_DTM           )  KEEP(DENSE_RANK LAST ORDER BY SEQ)  UPD_DTM
+                           , (SELECT COUNT(CASE WHEN ESTM_DTL_STATS_CD IN ( '20', '40' ) THEN 1 END)  ESTM_CUNT
+                              FROM TB_RD_REQ_CPRTCP_ESTM_DTL   D
+                              WHERE D.CO_CD       = K.CO_CD
+                                AND D.CUST_PREQNO = K.CUST_PREQNO
+                      )   ESTM_CUNT
+                      FROM TB_RD_REQ_CPRTCP_ESTM_STATS_DTLS    K
+                      GROUP BY
+                          CO_CD
+                             , CUST_PREQNO
+                  )  J
+                                           ON J.CO_CD = A.CO_CD AND J.CUST_PREQNO = A.CUST_PREQNO
+
+                  WHERE 1=1
+                    AND A.CO_CD       = '1000'
+                    AND A.CUST_PREQNO NOT LIKE 'RE%'
+                    AND B.MALL_SPR_CD = '20'
+                    <if test='period != null and period eq "1"'>
+                    AND A.ODR_REQ_DTM > ADD_MONTHS(SYSDATE, -3) /* 최근 3개월 기준 */
+                  </if>
+              ) A1
+         WHERE 1=1
+           AND EXISTS (
+             SELECT 1
+             FROM  TB_CO_MBR_OPRTR_INFO
+             WHERE 1=1
+               AND CO_CD = A1.CO_CD
+               AND OPRTR_ID = A1.PURG_CHRPSN_ID
+               AND ORG_CD =  #{orgCd}
+         )
+           AND NOT EXISTS ( SELECT 1
+                            FROM TB_RD_REQ_CPRTCP_ESTM_STATS_DTLS T1
+                            WHERE T1.CO_CD = A1.CO_CD
+                              AND T1.CUST_PREQNO = A1.CUST_PREQNO
+                              AND T1.ESTM_INFO_STATS_CD IN ('40', '50')
+
+         )
+         GROUP BY PURG_CHRPSN_ID, PURG_CHRPSN_NM
+         UNION ALL
+         SELECT  PURG_CHRPSN_ID
+              , PURG_CHRPSN_NM
+              , 0 AS ESTM_CNT
+              , SUM(CNT_VAL) AS NEW_PRD_CNT
+              , 0 AS RND_ESTM_CNT
+         FROM (
+                  SELECT CO_CD
+                       , MNFR_NO
+                       , PRD_CLCD
+                       , NEW_PRD_REQ_NO
+                       , NEW_PRD_REQ_STATS_CD
+                       , CNT_VAL
+                       , PURG_CHRPSN_ID
+                       , PURG_CHRPSN_NM
+                  FROM (SELECT /*+ INDEX_USE(A TB_PR_NEW_PRD_REQ_PROC_PK) */
+                            A.CO_CD                                                                     AS CO_CD                       /*회사코드*/
+                             , A.MNFR_NO
+                             , A.PRD_CLCD
+                             , A.NEW_PRD_REQ_NO                                                            AS NEW_PRD_REQ_NO              /*신규상품요청번호*/
+                             , B.NEW_PRD_REQ_STATS_CD                                                      AS NEW_PRD_REQ_STATS_CD
+                             , A.REG_DTM                                                                   AS REG_DTM                     /*등록일시*/
+                             , TB_PR_NEW_PRD_REQ_STATS_DTLS_ORDER AS TB_PR_NEW_PRD_REQ_STATS_DTLS_ORDER
+                             , ( SELECT  SSP_APP.FN_RD_CHRPSN_ID(A.CO_CD, A.MNFR_NO, A.PRD_CLCD , '10'                            )
+                                 FROM    DUAL )                                  AS PURG_CHRPSN_ID            /*구매담당자ID*/
+                             , ( SELECT  S3.OPRTR_NM
+                                 FROM    SSP_APP.TB_CO_MBR_OPRTR_INFO S3
+                                 WHERE   S3.CO_CD = A.CO_CD
+                                   AND     S3.OPRTR_ID = ( SELECT  SSP_APP.FN_RD_CHRPSN_ID(A.CO_CD, A.MNFR_NO, A.PRD_CLCD, '10')
+                                                           FROM    DUAL ) )        AS PURG_CHRPSN_NM           /*구매담당자이름*/
+                             , 1 AS CNT_VAL
+                        FROM SSP_APP.TB_PR_NEW_PRD_REQ_PROC A
+                                 LEFT JOIN ( SELECT   CO_CD
+                                                  , NEW_PRD_REQ_NO
+                                                  , REGPSN_ID
+                                                  , ROW_NUMBER() OVER(PARTITION BY CO_CD, NEW_PRD_REQ_NO ORDER BY SEQ DESC) AS TB_PR_NEW_PRD_REQ_STATS_DTLS_ORDER
+                                                  , SEQ
+                                                  , NEW_PRD_REQ_STATS_CD
+                                                  , UPD_DTM
+                                                  , UPDPSN_ID
+                                             FROM SSP_APP.TB_PR_NEW_PRD_REQ_STATS_DTLS )  B
+                                           ON 0=0
+                                               AND B.CO_CD          = A.CO_CD
+                                               AND B.NEW_PRD_REQ_NO = A.NEW_PRD_REQ_NO
+                        WHERE 0=0
+                          AND A.CO_CD       = '1000'
+                          AND A.MALL_SPR_CD = '20'
+                          AND B.TB_PR_NEW_PRD_REQ_STATS_DTLS_ORDER = 1
+                          AND B.NEW_PRD_REQ_STATS_CD IN ('22', '33', '34')    /* SSP반려 */
+                         <if test='period != null and period eq "1"'>
+                          AND A.REG_DTM > ADD_MONTHS(SYSDATE, -3) /* 최근 3개월 기준 */
+                          </if>
+                       ) A1
+                  WHERE 1=1
+                    AND EXISTS (
+                      SELECT 1
+                      FROM  TB_CO_MBR_OPRTR_INFO
+                      WHERE 1=1
+                        AND CO_CD = A1.CO_CD
+                        AND OPRTR_ID = A1.PURG_CHRPSN_ID
+                        AND ORG_CD =  #{orgCd}
+                  )
+              )
+         group by PURG_CHRPSN_ID
+                , PURG_CHRPSN_NM
+         UNION ALL
+         SELECT  OPRTR_ID AS PURG_CHRPSN_ID
+              , OPRTR_NM AS PURG_CHRPSN_NM
+              , 0 AS ESTM_CNT
+              , 0 AS NEW_PRD_CNT
+              , SUM(CNT_VAL) AS RND_ESTM_CNT
+         FROM (
+                  SELECT MST.*
+                  FROM (
+                           SELECT
+                               T1.CO_CD
+                                , T1.PRD_CLCD
+                                , T1.DISP_PRD_NM
+                                , T1.REPR_PRD_ID
+                                , T2.ESTM_REQ_NO
+                                , TO_CHAR(T2.REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                                , CASE WHEN SYSDATE - T2.REG_DTM > 3 THEN 'DELAY' ELSE 'OK' END AS CNT_VAL
+                                , 1 AS CNT_VAL
+                                , TO_CHAR(TO_DATE(T2.ESTM_REQDT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS ESTM_REQDT
+                                ,(
+                               CASE
+                                   WHEN (
+                                            SELECT ESTM_REQ_PROC_STATS_CD
+                                            FROM (
+                                                     SELECT
+                                                         S1.SEQ, S1.ESTM_REQ_PROC_STATS_CD
+                                                     FROM TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                                     WHERE S1.CO_CD = T2.CO_CD
+                                                       AND S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                                     ORDER BY SEQ DESC
+                                                 )
+                                            WHERE ROWNUM = 1
+                                        ) = '70'
+                                       THEN (
+                                       SELECT TO_CHAR(UPD_DTM, 'YYYY-MM-DD')
+                                       FROM TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                       WHERE S1.CO_CD = T2.CO_CD
+                                         AND S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                         AND S1.ESTM_REQ_PROC_STATS_CD = '70'
+                                   )
+                                   ELSE TO_CHAR(TO_DATE(T2.ESTM_CMPL_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+                                   END
+                               ) AS ESTM_CMPL_DT
+                                , TO_CHAR(TO_DATE(T2.ESTM_VLD_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS ESTM_VLD_DT
+                                , (
+                               SELECT  ESTM_REQ_PROC_STATS_CD
+                               FROM    (
+                                           SELECT  S1.SEQ, S1.ESTM_REQ_PROC_STATS_CD
+                                           FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                           WHERE   S1.CO_CD = T2.CO_CD
+                                             AND     S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                           ORDER BY SEQ DESC
+                                       )
+                               WHERE   ROWNUM = 1
+                           ) AS ESTM_REQ_PROC_STATS_CD
+                                , CASE
+                                      WHEN '20' >= T9.ESTM_INFO_STATS_CD AND T9.ESTM_CUNT > 0 THEN '30'
+                                      ELSE T9.ESTM_INFO_STATS_CD
+                               END AS ESTM_INFO_STATS_CD
+                                , T5.NEW_PRD_REQ_NO
+                                , T5.MRO_REQ_NO
+                                , T6.OPRTR_ID
+                                , T6.OPRTR_NM
+                                , T6.ORG_CD
+                                , T6.ORG_NM
+                           FROM    TB_RD_RND_DISP_BASIS T1
+                              , TB_RD_RND_DISP_ESTM_REQ_DTLS T2
+                              , TB_CC_MBR_BASIS T3
+                              , TB_CC_DEPT_BASIS T4
+                              , TB_PR_NEW_PRD_REQ_PROC T5
+                              , (
+                               SELECT  S1.CO_CD
+                                    , S1.PRD_CLCD
+                                    , S2.ORG_CD
+                                    , S2.OPRTR_ID
+                                    , S2.OPRTR_NM
+                                    , S2.ORG_NM
+                               FROM    TB_PR_PRD_CLSF_CHRPSN_INFO S1
+                                  , TB_CO_MBR_OPRTR_INFO S2
+                               WHERE   S1.CO_CD = S2.CO_CD
+                                 AND     S1.PRD_CLSF_CHRPSN_ID = S2.OPRTR_ID
+                                 AND     S1.PRD_CLSF_CHRPSN_TP_CD = '30'
+                                 AND     S1.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                                 AND     S1.PRD_CLSF_CHRPSN_USEYN = 'Y'
+                           ) T6
+                              , TB_PR_MRO_PRD_INFO T7
+                              , TB_PR_PRD_INFO T8
+                              , (
+                               SELECT  CO_CD
+                                    , ESTM_REQ_NO
+                                    , MAX(ESTM_DTL_STATS_CD) KEEP(DENSE_RANK LAST ORDER BY SEQ) ESTM_INFO_STATS_CD
+                                    , MAX(UPDPSN_ID ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPDPSN_ID
+                                    , MAX(UPD_DTM ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPD_DTM
+                                    , (
+                                   SELECT COUNT(CASE WHEN ESTM_DTL_STATS_CD IN ('20', '40') THEN 1 END) ESTM_CUNT
+                                   FROM TB_RD_REQ_CPRTCP_DISP_ESTM_DTL D
+                                   WHERE D.CO_CD = K.CO_CD
+                                     AND D.ESTM_REQ_NO = K.ESTM_REQ_NO
+                               ) ESTM_CUNT
+                               FROM   TB_RD_REQ_CPRTCP_DISP_ESTM_STATS_DTLS K
+                               GROUP BY CO_CD, ESTM_REQ_NO
+                           ) T9
+                           WHERE   T1.CO_CD = T2.CO_CD
+                             AND     T1.DISP_GRP_ID = T2.DISP_GRP_ID
+                             AND     T1.PRD_CLCD = T2.PRD_CLCD
+                             AND     T2.CO_CD = T9.CO_CD
+                             AND     T2.ESTM_REQ_NO = T9.ESTM_REQ_NO
+                             AND     T2.CO_CD = T3.CO_CD(+)
+                             AND     T2.REGPSN_ID = T3.MBR_ID(+)
+                             AND     T3.CO_CD = T4.CO_CD(+)
+                             AND     T3.DEPT_ID = T4.DEPT_ID(+)
+                             AND     T2.ESTM_REQ_NO = T5.ESTM_REQ_NO(+)
+                             AND     T1.CO_CD = T6.CO_CD(+)
+                             AND     T1.PRD_CLCD = T6.PRD_CLCD(+)
+                             AND     T1.CO_CD = T7.CO_CD(+)
+                             AND     T1.REPR_PRD_ID = T7.PRD_ID(+)
+                             AND     T1.CO_CD = T8.CO_CD(+)
+                             AND     T1.REPR_PRD_ID = T8.PRD_ID(+)
+                             AND     T7.CO_CD = T5.CO_CD(+)
+                             AND     T7.SSP_PRD_REG_REQ_ID = T5.NEW_PRD_REQ_NO(+)
+                              <if test='period != null and period eq "1"'>
+                             AND T2.REG_DTM > ADD_MONTHS(SYSDATE, -3) /* 최근 3개월 기준 */
+                              </if>
+                             AND   T6.ORG_CD                 = #{orgCd}  /* 팀장 */ 
+                       ) MST
+                  WHERE CO_CD = '1000'
+                     AND (ESTM_REQ_PROC_STATS_CD = '10')     /*  요청, 접수, 견적중  */
+                  OR ( ESTM_REQ_PROC_STATS_CD != '10'
+                      AND ESTM_INFO_STATS_CD = '10')
+                  OR (ESTM_REQ_PROC_STATS_CD != '10'
+                 AND ESTM_INFO_STATS_CD = '20')
+              )
+         GROUP BY OPRTR_ID, OPRTR_NM
+     )
+     GROUP BY PURG_CHRPSN_ID, PURG_CHRPSN_NM
+	</select>
+
+
+	<select id="selectNewItemListBatch" parameterType="HashMap" resultType="HashMap">
+	SELECT *
+	FROM TB_DA_RND_TEMP
+	WHERE TYPE = 'A'
+	AND   ORG_CD = #{orgCd}
+	<choose>
+		<when test='period != null and period eq "1"'>AND TERM = '1'</when>
+		<otherwise>AND TERM IS NULL</otherwise>
+	</choose>
+	</select>
+	
+	
+	<select id="selectRndPrdCprtcpCntListBatch" parameterType="HashMap" resultType="HashMap">
+	SELECT *
+	FROM TB_DA_RND_TEMP
+	WHERE TYPE = 'B'
+	AND   ORG_CD = #{orgCd}
+	<choose>
+		<when test='period != null and period eq "1"'>AND TERM = '1'</when>
+		<otherwise>AND TERM IS NULL</otherwise>
+	</choose>
+	</select>
+
+
+
+</mapper>

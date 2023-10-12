@@ -1,0 +1,301 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PP_03_06" width="1296" height="83" titletext="가격정보" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="83" width="1296">
+        <Static id="Static21_00" taborder="0" left="0" top="20" height="32" cssclass="sta_cm_box02L_tdt" text="" right="0"/>
+        <Static id="Static20_00" taborder="1" text="SSP기준가" left="0" top="20" width="200" height="32" cssclass="sta_cm_box01L_tdt"/>
+        <Static id="Static20_00_00" taborder="2" text="시장최저판매가" left="430" top="20" width="200" height="32" cssclass="sta_cm_box01L_tdt"/>
+        <Static id="Static20_00_00_00" taborder="3" text="List Price" left="860" top="20" width="200" height="32" cssclass="sta_cm_box01L_tdt"/>
+        <Static id="Static21_00_00" taborder="4" left="0" top="51" height="32" cssclass="sta_cm_box02L" text="" right="0"/>
+        <Static id="Static20_00_01" taborder="5" text="예외가격관리대상" left="0" top="51" width="200" height="32" cssclass="sta_cm_box01L"/>
+        <Combo id="cmb_prcAplySprCd" taborder="6" left="209" top="55" width="190" height="24" innerdataset="ds_prdAplySprCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" text="" onitemchanged="cmb_prcAplySprCd_onitemchanged"/>
+        <Static id="Static00" taborder="7" text="원" left="406" top="29" width="12" height="14"/>
+        <Static id="Static00_00" taborder="8" text="원" left="836" top="29" height="14" width="12"/>
+        <Static id="Static00_00_00" taborder="9" text="원" left="1276" top="29" height="14" width="12"/>
+        <MaskEdit id="edt_sspPrice" taborder="10" left="209" top="24" width="190" height="24" format="#,#.###" readonly="true"/>
+        <MaskEdit id="edt_lowPrice" taborder="11" left="639" top="24" width="191" height="24" format="#,#.###" readonly="true"/>
+        <MaskEdit id="edt_listPrice" taborder="12" left="1069" top="24" width="201" height="24" format="#,#.###" readonly="true"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search" oncolumnchanged="ds_search_oncolumnchanged">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="MRO_PRD_CLCD" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_price" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="PRD_PLCD" type="STRING" size="256"/>
+          <Column id="PRC_APLY_SPR_CD" type="STRING" size="256"/>
+          <Column id="MCND_PRD_YN" type="STRING" size="256"/>
+          <Column id="STPRC" type="STRING" size="256"/>
+          <Column id="MRK_LWST_SALSPRC" type="STRING" size="256"/>
+          <Column id="INTL_LWST_SALSPRC" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_prdAplySprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_prdAplySprCdCopy">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COM_DTL_CD"/>
+            <Col id="COM_DTL_CD_NM">선택</Col>
+          </Row>
+          <Row>
+            <Col id="COM_DTL_CD_NM">미끼상품</Col>
+            <Col id="COM_DTL_CD">20</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_mcnd">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="PRC_APLY_SPR_CD" type="STRING" size="256"/>
+          <Column id="MCND_PRD_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_pubSprCd">
+        <ColumnInfo>
+          <Column id="PUB_ONLY_SPR_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_type" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="STPRC" type="STRING" size="256"/>
+          <Column id="MRK_LWST_SALSPRC" type="STRING" size="256"/>
+          <Column id="DSTRB_STD_PRC" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 2022.03.17 조지훈
+*******************************************************/
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.fCallBackFn = "";	//콜백
+this.pageType = "edit";	//기본edit모드
+this.sSvcID = "";
+this.contextRealPath = "";
+this.loaded = false;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{	
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	this.fn_commonCodeSearch();
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_prdAplySprCd=ds_output1";
+	var arg = "";
+	
+	this.ds_search.insertRow(0);
+	this.ds_search.setColumn(0, "CODE_LIST", "PRC_APLY_SPR_CD");
+	this.ds_search.setColumn(0, "LANG_CD", "KO");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//가격대상 조회  
+this.fn_call = function(){
+	var sSvcId = "call"; 
+	var sUrl = "/pr/prd-mng/select-product-price.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_price=price";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack", false);
+};
+
+//가격정보 조회  
+this.fn_price = function(){
+	var sSvcId = "price"; 
+	var sUrl = "/pr/prd-mng/select-price-info.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_type=ds_output";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack", false);
+};
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(errorCode != 0 && errorCode != -100){
+		trace(errorMsg);
+	}
+	
+	switch(svcID){
+		case "commonCodeSearch":
+			this.ds_prdAplySprCd.insertRow(0);
+			this.ds_prdAplySprCd.setColumn(0, "COM_DTL_CD", "");
+			this.ds_prdAplySprCd.setColumn(0, "COM_DTL_CD_NM", "선택");
+			
+			break;
+			
+		case "call":		
+			var MCND_PRD_YN = this.ds_price.getColumn(0, "MCND_PRD_YN");	        //카테고리 시황상품여부
+			var PRC_APLY_SPR_CD = this.ds_price.getColumn(0, "PRC_APLY_SPR_CD");    //10 시황자재		20 미끼상품
+			var PUB_ONLY_SPR_CD = this.ds_pubSprCd.getColumn(0, "PUB_ONLY_SPR_CD"); //공용전용 구분
+			
+			if(MCND_PRD_YN == 'Y'){
+				this.cmb_prcAplySprCd.set_innerdataset(this.ds_prdAplySprCd);     //시황상품일 경우 시황상품 고정
+				this.cmb_prcAplySprCd.set_value('10');
+				this.cmb_prcAplySprCd.set_readonly(true);
+			} else{
+				this.cmb_prcAplySprCd.set_innerdataset(this.ds_prdAplySprCdCopy); //시황상품이 아닐 경우 미끼상품만 노출
+				if(!this.gfn_isNull(PRC_APLY_SPR_CD)){
+					this.cmb_prcAplySprCd.set_value(PRC_APLY_SPR_CD);
+					this.cmb_prcAplySprCd.set_readonly(false);
+				} else{
+					this.cmb_prcAplySprCd.set_value("");
+					this.cmb_prcAplySprCd.set_readonly(false);
+				}
+			}
+			
+			if(PUB_ONLY_SPR_CD == "전용"){
+				this.cmb_prcAplySprCd.set_readonly(true);                         //전용상품일 경우 가격대상 수정 불가
+			}
+			
+			this.loaded = true;
+			
+			break;
+			
+		case "price":
+			
+			break;
+	}
+	
+	//부모창 결과리턴
+	if(!this.gfn_isNull(this.fCallBackFn)){
+		this.lookupFunc(this.fCallBackFn).call(this.sSvcID, errorCode, errorMsg, {id:this.sSvcID, status:this.loaded});
+	}
+	
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+/*
+서비스ID(콜백ID)
+회사코드, 
+상품ID, 
+콜백펑션, 
+페이지타입 옵션 : edit:수정모드, read:읽기모드
+*/
+this.cfn_read = function(svcID, params, callBackFunction, pageType, isResize){
+	if(isResize){
+		//부모 사이즈 변경호출
+		this.lookupFunc(callBackFunction).call('tab_resize', 0, '', {'height':200});
+	}
+	if(this.loaded){
+		return false;
+	}
+	var paramArr = [{id:'coCd', name:'회사코드'}, {id:'prdId', name:'상품ID'}];
+	for(var i = 0; i<paramArr.length; i++){
+		if(this.gfn_isNull(params[paramArr[i]['id']])){
+			alert(this.titletext+' > 필수값 오류 > '+paramArr[i]['name']);
+			return false;
+		}
+	}
+	
+	
+	var pubOnlySprCd = params.pubOnlySprCd;
+	var prdClcd = params.prdClcd;
+	var mroPrdClcd = params.mroPrdClcd;
+	this.sSvcID = svcID;
+	this.fCallBackFn = callBackFunction;
+	if(pageType == 'read'){
+		var object = this.all;
+		for( var i = 0; i < object.length; i++ ){
+			var stype = object[i].valueOf();
+			if(stype == '[object Combo]'){
+				this[object[i].id].set_readonly(true);
+			}
+		}
+	}
+	
+	this.ds_search.setColumn(0, "CO_CD", params.coCd);
+	this.ds_search.setColumn(0, "PRD_ID", params.prdId);
+	this.ds_search.setColumn(0, "PRD_CLCD", params.prdClcd);
+	this.ds_search.setColumn(0, "MRO_PRD_CLCD", params.mroPrdClcd);
+	this.ds_pubSprCd.setColumn(0, "PUB_ONLY_SPR_CD", params.pubOnlySprCd);
+
+	this.fn_call();
+	this.fn_price();
+}
+
+//필요값 리턴
+this.cfn_getData = function(){
+	var returnObject = {
+		'PRC_APLY_SPR_CD' : this.cmb_prcAplySprCd.value
+	};
+	
+	return returnObject;
+};
+
+//사이즈 조절 필요시 호출
+this.cfn_resize = function(width, height){
+	if(!this.gfn_isNull(width)){
+		this.set_width(width);
+	}
+	if(!this.gfn_isNull(height)){
+		this.set_height(height);
+	}
+}
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+//가격 대상 선택 후
+this.cmb_prcAplySprCd_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	var value = this.cmb_prcAplySprCd.value;
+	this.ds_price.setColumn(0, "PRC_APLY_SPR_CD", value);
+};]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="edt_sspPrice" propid="value" datasetid="ds_type" columnid="STPRC"/>
+      <BindItem id="item1" compid="edt_lowPrice" propid="value" datasetid="ds_type" columnid="MRK_LWST_SALSPRC"/>
+      <BindItem id="item2" compid="edt_listPrice" propid="value" datasetid="ds_type" columnid="DSTRB_STD_PRC"/>
+    </Bind>
+  </Form>
+</FDL>

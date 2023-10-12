@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_VA_03" width="670" height="330" titletext="상품 상세" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="330" width="670">
+        <Button id="btn_cancel" taborder="0" text="닫기" left="300" width="70" height="30" onclick="btn_cancel_onclick" bottom="20"/>
+        <Static id="sta_title" taborder="1" cssclass="sta_WF_title02" width="200" height="23" left="20" text="■ 상품 상세" top="20"/>
+        <Div id="div_dtl" taborder="2" text="Div00" left="20" height="190" right="20" top="50">
+          <Layouts>
+            <Layout>
+              <Static id="Static14" taborder="10" left="0" top="141" height="32" cssclass="sta_cm_box02L" right="0"/>
+              <Static id="Static13" taborder="6" left="0" top="94" height="48" cssclass="sta_cm_box02L" text="" right="0"/>
+              <Static id="Static12" taborder="4" left="0" top="63" height="32" cssclass="sta_cm_box02L" text="" right="0"/>
+              <Static id="Static11" taborder="2" left="0" top="32" height="32" cssclass="sta_cm_box02L" text="" onclick="Div00_01_00_00_Static21_00_01_01_onclick" right="0"/>
+              <Static id="Static10" taborder="9" left="0" top="1" height="32" cssclass="sta_cm_box02L_tdt" text="" right="0"/>
+              <Static id="Static01" taborder="0" left="1" top="1" width="170" height="32" cssclass="sta_cm_box01L_tdt" text="상품"/>
+              <Static id="Static02" taborder="1" left="1" top="32" width="170" height="32" cssclass="sta_cm_box01L" text="카테고리"/>
+              <Static id="Static03" taborder="3" left="1" top="63" width="170" height="32" cssclass="sta_cm_box01L" text="제조원"/>
+              <Static id="Static04" taborder="5" left="1" top="94" width="170" height="48" cssclass="sta_cm_box01L" text="대표규격"/>
+              <Static id="Static05" taborder="7" left="1" top="141" width="170" height="32" cssclass="sta_cm_box01L" text="구매담당자"/>
+              <Static id="sta_buyInfo" taborder="8" text="" left="Static05:10" top="145" height="24" right="10" cssclass="sta_cm_box02L_txt"/>
+              <Static id="sta_mnfrInfo" taborder="11" text="" left="Static03:10" top="67" height="24" right="11" cssclass="sta_cm_box02L_txt"/>
+              <Static id="sta_catgInfo" taborder="12" text="" left="180" top="35" height="24" right="11" cssclass="sta_cm_box02L_txt"/>
+              <Static id="sta_prdInfo" taborder="13" text="" left="Static01:10" top="5" height="24" right="11" cssclass="sta_cm_box02L_txt"/>
+              <TextArea id="tae_attrInfo" taborder="14" left="181" top="95" width="440" height="46" wordWrap="char" readonly="true" background="#ffffff" color="#4f4f4f" border="0px none"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_prdInfo">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="PRD_NM" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="MNFR_NO" type="STRING" size="256"/>
+          <Column id="MNFR_NM" type="STRING" size="256"/>
+          <Column id="ATTR_INFO" type="STRING" size="256"/>
+          <Column id="PURG_CHRPSN_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : 상품 상세
+  CREATION DATES : 2022.03.11
+*******************************************************/
+//인클루드
+include "CO::coUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	// 파라미터 값 ds setcolumn
+	this.ds_search.setColumn(0, "CO_CD", this.parent.coCd);
+	this.ds_search.setColumn(0, "PRD_ID", this.parent.prdId);
+	
+	this.fn_search();
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	//ESC : 닫기기능
+	if(e.keycode == 27){
+		this.close();
+	}
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회
+this.fn_search = function()
+{
+	var sSvcId = "prdInfoSearch";    
+	var sUrl = "/sa/main-prd/select-prd-info.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_prdInfo=ds_output";
+	var arg = "";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");	
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+	if(svcID == "prdInfoSearch"){
+		var prdClcd = this.gfn_isNull(this.ds_prdInfo.getColumn(0, "PRD_CLCD")) ? "" : this.ds_prdInfo.getColumn(0, "PRD_CLCD");
+		var prdClsfNm = this.gfn_isNull(this.ds_prdInfo.getColumn(0, "PRD_CLSF_NM")) ? "" : this.ds_prdInfo.getColumn(0, "PRD_CLSF_NM");
+		var oprtrNm = this.gfn_isNull(this.ds_prdInfo.getColumn(0, "OPRTR_NM")) ? "" : this.ds_prdInfo.getColumn(0, "OPRTR_NM");
+		var prdInfo = "(" + this.ds_prdInfo.getColumn(0, "PRD_ID") + ") " + this.ds_prdInfo.getColumn(0, "PRD_NM");
+		var catgInfo = "(" + prdClcd + ") " + prdClsfNm;
+		var mnfrInfo = "(" + this.ds_prdInfo.getColumn(0, "MNFR_NO") + ") " + this.ds_prdInfo.getColumn(0, "MNFR_NM");
+		var attrInfo = this.ds_prdInfo.getColumn(0, "ATTR_INFO");
+		var buyInfo = "(" + this.ds_prdInfo.getColumn(0, "PURG_CHRPSN_ID") + ") " + oprtrNm;
+
+		this.div_dtl.form.sta_prdInfo.set_text(prdInfo);
+		this.div_dtl.form.sta_catgInfo.set_text(catgInfo);
+		this.div_dtl.form.sta_mnfrInfo.set_text(mnfrInfo);
+		this.div_dtl.form.tae_attrInfo.set_value(attrInfo);
+		this.div_dtl.form.sta_buyInfo.set_text(buyInfo);
+	}
+}
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+}
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+]]></Script>
+  </Form>
+</FDL>

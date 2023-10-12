@@ -1,0 +1,186 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="deliveryPlaceInqPopup" width="930" height="630" titletext="배송지 선택" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="630" width="930">
+        <Static id="Static00" taborder="0" text="수령인" left="18" top="57" width="70" height="29"/>
+        <Edit id="edt_rcvrNm" taborder="1" left="117" top="57" width="793" height="30"/>
+        <Grid id="grd_list" taborder="6" left="18" top="211" width="892" height="389" binddataset="ds_dlvplc" autofittype="col" onselectchanged="Grid00_onselectchanged" cellsizebandtype="allband" oncelldblclick="grd_list_oncelldblclick">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="112"/>
+                <Column size="102"/>
+                <Column size="150"/>
+                <Column size="373"/>
+                <Column size="153"/>
+                <Column size="149"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="배송지 ID"/>
+                <Cell col="1" text="수령인"/>
+                <Cell col="2" text="부서명"/>
+                <Cell col="3" text="우편번호/주소"/>
+                <Cell col="4" text="휴대폰"/>
+                <Cell col="5" text="전화번호"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:DLVPLC_ID" textAlign="center"/>
+                <Cell col="1" text="bind:RCVR_NM" textAlign="center"/>
+                <Cell col="2" text="bind:DEPT_NM"/>
+                <Cell col="3" text="bind:ADDR"/>
+                <Cell col="4" text="bind:MP_NO" textAlign="center"/>
+                <Cell col="5" text="bind:TEL_NO" textAlign="center"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_clear" taborder="4" text="초기화" left="775" top="170" width="65" height="32" onclick="btn_clear_onclick"/>
+        <Button id="btn_search" taborder="5" text="검색" left="845" top="170" width="65" height="32" onclick="btn_search_onclick"/>
+        <Static id="Static01" taborder="7" text="배송지 선택" left="18" top="16" width="155" height="37" font="bold 14pt &quot;Arial&quot;" onclick="Static01_onclick"/>
+        <Static id="sta_totcnt" taborder="8" text="총 0건" left="18" top="186" width="84" height="18"/>
+        <Static id="Static00_00" taborder="9" text="부서명" left="18" top="91" width="70" height="29"/>
+        <Edit id="edt_deptNm" taborder="2" left="117" top="91" width="793" height="30"/>
+        <Static id="Static00_00_00" taborder="10" text="우편번호/주소" left="18" top="125" width="84" height="29"/>
+        <Edit id="edt_addr" taborder="3" left="117" top="125" width="793" height="30"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_dlvplc">
+        <ColumnInfo>
+          <Column id="DLVPLC_ID" type="STRING" size="256"/>
+          <Column id="RCVR_NM" type="STRING" size="256"/>
+          <Column id="DEPT_NM" type="STRING" size="256"/>
+          <Column id="ZPCD" type="STRING" size="256"/>
+          <Column id="REPR_ADDR" type="STRING" size="256"/>
+          <Column id="DTL_ADDR" type="STRING" size="256"/>
+          <Column id="MP_NO" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="ADDR" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="cPage" type="INT" size="256"/>
+          <Column id="pagingSize" type="INT" size="256"/>
+          <Column id="pageSize" type="INT" size="256"/>
+          <Column id="rcvrNm" type="STRING" size="256"/>
+          <Column id="deptNm" type="STRING" size="256"/>
+          <Column id="addr" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : MarketA
+CREATION DATES : 2021.01.19
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totRowCnt = 0;
+this.pagingSize = 10;
+this.pageSize = 20;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.edt_addr.set_value(this.parent.addr);
+	//조회
+	this.fn_search(1);
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	var objType = obj.getFocus();
+	if( e.keycode == 13 && objType == "[object Edit]" ) {
+		//조회
+		this.fn_search(1);
+	}
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (cPage)
+{
+	var sSvcId = "deliveryPlaceList";    
+	var sUrl = "/co/popUp/deliveryPlaceList.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_dlvplc=ds_output1";
+	var arg = "";
+	
+	if( undefined == cPage ) {
+		cPage = 1;
+	}
+	
+	// 페이징 정보 세팅.
+	this.ds_search.setColumn(0, "cPage", cPage);
+	this.ds_search.setColumn(0, "pagingSize", this.pagingSize);
+	this.ds_search.setColumn(0, "pageSize", this.pageSize);
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "deliveryPlaceList"){    
+		this.sta_totcnt.set_text("총 "+this.totRowCnt+"건");
+	}
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.edt_rcvrNm.set_value("");
+	this.edt_rcvrNm.set_value("");
+	this.edt_addr.set_value("");
+};
+
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search(1);
+};
+
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+this.grd_list_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var resData = {};
+	var resString = "";
+	
+	resData.DLVPLC_ID = this.ds_dlvplc.getColumn(this.ds_dlvplc.rowposition, "DLVPLC_ID");
+	resData.ADDR = this.ds_dlvplc.getColumn(this.ds_dlvplc.rowposition, "ADDR");
+	resString = JSON.stringify(resData);	
+	this.close(resString);
+};
+
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="edt_rcvrNm" propid="value" datasetid="ds_search" columnid="rcvrNm"/>
+      <BindItem id="item1" compid="edt_deptNm" propid="value" datasetid="ds_search" columnid="deptNm"/>
+      <BindItem id="item2" compid="edt_addr" propid="value" datasetid="ds_search" columnid="addr"/>
+    </Bind>
+  </Form>
+</FDL>

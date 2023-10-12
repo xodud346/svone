@@ -1,0 +1,249 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PP_07" width="600" height="530" onload="fn_onLoad" titletext="카테고리 조회" onkeyup="fn_onkeyup" scrollbartype="none none" onkeydown="fn_onkeydown">
+    <Layouts>
+      <Layout height="530" width="600">
+        <Grid id="grd_list" taborder="0" left="20" top="98" binddataset="ds_list" autofittype="none" cellsizebandtype="allband" oncelldblclick="grd_list_oncelldblclick" autosizingtype="none" bottom="60" right="20" onenterdown="grd_list_onenterdown" oncellclick="grd_list_oncellclick" autoenter="select" cellsizingtype="col" scrollbartype="auto fixed">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="202"/>
+                <Column size="289"/>
+                <Column size="48"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="카테고리ID"/>
+                <Cell col="1" text="카테고리명"/>
+                <Cell col="2" text="레벨"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:PRD_CLCD" wordWrap="none" textAlign="left" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;"/>
+                <Cell col="1" text="bind:FULL_PRD_CLSF_NM" wordWrap="none" textAlign="left" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;"/>
+                <Cell col="2" text="bind:HIER_LVL"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="Static01" taborder="1" text="카테고리 조회" left="20" top="20" width="160" height="22" cssclass="sta_WF_title04"/>
+        <Button id="btn_search" taborder="2" text="조회" top="60" height="28" cssclass="btn_WF_require" width="60" right="20" onclick="btn_search_onclick"/>
+        <Static id="sta_totcnt" taborder="3" text="총 0건" left="20" usedecorate="true" width="250" height="14" top="65"/>
+        <Static id="sta_totcnt00" taborder="4" text="최대조회수" top="60" height="28" usedecorate="true" cssclass="sta_WF_txtR" right="188" width="60" onclick="Div00_sta_totcnt00_onclick"/>
+        <Edit id="edt_rowCount" taborder="5" top="60" height="28" right="84" width="100" value="1000" text="1000" readonly="true"/>
+        <Button id="btn_add" taborder="6" text="선택" onclick="btn_add_onclick" width="60" right="270" height="30" bottom="20" cssclass="btn_WF_select"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="FULL_PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="HIER_LVL" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="LWST_CD_YN" type="STRING" size="256"/>
+          <Column id="MALL_SPR_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="LWST_CD_YN"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_listCopy">
+        <ColumnInfo>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="FULL_PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="HIER_LVL" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : MarketA
+CREATION DATES : 2021.01.19
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+    this.gfn_formOnLoad(this);
+	var prdClcd = this.parent.prdClcd;
+	var prdClsfNm = this.parent.prdClsfNm;
+	var mallSprCd = this.parent.mallSprCd;
+	
+	if(this.gfn_isNull(this.parent.coCd) || this.parent.coCd ==  undefined){
+		alert("팝업창의 회사코드가 비어있습니다. 확인해주세요.");
+		return;
+	}else{
+		this.ds_search.setColumn(0, "CO_CD", this.parent.coCd);
+	}
+	
+	if(this.gfn_isNull(mallSprCd)){
+		alert('몰구분코드는 필수입니다.');
+		this.close(false);
+	}
+	this.ds_search.setColumn(0, "MALL_SPR_CD", mallSprCd);	//몰구분
+	if(!this.gfn_isNull(prdClcd) || !this.gfn_isNull(prdClsfNm)){
+		this.ds_search.setColumn(0, "PRD_CLCD", prdClcd);
+		this.ds_search.setColumn(0, "PRD_CLSF_NM", prdClsfNm);
+		
+		this.fn_search();
+	}else{
+		this.fn_initGrid();
+	}
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+    var objType = obj.getFocus();
+    if( e.keycode == 13 && objType == "[object Edit]" ) {
+        //조회
+        this.fn_search(true);
+    }else if(e.keycode == 27){	//ESC : 닫기기능
+        this.close();
+    }
+};
+
+this.fn_onkeydown = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	if(e.keycode == 13 && e.ctrlkey){	//Ctrl+Enter : 선택기능
+		this.btn_add_onclick();
+	}
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (bInit)
+{
+    var sSvcId = "search";    
+    var sUrl = "/pr/prd-popup/select-category-popup-list.do";  
+    var inDs = "ds_search=ds_search";
+    var outDs = "ds_listCopy=ds_list";
+    var arg = "";
+
+    this.ds_search.setColumn(0,"ROW_COUNT", this.edt_rowCount.value);
+    
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+    switch(svcID) {
+        case "search" :
+			this.ds_list.clearData();
+			this.fn_initGrid();
+			this.ds_list.appendData(this.ds_listCopy, true);
+            this.sta_totcnt.set_text("총 "+ this.gfn_appendComma(this.totalCount, 0) +"건");
+            break;
+            
+    }
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_initGrid = function(){
+	this.ds_list.insertRow(0);
+	this.ds_list.setColumn(0, "PRD_CLCD",  this.ds_search.getColumn(0, "PRD_CLCD"));
+	this.ds_list.setColumn(0, "FULL_PRD_CLSF_NM",  this.ds_search.getColumn(0, "PRD_CLSF_NM"));
+	this.ds_list.set_rowposition(-1);
+};
+
+this.fn_searchMapSetting = function(){
+	this.ds_search.setColumn(0, "PRD_CLCD", this.ds_list.getColumn(0, "PRD_CLCD"));
+	this.ds_search.setColumn(0, "PRD_CLSF_NM", this.ds_list.getColumn(0, "FULL_PRD_CLSF_NM"));
+};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//조회버튼
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var coCd = this.ds_search.getColumn(0, "CO_CD");
+	if(this.gfn_isNull(coCd) || coCd ==  undefined){
+		alert("팝업창의 회사코드가 비어있습니다. 확인해주세요.");
+		return;
+	}
+	this.fn_searchMapSetting();
+    this.fn_search();
+};
+
+//검색조건 ROW에서 엔터
+this.grd_list_onenterdown = function(obj:nexacro.Grid,e:nexacro.GridEditEventInfo)
+{
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+//ROW더블클릭
+this.grd_list_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row != 0){
+		var resData = {};
+		var resString = "";
+		
+		resData.PRD_CLCD = this.ds_list.getColumn(this.ds_list.rowposition, "PRD_CLCD");
+		resData.PRD_CLSF_NM = this.ds_list.getColumn(this.ds_list.rowposition, "PRD_CLSF_NM");
+		resData.FULL_PRD_CLSF_NM = this.ds_list.getColumn(this.ds_list.rowposition, "FULL_PRD_CLSF_NM");
+		
+		resString = JSON.stringify(resData);
+		this.close(resString);
+	}
+};
+
+//검색조건 ROW의 CELL 클릭 시 글자 맨 끝으로 커서 가도록
+this.grd_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row == 0){
+		var cellText = obj.getCellText(e.row, e.cell);
+		if(cellText != undefined){
+			obj.setEditSelect(cellText.length, cellText.length);
+		}
+	}
+};
+
+this.btn_add_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_list.rowposition < 1){
+		alert("선택된 데이터가 없습니다.");
+		return;
+	}
+	var resData = {};
+	var resString = "";
+	
+	resData.PRD_CLCD = this.ds_list.getColumn(this.ds_list.rowposition, "PRD_CLCD");
+	resData.PRD_CLSF_NM = this.ds_list.getColumn(this.ds_list.rowposition, "PRD_CLSF_NM");
+	resData.FULL_PRD_CLSF_NM = this.ds_list.getColumn(this.ds_list.rowposition, "FULL_PRD_CLSF_NM");
+	
+	resString = JSON.stringify(resData);
+	this.close(resString);
+};
+]]></Script>
+    <Bind/>
+  </Form>
+</FDL>

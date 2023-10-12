@@ -1,0 +1,536 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form1" width="1336" height="680" titletext="예산 계정/부서설정 탭" onload="fn_onLoad" onkeyup="form1_onkeyup">
+    <Layouts>
+      <Layout height="680" mobileorientation="landscape" width="1336">
+        <Div id="div_search" taborder="0" text="검색 영역" left="0" top="25" right="0" height="75" formscrolltype="none" formscrollbartype="none none">
+          <Layouts>
+            <Layout>
+              <Static id="Static05" taborder="0" top="0" height="32" cssclass="sta_cm_box02L_tdt" left="20" right="0" text=""/>
+              <Static id="Static02" taborder="1" text="사업장" left="0" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static04" taborder="2" text="운영단위" left="432" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static04_00" taborder="3" text="계정" left="862" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Button id="btn_bzplc" taborder="4" left="393" top="4" height="24" cssclass="btn_WF_search02" width="24" onclick="btn_bzplc_onclick"/>
+              <Button id="btn_oprUnit" taborder="5" left="809" top="4" height="24" cssclass="btn_WF_search02" width="24" onclick="btn_oprUnit_onclick"/>
+              <Button id="btn_acct" taborder="6" left="1243" top="4" height="24" cssclass="btn_WF_search02" width="24" onclick="btn_acct_onclick"/>
+              <Edit id="edt_bzplcId" taborder="7" left="134" top="4" width="95" height="24" enable="true"/>
+              <Edit id="edt_oprUnitId" taborder="8" left="567" top="4" width="95" height="24" enable="true"/>
+              <Edit id="edt_deptId" taborder="9" left="998" top="4" width="95" height="24" enable="true"/>
+              <Edit id="edt_bzplcNm" taborder="10" left="235" top="4" width="154" height="24" enable="false"/>
+              <Edit id="edt_oprUnitNm" taborder="11" left="666" top="4" width="137" height="24" enable="false"/>
+              <Edit id="edt_deptNm" taborder="12" left="1098" top="4" width="137" height="24" enable="false"/>
+              <Button id="btn_oprUnitTxt" taborder="13" left="834" top="4" height="24" cssclass="btn_WF_document" width="24" onclick="btn_oprUnitTxt_onclick"/>
+              <Button id="btn_acctTxt" taborder="14" left="1267" top="4" height="24" cssclass="btn_WF_document" width="24" onclick="btn_acctTxt_onclick"/>
+              <Static id="Static05_00" taborder="16" top="31" height="32" cssclass="sta_cm_box02L" left="20" right="0" text=""/>
+              <Static id="Static02_00" taborder="15" text="계정유형" left="0" top="31" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Radio id="rdo_acctTpCd" taborder="17" left="134" top="36" width="120" height="24" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" direction="vertical" onitemchanged="rdo_acctTpCd_onitemchanged">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">1</Col>
+                      <Col id="datacolumn">일반</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">2</Col>
+                      <Col id="datacolumn">공통</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Radio>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btn_search" taborder="1" text="조회" top="92" width="60" height="30" right="0" onclick="btn_search_onclick" cssclass="btn_WF_select"/>
+        <Button id="btn_reset" taborder="2" text="초기화" top="92" width="60" height="30" onclick="btn_reset_onclick" right="btn_search:4" cssclass="btn_WF_reset"/>
+        <Static id="sta_totCount" taborder="3" text="(총 0건 1/1)" left="0" top="163" width="121" height="25" usedecorate="true"/>
+        <Grid id="grd_list" taborder="5" left="0" top="190" right="0" bottom="60" autofittype="col" fillareatype="none" binddataset="ds_list" oncellclick="grd_list_oncellclick" selecttype="area">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="100"/>
+                <Column size="150"/>
+                <Column size="100"/>
+                <Column size="150"/>
+                <Column size="100"/>
+                <Column size="150"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="100"/>
+                <Column size="100"/>
+                <Column size="100"/>
+                <Column size="100"/>
+                <Column size="100"/>
+              </Columns>
+              <Rows>
+                <Row size="30" band="head"/>
+                <Row size="30" band="head"/>
+                <Row size="30"/>
+              </Rows>
+              <Band id="head">
+                <Cell rowspan="2" text="사업장ID"/>
+                <Cell col="1" rowspan="2" text="사업장명"/>
+                <Cell col="2" rowspan="2" text="운영단위ID"/>
+                <Cell col="3" rowspan="2" text="운영단위명"/>
+                <Cell col="4" rowspan="2" text="계정ID"/>
+                <Cell col="5" rowspan="2" text="계정명"/>
+                <Cell col="6" rowspan="2" text="계정레벨"/>
+                <Cell col="7" rowspan="2" text="계정유형"/>
+                <Cell col="8" rowspan="2" text="계정코드"/>
+                <Cell col="9" rowspan="2" text="상위계정ID"/>
+                <Cell col="10" rowspan="2" text="상위계정명"/>
+                <Cell col="11" colspan="2" text="예산 사용 상위계정"/>
+                <Cell row="1" col="11" text="계정ID"/>
+                <Cell row="1" col="12" text="계정명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:BZPLC_ID" textAlign="center" suppress="0"/>
+                <Cell col="1" text="bind:BZPLC_NM" suppress="0"/>
+                <Cell col="2" text="bind:OPR_UNIT_ID" textAlign="center" suppress="0"/>
+                <Cell col="3" text="bind:OPR_UNIT_NM" suppress="0"/>
+                <Cell col="4" textAlign="center" text="bind:ACCT_ID" color="blue" textDecoration="underline"/>
+                <Cell col="5" text="bind:ACCT_NM" textAlign="left"/>
+                <Cell col="6" text="bind:ACCT_LVL"/>
+                <Cell col="7" text="bind:ACCT_TP_NM"/>
+                <Cell col="8" text="bind:ACCT_CD" displaytype="normal" edittype="none" textAlign="left"/>
+                <Cell col="9" text="bind:HRNK_ACCT_ID"/>
+                <Cell col="10" text="bind:HRNK_ACCT_NM" textAlign="left"/>
+                <Cell col="11" text="bind:BGT_USE_HRNK_ACCT_ID"/>
+                <Cell col="12" text="bind:BGT_USE_HRNK_ACCT_NM" textAlign="left"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="div_paging" taborder="6" left="20" bottom="9" height="38" formscrollbartype="none none" right="20" url="COMM::cmmPaging.xfdl"/>
+        <Combo id="cbo_pageViewCnt" taborder="9" text="20개씩" top="151" height="30" index="0" innerdataset="innerdataset" datacolumn="datacolumn" codecolumn="codecolumn" onitemchanged="cbo_pageViewCnt_onitemchanged" right="0" width="90" value="20">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">20</Col>
+                <Col id="datacolumn">20개씩</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">50</Col>
+                <Col id="datacolumn">50개씩</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">100</Col>
+                <Col id="datacolumn">100개씩</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Combo>
+        <Button id="btn_excel" taborder="4" text="엑셀 다운로드" top="151" width="110" height="30" right="cbo_pageViewCnt:4" onclick="btn_excel_onclick" cssclass="btn_WF_excel"/>
+        <Button id="btn_save" taborder="7" text="저장(미사용)" top="151" width="86" height="30" right="290" onclick="btn_save_onclick" visible="false"/>
+        <Button id="btn_batchReg" taborder="8" text="일괄등록" top="151" width="70" height="30" right="btn_excel:4" onclick="btn_batchReg_onclick"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : 계정/부서 설정
+  CREATION DATES : 20220407
+*******************************************************/
+include "CC::CcUtils.xjs";
+include "OD::odUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.fv_sessionData = this.getSession(); //session object
+this.fv_totalCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//검색 영역 최소size 적용
+	this.div_search.set_height(this.div_search.uMinSize);
+	this.resetScroll();
+	
+	this.copyPaste.addGrid(this.grd_list);
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회  
+this.fn_search = function()	{
+	oSortInfo = this.grd_list.uaSortInfo;
+	if(oSortInfo != null){
+		this.ds_search.setColumn(0,"SORT_COLUMN",oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE",oSortInfo.status);
+	}
+
+	var sSvcId = "selectList";    
+	var sUrl = "/bo/cust/bgt/ssp_bo_ma_78/select-bgt-dept-mapp-list-by-acct.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_list=ds_list";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//저장
+this.fn_save = function()	{
+	var sSvcId = "save";    
+	var sUrl = "/bo/cust/bgt/ssp_bo_ma_78/update-bgt-mapp-bgt-use-hrnk-acct.do";  
+	var inDs = "ds_list=ds_list:U";
+	var outDs = "";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(errorCode == -1) {		
+		alert(this.fn_getMessage("ERRC000058"));
+	}
+	else {	
+		if(svcID == "selectList"){			
+			if(this.ds_list.getRowCount() > 0) {		
+				this.fv_totalCount = this.ds_list.getColumn(0,"TOT_CUNT");			
+				this.div_paging.form.cfn_createPage(this.div_paging,this.fv_totalCount,this.cbo_pageViewCnt.value,"fn_pageCallback");
+			}
+		}
+		else if(svcID == "save") {			
+			alert(this.fn_getMessage("ERRC000081"));
+			this.btn_search_onclick();
+		}
+	}
+};
+
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;
+	if(sFlag){
+		this.ds_search.setColumn(0,"START_NUM",oPaging.uPageNum);		
+		this.ds_search.setColumn(0,"ROW_COUNT",this.cbo_pageViewCnt.value);
+		this.fn_search();
+	}
+	
+	var sTotText = "(<b v='true'>총 "+ oPaging.uTotCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+	this.sta_totCount.set_text(sTotText);
+};
+
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_list"){
+		this.btn_search_onclick();
+	}
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+	//search static 필수표시 설정
+	this.div_search.form.Static02.uEssentiel = "true";
+
+	//search div 초기 설정
+	this.div_search.uMinSize = this.div_search.height;
+	this.div_search.uMaxSize = 157;
+
+	//grid 초기 설정
+	this.grd_list.uSortFlag = "false";
+	this.grd_list.uServerSortFlag = "true";
+	this.grd_list.uSortCallback = "fn_sortCallback";
+	this.grd_list.uCellSizeType = "true";
+	
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 10;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;	
+	
+	this.ds_search.setColumn(0,"CO_CD",this.fv_sessionData.coCd);
+	this.div_search.form.rdo_acctTpCd.set_index(0);
+	this.displayType();
+};
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.displayType = function()
+{
+	this.sta_totCount.set_text("(총 0건 1/1)");
+	
+	this.ds_list.clearData();
+	this.ds_search.setColumn(0,"OPR_UNIT_ID","");
+	this.ds_search.setColumn(0,"OPR_UNIT_NM","");
+	
+	//일반, 공통계정 여부에 따라 관리 컬럼 출력처리
+	var acctTpCd = this.ds_search.getColumn(0,"ACCT_TP_CD");
+	if(acctTpCd == "1") { //일반계정
+		//운영단위 조회조건 활성화
+		this.div_search.form.edt_oprUnitId.set_enable(true);
+		this.div_search.form.edt_oprUnitNm.set_enable(true);
+		this.div_search.form.btn_oprUnit.set_enable(true);
+		this.div_search.form.btn_oprUnitTxt.set_enable(true);
+		
+		this.grd_list.setFormatColProperty(2,"size",150); //운영단위id
+		this.grd_list.setFormatColProperty(3,"size",200); //운영단위명
+	}
+	else if(acctTpCd == "2") { //공통계정
+		//운영단위 조회조건 비활성화
+		this.div_search.form.edt_oprUnitId.set_enable(false);
+		this.div_search.form.edt_oprUnitNm.set_enable(false);
+		this.div_search.form.btn_oprUnit.set_enable(false);
+		this.div_search.form.btn_oprUnitTxt.set_enable(false);
+		
+		this.grd_list.setFormatColProperty(2,"size",0); //운영단위id
+		this.grd_list.setFormatColProperty(3,"size",0);	//운영단위명			
+	}	
+}
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//조회 버튼 click  이벤트
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+
+	if(this.gfn_isNull(this.ds_search.getColumn(0,"BZPLC_ID"))) {		
+		alert(this.fn_getMessage("ERRC000004", "사업장"));
+		return;
+	}
+		
+	var oPaging = this.div_paging;
+	oPaging.uPageNum = 0;
+	this.ds_search.setColumn(0,"START_NUM",oPaging.uPageNum);
+	this.ds_search.setColumn(0,"ROW_COUNT",this.cbo_pageViewCnt.value);
+	
+	this.fn_search();
+};
+
+
+this.btn_excel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ofn_exportExcel({form:this, grid:this.grd_list, fileName:"예산계정목록"});
+};
+
+
+this.btn_reset_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{		
+	for(i=0; i<this.ds_search.colcount; i++) {
+		this.ds_search.setColumn(0, i, "");
+	}
+	
+	this.ds_search.setColumn(0,"CO_CD",this.fv_sessionData.coCd);
+	this.div_search.form.rdo_acctTpCd.set_index(0);
+};
+
+
+this.btn_bzplc_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+	
+	var params = {coCd : this.fv_sessionData.coCd};
+	
+	this.gfn_openPopup('bizPop', "CO_POP::SSP_BO_PP_22.xfdl", params, function(sPopupId, sRetValue) {
+		var retObj = JSON.parse(sRetValue);
+		this.ds_search.setColumn(0,"BZPLC_ID",retObj.BZPLC_ID);
+		this.ds_search.setColumn(0,"BZPLC_NM",retObj.BZPLC_NM);
+	}, {titlebar:"true"});
+};
+
+this.btn_oprUnit_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+
+	var params = { 
+		coCd : this.fv_sessionData.coCd
+		,bzplcId : this.ds_search.getColumn(0,"BZPLC_ID")
+	};
+	
+	this.gfn_openPopup('oprUnitPop', "CO_POP::SSP_BO_PP_23.xfdl", params, function(sPopupId, sRetValue) {
+		var retObj = JSON.parse(sRetValue);
+		var id = "";
+		var nm = "";
+		for(i=0; i<retObj.length; i++) {
+			var row = JSON.parse(retObj[i]);
+			id += row.OPR_UNIT_ID + ",";
+			nm += row.OPR_UNIT_NM + ",";
+		}
+				
+		this.ds_search.setColumn(0,"OPR_UNIT_ID",id.replace(/,\s*$/, ""));
+		this.ds_search.setColumn(0,"OPR_UNIT_NM",nm.replace(/,\s*$/, ""));
+	}, {titlebar:"true"});	
+};
+
+this.btn_acct_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+	
+	var params = { 
+		coCd : this.fv_sessionData.coCd
+		,bzplcId : this.ds_search.getColumn(0,"BZPLC_ID")
+	};	
+	
+	this.gfn_openPopup('acctPop', "CC::SSP_BO_PP_31.xfdl", params, function(sPopupId, sRetValue) {
+		var retObj = JSON.parse(sRetValue);
+		var id = "";
+		var nm = "";
+		for(i=0; i<retObj.length; i++) {
+			var row = JSON.parse(retObj[i]);
+			id += row.ACCT_ID + ",";
+			nm += row.ACCT_NM + ",";
+		}
+		
+		this.ds_search.setColumn(0,"ACCT_ID",id.replace(/,\s*$/, ""));
+		this.ds_search.setColumn(0,"ACCT_NM",nm.replace(/,\s*$/, ""));
+	}, {titlebar:"true"});		
+};
+
+this.btn_oprUnitTxt_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = { textId : this.div_search.form.edt_oprUnitId };
+
+	this.gfn_openPopup('oprUnitPop', "CO_POP::SSP_BO_PP_13.xfdl", params,  function(objID, sRetValue) {
+		var retObj = JSON.parse(sRetValue);
+		this.ds_search.setColumn(0,"OPR_UNIT_ID",retObj.textValue.replace(/,\s*$/, ""));
+		this.ds_search.setColumn(0,"OPR_UNIT_NM",retObj.textValue.replace(/,\s*$/, ""));
+	}, {title:"멀티 텍스트 팝업"});		
+};
+	
+this.btn_acctTxt_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = { textId : this.div_search.form.edt_deptId };
+
+	this.gfn_openPopup('oprUnitPop', "CO_POP::SSP_BO_PP_13.xfdl", params,  function(objID, sRetValue) {
+		var retObj = JSON.parse(sRetValue);
+		this.ds_search.setColumn(0,"ACCT_ID",retObj.textValue.replace(/,\s*$/, ""));		
+		this.ds_search.setColumn(0,"ACCT_NM",retObj.textValue.replace(/,\s*$/, ""));		
+	}, {title:"멀티 텍스트 팝업"});			
+};
+
+this.grd_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{	
+	obj.showEditor(true); //한번 클릭시 그리드텍사스박스에 포커스 줌
+	
+	if(this.gfn_getBindColumnNameByIndex(obj, e.col) == "ACCT_ID") {
+		var params = {CO_CD : this.ds_list.getColumn(e.row,"CO_CD")
+			, BZPLC_ID : this.ds_list.getColumn(e.row,"BZPLC_ID")
+			, OPR_UNIT_ID : this.ds_list.getColumn(e.row,"OPR_UNIT_ID")
+			, ACCT_ID : this.ds_list.getColumn(e.row,"ACCT_ID")
+			, ACCT_NM : this.ds_list.getColumn(e.row,"ACCT_NM")
+		};
+
+		var popUrl = "";
+		if(this.ds_list.getColumn(e.row,"ACCT_TP_CD") == "1") popUrl = "CC::SSP_BO_MA_83.xfdl"; //계정유형코드(1:일반)								
+		else if(this.ds_list.getColumn(e.row,"ACCT_TP_CD") == "2") popUrl = "CC::SSP_BO_MA_85.xfdl"; //계정유형코드(2:공통)	
+		
+		this.gfn_openPopup('bgtSettingPop', popUrl, params,  function(objID, sRetValue) {					
+		}, {titlebar:"true", title:"예산설정팝업"});		
+	}
+};
+
+this.btn_batchReg_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var param = {pgmId : "SSP_XL_CC_16"};
+	var options = {};
+	options.title = "예산 일괄등록";
+	this.gfn_openPopup("SSP_BO_PP_34", "CO_POP::SSP_BO_PP_34.xfdl", param, function() {
+	
+	}, options);	
+};
+
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	// # SSP-812 수정 : 계정코드 수정 불가능하게 변경 및 저장버튼 제거(숨김처리)
+	if(this.ds_search.getColumn(0,"ACCT_TP_CD") == "2") { //공통계정은 통과
+		return;
+	}
+
+	if(!this.gfn_dsIsUpdated(this.ds_list)) {		
+		alert(this.fn_getMessage("ERRC000039")); //변경된 행이 없습니다.
+		return;
+	}
+	
+	if(confirm(this.fn_getMessage("ERRC000080"))) { //저장하시겠습니까?
+		this.fn_save();
+	}
+};
+
+
+this.rdo_acctTpCd_onitemchanged = function(obj:nexacro.Radio,e:nexacro.ItemChangeEventInfo)
+{
+	this.displayType();
+};
+
+this.cbo_pageViewCnt_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.btn_search_onclick();
+};
+
+this.form1_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	if(e.ctrlkey && e.keycode==13) {
+		this.btn_search_onclick();
+	}			
+};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_NM" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_LVL" type="STRING" size="256"/>
+          <Column id="ACCT_TP_CD" type="STRING" size="256"/>
+          <Column id="ACCT_TP_NM" type="STRING" size="256"/>
+          <Column id="ACCT_CD" type="STRING" size="256"/>
+          <Column id="HRNK_ACCT_ID" type="STRING" size="256"/>
+          <Column id="HRNK_ACCT_NM" type="STRING" size="256"/>
+          <Column id="HRNK_BGT_USE_YN" type="STRING" size="256"/>
+          <Column id="BGT_USE_HRNK_ACCT_ID" type="STRING" size="256"/>
+          <Column id="BGT_USE_HRNK_ACCT_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_NM" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_TP_CD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="div_search.form.edt_bzplcId" propid="value" datasetid="ds_search" columnid="BZPLC_ID"/>
+      <BindItem id="item1" compid="div_search.form.edt_oprUnitId" propid="value" datasetid="ds_search" columnid="OPR_UNIT_ID"/>
+      <BindItem id="item2" compid="div_search.form.edt_deptId" propid="value" datasetid="ds_search" columnid="ACCT_ID"/>
+      <BindItem id="item3" compid="div_search.form.edt_bzplcNm" propid="value" datasetid="ds_search" columnid="BZPLC_NM"/>
+      <BindItem id="item4" compid="div_search.form.edt_oprUnitNm" propid="value" datasetid="ds_search" columnid="OPR_UNIT_NM"/>
+      <BindItem id="item5" compid="div_search.form.edt_deptNm" propid="value" datasetid="ds_search" columnid="ACCT_NM"/>
+      <BindItem id="item6" compid="div_search.form.rdo_acctTpCd" propid="value" datasetid="ds_search" columnid="ACCT_TP_CD"/>
+    </Bind>
+  </Form>
+</FDL>

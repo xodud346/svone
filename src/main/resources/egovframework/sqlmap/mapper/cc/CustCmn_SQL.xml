@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="custCmn">
+
+   <!-- 
+    ******************************************************************************
+    * SELECT : custCmn
+    * 작성자 : moonjooh
+    * 작성 일자 : 2022-02-22
+    ******************************************************************************
+    -->
+    <select id="selectIddtMultiPop" parameterType="HashMap" resultType="HashMap">
+        /* custCmn.selectIddtMultiPop 산업군 멀티조회 */
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />
+		SELECT '0' AS CHK
+			 , USE_YN 
+		 	 , IDDT_ID 
+			 , IDDT_NM
+			 , NVL(UPD_DTM, REG_DTM) AS UPD_DTM
+		  FROM TB_CC_IDDT_BASIS IDDT
+		 WHERE ROWNUM <![CDATA[<= ]]> 1000
+		 <if test="iddtId != null and !iddtId.equals('') ">
+              AND IDDT_ID LIKE '%' || #{iddtId} || '%'
+          </if>
+	 	  <if test="iddtNm != null and !iddtNm.equals('') ">
+	          AND IDDT_NM LIKE '%' || #{iddtNm} || '%'
+	      </if>
+	      <if test="iddtIdStrArr != null and iddtIdStrArr.length > 0">
+	    	  AND 
+	    	  <foreach collection="iddtIdStrArr" item="iddtIdStrArr" open="(" close=")" separator="or">
+	    		  IDDT_ID LIKE '%' || #{iddtIdStrArr} || '%'
+	    	  </foreach>
+		  </if>
+	      <if test="iddtNmStrArr != null and iddtNmStrArr.length > 0">
+	    	  AND 
+	    	  <foreach collection="iddtNmStrArr" item="iddtNmStrArr" open="(" close=")" separator="or">
+	    		  IDDT_NM LIKE '%' || #{iddtNmStrArr} || '%'
+	    	  </foreach>
+		  </if>
+          ORDER BY IDDT_ID
+          <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+    </select>
+    
+    <select id="selectDeptMultiPop" parameterType="HashMap" resultType="HashMap">
+        /* custCmn.selectDeptMultiPop 부서 멀티조회 */
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />
+	        SELECT '0' AS CHK
+	        	 , DEPT.CO_CD
+	             , DEPT.DEPT_ID
+				 , DEPT.DEPT_NM
+				 , DEPT.CCO_DEPT_CD
+				 , DEPT.DEPT_SRT_SEQ			 
+				 , DEPT.BZPLC_ID
+				 , BZ.BZPLC_NM 
+				 , DEPT.OPR_UNIT_ID 
+				 , OPR.OPR_UNIT_NM
+			  FROM TB_CC_DEPT_BASIS DEPT
+			  LEFT OUTER JOIN TB_CC_BZPLC_BASIS BZ
+				ON BZ.CO_CD = DEPT.CO_CD 
+			   AND BZ.BZPLC_ID = DEPT.BZPLC_ID
+			  LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS OPR
+				ON OPR.CO_CD = DEPT.CO_CD 
+			   AND OPR.BZPLC_ID = DEPT.BZPLC_ID
+			   AND OPR.OPR_UNIT_ID = DEPT.OPR_UNIT_ID
+			 WHERE DEPT.USE_YN = 'Y'
+			 	<if test="coCd != null and !coCd.equals('') ">
+	                AND DEPT.CO_CD = #{coCd}
+	            </if>
+	          <!-- 운영단위 제한 품
+	            <if test="oprUnitId != null and !oprUnitId.equals('') ">
+	                AND DEPT.OPR_UNIT_ID = #{oprUnitId}
+	            </if> -->
+	            <if test="bzplcId != null and !bzplcId.equals('') ">
+	                AND BZ.BZPLC_ID = #{bzplcId}
+	            </if>
+	            <if test="deptId != null and !deptId.equals('') ">
+	                AND DEPT.DEPT_ID LIKE '%' || #{deptId} || '%'
+	            </if>
+	            <if test="deptNm != null and !deptNm.equals('') ">
+	                AND DEPT.DEPT_NM LIKE '%' || #{deptNm} || '%'
+	            </if>
+	            <if test="ccoDeptCd != null and !ccoDeptCd.equals('') ">
+	                AND DEPT.CCO_DEPT_CD LIKE '%' || #{ccoDeptCd} || '%'
+	            </if>
+	            <if test="bzplcNm != null and !bzplcNm.equals('') ">
+	                AND BZ.BZPLC_NM LIKE '%' || #{bzplcNm} || '%'
+	            </if>
+	            <if test="oprUnitNm != null and !oprUnitNm.equals('') ">
+	                AND OPR.OPR_UNIT_NM LIKE '%' || #{oprUnitNm} || '%'
+	            </if>
+	            <if test="oprUnitIdStrArr != null and oprUnitIdStrArr.length > 0">
+			    	AND DEPT.OPR_UNIT_ID IN
+			    	<foreach collection="oprUnitIdStrArr" item="oprUnitIdStrArr" open="(" close=")" separator=",">
+			    		#{oprUnitIdStrArr}
+			    	</foreach>
+				</if>
+				<if test="bzplcIdStrArr != null and bzplcIdStrArr.length > 0">
+			    	AND BZ.BZPLC_ID IN
+			    	<foreach collection="bzplcIdStrArr" item="bzplcIdStrArr" open="(" close=")" separator=",">
+			    		#{bzplcIdStrArr}
+			    	</foreach>
+				</if>
+				<if test="deptIdStrArr != null and deptIdStrArr.length > 0">
+			    	AND DEPT.DEPT_ID IN 
+			    	<foreach collection="deptIdStrArr" item="deptIdStrArr" open="(" close=")" separator=",">
+			    		 #{deptIdStrArr}
+			    	</foreach>
+				</if>
+				<if test="deptNmStrArr != null and deptNmStrArr.length > 0">
+			    	AND 
+			    	<foreach collection="deptNmStrArr" item="deptNmStrArr" open="(" close=")" separator="or">
+			    		DEPT.DEPT_NM LIKE '%' || #{deptNmStrArr} || '%'
+			    	</foreach>
+				</if>
+				<if test="ccoDeptCdStrArr != null and ccoDeptCdStrArr.length > 0">
+			    	AND
+			    	<foreach collection="ccoDeptCdStrArr" item="ccoDeptCdStrArr" open="(" close=")" separator="or">
+			    		DEPT.CCO_DEPT_CD LIKE '%' || #{ccoDeptCdStrArr} || '%'
+			    	</foreach>
+				</if>
+				<if test="bzplcNmStrArr != null and bzplcNmStrArr.length > 0">
+			    	AND 
+			    	<foreach collection="bzplcNmStrArr" item="bzplcNmStrArr" open="(" close=")" separator="or">
+			    		BZ.BZPLC_NM LIKE '%' || #{bzplcNmStrArr} || '%'
+			    	</foreach>
+				</if>
+				<if test="oprUnitNmStrArr != null and oprUnitNmStrArr.length > 0">
+			    	AND 
+			    	<foreach collection="oprUnitNmStrArr" item="oprUnitNmStrArr" open="(" close=")" separator="or">
+			    		OPR.OPR_UNIT_NM LIKE '%' || #{oprUnitNmStrArr} || '%'
+			    	</foreach>
+				</if>
+	         ORDER BY DEPT.DEPT_ID
+		<include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+    </select>
+    
+    <select id="selectMbrOprtrOrgInfoList" parameterType="HashMap" resultType="HashMap">
+        /* custCmn.selectMbrOprtrOrgInfoList - 부서 멀티조회 */
+        SELECT TCMOOI.CO_CD                                                                         /* 회사코드 */
+		      , TCMOOI.ORG_CD AS TEAM_CD                                                            /* 조직코드 */
+		      , TCMOOI.ORG_NM AS TEAM_NM                                                            /* 조직명 */
+		      , TCMOOI.PRD_DISP_MNG_SBJ_CD                                                          /* 상품진열관리주체 코드 */
+		      , NVL(TCCCD.COM_DTL_CD_NM, '-') AS PRD_DISP_MNG_SBJ_NM                                /* 상품진열관리주체 코드명 */
+		      , CASE WHEN TCCCD.COM_DTL_CD_NM IS NULL THEN TCMOOI.PRD_DISP_MNG_SBJ_CD
+		             ELSE TCMOOI.PRD_DISP_MNG_SBJ_CD || '(' || TCCCD.COM_DTL_CD_NM || ')'
+		         END PRD_DISP_MNG_SBJ                                                               /* 상품진열관리주체 텍스트 */
+		   FROM TB_CO_MBR_OPRTR_ORG_INFO TCMOOI
+	  LEFT JOIN TB_CO_COM_CD_DTL TCCCD ON TCCCD.COM_CLSF_CD = 'DEPT_ATTR_CD' AND TCCCD.COM_DTL_CD = TCMOOI.PRD_DISP_MNG_SBJ_CD
+		  WHERE TCMOOI.USE_YN = 'Y'
+		  <if test="coCd != null and !coCd.equals('') ">
+			AND TCMOOI.CO_CD = #{coCd}
+	 	  </if>
+		  <if test="orgCd != null and !orgCd.equals('') ">
+			AND TCMOOI.ORG_CD = #{orgCd}
+		  </if>
+		  <if test="orgNm != null and !orgNm.equals('') ">
+		  	AND TCMOOI.ORG_NM LIKE '%' || #{orgNm} || '%'
+		  </if>
+		  <if test="prdDispMngSbjCd != null and !prdDispMngSbjCd.equals('') ">
+		  	AND TCMOOI.PRD_DISP_MNG_SBJ_CD = #{prdDispMngSbjCd}
+		  </if>
+		  <if test="TYPE != null and !TYPE.equals('') ">
+		  	<choose>
+		  		<when test="TYPE.equals('01')">
+		  			/* 운영팀 */
+		  			AND TCMOOI.PRD_DISP_MNG_SBJ_CD = '08'
+		  		</when>
+		  		<when test="TYPE.equals('02')">
+		  			/* 서비스팀 */
+		  			AND TCMOOI.PRD_DISP_MNG_SBJ_CD = '20'
+		  		</when>
+		  		<when test="TYPE.equals('03')">
+		  			/* MD팀 */
+		  			AND TCMOOI.PRD_DISP_MNG_SBJ_CD IN ('02','04')
+		  		</when>
+		  		<when test="TYPE.equals('04')">
+		  			/* 구매팀 */
+		  			AND TCMOOI.PRD_DISP_MNG_SBJ_CD IN ('02','04')
+		  		</when>
+		  		<when test="TYPE.equals('05')">
+		  		    /* 영업팀 */
+		  			AND TCMOOI.PRD_DISP_MNG_SBJ_CD = '01'
+		  		</when>
+		  	</choose>
+		  </if>
+		  ORDER BY TCMOOI.ORG_NM ASC
+    </select>
+    <select id="selectMbrOprtrOrgInfoListCnt" parameterType="HashMap" resultType="Integer">
+        /* custCmn.selectMbrOprtrOrgInfoListCnt - 부서 멀티조회 */
+        SELECT COUNT(*)
+          FROM TB_CO_MBR_OPRTR_ORG_INFO TCMOOI
+	 LEFT JOIN TB_CO_COM_CD_DTL TCCCD ON TCCCD.COM_CLSF_CD = 'DEPT_ATTR_CD' AND TCCCD.COM_DTL_CD = TCMOOI.PRD_DISP_MNG_SBJ_CD
+		 WHERE TCMOOI.USE_YN = 'Y'
+		 <if test="coCd != null and !coCd.equals('') ">
+			AND TCMOOI.CO_CD = #{coCd}
+		 </if>
+		 <if test="orgCd != null and !orgCd.equals('') ">
+			AND TCMOOI.ORG_CD = #{orgCd}
+		 </if>
+		 <if test="orgNm != null and !orgNm.equals('') ">
+		  	AND TCMOOI.ORG_NM LIKE '%' || #{orgNm} || '%'
+		 </if>
+		 <if test="prdDispMngSbjCd != null and !prdDispMngSbjCd.equals('') ">
+		  	AND TCMOOI.PRD_DISP_MNG_SBJ_CD = #{prdDispMngSbjCd}
+		  </if>
+		 <if test="TYPE != null and !TYPE.equals('') ">
+		  	<choose>
+		  		<when test="TYPE.equals('01')">
+		  			/* 운영팀 */
+		  			AND TCMOOI.PRD_DISP_MNG_SBJ_CD = '08'
+		  		</when>
+		  		<when test="TYPE.equals('02')">
+		  			/* 서비스팀 */
+		  			AND TCMOOI.PRD_DISP_MNG_SBJ_CD = '20'
+		  		</when>
+		  		<when test="TYPE.equals('03')">
+		  			/* MD팀 */
+		  			AND TCMOOI.PRD_DISP_MNG_SBJ_CD IN ('02','04')
+		  		</when>
+		  		<when test="TYPE.equals('04')">
+		  			/* 구매팀 */
+		  			AND TCMOOI.PRD_DISP_MNG_SBJ_CD IN ('02','04')
+		  		</when>
+		  		<when test="TYPE.equals('05')">
+		  		    /* 영업팀 */
+		  			AND TCMOOI.PRD_DISP_MNG_SBJ_CD = '01'
+		  		</when>
+		  	</choose>
+		  </if>
+    </select>
+    <select id="selectMbrOprtrSalsInfoList" parameterType="HashMap" resultType="HashMap">
+    	/* custCmn.selectMbrOprtrSalsInfoList - 공통팝업 운영팀 조회 */
+    	SELECT SALS_TEAM_CD AS TEAM_CD
+             , SALS_TEAM_NM AS TEAM_NM
+          FROM TB_CC_SALS_TEAM_BASIS TCSTB
+         WHERE 1=1
+         <if test="orgCd != null and !orgCd.equals('') ">
+			AND TCSTB.SALS_TEAM_CD = #{orgCd}
+		 </if>
+		 <if test="orgNm != null and !orgNm.equals('') ">
+		  	AND TCSTB.SALS_TEAM_NM LIKE '%' || #{orgNm} || '%'
+		 </if>
+    </select>
+    <select id="selectMbrOprtrSalsInfoListCnt" parameterType="HashMap" resultType="Integer">
+    	/* custCmn.selectMbrOprtrSalsInfoListCnt - 공통팝업 운영팀 카운트 조회 */
+    	SELECT COUNT(*)
+          FROM TB_CC_SALS_TEAM_BASIS TCSTB
+         WHERE 1=1
+         <if test="orgCd != null and !orgCd.equals('') ">
+			AND TCSTB.SALS_TEAM_CD = #{orgCd}
+		 </if>
+		 <if test="orgNm != null and !orgNm.equals('') ">
+		  	AND TCSTB.SALS_TEAM_NM LIKE '%' || #{orgNm} || '%'
+		 </if>
+    </select>
+    <select id="selectMbrOprtrOrgInfoListNewVersion" parameterType="HashMap" resultType="HashMap">
+    	/* 새로운 버전의 운영팀조회 팝업 리스트 조회 - selectMbrOprtrOrgInfoListNewVersion */
+    	SELECT CASE WHEN TCMOOI.TEAM_ATTR_CLCD IN (
+    	                 <choose>
+    	                 	<when test=' "1".equals(teamAttrClcdNm)'>
+					  			/* 영업팀 */
+					  			'01'
+					  		</when>
+					  		<when test=' "2".equals(teamAttrClcdNm)'>
+					  			/* 서비스팀 */
+					  			'20'
+					  		</when>
+					  		<when test=' "3".equals(teamAttrClcdNm)'>
+					  			/* MD팀 */
+					  			'02','04'
+					  		</when>
+					  		<when test=' "4".equals(teamAttrClcdNm)'>
+					  			/* 구매팀 */
+					  			'02','04'
+					  		</when>
+					  		<when test=' "5".equals(teamAttrClcdNm)'>
+					  		    /* 운영팀 */
+					  			'01'
+					  		</when>
+					  		<when test=' "6".equals(teamAttrClcdNm)'>
+					  		    /* 영업담당 */
+					  			'01' 
+					  		</when>
+				  		 </choose>
+    	                 ) THEN 1
+    	            ELSE 9
+    	        END BIZ_ORD
+    	     , TCMOOI.CO_CD                                                                        /* 회사코드 */
+		     , TCMOOI.ORG_CD AS TEAM_CD                                                            /* 팀코드 */
+		     , TCMOOI.ORG_NM AS TEAM_NM                                                            /* 팀명 */
+		     , TCMOOI.TEAM_ATTR_CLCD                                                               /* 팀속성코드 */
+		     , TCMOOI.SALS_CHR_CD                                                                  /* 영업담당코드 */
+		     , TCMOOI.SALS_CHR_NM                                                                  /* 영업담당명 */
+		     , TCMOOI.SALS_TEAM_CD                                                                 /* 영업팀코드 */
+		     , TCSTB.SALS_TEAM_NM                                                                  /* 영업팀명 */
+		     , TCMOOI.USE_YN                                                                       /* 사용여부 */
+		     , CASE WHEN TCMOOI.USE_YN = 'Y' THEN '사용'
+		            WHEN TCMOOI.USE_YN = 'N' THEN '미사용'
+		            ELSE '-'
+		        END USE_YN_TEXT                                                                     /* 사용여부 텍스트 */
+		  FROM TB_CO_MBR_OPRTR_ORG_INFO TCMOOI
+     LEFT JOIN TB_CC_SALS_TEAM_BASIS TCSTB ON TCMOOI.SALS_TEAM_CD = TCSTB.SALS_TEAM_CD 
+         WHERE TCMOOI.CO_CD = #{coCd}
+           /*
+           AND (
+		            (TCMOOI.TEAM_ATTR_CLCD = '01' AND TCMOOI.SALS_TEAM_CD IS NOT NULL)
+				OR
+		            (TCMOOI.TEAM_ATTR_CLCD = '20')
+				OR
+		            (TCMOOI.TEAM_ATTR_CLCD IN ('02','04'))
+				OR
+		            (TCMOOI.TEAM_ATTR_CLCD = '01')
+				OR
+		           	(TCMOOI.TEAM_ATTR_CLCD = '01' AND TCMOOI.SALS_CHR_CD IS NOT NULL)
+	           )
+	       */
+           <if test="teamCd != null and !teamCd.equals('') ">
+           	   AND TCMOOI.ORG_CD = #{teamCd}
+           </if>
+           <if test="teamNm != null and !teamNm.equals('') ">
+           	   AND TCMOOI.ORG_NM LIKE '%' || #{teamNm} || '%'
+           </if>
+           <if test="salsTeamCd != null and !salsTeamCd.equals('') ">
+           	   AND TCMOOI.SALS_TEAM_CD = #{salsTeamCd}
+           </if>
+           <if test="salsChrCd != null and !salsChrCd.equals('') ">
+           	   AND TCMOOI.SALS_CHR_CD = #{salsChrCd}
+           </if>
+           <if test="useYn!= null and !useYn.equals('') ">
+           	   AND TCMOOI.USE_YN = #{useYn}
+           </if>
+           ORDER BY BIZ_ORD ASC, TEAM_CD ASC
+		   OFFSET 0 ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>
+    <select id="selectMbrOprtrOrgInfoListNewVersionCnt" parameterType="HashMap" resultType="Integer">
+    	/* 새로운 버전의 운영팀조회 팝업 리스트 카운트 조회 - selectMbrOprtrOrgInfoListNewVersionCnt */
+    	SELECT COUNT(*)
+		  FROM TB_CO_MBR_OPRTR_ORG_INFO TCMOOI
+     LEFT JOIN TB_CC_SALS_TEAM_BASIS TCSTB ON TCMOOI.SALS_TEAM_CD = TCSTB.SALS_TEAM_CD 
+         WHERE TCMOOI.CO_CD = #{coCd}
+           /*
+           AND (
+		            (TCMOOI.TEAM_ATTR_CLCD = '01' AND TCMOOI.SALS_TEAM_CD IS NOT NULL)
+				OR
+		            (TCMOOI.TEAM_ATTR_CLCD = '20')
+				OR
+		            (TCMOOI.TEAM_ATTR_CLCD IN ('02','04'))
+				OR
+		            (TCMOOI.TEAM_ATTR_CLCD = '01')
+				OR
+		           	(TCMOOI.TEAM_ATTR_CLCD = '01' AND TCMOOI.SALS_CHR_CD IS NOT NULL)
+	           )
+	       */
+           <if test="teamCd != null and !teamCd.equals('') ">
+           	   AND TCMOOI.ORG_CD = #{teamCd}
+           </if>
+           <if test="teamNm != null and !teamNm.equals('') ">
+           	   AND TCMOOI.ORG_NM LIKE '%' || #{teamNm} || '%'
+           </if>
+           <if test="salsTeamCd != null and !salsTeamCd.equals('') ">
+           	   AND TCMOOI.SALS_TEAM_CD = #{salsTeamCd}
+           </if>
+           <if test="salsChrCd != null and !salsChrCd.equals('') ">
+           	   AND TCMOOI.SALS_CHR_CD = #{salsChrCd}
+           </if>
+           <if test="useYn!= null and !useYn.equals('') ">
+           	   AND TCMOOI.USE_YN = #{useYn}
+           </if>
+    </select>
+    
+    <select id="selectSvcOprtrMbr" parameterType="HashMap" resultType="HashMap">
+        /* custCmn.selectSvcOprtrMbr 서비스담당자 조회 */
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+        SELECT A.CO_CD						-- 회사코드
+        	 , A.EMP_NO						-- 사번
+			 , A.OPRTR_NM 					-- 담당자 명
+			 , A.ORG_CD						-- 조직코드
+			 , A.ORG_NM 					-- 조직코드 명
+			 , A.USR_SPR_CD	AS USR_SPR_CD	-- 직무
+			 , C.COM_DTL_CD_NM AS USR_SPR_NM
+		FROM TB_CO_MBR_OPRTR_INFO A
+		LEFT OUTER JOIN TB_CO_COM_CD_DTL C
+			ON ( C.LANG_CD = 'KO' AND C.COM_CLSF_CD = 'USR_SPR_CD' AND C.COM_USR_DEFN_NM_1 = A.USR_SPR_CD )
+		WHERE A.USE_YN = 'Y'
+		  AND A.USR_SPR_CD = '2'
+		  AND A.CO_CD = #{coCd}
+          <if test="empNo != null and !empNo.equals('') ">
+          AND A.EMP_NO = #{empNo}
+          </if>
+          <if test="oprtrNm != null and !oprtrNm.equals('') ">
+          AND A.OPRTR_NM LIKE '%' || #{oprtrNm} || '%'
+          </if>
+          <if test="orgCd != null and !orgCd.equals('') ">
+          AND A.ORG_CD = #{orgCd}
+          </if>
+          <if test="orgNm != null and !orgNm.equals('') ">
+          AND A.ORG_NM LIKE '%' || #{orgNm} || '%'
+          </if>
+          <if test="usrSprNm != null and !usrSprNm.equals('') ">
+          AND C.COM_DTL_CD_NM LIKE '%' || #{usrSprNm} || '%'
+          </if>
+		ORDER BY EMP_NO
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+    </select>
+    
+    <select id="selectCaddrRegNum" parameterType="HashMap" resultType="HashMap">
+        /* custCmn.selectCaddrRegNum 연락처 등록번호 조회 */
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" /> 
+        SELECT A.CO_CD 						-- 회사코드
+			 , A.CUST_HELPER_CADDR_REG_NO AS NO4CHK
+			 , A.CUST_HELPER_CADDR_REG_NO 	-- 연락처 등록번호
+			 , A.CADDR_SPR_CD 				-- 구분 
+			 , A.CADDR_DISP_NM 				-- Front표시명
+			 , A.CUST_HELPER_CADDR			-- 연락처
+			 , A.USE_YN						-- 사용여부
+			 , B.CADDR_CHN_SPR_CD 			-- 채널구분
+			 , B.EMAIL_ADDR 				-- 이메일		
+			 , (SELECT NVL(EMAIL_ADDR,'')
+                  FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL
+                 WHERE CO_CD = A.CO_CD 
+                   AND CUST_HELPER_CADDR_REG_NO = A.CUST_HELPER_CADDR_REG_NO
+                   AND CADDR_CHN_SPR_CD = '10'
+               ) AS EMAIL_ADDR_ALL                                                                /* 전체 이메일 */
+             , (SELECT NVL(EMAIL_ADDR,'')
+                  FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL
+                 WHERE CO_CD = A.CO_CD 
+                   AND CUST_HELPER_CADDR_REG_NO = A.CUST_HELPER_CADDR_REG_NO
+                   AND CADDR_CHN_SPR_CD = '20'
+               ) AS EMAIL_ADDR_DLV                                                                /* 배송 이메일 */
+             , (SELECT NVL(EMAIL_ADDR,'')
+                  FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL
+                 WHERE CO_CD = A.CO_CD 
+                   AND CUST_HELPER_CADDR_REG_NO = A.CUST_HELPER_CADDR_REG_NO
+                   AND CADDR_CHN_SPR_CD = '30'
+               ) AS EMAIL_ADDR_ORD                                                                /* 주문 이메일 */
+             , (SELECT NVL(EMAIL_ADDR,'')
+                  FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL
+                 WHERE CO_CD = A.CO_CD 
+                   AND CUST_HELPER_CADDR_REG_NO = A.CUST_HELPER_CADDR_REG_NO
+                   AND CADDR_CHN_SPR_CD = '40'
+               ) AS EMAIL_ADDR_AS                                                                 /* 반품/교환/취소/AS */
+               , (SELECT NVL(EMAIL_ADDR,'')
+                  FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL
+                 WHERE CO_CD = A.CO_CD 
+                   AND CUST_HELPER_CADDR_REG_NO = A.CUST_HELPER_CADDR_REG_NO
+                   AND CADDR_CHN_SPR_CD = '50'
+               ) AS EMAIL_ADDR_ETC                                                                /* 회원/정산/기타 */
+               , '' AS DSP_ONLY_EMAIL_ADDR                                                        /* 발신전용 이메일 */
+		FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_MST A
+		LEFT OUTER JOIN TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL B
+			ON (B.CO_CD = A.CO_CD AND B.CUST_HELPER_CADDR_REG_NO = A.CUST_HELPER_CADDR_REG_NO )
+		WHERE A.CO_CD = #{coCd}
+		  AND A.CADDR_SPR_CD IS NOT NULL
+          <if test="custHelperCaddrRegNo != null and !custHelperCaddrRegNo.equals('') ">
+          AND A.CUST_HELPER_CADDR_REG_NO LIKE '%' || #{custHelperCaddrRegNo} || '%'
+          </if>
+          <if test="caddrSprCd != null and !caddrSprCd.equals('') ">
+          AND A.CADDR_SPR_CD = #{caddrSprCd}
+          </if>
+          <if test="caddrDispNm != null and !caddrDispNm.equals('') ">
+          AND A.CADDR_DISP_NM LIKE '%' || #{caddrDispNm} || '%'
+          </if>
+          <if test="custHelperCaddr != null and !custHelperCaddr.equals('') ">
+          AND A.CUST_HELPER_CADDR LIKE '%' || #{custHelperCaddr} || '%'
+          </if>
+          
+          <if test='useYn != null and !"".equals(useYn)'>AND A.USE_YN = #{useYn}</if>
+          
+		ORDER BY TO_NUMBER(CUST_HELPER_CADDR_REG_NO) 
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+    </select>
+    
+    <select id="selectClientPopupList" parameterType="HashMap" resultType="HashMap">
+        /* custCmn.selectClientPopupList 회원멀티조회 SSP_BO_PP_25_1 */
+        SELECT 0 CHK
+			, A.MBR_ID
+			, B.MBR_NM
+			, SUBSTR(A.LOGN_ID,1,3) || LPAD('*',(LENGTH(A.LOGN_ID)-3),'*') AS LOGN_ID
+			, C.BZPLC_ID
+			, C.BZPLC_NM
+			, D.DEPT_ID
+			, D.DEPT_NM
+			, E.OPR_UNIT_ID
+			, E.OPR_UNIT_NM
+			, A.CO_CD
+			, BB.APRV_AUTH_USE_YN
+			, BB.ORD_AUTH_USE_YN
+			, BB.GI_AUTH_USE_YN 
+			, BB.CRD_STL_AUTH_USE_YN
+			, BB.CRD_STL_AUTH_USE_CD 
+			, BB.BGT_AUTH_USE_CD 
+			, BB.ADJ_AUTH_USE_CD 
+			, BB.MNG_AUTH_USE_CD  
+			, BB.TAXINV_AUTH_USE_YN 
+		 FROM SSP_APP.TB_CO_MBR_LOGN_INFO A
+	    INNER JOIN SSP_APP.TB_CC_MBR_BASIS B
+	 	    ON A.CO_CD = B.CO_CD
+	 	   AND A.MBR_ID = B.MBR_ID
+	    INNER JOIN SSP_APP.TB_CC_BZPLC_BASIS C	
+		   ON C.BZPLC_ID = A.BZPLC_ID
+		  AND C.CO_CD = A.CO_CD	
+	    INNER JOIN SSP_APP.TB_CC_DEPT_BASIS D
+	  	   ON D.CO_CD = B.CO_CD
+		  AND D.BZPLC_ID = B.BZPLC_ID
+		  AND D.DEPT_ID = B.DEPT_ID
+	    INNER JOIN SSP_APP.TB_CC_OPR_UNIT_BASIS E
+		   ON E.CO_CD = B.CO_CD
+		  AND E.BZPLC_ID = B.BZPLC_ID
+		  AND E.OPR_UNIT_ID = D.OPR_UNIT_ID
+	    LEFT OUTER JOIN TB_CC_MBR_CTL_AUTH_INFO BB
+		   ON B.CO_CD  = BB.CO_CD
+		  AND B.MBR_ID = BB.MBR_ID		  
+	    WHERE B.MBR_NM != '탈퇴'
+		  AND B.MBR_USE_CD = 'Y'
+<!--   		  AND BB.GI_AUTH_USE_YN = 'Y'  /* 입고권한사용여부       */ -->
+  		  
+			<if test="coCd != null and coCd !='' ">
+				AND A.CO_CD = #{coCd}
+			</if>
+			<if test="bzplcId != null and bzplcId !='' ">
+				AND C.BZPLC_ID = #{bzplcId}
+			</if>
+			<if test="oprUnitId != null and oprUnitId !='' ">
+				AND E.OPR_UNIT_ID = #{oprUnitId}
+			</if>	
+	   		<if test="mbrId != null and mbrId !='' ">
+				AND UPPER(A.MBR_ID) LIKE '%' || UPPER(#{mbrId}) || '%'
+			</if>
+			<if test="arrMbrId != null and arrMbrId.length > 0">
+				AND 
+				<foreach collection="arrMbrId" item="mbrId" open="(" close=")" separator="or">
+					UPPER(A.MBR_ID) LIKE '%' || UPPER(#{mbrId}) || '%'
+				</foreach>
+			</if>
+			<if test="mbrNm != null and mbrNm !='' ">
+				AND UPPER(B.MBR_NM) LIKE '%'|| UPPER(#{mbrNm}) ||'%'
+			</if>
+			<if test="arrMbrNm != null and arrMbrNm.length > 0">
+				AND 
+				<foreach collection="arrMbrNm" item="mbrNm" open="(" close=")" separator="or">
+					B.MBR_NM LIKE '%'|| #{mbrNm} ||'%'
+				</foreach>
+			</if>
+			<if test="lognId != null and lognId !='' ">
+				AND UPPER(A.LOGN_ID) LIKE '%' || UPPER(#{lognId})  || '%'
+			</if>
+	    ORDER BY A.MBR_ID
+ 	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+
+
+	<select id="selectUsdIddtMultiPop" parameterType="HashMap" resultType="HashMap">
+		/* custCmn.selectIddtMultiPop 산업군 멀티조회 */
+		<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />
+		SELECT '0' AS CHK
+		, USE_YN
+		, IDDT_ID
+		, IDDT_NM
+		, NVL(UPD_DTM, REG_DTM) AS UPD_DTM
+		FROM TB_CC_IDDT_BASIS IDDT
+		WHERE ROWNUM <![CDATA[<= ]]> 1000
+		AND USE_YN = 'Y'
+		<if test="iddtId != null and !iddtId.equals('') ">
+			AND IDDT_ID LIKE '%' || #{iddtId} || '%'
+		</if>
+		<if test="iddtNm != null and !iddtNm.equals('') ">
+			AND IDDT_NM LIKE '%' || #{iddtNm} || '%'
+		</if>
+		<if test="iddtIdStrArr != null and iddtIdStrArr.length > 0">
+			AND
+			<foreach collection="iddtIdStrArr" item="iddtIdStrArr" open="(" close=")" separator="or">
+				IDDT_ID LIKE '%' || #{iddtIdStrArr} || '%'
+			</foreach>
+		</if>
+		<if test="iddtNmStrArr != null and iddtNmStrArr.length > 0">
+			AND
+			<foreach collection="iddtNmStrArr" item="iddtNmStrArr" open="(" close=")" separator="or">
+				IDDT_NM LIKE '%' || #{iddtNmStrArr} || '%'
+			</foreach>
+		</if>
+		ORDER BY IDDT_ID
+		<include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+	</select>
+</mapper>

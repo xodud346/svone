@@ -1,0 +1,829 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+ 
+<!-- 
+****************************************************************************** 
+* SELECT : 정산관리 - 정산 대사 조회 
+* 작성자 : 윤민우 
+* 작성 일자 : 2022.03.29 
+****************************************************************************** 
+--> 
+<mapper namespace="com.ssp.bo.ad.adCalculate"> 
+ 
+    <!-- 정산 대사 목록 카운트 --> 
+    <select id="selectCalculateListCount" parameterType="HashMap" resultType="Integer"> 
+        /* com.ssp.bo.ad.adCalculate.selectCalculateListCount */ 
+            With BASE_DATA As 
+            ( 
+                Select  <if test=" OPR_UNIT_ID > 0 "> 
+                        /*+ LEADING(T2 M A A1 B C D E ) INDEX(A1 TB_OD_ODR_DTL_PK) INDEX(C TB_OD_ODR_DTL_PK) USE_NL(T2 M A A1 B C D E)*/ /*SSP-2675_개선_성진우_주문_정산관리화면 조회속도 개선*/
+                        </if>
+                        a.CO_CD                                                                                                 /* 회사코드 */ 
+                        , a.BZPLC_ID                                                                                            /* 사업장ID */ 
+                        , a.ODR_NO                                                                                              /* 주문번호 */ 
+                        , a.ODR_ITM_NO                                                                                          /* 주문항목번호 */ 
+                        , a.ADJ_YM                                                          As ADJ_YM                           /* 정산년월 */ 
+                        , b.ADJ_DCN_DTM                                                                                         /* 정산확정일시 */ 
+                        , b.ADJ_DCN_YN                                                      As DCN_YN                           /* 확정여부 */ 
+                        , a.ODR_QTY                                                         As ODR_QTY                          /* 주문수량 정산인 경우는 정산 수량*/ 
+                        , a1.SELL_UNIT_CD                                                                                       /* 판매단위코드 */ 
+                        , a1.SALSPRC                                                                                            /* 판매가 */ 
+                        , a1.CURR_UNIT_CD                                                                                       /* 통화단위코드 */ 
+                        , b.GI_DCN_DT                                                                                           /* 입고확정일자 */ 
+                        , b.ADJ_DCN_DEALR_ID                                                                                    /* 정산확정처리자ID */ 
+                        , b.RCV_EMAIL_ADDR                                                                                      /* 수신이메일주소 */ 
+                        , b.ADJ_BIL_ITM_NM                                                                                      /* 정산계산서품목명 */ 
+                        , b.ADJ_BIL_SPR_CD                                                                                      /* 정산계산서구분코드 */ 
+                        , b.FW_RSN_CTS                                                                                          /* 이월사유내용 */ 
+                From    TB_AD_ADJ_DTLS a 
+                        Join 
+                        TB_OD_ODR_MST m 
+                            On (m.CO_CD = a.CO_CD 
+                            And m.BZPLC_ID = a.BZPLC_ID 
+                            And m.ODR_NO = a.ODR_NO) 
+                        Join 
+                        TB_OD_ODR_DTL a1 
+                            On (a1.CO_CD = a.CO_CD 
+                            And a1.BZPLC_ID = a.BZPLC_ID 
+                            And a1.ODR_NO = a.ODR_NO 
+                            And a1.ODR_ITM_NO = a.ODR_ITM_NO) 
+                        Left Join 
+                        TB_AD_SSP_ADJ_HST b 
+                            On (b.CO_CD = a.CO_CD 
+                            And b.BZPLC_ID = a.BZPLC_ID 
+                            And b.ODR_NO = a.ODR_NO 
+                            And b.ODR_ITM_NO = a.ODR_ITM_NO 
+                            And b.ADJ_YM = a.ADJ_YM) 
+                        Join TB_OD_ODR_DTL C
+                            ON (C.CO_CD = A1.CO_CD 
+                            AND C.BZPLC_ID = A1.BZPLC_ID 
+                            AND C.ODR_NO = A1.ORI_ODR_NO 
+                            AND C.ODR_ITM_NO = A1.ORI_ITM_NO)
+                        JOIN
+                        TB_OD_ODR_MST D
+                            ON (D.CO_CD = A1.CO_CD 
+                            AND D.BZPLC_ID = A1.BZPLC_ID 
+                            AND D.ODR_NO = A1.ORI_ODR_NO) 
+                        LEFT JOIN TB_OD_ODR_TRMN_DTLS  E
+                            ON (E.CO_CD = A.CO_CD 
+                            AND E.BZPLC_ID = A.BZPLC_ID 
+                            AND E.ODR_NO = A.ODR_NO 
+                            AND E.ODR_ITM_NO = A.ODR_ITM_NO) 
+                    <if test=" BZPLC_ID > 0 "> 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T1 
+                        ON  T1.SES_ID = #{SES_ID} 
+                        AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T1.COL_ITM = 'BZPLC_ID' 
+                        AND T1.COND_DATA_VAL = m.BZPLC_ID 
+                    </if> 
+                    <if test=" OPR_UNIT_ID > 0 "> 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T2 
+                        ON  T2.SES_ID = #{SES_ID} 
+                        AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T2.COL_ITM = 'OPR_UNIT_ID' 
+                        AND T2.COND_DATA_VAL = m.OPR_UNIT_ID 
+                    </if> 
+                    <if test=" DEPT_ID > 0 "> 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T3 
+                        ON  T3.SES_ID = #{SES_ID} 
+                        AND T3.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T3.COL_ITM = 'DEPT_ID' 
+                        AND T3.COND_DATA_VAL = m.DEPT_ID 
+                    </if> 
+                    <if test=" ODR_NO > 0 "> 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T4 
+                        ON  T4.SES_ID = #{SES_ID} 
+                        AND T4.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T4.COL_ITM = 'ODR_NO' 
+                        AND REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,1) = a1.ODR_NO 
+                        AND (CASE WHEN TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR 
+                                      TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN 
+                                      a1.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL, '[^-]+', 1, 2))) END) = a1.ODR_ITM_NO 
+                    </if> 
+                    <if test=" ACCT_ID > 0 "> 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS  T5 
+                        ON  T5.SES_ID = #{SES_ID} 
+                        AND T5.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T5.COL_ITM = 'ACCT_ID' 
+                        AND T5.COND_DATA_VAL = a1.ACCT_ID 
+                    </if> 
+                    JOIN TB_AD_ADJ_FW_PROC T6
+                     On (t6.CO_CD = a.CO_CD 
+                        And t6.BZPLC_ID = a.BZPLC_ID 
+                        And t6.ODR_NO = a.ODR_NO 
+                        And t6.ODR_ITM_NO = a.ODR_ITM_NO) 
+                    WHERE 1=1 
+                    AND t6.ADJ_YM = #{ADJ_YM} 
+                    /* SSP-2724_성진우_20230322 */
+                    AND ( 
+                         /* 반품이 존재하는 주문의 경우 1. 정상반품X, 위수탁회수여부Y 가 아닌건(회수건제외). 2. 정상반품X, 위수탁회수여부가Y면서 반품수량이 존재하는건.(반품건중 수량존재하는건) */
+                         (
+                          EXISTS (SELECT  /*+ INDEX(Z TB_OD_ODR_DTL_IX12)*/ 1 FROM TB_OD_ODR_DTL Z WHERE Z.ORI_ODR_NO = C.ODR_NO AND Z.ORI_ITM_NO = C.ODR_ITM_NO AND ODR_NO like '9%')
+                          AND  (
+                               (D.NRML_RTNGDS_SPR_CD = 'N' AND C.CNSG_RTRV_YN = 'N' AND NVL(C.RTNGDS_QTY,0) > 0)OR NOT(D.NRML_RTNGDS_SPR_CD = 'N' AND C.CNSG_RTRV_YN = 'Y')
+                               )
+                          )
+                         /* 반품이 없는건 정상주문건은 종결처리가 안 된건 */ 
+                          OR 
+                          (NOT EXISTS (SELECT  /*+ INDEX(Z TB_OD_ODR_DTL_IX12)*/ 1 FROM TB_OD_ODR_DTL Z WHERE Z.ORI_ODR_NO = C.ODR_NO AND Z.ORI_ITM_NO = C.ODR_ITM_NO AND ODR_NO like '9%') AND NVL(E.ODR_TRMN_YN,'N') != 'Y')
+                       )
+                    <if test="ODRPSN_ID != null and ODRPSN_ID != ''"> 
+                    AND m.ODRPSN_ID = #{ODRPSN_ID} 
+                    </if> 
+                    <if test="ADJ_DCN_DEALR_ID != null and ADJ_DCN_DEALR_ID != ''"> 
+                    AND a.ADJ_DCN_DEALR_ID = #{ADJ_DCN_DEALR_ID} 
+                    </if> 
+                    <if test="DCN_YN != null and DCN_YN != ''"> 
+                    AND b.ADJ_DCN_YN = #{DCN_YN} 
+                    </if> 
+            ) 
+            Select 
+                    count(*) 
+            From    BASE_DATA a 
+ 
+ 
+    </select> 
+ 
+    <!-- 정산 대사 목록 조회 --> 
+    <select id="selectCalculateList" parameterType="HashMap" resultType="HashMap"> 
+        /* com.ssp.bo.ad.adCalculate.selectCalculateList */ 
+        With BASE_DATA As 
+        ( 
+            Select  <if test=" OPR_UNIT_ID > 0 "> 
+                        /*+ LEADING(T2 M A A1 B C D E ) INDEX(A1 TB_OD_ODR_DTL_PK) INDEX(C TB_OD_ODR_DTL_PK) USE_NL(T2 M A A1 B C D E)*/ /*SSP-2675_개선_성진우_주문_정산관리화면 조회속도 개선*/
+                    </if>
+                    a.CO_CD                                                                                                 /* 회사코드 */ 
+                    , a.BZPLC_ID                                                                                            /* 사업장ID */ 
+                    , a.ODR_NO                                                                                              /* 주문번호 */ 
+                    , a.ODR_ITM_NO                                                                                          /* 주문항목번호 */ 
+                    , t6.ADJ_YM                                                          As ADJ_YM                           /* 정산년월 */ 
+                    , b.ADJ_DCN_DTM                                                                                         /* 정산확정일시 */ 
+                    , b.ADJ_DCN_YN                                                      As DCN_YN                           /* 확정여부 */ 
+                    , a.ODR_QTY                                                         As ODR_QTY                          /* 주문수량 정산인 경우는 정산 수량*/ 
+                    , a1.SELL_UNIT_CD                                                                                       /* 판매단위코드 */ 
+                    , a1.SALSPRC                                                                                            /* 판매가 */ 
+                    , a1.CURR_UNIT_CD                                                                                       /* 통화단위코드 */ 
+                    , b.GI_DCN_DT                                                                                           /* 입고확정일자 */ 
+                    , b.ADJ_DCN_DEALR_ID                                                                                    /* 정산확정처리자ID */ 
+                    , CASE WHEN b.RCV_EMAIL_ADDR IS NULL THEN ''
+                               WHEN REGEXP_INSTR(b.RCV_EMAIL_ADDR, '@') > 0 
+                                    THEN SUBSTR(b.RCV_EMAIL_ADDR,1,INSTR(b.RCV_EMAIL_ADDR,'@', 1)-4 )
+                                         ||LPAD('*',3,'*')||SUBSTR(b.RCV_EMAIL_ADDR,INSTR(b.RCV_EMAIL_ADDR,'@', 1)) 
+                               ELSE b.RCV_EMAIL_ADDR
+                           END AS RCV_EMAIL_ADDR                                                                            /* 수신이메일주소 */ 
+                    , b.ADJ_BIL_ITM_NM                                                                                      /* 정산계산서품목명 */ 
+                    , b.ADJ_BIL_SPR_CD                                                                                      /* 정산계산서구분코드 */ 
+                    , b.FW_RSN_CTS                                                                                          /* 이월사유내용 */ 
+            From    TB_AD_ADJ_DTLS a 
+                    Join 
+                    TB_OD_ODR_MST m 
+                        On (m.CO_CD = a.CO_CD 
+                        And m.BZPLC_ID = a.BZPLC_ID 
+                        And m.ODR_NO = a.ODR_NO) 
+                    Join 
+                    TB_OD_ODR_DTL a1 
+                        On (a1.CO_CD = a.CO_CD 
+                        And a1.BZPLC_ID = a.BZPLC_ID 
+                        And a1.ODR_NO = a.ODR_NO 
+                        And a1.ODR_ITM_NO = a.ODR_ITM_NO) 
+                    Left Join 
+                    TB_AD_SSP_ADJ_HST b 
+                        On (b.CO_CD = a.CO_CD 
+                        And b.BZPLC_ID = a.BZPLC_ID 
+                        And b.ODR_NO = a.ODR_NO 
+                        And b.ODR_ITM_NO = a.ODR_ITM_NO 
+                        And b.ADJ_YM = a.ADJ_YM) 
+                    Join
+                    TB_OD_ODR_DTL C
+                        ON (C.CO_CD = A1.CO_CD 
+                        AND C.BZPLC_ID = A1.BZPLC_ID 
+                        AND C.ODR_NO = A1.ORI_ODR_NO 
+                        AND C.ODR_ITM_NO = A1.ORI_ITM_NO)
+                    JOIN
+                    TB_OD_ODR_MST D
+                        ON (D.CO_CD = A1.CO_CD 
+                        AND D.BZPLC_ID = A1.BZPLC_ID 
+                        AND D.ODR_NO = A1.ORI_ODR_NO) 
+                    LEFT JOIN TB_OD_ODR_TRMN_DTLS  E
+                        ON (E.CO_CD = A.CO_CD 
+                        AND E.BZPLC_ID = A.BZPLC_ID 
+                        AND E.ODR_NO = A.ODR_NO 
+                        AND E.ODR_ITM_NO = A.ODR_ITM_NO) 
+                <if test=" BZPLC_ID > 0 "> 
+                    JOIN 
+                    TB_OD_ODR_INQ_TGT_DTLS   T1 
+                    ON  T1.SES_ID = #{SES_ID} 
+                    AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                    AND T1.COL_ITM = 'BZPLC_ID' 
+                    AND T1.COND_DATA_VAL = m.BZPLC_ID 
+                </if> 
+                <if test=" OPR_UNIT_ID > 0 "> 
+                    JOIN 
+                    TB_OD_ODR_INQ_TGT_DTLS   T2 
+                    ON  T2.SES_ID = #{SES_ID} 
+                    AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                    AND T2.COL_ITM = 'OPR_UNIT_ID' 
+                    AND T2.COND_DATA_VAL = m.OPR_UNIT_ID 
+                </if> 
+                <if test=" DEPT_ID > 0 "> 
+                    JOIN 
+                    TB_OD_ODR_INQ_TGT_DTLS   T3 
+                    ON  T3.SES_ID = #{SES_ID} 
+                    AND T3.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                    AND T3.COL_ITM = 'DEPT_ID' 
+                    AND T3.COND_DATA_VAL = m.DEPT_ID 
+                </if> 
+                <if test=" ODR_NO > 0 "> 
+                    JOIN 
+                    TB_OD_ODR_INQ_TGT_DTLS   T4 
+                    ON  T4.SES_ID = #{SES_ID} 
+                    AND T4.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                    AND T4.COL_ITM = 'ODR_NO' 
+                    AND REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,1) = a1.ODR_NO 
+                    AND (CASE WHEN TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR 
+                                  TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN 
+                                  a1.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2))) END) = a1.ODR_ITM_NO 
+                </if> 
+                <if test=" ACCT_ID > 0 "> 
+                    JOIN 
+                    TB_OD_ODR_INQ_TGT_DTLS  T5 
+                    ON  T5.SES_ID = #{SES_ID} 
+                    AND T5.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                    AND T5.COL_ITM = 'ACCT_ID' 
+                    AND T5.COND_DATA_VAL = a1.ACCT_ID 
+                </if> 
+                    JOIN TB_AD_ADJ_FW_PROC T6
+                     On (t6.CO_CD = a.CO_CD 
+                        And t6.BZPLC_ID = a.BZPLC_ID 
+                        And t6.ODR_NO = a.ODR_NO 
+                        And t6.ODR_ITM_NO = a.ODR_ITM_NO) 
+                WHERE 1=1 
+                AND t6.ADJ_YM = #{ADJ_YM} 
+                 /* SSP-2724_성진우_20230322 */
+                AND ( 
+                         /* 반품이 존재하는 주문의 경우 1. 정상반품X, 위수탁회수여부Y 가 아닌건(회수건제외). 2. 정상반품X, 위수탁회수여부가Y면서 반품수량이 존재하는건.(반품건중 수량존재하는건) */
+                         (
+                          EXISTS (SELECT  /*+ INDEX(Z TB_OD_ODR_DTL_IX12)*/ 1 FROM TB_OD_ODR_DTL Z WHERE Z.ORI_ODR_NO = C.ODR_NO AND Z.ORI_ITM_NO = C.ODR_ITM_NO AND ODR_NO like '9%')
+                          AND  (
+                               (D.NRML_RTNGDS_SPR_CD = 'N' AND C.CNSG_RTRV_YN = 'N' AND NVL(C.RTNGDS_QTY,0) > 0)OR NOT(D.NRML_RTNGDS_SPR_CD = 'N' AND C.CNSG_RTRV_YN = 'Y')
+                               )
+                          )
+                         /* 반품이 없는건 정상주문건은 종결처리가 안 된건 */ 
+                          OR 
+                          (NOT EXISTS (SELECT  /*+ INDEX(Z TB_OD_ODR_DTL_IX12)*/ 1 FROM TB_OD_ODR_DTL Z WHERE Z.ORI_ODR_NO = C.ODR_NO AND Z.ORI_ITM_NO = C.ODR_ITM_NO AND ODR_NO like '9%') AND NVL(E.ODR_TRMN_YN,'N') != 'Y')
+                      )
+                <if test="ODRPSN_ID != null and ODRPSN_ID != ''"> 
+                AND m.ODRPSN_ID = #{ODRPSN_ID} 
+                </if> 
+                <if test="ADJ_DCN_DEALR_ID != null and ADJ_DCN_DEALR_ID != ''"> 
+                AND a.ADJ_DCN_DEALR_ID = #{ADJ_DCN_DEALR_ID} 
+                </if> 
+                <if test="DCN_YN != null and DCN_YN != ''"> 
+                AND b.ADJ_DCN_YN = #{DCN_YN} 
+                </if> 
+        ) 
+        Select /*+ NO_MERGE(A) INDEX(E TB_OD_ODR_DTL_IX02) LEADING(A) USE_NL(A C D E F G H I J K L M N O P)*/
+                a.CO_CD 
+                , a.BZPLC_ID                                                                                                /* 사업장id*/ 
+                , a.ODR_NO 
+                , a.ODR_ITM_NO 
+                , a.DCN_YN                                                                                                  /* 확정여부 */ 
+                , a.ADJ_YM                                                                                                  /* 검수월 */ 
+                , a.ODR_NO || '-' || To_Char(a.ODR_ITM_NO)                              As ODR_NO_AND_ITEM_NO               /*주문품목번호*/ 
+                , a.ODR_QTY                 /* 주문수량 */ 
+                , FN_OD_GET_ADJ_YYYYMM(c.ADJ_DD,TO_DATE(a.GI_DCN_DT Default Null On Conversion Error ,'YYYYMMDD')) 
+                                                                                        As ORG_ADJ_YM                       /*원래 정산년월*/ 
+                 
+                <![CDATA[ 
+                , Case 
+                    When FN_OD_GET_ADJ_YYYYMM(c.ADJ_DD,TO_DATE(a.GI_DCN_DT Default Null On Conversion Error ,'YYYYMMDD')) = a.ADJ_YM Then 
+                        '당월' 
+                    When FN_OD_GET_ADJ_YYYYMM(c.ADJ_DD,TO_DATE(a.GI_DCN_DT Default Null On Conversion Error ,'YYYYMMDD')) > a.ADJ_YM Then 
+                        '전월' 
+                    When FN_OD_GET_ADJ_YYYYMM(c.ADJ_DD,TO_DATE(a.GI_DCN_DT Default Null On Conversion Error ,'YYYYMMDD')) < a.ADJ_YM Then 
+                        '이월' 
+                End                                                                     As ADJ_FW_SPR_NM2                    -- 전월/이월구분 
+                ]]> 
+                 
+                , CASE WHEN a.DCN_YN = 'Y' THEN TO_CHAR(TO_DATE(a.ADJ_YM, 'YYYYMM'), 'YYYY-MM') END     ADJ_FW_SPR_NM       -- 전월/이월구분 
+                , a.FW_RSN_CTS                                                                                              /* 전월/이월 사유 */ 
+                , a.ADJ_BIL_SPR_CD                                                                                          /* 계산서 구분 */ 
+                , a.ADJ_BIL_ITM_NM                                                                                          /* 계산서품목명 */ 
+                , a.RCV_EMAIL_ADDR                                                                                          /* 수신이메일주소 */ 
+                , d.BZPLC_NM                                                                                                /* 사업장명 */ 
+                , b.OPR_UNIT_ID                                                                                             /* 운영단위ID */ 
+                , c.OPR_UNIT_NM                                                                                             /* 운영단위명 */ 
+                , b.DEPT_ID                                                             As ODR_DEPT_ID                      /* 주문부서id */ 
+                , f.CCO_DEPT_CD                                                         As ODR_DEPT_CD                      /* 주문부서코드 */ 
+                , f.DEPT_NM                                                             As ODR_DEPT_NM                      /* 부서명 */ 
+                , b.ODRPSN_ID                                                                                               /* 주문자ID */ 
+                , g.MBR_NM                                                              As ODRPSN_NM                        /* 주문자명 */ 
+                , b.ODR_DLGTE_ID                                                                                            /* 주문대행자ID */ 
+                , h.MBR_NM                                                              As ODR_DLGTE_NM                     /* 주문대행자명 */ 
+                , e.RCVR_NM                                                                                                 /* 수령인명 */ 
+                , LTRIM(e.PRD_ID, '0')                                                  As PRD_ID                           /* 상품ID */ 
+                , i.PRD_NM                                                                                                  /* 상품명 */ 
+                , j.MRO_REPR_ATTR || i.SSP_REPR_ATTR                                    As REPR_ATTR                        /* 규격 */ 
+                , a.SALSPRC                                                                                                 /* 판매가 */ 
+                , (CASE WHEN A.ODR_NO LIKE '9%' THEN -1 ELSE 1 END) * e.SALE_AMT        AS SALE_AMT                         /* 판매금액(VAT제외) */ 
+                , (CASE WHEN A.ODR_NO LIKE '9%' THEN -1 ELSE 1 END) * e.VAT_AMT         AS VAT_AMT                          /* VAT */ 
+                , (CASE WHEN A.ODR_NO LIKE '9%' THEN -1 ELSE 1 END) * (Nvl(e.SALE_AMT,0) + Nvl(e.VAT_AMT,0)) As SUM_SALE_AMT /* 판매금액(VAT포함) */
+                , a.SELL_UNIT_CD                                                                                            /* 주문단위 */ 
+                , e.COST_TRNSF_DEPT_ID                                                                                      /* 이체부서ID */ 
+                , k.CCO_DEPT_CD                                                         As COST_TRNSF_DEPT_CD               /* 이체부서코드 */ 
+                , k.DEPT_NM                                                             As COST_TRNSF_DEPT_NM               /* 이체부서명 */ 
+                , e.ACCT_ID                                                                                                 /* 계정ID */ 
+                , l.ACCT_CD                                                                                                 /* 고객사계정코드 */ 
+                , l.ACCT_NM                                                                                                 /* 계정명 */ 
+                , e.ODR_DCN_DTM 
+                , m.DLV_CMPL_DTM 
+                , n.GI_DTM 
+                , n.GDPSN_ID                                                                                                /* 입고자ID */ 
+                , o.MBR_NM                                                              As GDPSN_NM                         /* 입고자명 */ 
+                , n.AUTO_GI_YN                                                                                              /* 자동입고여부 */ 
+                , To_Char(a.ADJ_DCN_DTM,'YYYY.MM.DD HH24:MI:SS')                        As ADJ_DCN_DTM                      /* 정산확정일시 */ 
+                , a.ADJ_DCN_DEALR_ID                                                                                        /* 정산확정처리자ID */ 
+                , p.MBR_NM                                                              As ADJ_DCN_DEALR_NM                 /* 정산확정처리자명 */ 
+        From    BASE_DATA a 
+                Left Join 
+                TB_OD_ODR_MST b 
+                    On (b.CO_CD = a.CO_CD 
+                    And b.BZPLC_ID = a.BZPLC_ID 
+                    And b.ODR_NO = a.ODR_NO) 
+                Left Join 
+                TB_CC_OPR_UNIT_BASIS c 
+                    On (c.CO_CD = b.CO_CD 
+                    And c.BZPLC_ID = b.BZPLC_ID 
+                    And c.OPR_UNIT_ID = b.OPR_UNIT_ID) 
+                Left Join 
+                TB_CC_BZPLC_BASIS d 
+                    On (d.CO_CD = a.CO_CD 
+                    And d.BZPLC_ID = a.BZPLC_ID) 
+                Left Join 
+                TB_OD_ODR_DTL e 
+                    On (e.CO_CD = a.CO_CD 
+                    And e.BZPLC_ID = a.BZPLC_ID 
+                    And e.ODR_NO = a.ODR_NO 
+                    And e.ODR_ITM_NO = a.ODR_ITM_NO) 
+                Left Join 
+                TB_CC_DEPT_BASIS f 
+                    On (f.CO_CD = b.CO_CD 
+                    And f.DEPT_ID = b.DEPT_ID) 
+                Left Join 
+                TB_CC_MBR_BASIS g 
+                    On (g.CO_CD = b.CO_CD 
+                    And g.MBR_ID = b.ODRPSN_ID) 
+                Left Join 
+                TB_CC_MBR_BASIS h 
+                    On (h.CO_CD = b.CO_CD 
+                    And h.MBR_ID = b.ODR_DLGTE_ID) 
+                Left Join 
+                TB_PR_PRD_INFO i 
+                    On (i.CO_CD = e.CO_CD 
+                    And i.PRD_ID = e.PRD_ID) 
+                Left Join 
+                TB_PR_MRO_PRD_INFO j 
+                    On (j.CO_CD = e.CO_CD 
+                    And j.PRD_ID = e.PRD_ID) 
+                Left Join 
+                TB_CC_DEPT_BASIS k 
+                    On (k.CO_CD = e.CO_CD 
+                    And k.DEPT_ID = e.COST_TRNSF_DEPT_ID) 
+                Left Join 
+                TB_CC_BGT_ACCT_BASIS l 
+                    On (l.CO_CD = e.CO_CD 
+                    And l.BZPLC_ID = e.BZPLC_ID 
+                    And l.ACCT_ID = e.ACCT_ID) 
+                Left Join 
+                TB_DL_ODR_ACP_DLV_PROC m 
+                    On (m.CO_CD = e.CO_CD 
+                    And m.BZPLC_ID = e.BZPLC_ID 
+                    And m.ODR_NO = e.ODR_NO 
+                    And m.ODR_ITM_NO = e.ODR_ITM_NO) 
+                Left Join 
+                TB_AD_GI_DCN_PROC n 
+                    On (n.CO_CD = e.CO_CD 
+                    And n.BZPLC_ID = e.BZPLC_ID 
+                    And n.ODR_NO = e.ODR_NO 
+                    And n.ODR_ITM_NO = e.ODR_ITM_NO) 
+                Left Join 
+                TB_CC_MBR_BASIS o 
+                    On (o.CO_CD = n.CO_CD 
+                    And o.MBR_ID = n.GDPSN_ID) 
+                Left Join 
+                TB_CC_MBR_BASIS p 
+                    On (p.CO_CD = a.CO_CD 
+                    And p.MBR_ID = a.ADJ_DCN_DEALR_ID) 
+        Order By 
+                a.ADJ_YM 
+                ,a.ODR_NO 
+                ,a.ODR_ITM_NO 
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY 
+    </select> 
+ 
+    <!-- 미정산 내역 목록 전체 카운트 --> 
+    <select id="selectNoCalculateListCount" parameterType="HashMap" resultType="Integer"> 
+        /* com.ssp.bo.ad.adCalculate.selectNoCalculateListCount */ 
+ 
+            With BASE_DATA As 
+            ( 
+                Select  <if test=" OPR_UNIT_ID > 0 "> 
+                         /*+ LEADING(T2 M A A1 B C D E ) INDEX(A1 TB_OD_ODR_DTL_PK) INDEX(C TB_OD_ODR_DTL_PK) USE_NL(T2 M A A1 B C D E)*/ /*SSP-2675_개선_성진우_주문_정산관리화면 조회속도 개선*/
+                        </if>
+                          a.CO_CD                                                                                                 /* 회사코드 */ 
+                        , a.BZPLC_ID                                                                                            /* 사업장ID */ 
+                        , a.ODR_NO                                                                                              /* 주문번호 */ 
+                        , a.ODR_ITM_NO                                                                                          /* 주문항목번호 */ 
+                        , nvl(b.ADJ_BSS_YM,a.adj_ym)                                        As ADJ_YM                           /* 정산년월 */ 
+                        , a.ADJ_DCN_DTM                                                                                         /* 정산확정일시 */ 
+                        , a.ADJ_DCN_YN                                                      As DCN_YN                           /* 확정여부 */ 
+                        , nvl(b.MCAL_QTY,a1.odr_qty)                                        As ODR_QTY                          /* 주문수량 미정산인 경우는 미정산 수량*/ 
+                        , a1.SELL_UNIT_CD                                                                                       /* 판매단위코드 */ 
+                        , a1.SALSPRC                                                                                            /* 판매가 */ 
+                        , a1.CURR_UNIT_CD                                                                                       /* 통화단위코드 */ 
+                        , a.GI_DCN_DT                                                                                           /* 입고확정일자 */ 
+                        , a.ADJ_DCN_DEALR_ID                                                                                    /* 정산확정처리자ID */ 
+                        , a.RCV_EMAIL_ADDR                                                                                      /* 수신이메일주소 */ 
+                        , a.ADJ_BIL_ITM_NM                                                                                      /* 정산계산서품목명 */ 
+                        , a.ADJ_BIL_SPR_CD                                                                                      /* 정산계산서구분코드 */ 
+                        , a.FW_RSN_CTS                                                                                          /* 이월사유내용 */ 
+                        , m.OPR_UNIT_ID 
+                        , m.ODRPSN_ID 
+                        , m.ODR_DLGTE_ID 
+                        , m.DEPT_ID 
+                From    TB_AD_SSP_ADJ_DTLS a 
+                        Join 
+                        TB_OD_ODR_MST m 
+                            On (m.CO_CD = a.CO_CD 
+                            And m.BZPLC_ID = a.BZPLC_ID 
+                            And m.ODR_NO = a.ODR_NO) 
+                        Join 
+                        TB_OD_ODR_DTL a1 
+                            On (a1.CO_CD = a.CO_CD 
+                            And a1.BZPLC_ID = a.BZPLC_ID 
+                            And a1.ODR_NO = a.ODR_NO 
+                            And a1.ODR_ITM_NO = a.ODR_ITM_NO) 
+                        Join 
+                        TB_AD_ADJ_TGT_DTLS b 
+                            On (b.CO_CD = a.CO_CD 
+                            And b.BZPLC_ID = a.BZPLC_ID 
+                            And b.ODR_NO = a.ODR_NO 
+                            And b.ODR_ITM_NO = a.ODR_ITM_NO) 
+                        Join
+                        TB_OD_ODR_DTL C
+                            ON (C.CO_CD = A1.CO_CD 
+                            AND C.BZPLC_ID = A1.BZPLC_ID 
+                            AND C.ODR_NO = A1.ORI_ODR_NO 
+                            AND C.ODR_ITM_NO = A1.ORI_ITM_NO)
+                        JOIN
+                        TB_OD_ODR_MST D
+                            ON (D.CO_CD = A1.CO_CD 
+                            AND D.BZPLC_ID = A1.BZPLC_ID 
+                            AND D.ODR_NO = A1.ORI_ODR_NO) 
+                        LEFT JOIN TB_OD_ODR_TRMN_DTLS  E
+                            ON (E.CO_CD = A.CO_CD 
+                            AND E.BZPLC_ID = A.BZPLC_ID 
+                            AND E.ODR_NO = A.ODR_NO 
+                            AND E.ODR_ITM_NO = A.ODR_ITM_NO) 
+                    <if test=" BZPLC_ID > 0 "> 
+                        /* 사업장 */ 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T1 
+                        ON  T1.SES_ID = #{SES_ID} 
+                        AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T1.COL_ITM = 'BZPLC_ID' 
+                        AND T1.COND_DATA_VAL = m.BZPLC_ID 
+                    </if> 
+                    <if test=" OPR_UNIT_ID > 0 "> 
+                        /* 운영단위 */ 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T2 
+                        ON  T2.SES_ID = #{SES_ID} 
+                        AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T2.COL_ITM = 'OPR_UNIT_ID' 
+                        AND T2.COND_DATA_VAL = m.OPR_UNIT_ID 
+                    </if> 
+                    <if test=" DEPT_ID > 0 "> 
+                        /* 주문부서 */ 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T3 
+                        ON  T3.SES_ID = #{SES_ID} 
+                        AND T3.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T3.COL_ITM = 'DEPT_ID' 
+                        AND T3.COND_DATA_VAL = m.DEPT_ID 
+                    </if> 
+                    <if test=" ODR_NO > 0 "> 
+                        /* 주문번호 */ 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T4 
+                        ON  T4.SES_ID = #{SES_ID} 
+                        AND T4.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T4.COL_ITM = 'ODR_NO' 
+                        AND REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,1) = a1.ODR_NO 
+                        AND (CASE WHEN TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR 
+                                      TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN 
+                                      a1.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2))) END) = a1.ODR_ITM_NO 
+                    </if> 
+                    <if test=" ACCT_ID > 0 "> 
+                        /* 계정 */ 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS  T5 
+                        ON  T5.SES_ID = #{SES_ID} 
+                        AND T5.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T5.COL_ITM = 'ACCT_ID' 
+                        AND T5.COND_DATA_VAL = a1.ACCT_ID 
+                    </if> 
+                Where   1=1 
+                 /* SSP-2724_성진우_20230322 */
+                 AND ( 
+                         /* 반품이 존재하는 주문의 경우 1. 정상반품X, 위수탁회수여부Y 가 아닌건(회수건제외). 2. 정상반품X, 위수탁회수여부가Y면서 반품수량이 존재하는건.(반품건중 수량존재하는건) */
+                         (
+                          EXISTS (SELECT  /*+ INDEX(Z TB_OD_ODR_DTL_IX12)*/ 1 FROM TB_OD_ODR_DTL Z WHERE Z.ORI_ODR_NO = C.ODR_NO AND Z.ORI_ITM_NO = C.ODR_ITM_NO AND ODR_NO like '9%')
+                          AND  (
+                               (D.NRML_RTNGDS_SPR_CD = 'N' AND C.CNSG_RTRV_YN = 'N' AND NVL(C.RTNGDS_QTY,0) > 0)OR NOT(D.NRML_RTNGDS_SPR_CD = 'N' AND C.CNSG_RTRV_YN = 'Y')
+                               )
+                          )
+                         /* 반품이 없는건 정상주문건은 종결처리가 안 된건 */ 
+                          OR 
+                          (NOT EXISTS (SELECT  /*+ INDEX(Z TB_OD_ODR_DTL_IX12)*/ 1 FROM TB_OD_ODR_DTL Z WHERE Z.ORI_ODR_NO = C.ODR_NO AND Z.ORI_ITM_NO = C.ODR_ITM_NO AND ODR_NO like '9%') AND NVL(E.ODR_TRMN_YN,'N') != 'Y')
+                      )
+            ) 
+            Select 
+                    count(*) 
+            From    BASE_DATA a 
+ 
+    </select> 
+ 
+    <!-- 미정산 내역 목록 전체 조회 --> 
+    <select id="selectNoCalculateList" parameterType="HashMap" resultType="HashMap"> 
+        /* com.ssp.bo.ad.adCalculate.selectNoCalculateList */ 
+        With BASE_DATA As 
+            ( 
+                Select  <if test=" OPR_UNIT_ID > 0 "> 
+                         /*+ LEADING(T2 M A A1 B C D E ) INDEX(A1 TB_OD_ODR_DTL_PK) INDEX(C TB_OD_ODR_DTL_PK) USE_NL(T2 M A A1 B C D E)*/ /*SSP-2675_개선_성진우_주문_정산관리화면 조회속도 개선*/
+                        </if>
+                          a.CO_CD                                                                                                 /* 회사코드 */ 
+                        , a.BZPLC_ID                                                                                            /* 사업장ID */ 
+                        , a.ODR_NO                                                                                              /* 주문번호 */ 
+                        , a.ODR_ITM_NO                                                                                          /* 주문항목번호 */ 
+                        , nvl(t6.ADJ_YM,a.adj_ym)                                        As ADJ_YM                           /* 정산년월 */ 
+                        , a.ADJ_DCN_DTM                                                                                         /* 정산확정일시 */ 
+                        , a.ADJ_DCN_YN                                                      As DCN_YN                           /* 확정여부 */ 
+                        , nvl(b.MCAL_QTY,a1.odr_qty)                                        As ODR_QTY                          /* 주문수량 미정산인 경우는 미정산 수량*/ 
+                        , a1.SELL_UNIT_CD                                                                                       /* 판매단위코드 */ 
+                        , a1.SALSPRC                                                                                            /* 판매가 */ 
+                        , a1.CURR_UNIT_CD                                                                                       /* 통화단위코드 */ 
+                        , a.GI_DCN_DT                                                                                           /* 입고확정일자 */ 
+                        , a.ADJ_DCN_DEALR_ID                                                                                    /* 정산확정처리자ID */ 
+                        , a.RCV_EMAIL_ADDR AS RCV_EMAIL_ADDR                                                                    /* 수신이메일주소 */ 
+                        , a.ADJ_BIL_ITM_NM                                                                                      /* 정산계산서품목명 */ 
+                        , a.ADJ_BIL_SPR_CD                                                                                      /* 정산계산서구분코드 */ 
+                        , a.FW_RSN_CTS                                                                                          /* 이월사유내용 */ 
+                        , m.OPR_UNIT_ID 
+                        , m.ODRPSN_ID 
+                        , m.ODR_DLGTE_ID 
+                        , m.DEPT_ID 
+                        , a.DCN_ADJ_YM      /* 확정정산년월 */ 
+                From    TB_AD_SSP_ADJ_DTLS a 
+                        Join 
+                        TB_OD_ODR_MST m 
+                            On (m.CO_CD = a.CO_CD 
+                            And m.BZPLC_ID = a.BZPLC_ID 
+                            And m.ODR_NO = a.ODR_NO) 
+                        Join 
+                        TB_OD_ODR_DTL a1 
+                            On (a1.CO_CD = a.CO_CD 
+                            And a1.BZPLC_ID = a.BZPLC_ID 
+                            And a1.ODR_NO = a.ODR_NO 
+                            And a1.ODR_ITM_NO = a.ODR_ITM_NO) 
+                        Join 
+                        TB_AD_ADJ_TGT_DTLS b 
+                            On (b.CO_CD = a.CO_CD 
+                            And b.BZPLC_ID = a.BZPLC_ID 
+                            And b.ODR_NO = a.ODR_NO 
+                            And b.ODR_ITM_NO = a.ODR_ITM_NO) 
+                        Join
+                        TB_OD_ODR_DTL C
+                            ON (C.CO_CD = A1.CO_CD 
+                            AND C.BZPLC_ID = A1.BZPLC_ID 
+                            AND C.ODR_NO = A1.ORI_ODR_NO 
+                            AND C.ODR_ITM_NO = A1.ORI_ITM_NO)
+                        JOIN
+                        TB_OD_ODR_MST D
+                            ON (D.CO_CD = A1.CO_CD 
+                            AND D.BZPLC_ID = A1.BZPLC_ID 
+                            AND D.ODR_NO = A1.ORI_ODR_NO) 
+                        LEFT JOIN TB_OD_ODR_TRMN_DTLS  E
+                            ON (E.CO_CD = A.CO_CD 
+                            AND E.BZPLC_ID = A.BZPLC_ID 
+                            AND E.ODR_NO = A.ODR_NO 
+                            AND E.ODR_ITM_NO = A.ODR_ITM_NO) 
+                    <if test=" BZPLC_ID > 0 "> 
+                        /* 사업장 */ 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T1 
+                        ON  T1.SES_ID = #{SES_ID} 
+                        AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T1.COL_ITM = 'BZPLC_ID' 
+                        AND T1.COND_DATA_VAL = m.BZPLC_ID 
+                    </if> 
+                    <if test=" OPR_UNIT_ID > 0 "> 
+                        /* 운영단위 */ 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T2 
+                        ON  T2.SES_ID = #{SES_ID} 
+                        AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T2.COL_ITM = 'OPR_UNIT_ID' 
+                        AND T2.COND_DATA_VAL = m.OPR_UNIT_ID 
+                    </if> 
+                    <if test=" DEPT_ID > 0 "> 
+                        /* 주문부서 */ 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T3 
+                        ON  T3.SES_ID = #{SES_ID} 
+                        AND T3.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T3.COL_ITM = 'DEPT_ID' 
+                        AND T3.COND_DATA_VAL = m.DEPT_ID 
+                    </if> 
+                    <if test=" ODR_NO > 0 "> 
+                        /* 주문번호 */ 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS   T4 
+                        ON  T4.SES_ID = #{SES_ID} 
+                        AND T4.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T4.COL_ITM = 'ODR_NO' 
+                        AND REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,1) = a1.ODR_NO 
+                        AND (CASE WHEN TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR 
+                                      TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN 
+                                      a1.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T4.COND_DATA_VAL,'[^-]+',1,2))) END) = a1.ODR_ITM_NO 
+                    </if> 
+                    <if test=" ACCT_ID > 0 "> 
+                        /* 계정 */ 
+                        JOIN 
+                        TB_OD_ODR_INQ_TGT_DTLS  T5 
+                        ON  T5.SES_ID = #{SES_ID} 
+                        AND T5.INQ_COND_DTLS = #{INQ_COND_DTLS} 
+                        AND T5.COL_ITM = 'ACCT_ID' 
+                        AND T5.COND_DATA_VAL = a1.ACCT_ID 
+                    </if> 
+	                    JOIN TB_AD_ADJ_FW_PROC T6
+	                     On (t6.CO_CD = a.CO_CD 
+	                        And t6.BZPLC_ID = a.BZPLC_ID 
+	                        And t6.ODR_NO = a.ODR_NO 
+	                        And t6.ODR_ITM_NO = a.ODR_ITM_NO) 
+                Where   1=1 
+                 /* SSP-2724_성진우_20230322 */
+                 AND ( 
+                         /* 반품이 존재하는 주문의 경우 1. 정상반품X, 위수탁회수여부Y 가 아닌건(회수건제외). 2. 정상반품X, 위수탁회수여부가Y면서 반품수량이 존재하는건.(반품건중 수량존재하는건) */
+                         (
+                          EXISTS (SELECT  /*+ INDEX(Z TB_OD_ODR_DTL_IX12)*/ 1 FROM TB_OD_ODR_DTL Z WHERE Z.ORI_ODR_NO = C.ODR_NO AND Z.ORI_ITM_NO = C.ODR_ITM_NO AND ODR_NO like '9%')
+                          AND  (
+                               (D.NRML_RTNGDS_SPR_CD = 'N' AND C.CNSG_RTRV_YN = 'N' AND NVL(C.RTNGDS_QTY,0) > 0)OR NOT(D.NRML_RTNGDS_SPR_CD = 'N' AND C.CNSG_RTRV_YN = 'Y')
+                               )
+                          )
+                         /* 반품이 없는건 정상주문건은 종결처리가 안 된건 */ 
+                          OR 
+                          (NOT EXISTS (SELECT  /*+ INDEX(Z TB_OD_ODR_DTL_IX12)*/ 1 FROM TB_OD_ODR_DTL Z WHERE Z.ORI_ODR_NO = C.ODR_NO AND Z.ORI_ITM_NO = C.ODR_ITM_NO AND ODR_NO like '9%') AND NVL(E.ODR_TRMN_YN,'N') != 'Y')
+                      )
+            ) 
+            Select /*+ NO_MERGE(A) INDEX(E TB_OD_ODR_DTL_IX02) LEADING(A) USE_NL(A C D E F G H I J K L M N O P)*/
+                    a.CO_CD 
+                    , a.BZPLC_ID                                                                                                /* 사업장id*/ 
+                    , a.ODR_NO 
+                    , a.ODR_ITM_NO 
+                    , a.DCN_YN                                                                                                  /* 확정여부 */ 
+                    , a.ADJ_YM                                                                                                  /* 검수월 */ 
+                    , a.ODR_NO || '-' || To_Char(a.ODR_ITM_NO)                              As ODR_NO_AND_ITEM_NO               /*주문품목번호*/ 
+                    , a.ODR_QTY                 /* 주문수량 */ 
+                    , FN_OD_GET_ADJ_YYYYMM(c.ADJ_DD,TO_DATE(a.GI_DCN_DT Default Null On Conversion Error ,'YYYYMMDD')) 
+                                                                                            As ORG_ADJ_YM                       /*원래 정산년월*/ 
+                                                                                             
+                    <![CDATA[                                                                         
+                    , Case 
+                        When FN_OD_GET_ADJ_YYYYMM(c.ADJ_DD,TO_DATE(a.GI_DCN_DT Default Null On Conversion Error ,'YYYYMMDD')) = a.ADJ_YM Then 
+                            '당월' 
+                        When FN_OD_GET_ADJ_YYYYMM(c.ADJ_DD,TO_DATE(a.GI_DCN_DT Default Null On Conversion Error ,'YYYYMMDD')) > a.ADJ_YM Then 
+                            '전월' 
+                        When FN_OD_GET_ADJ_YYYYMM(c.ADJ_DD,TO_DATE(a.GI_DCN_DT Default Null On Conversion Error ,'YYYYMMDD')) < a.ADJ_YM Then 
+                            '이월' 
+                    End                                                                     As ADJ_FW_SPR_NM2                    /* 전월/이월구분*/ 
+                    ]]> 
+                    , CASE WHEN a.DCN_YN = 'Y' THEN TO_CHAR(TO_DATE(a.DCN_ADJ_YM, 'YYYYMM'), 'YYYY-MM') END     ADJ_FW_SPR_NM   /* 전월/이월구분*/ 
+                    , a.FW_RSN_CTS                                                                                              /* 전월/이월 사유 */ 
+                    , a.ADJ_BIL_SPR_CD                                                                                          /* 계산서 구분 */ 
+                    , a.ADJ_BIL_ITM_NM                                                                                          /* 계산서품목명 */ 
+                    , a.RCV_EMAIL_ADDR                                                                                          /* 수신이메일주소 */ 
+                    , d.BZPLC_NM                                                                                                /* 사업장명 */ 
+                    , a.OPR_UNIT_ID                                                                                             /* 운영단위ID */ 
+                    , c.OPR_UNIT_NM                                                                                             /* 운영단위명 */ 
+                    , a.DEPT_ID                                                             As ODR_DEPT_ID                      /* 주문부서id */ 
+                    , f.CCO_DEPT_CD                                                         As ODR_DEPT_CD                      /* 주문부서코드 */ 
+                    , f.DEPT_NM                                                             As ODR_DEPT_NM                      /* 부서명 */ 
+                    , a.ODRPSN_ID                                                                                               /* 주문자ID */ 
+                    , g.MBR_NM                                                              As ODRPSN_NM                        /* 주문자명 */ 
+                    , a.ODR_DLGTE_ID                                                                                            /* 주문대행자ID */ 
+                    , h.MBR_NM                                                              As ODR_DLGTE_NM                     /* 주문대행자명 */ 
+                    , e.RCVR_NM                                                                                                 /* 수령인명 */ 
+                    , LTRIM(e.PRD_ID, '0')                                                  As PRD_ID                           /* 상품ID */ 
+                    , i.PRD_NM                                                                                                  /* 상품명 */ 
+                    , j.MRO_REPR_ATTR || i.SSP_REPR_ATTR                                    As REPR_ATTR                        /* 규격 */ 
+                    , a.SALSPRC                                                                                                 /* 판매가 */ 
+                    , (CASE WHEN A.ODR_NO LIKE '9%' THEN -1 ELSE 1 END) * e.SALE_AMT        AS SALE_AMT                         /* 판매금액(VAT제외) */ 
+                    , (CASE WHEN A.ODR_NO LIKE '9%' THEN -1 ELSE 1 END) * e.VAT_AMT         AS VAT_AMT                          /* VAT */ 
+                    , (CASE WHEN A.ODR_NO LIKE '9%' THEN -1 ELSE 1 END) * (Nvl(e.SALE_AMT,0) + Nvl(e.VAT_AMT,0)) As SUM_SALE_AMT /* 판매금액(VAT포함) */
+                    , a.SELL_UNIT_CD                                                                                            /* 주문단위 */ 
+                    , e.COST_TRNSF_DEPT_ID                                                                                      /* 이체부서ID */ 
+                    , k.CCO_DEPT_CD                                                         As COST_TRNSF_DEPT_CD               /* 이체부서코드 */ 
+                    , k.DEPT_NM                                                             As COST_TRNSF_DEPT_NM               /* 이체부서명 */ 
+                    , e.ACCT_ID                                                                                                 /* 계정ID */ 
+                    , l.ACCT_CD                                                                                                 /* 고객사계정코드 */ 
+                    , l.ACCT_NM                                                                                                 /* 계정명 */ 
+                    , To_Char(e.ODR_DCN_DTM,'YYYY.MM.DD HH24:MI:SS')                        As ODR_DCN_DTM                      /* 주문생성일시 */ 
+                    , To_Char(m.DLV_CMPL_DTM,'YYYY.MM.DD HH24:MI:SS')                       As DLV_CMPL_DTM                     /* 배송완료일시 */ 
+                    , To_Char(n.GI_DTM,'YYYY.MM.DD HH24:MI:SS')                             As GI_DTM                           /* 입고처리일시 */ 
+                    , n.GDPSN_ID                                                                                                /* 입고자ID */ 
+                    , o.MBR_NM                                                              As GDPSN_NM                         /* 입고자명 */ 
+                    , n.AUTO_GI_YN                                                                                              /* 자동입고여부 */ 
+                    , To_Char(a.ADJ_DCN_DTM,'YYYY.MM.DD HH24:MI:SS')                        As ADJ_DCN_DTM                      /* 정산확정일시 */ 
+                    , a.ADJ_DCN_DEALR_ID                                                                                        /* 정산확정처리자ID */ 
+                    , p.MBR_NM                                                              As ADJ_DCN_DEALR_NM                 /* 정산확정처리자명 */ 
+            From    BASE_DATA a 
+                    Left Join 
+                    TB_CC_OPR_UNIT_BASIS c 
+                        On (c.CO_CD = a.CO_CD 
+                        And c.BZPLC_ID = a.BZPLC_ID 
+                        And c.OPR_UNIT_ID = a.OPR_UNIT_ID) 
+                    Left Join 
+                    TB_CC_BZPLC_BASIS d 
+                        On (d.CO_CD = a.CO_CD 
+                        And d.BZPLC_ID = a.BZPLC_ID) 
+                    Left Join 
+                    TB_OD_ODR_DTL e 
+                        On (e.CO_CD = a.CO_CD 
+                        And e.BZPLC_ID = a.BZPLC_ID 
+                        And e.ODR_NO = a.ODR_NO 
+                        And e.ODR_ITM_NO = a.ODR_ITM_NO) 
+                    Left Join 
+                    TB_CC_DEPT_BASIS f 
+                        On (f.CO_CD = a.CO_CD 
+                        And f.DEPT_ID = a.DEPT_ID) 
+                    Left Join 
+                    TB_CC_MBR_BASIS g 
+                        On (g.CO_CD = a.CO_CD 
+                        And g.MBR_ID = a.ODRPSN_ID) 
+                    Left Join 
+                    TB_CC_MBR_BASIS h 
+                        On (h.CO_CD = a.CO_CD 
+                        And h.MBR_ID = a.ODR_DLGTE_ID) 
+                    Left Join 
+                    TB_PR_PRD_INFO i 
+                        On (i.CO_CD = e.CO_CD 
+                        And i.PRD_ID = e.PRD_ID) 
+                    Left Join 
+                    TB_PR_MRO_PRD_INFO j 
+                        On (j.CO_CD = e.CO_CD 
+                        And j.PRD_ID = e.PRD_ID) 
+                    Left Join 
+                    TB_CC_DEPT_BASIS k 
+                        On (k.CO_CD = e.CO_CD 
+                        And k.DEPT_ID = e.COST_TRNSF_DEPT_ID) 
+                    Left Join 
+                    TB_CC_BGT_ACCT_BASIS l 
+                        On (l.CO_CD = e.CO_CD 
+                        And l.BZPLC_ID = e.BZPLC_ID 
+                        And l.ACCT_ID = e.ACCT_ID) 
+                    Left Join 
+                    TB_DL_ODR_ACP_DLV_PROC m 
+                        On (m.CO_CD = e.CO_CD 
+                        And m.BZPLC_ID = e.BZPLC_ID 
+                        And m.ODR_NO = e.ODR_NO 
+                        And m.ODR_ITM_NO = e.ODR_ITM_NO) 
+                    Left Join 
+                    TB_AD_GI_DCN_PROC n 
+                        On (n.CO_CD = e.CO_CD 
+                        And n.BZPLC_ID = e.BZPLC_ID 
+                        And n.ODR_NO = e.ODR_NO 
+                        And n.ODR_ITM_NO = e.ODR_ITM_NO) 
+                    Left Join 
+                    TB_CC_MBR_BASIS o 
+                        On (o.CO_CD = n.CO_CD 
+                        And o.MBR_ID = n.GDPSN_ID) 
+                    Left Join 
+                    TB_CC_MBR_BASIS p 
+                        On (p.CO_CD = a.CO_CD 
+                        And p.MBR_ID = a.ADJ_DCN_DEALR_ID) 
+ 
+            Order By 
+                    a.ADJ_YM 
+                    ,a.ODR_NO 
+                    ,a.ODR_ITM_NO 
+ 
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY 
+    </select> 
+ 
+</mapper>

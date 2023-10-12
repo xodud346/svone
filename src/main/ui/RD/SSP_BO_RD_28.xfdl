@@ -1,0 +1,560 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form" width="860" height="604" titletext="상품군 R&amp;D속성 관리" onload="form_onload" onclose="form_onclose">
+    <Layouts>
+      <Layout height="604" width="860" stepindex="">
+        <Div id="divDetail" taborder="0" left="15" top="48" width="470" height="77" border="0px solid darkblue" text="">
+          <Layouts>
+            <Layout/>
+          </Layouts>
+        </Div>
+        <Div id="divPopup" taborder="2" text="Div00" left="20" top="20" bottom="70" positionstep="0" right="20">
+          <Layouts>
+            <Layout>
+              <Static id="Static60_00" taborder="0" text="| 상품군 R&amp;D속성 관리" left="0" top="0" height="21" cssclass="sta_WF_title02" width="300"/>
+              <Grid id="grd_list1" taborder="1" top="78" binddataset="ds_list1" left="0" width="330" bottom="0" autofittype="col" nodatatext="조회 결과가 존재하지 않습니다">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="35"/>
+                      <Column size="120"/>
+                      <Column size="160"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="31" band="head"/>
+                      <Row size="31"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                      <Cell col="1" text="R&amp;D속성코드"/>
+                      <Cell col="2" text="R&amp;D속성명"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell displaytype="checkboxcontrol" edittype="checkbox" text="bind:CHK"/>
+                      <Cell col="1" text="bind:PRD_ATTR_CD" textAlign="center"/>
+                      <Cell col="2" text="bind:PRNM" cssclass="grd_WF_left"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Div id="div" taborder="2" text="Div01" left="326" top="0" width="64" bottom="0">
+                <Layouts>
+                  <Layout>
+                    <Button id="btn_allRight" taborder="0" left="20" top="50%" cssclass="btn_WF_shuttleR" width="24" text="" height="24" onclick="btn_allRight_onclick"/>
+                    <Button id="btn_allLeft" taborder="1" left="20" top="btn_allRight:4" cssclass="btn_WF_shuttleL" width="24" text="" height="24" onclick="btn_allLeft_onclick"/>
+                  </Layout>
+                </Layouts>
+              </Div>
+              <Grid id="grd_list2" taborder="3" top="78" binddataset="ds_list2" left="387" bottom="0" autofittype="col" right="0" nodatatext="조회 결과가 존재하지 않습니다">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="35"/>
+                      <Column size="100"/>
+                      <Column size="150"/>
+                      <Column size="80"/>
+                      <Column size="67"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="31" band="head"/>
+                      <Row size="31"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                      <Cell col="1" text="R&amp;D속성코드"/>
+                      <Cell col="2" text="R&amp;D속성명"/>
+                      <Cell col="3" text="필수항목"/>
+                      <Cell col="4" text="노출여부"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell edittype="checkbox" displaytype="checkboxcontrol" text="bind:CHK"/>
+                      <Cell col="1" text="bind:PRD_ATTR_CD" textAlign="center"/>
+                      <Cell col="2" text="bind:PRNM" cssclass="grd_WF_left"/>
+                      <Cell col="3" text="bind:MAND_YN" displaytype="checkboxcontrol" edittype="checkbox" checkboxfalsevalue="N" checkboxtruevalue="Y"/>
+                      <Cell col="4" displaytype="checkboxcontrol" edittype="checkbox" text="bind:EXPS_YN" checkboxfalsevalue="N" checkboxtruevalue="Y"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Static id="Static60_00_00" taborder="4" text="■ 상품군 조회" left="0" top="50" height="30" cssclass="sta_WF_title02" width="120"/>
+              <Static id="Static60_00_00_00" taborder="5" text="■ 상품군 사용 R&amp;D속성" left="390" top="50" height="30" cssclass="sta_WF_title02" width="180"/>
+              <Edit id="edtSearch" taborder="6" left="161" top="50" height="24" onkeyup="divPopup_edtSearch_onkeyup" width="141"/>
+              <Button id="btn_top" taborder="7" top="10.00%" width="24" text="▲" height="24" onclick="divPopup_btn_top_onclick" right="29"/>
+              <Button id="btn_down" taborder="8" left="btn_top:4" top="10.00%" width="24" text="▼" height="24" onclick="divPopup_btn_down_onclick"/>
+              <Button id="btn_find" taborder="9" top="50" height="24" cssclass="btn_WF_search02" width="24" onclick="btn_search_onclick" text="" left="306"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btn_cancel00" taborder="3" text="취소" left="328" width="100" onclick="btn_clear_onclick" bottom="20" height="32"/>
+        <Button id="btn_save" taborder="4" text="저장" left="432" width="100" cssclass="btn_WF_select" bottom="20" height="32" onclick="btn_save_onclick"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/**********************************************************************
+* FormID(화면   ID명): SSP_BO_RD_28.xfdl(상품군 R&D속성 관리)
+* 작 성			일 명: 김진섭
+* 작 성	    	일 자: 2022/05/11
+* 변 경     	일 자:
+* 변 경			자 명:
+* 변경 및 수정 로그 : 일자별로 변경자 및 변경사항을 간략히 기술
+*/
+/**********************************************************************
+	01. 전처리 공통 함수 선언 
+***********************************************************************/
+include "RD::rdMain.xjs";
+/**********************************************************************
+	02. 폼 변수 정의 
+***********************************************************************/
+this.prdClcd 	= this.parent.prdClcd;
+this.mallSprCd 	= "20"; 					//10:SSP, 20:R&D
+this.coCd 		= this.parent.coCd;
+
+/**********************************************************************
+	03. 폼 로드 및 닫을때(폼이 포커스 갈때)
+***********************************************************************/
+/**
+ * 기능 : 폼 로드 완료후 초기값 Setting
+ */
+this.form_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//폼에 공통으로 로드시 사용하는 함수.
+	this.gfn_formOnLoad(this);
+	//사용자 초기화 함수
+	this.fn_formInit();
+}; 
+/**
+ * 기능 : 폼언 로드(닫기전 셋팅)  Setting
+ */
+this.form_onclose = function(obj:nexacro.Form,e:nexacro.CloseEventInfo)
+{
+	
+};
+/**********************************************************************
+	04. 공통 코드 및 콤보 데이타 조회 
+***********************************************************************/
+this.fn_formInit = function()
+{
+	this.ds_search.setColumn(0,"CO_CD", this.coCd);
+	this.ds_search.setColumn(0,"MALL_SPR_CD", this.mallSprCd);
+	this.fn_LRet();
+
+};
+
+/**
+ * 기능 : 콜백함수(후처리) 
+ */
+this.fn_callBack = function(sSvcId,nErrorCode, sErrorMsg) 
+{
+	if(nErrorCode != 0)
+	{
+		this.fn_alert(sErrorMsg,"에러정보","","error");
+		return false;
+	}else
+	{
+		/*sSvcId (Transaction Id)*/
+		switch(sSvcId)
+		{
+			case "Init":
+				this.fn_PostformInit();
+				break;
+			case "LRet":
+			    this.fn_postLRet();
+				break;	
+			case "RRet":
+			    this.fn_postRRet();
+				break;	
+			case "Save":
+			    this.fn_PostSave();
+				break;
+			
+			default:
+				break;
+		}
+	}
+};
+
+/**********************************************************************
+	05. LEFT 조회 함수 선언  
+***********************************************************************/
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_LRet();
+};
+
+this.divPopup_edtSearch_onkeyup = function(obj:nexacro.Edit,e:nexacro.KeyEventInfo)
+{
+	if(e.keycode == 13)
+	{
+		this.fn_LRet();
+	}
+};
+
+/**
+ * 기능 : 조회 전 실행
+ */
+this.fn_preLRet = function()
+{ 
+	// 조회조건 셋팅
+	this.ds_search.setColumn(0,"PRNM", this.divPopup.form.edtSearch.value);
+	return true;
+};
+
+/**
+ * 기능 : 화면조회 전 실행
+ */
+this.fn_LRet = function()
+{
+	if(!this.fn_preLRet())
+	{
+		return false;
+	}
+	var strSvc      = "LRet";
+    var strUrl      = "/rd/category/select-prd-attr-list.do";
+    var strInDs     = "ds_search=ds_search";
+    var strOutDs    = "ds_list1=ds_output";
+    var strArg      = "";
+    var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack
+    var strASync    = true;             //생략이나 공백일시에는 ASync=true,싱크시는 false로
+    this.gfn_transaction(strSvc
+                       , strUrl
+                       , strInDs
+                       , strOutDs
+                       , strArg
+                       , strCallBack
+                       , strASync);
+	
+}
+
+/**
+ * 기능 : 조회 후 실행
+ */
+this.fn_postLRet = function()
+{ 
+	if(this.ds_list2.rowcount > 0)
+	{
+		this.ds_list1.set_enableevent(false);
+		if(!this.gfn_dsIsUpdated(this.ds_list2))
+		{
+			this.fn_RRet();
+		} else 
+		{
+			var aChkArr = new Array();
+			for(var i=0; i<this.ds_list2.rowcount; i++)
+			{
+				aChkArr.push(this.ds_list2.getColumn(i, "PRD_ATTR_CD"));
+			}
+			for(var i=0; i<=aChkArr.length-1; i++)
+			{
+				var aDelArr =  new Array();	
+				var row = this.ds_list1.findRow("PRD_ATTR_CD", aChkArr[i]);
+				
+				for (var j = row; j <= row; j++)
+				{
+					aDelArr.push(j);
+				}
+				this.ds_list1.deleteMultiRows(aDelArr);
+			}
+		}
+		this.ds_list1.set_enableevent(true);
+	}else
+	{
+		this.fn_RRet();
+	}
+	//trace(this.ds_master.saveXML());
+	
+};
+/**********************************************************************
+	05_1. RIGHT 조회 함수 선언  
+***********************************************************************/
+/**
+ * 기능 : 조회 전 실행
+ */
+this.fn_preRRet = function()
+{ 
+	// 조회조건 셋팅
+	this.ds_search.setColumn(0,"PRD_CLCD", this.prdClcd);
+	return true;
+};
+/**
+ * 기능 : 화면조회 전 실행
+ */
+this.fn_RRet = function()
+{
+	if(!this.fn_preRRet())
+	{
+		return false;
+	}
+	var strSvc      = "RRet";
+    var strUrl      = "/rd/category/select-clsf-attr-mapp-list.do";
+    var strInDs     = "ds_search=ds_search";
+    var strOutDs    = "ds_list2=ds_output";
+    var strArg      = "";
+    var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack
+    var strASync    = true;             //생략이나 공백일시에는 ASync=true,싱크시는 false로
+    this.gfn_transaction(strSvc
+                       , strUrl
+                       , strInDs
+                       , strOutDs
+                       , strArg
+                       , strCallBack
+                       , strASync);
+	
+	
+}
+
+/**
+ * 기능 : 조회 후 실행
+ */
+this.fn_postRRet = function()
+{ 
+	var aChkArr = new Array();
+	for(var i=0; i<this.ds_list2.rowcount; i++)
+	{
+		aChkArr.push(this.ds_list2.getColumn(i, "PRD_ATTR_CD"));
+	}
+
+	for(var i=0; i<=aChkArr.length-1; i++)
+	{
+		var aDelArr =  new Array();	
+		var row = this.ds_list1.findRow("PRD_ATTR_CD", aChkArr[i]);
+		
+		for (var j = row; j <= row; j++)
+		{
+			aDelArr.push(j);
+		}
+		this.ds_list1.deleteMultiRows(aDelArr);
+	}
+	//trace(this.ds_master.saveXML());
+};
+/**********************************************************************
+        06. 저장 함수 선언
+***********************************************************************/
+/**
+ * 기능 : 저장 버튼 클릭시
+ */
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_Save();
+};
+
+/**
+ * 기능 : 저장 전 실행
+ */
+this.fn_PreSave = function()
+{
+	 var result = this.fn_confirm( "ERRR000098", "저장","", "question" ); // 저장 하시겠습니까?
+     if(result == 0)
+     {
+         return false;
+     }
+     return true;
+
+};
+
+/**
+ * 기능 : 저장 실행
+ */
+this.fn_Save = function()
+{
+    if(!this.fn_PreSave())
+    {
+        return false;
+    }
+	
+	
+    var strSvc      = "Save";
+    var strUrl      = "/rd/category/save-clsf-attr-mapp.do";
+	var strInDs     = "ds_save=ds_list2:U";
+    var strOutDs    = "";
+    var strArg      = "";
+    var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack
+    var strASync    = true;             //생략이나 공백일시에는 ASync=true,싱크시는 false로
+    this.gfn_transaction(strSvc
+                       , strUrl
+                       , strInDs
+                       , strOutDs
+                       , strArg
+                       , strCallBack
+                       , strASync);
+					   
+	
+};
+
+/**
+ * 기능 : 저장시 후처리
+ */
+this.fn_PostSave = function()
+{
+	this.fn_alert("ERRR000007","저장","","question");   //정상적으로 저장되었습니다.
+	var resData 	= {};
+	var resString 	= "";
+	
+	resData.PRD_CLCD = this.prdClcd;
+	resString = JSON.stringify(resData);	
+	this.close(resString);
+	
+};
+/**********************************************************************
+	07. 닫기버튼
+***********************************************************************/
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+/**********************************************************************
+	08.Get, Set Method 
+***********************************************************************/
+//전체 메뉴 이동 호출 함수
+this.fn_allMoveDataSet= function(orgGrid, targetGrid, orgDs, targetDs){
+	var aChkArr = new Array();
+
+	for(var i=0; i<orgDs.rowcount; i++)
+	{
+		if(orgDs.getColumn(i, "CHK") == 1)
+		{
+			aChkArr.push(orgDs.getColumn(i, "PRD_ATTR_CD"));
+		}
+	}
+	this.fnAllCopy(orgGrid, targetGrid, orgDs, targetDs,  aChkArr);
+};
+
+this.fnAllCopy= function(orgGrid, targetGrid, orgDs, targetDs, arrayRow){
+	var dsOrg	  = orgDs;
+	var dsTarget  = targetDs;
+	var nEnd = 0;
+	var nStart = 0;
+	var nRow = 0;
+	
+	for(var i=0; i<=arrayRow.length-1; i++){
+		var aDelArr =  new Array();	
+		var row = orgDs.findRow("PRD_ATTR_CD", arrayRow[i]);
+		
+		if( row >= 0){			
+			//start, end에 현재 row 값 세팅
+			nStart = nEnd = row;
+			dsTarget.set_enableevent(false);
+			
+			for (var j = nStart; j <= nEnd; j++){
+				//옮길트리에서 seqKey에 해당하는 값 찾아서 중복제거
+				var findRow = dsTarget.findRowExpr("PRD_ATTR_CD" + " == "+ dsOrg.getColumn(j, "PRD_ATTR_CD"));
+				if(findRow < 0){
+					nRow = dsTarget.addRow();
+					dsTarget.copyRow(nRow, dsOrg, j);
+					dsTarget.setColumn(nRow, "CHK", 0);
+					dsTarget.setColumn(nRow, "PRD_CLCD", this.prdClcd);
+					dsTarget.setColumn(nRow, "SRT_SO", nRow+1 );
+					dsTarget.setColumn(nRow, "EXPS_YN", 'Y' );
+				}
+				//삭제할 배열 row 추가
+				aDelArr.push(j);
+			}
+			dsTarget.set_enableevent(true);	
+			
+			//옮길 트리에 추가한 후 삭제시작 
+			//1.선택한 현재~자식 row 삭제
+			dsOrg.deleteMultiRows(aDelArr);
+			
+		}	
+		
+		nEnd = 0;
+		nStart = 0;
+		nRow = 0;
+	}
+};
+
+ /**********************************************************************
+	09.기타 Control Event  
+***********************************************************************/
+this.btn_allRight_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var chkCnt = this.ds_list1.getCaseCount("CHK == 1");
+	if(chkCnt == 0)
+	{
+		this.fn_alert("ERRR000091","저장","","question");   
+		return false;
+	}
+	
+	this.fn_allMoveDataSet(this.divPopup.form.grd_list1, this.divPopup.form.grd_list2, this.ds_list1, this.ds_list2);
+	this.ds_list2.set_keystring("S:+SRT_SO");	
+};
+
+this.btn_allLeft_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var chkCnt = this.ds_list2.getCaseCount("CHK == 1");
+	if(chkCnt == 0)
+	{
+		this.fn_alert("ERRC000050","저장","데이터","question");   //선택된 &1 이(가) 없습니다.
+		return false;
+	}
+	
+	this.fn_allMoveDataSet(this.divPopup.form.grd_list2, this.divPopup.form.grd_list1, this.ds_list2, this.ds_list1);
+	this.ds_list1.set_keystring("S:+PRD_ATTR_CD");	
+};
+
+this.divPopup_btn_top_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var nTRow = this.ds_list2.rowposition;
+	if(nTRow == 0)
+	{
+		this.fn_alert("ERRN000038","저장","","question");   
+		return false;
+	}
+	this.ds_list2.moveRow(nTRow, (nTRow-1));
+	
+	for(var i=0; i<this.ds_list2.rowcount; i++)
+	{
+		this.ds_list2.setColumn(i,"SRT_SO", i+1);
+	}
+};
+
+this.divPopup_btn_down_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var nTRow = this.ds_list2.rowposition;
+	if(nTRow == (this.ds_list2.getRowCount()-1))
+	{
+		this.fn_alert("ERRN000038","저장","","question");     
+		return false;
+	}
+	this.ds_list2.moveRow(nTRow, (nTRow+1));	
+	
+	for(var i=0; i<this.ds_list2.rowcount; i++)
+	{
+		this.ds_list2.setColumn(i,"SRT_SO", i+1);
+	}
+};
+
+]]></Script>
+    <Objects>
+      <Dataset id="ds_list1">
+        <ColumnInfo>
+          <Column id="PRNM" type="STRING" size="256"/>
+          <Column id="PRD_ATTR_CD" type="STRING" size="256"/>
+          <Column id="CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list2" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="PRNM" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ATTR_CD" type="STRING" size="256"/>
+          <Column id="MAND_YN" type="STRING" size="256"/>
+          <Column id="SRT_SO" type="STRING" size="256"/>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="EXPS_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="PRNM" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="MALL_SPR_CD" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

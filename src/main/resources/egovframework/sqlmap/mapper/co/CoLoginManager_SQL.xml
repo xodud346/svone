@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.co.LoginManager">
+	<!-- 관리자 정보 조회 -->
+	<select id="selectLoginManagerInfo" parameterType="HashMap" resultType="HashMap">
+		/* LoginManager.selectLoginManagerInfo */
+		SELECT
+			  CO_CD
+			, OPRTR_ID
+			, OPRTR_NM
+			, EMP_NO
+			, CHR_TASK_NM
+			, MSSGR_ADDR
+			, EMAIL_ADDR
+			, USR_SPR_CD
+			, USE_YN
+			, PSTN_NM
+			, SEX_SPR_CD
+			, WPTAL_ID
+			, ORG_CD
+			, ORG_NM
+			, DIV_CD
+			, ENCRP_USR_INFO_DTLS
+			, DTY_NM
+			, JBPOS_NM
+			, TEL_NO
+			, HP_NO
+			, USR_STATS_CD
+			, SALS_TEAM_CD
+			, SALS_CHR_CD
+			, PLNT_ID
+			, ACNT_CERT_AUTH_YN
+			, JB_CD
+			, JB_NM
+			, ENT_DT
+			, RTCO_DT
+			, REG_DTM
+			, REGPSN_ID
+			, UPD_DTM
+			, UPDPSN_ID
+		FROM	TB_CO_MBR_OPRTR_INFO
+		WHERE	WPTAL_ID = #{WPTAL_ID}
+		AND		USE_YN = 'Y'
+	</select>
+
+
+	<select id="selectUserAuthList" parameterType="HashMap" resultType="SspMap">
+		/* LoginManager.selectUserAuthList */
+		SELECT
+				AU.ADM_MST_ID
+			,	AU.AUT_MST_IDX
+		FROM	TB_SB_AUT_USER AU
+				INNER JOIN T_AUT_MST AM
+					ON AM.AUT_MST_IDX = AU.AUT_MST_IDX
+					AND AM.AUT_MST_USE_YN = 'Y'
+		WHERE	AU.ADM_MST_ID = #{ADM_MST_ID}
+	</select>
+
+
+	<select id="selectSystemDateList" parameterType="HashMap" resultType="HashMap">
+        SELECT                                                              
+                 A.YYYY                                      AS YYYY     
+               , A.YYYYMMDD                                  AS YYYYMMDD                
+               , A.KOR_YYYYMMDD || ' ' || A.DAY_OF_KOR_WEEK  AS KOR_YYYYMMDD                      /* A.KOR_YYYYMMDD + ' ' + A.DAY_OF_KOR_WEEK */
+               , A.YYYYMM                                    AS YYYYMM              
+               , A.MMDD                                      AS MMDD                
+               , A.MM                                        AS MM                  
+               , A.DD                                        AS DD                  
+               , A.MONTH_FIRST_DAY                           AS MONTH_FIRST_DAY     
+               , A.MONTH_LAST_DAY                            AS MONTH_LAST_DAY      
+               , A.DAY_OF_WEEK                               AS DAY_OF_WEEK         
+               , A.DAY_OF_KOR_WEEK                           AS DAY_OF_KOR_WEEK     
+            FROM
+            (
+                SELECT TO_CHAR(SYSDATE, 'YYYY')                          AS YYYY                 /*년 * LEFT(CONVERT(VARCHAR(4), GetDate(),112),4)) */    
+                     , TO_CHAR(SYSDATE, 'YYYYMMDD')                      AS YYYYMMDD             /*년/월/일 CONVERT(VARCHAR(8),GETDATE(),112)*/
+                     , TO_CHAR(SYSDATE, 'YYYY.MM.DD')                    AS KOR_YYYYMMDD         /*년/월/일 CONVERT(VARCHAR(8),GETDATE(),102)*/
+                     , TO_CHAR(SYSDATE, 'YYYYMM')                        AS YYYYMM               /*년/월 LEFT(CONVERT(VARCHAR(6), GetDate(),112),6)) */
+                     , TO_CHAR(SYSDATE, 'MMDD')                          AS MMDD                 /*월/일 RIGHT(CONVERT(VARCHAR(4), GetDate(),112),4)) */
+                     , TO_CHAR(SYSDATE, 'MM')                            AS MM                   /*월  SUBSTRING(CONVERT(VARCHAR(2), GetDate(),112),4,2))*/
+                     , TO_CHAR(SYSDATE, 'DD')                            AS DD                   /*일  RIGHT(CONVERT(VARCHAR(2), GetDate(),112),2)) */
+                     , TO_CHAR(SYSDATE, 'YYYYMM')||'01'                  AS MONTH_FIRST_DAY      /*현재월에 시작일자  LEFT(CONVERT(VARCHAR(6), GetDate(),112),6)) + '01'*/
+                     , TO_CHAR(LAST_DAY(SYSDATE), 'YYYYMMDD')            AS MONTH_LAST_DAY       /*현재월에 마지막일자 CONVERT(VARCHAR(8),EOMONTH( GETDATE())) */  
+                     , TO_CHAR(SYSDATE, 'D')                             AS DAY_OF_WEEK          /*현재요일(1일요일~7토요일) DATEPART(WEEKDAY, GETDATE()) */
+                     , CASE WHEN TO_CHAR(SYSDATE, 'D') = '1' THEN '일요일'                          /* CASE WHEN DATEPART(WEEKDAY, GETDATE()) = '1' THEN 'Sun' */ 
+                            WHEN TO_CHAR(SYSDATE, 'D') = '2' THEN '월요일'                          /*      WHEN DATEPART(WEEKDAY, GETDATE()) = '2' THEN 'Mon' */
+                            WHEN TO_CHAR(SYSDATE, 'D') = '3' THEN '화요일'                          /*      WHEN DATEPART(WEEKDAY, GETDATE()) = '3' THEN 'Tue' */
+                            WHEN TO_CHAR(SYSDATE, 'D') = '4' THEN '수요일'                          /*      WHEN DATEPART(WEEKDAY, GETDATE()) = '4' THEN 'Wed' */
+                            WHEN TO_CHAR(SYSDATE, 'D') = '5' THEN '목요일'                          /*      WHEN DATEPART(WEEKDAY, GETDATE()) = '5' THEN 'Thu' */
+                            WHEN TO_CHAR(SYSDATE, 'D') = '6' THEN '금요일'                          /*      WHEN DATEPART(WEEKDAY, GETDATE()) = '6' THEN 'Fri' */
+                            WHEN TO_CHAR(SYSDATE, 'D') = '7' THEN '토요일'                          /*      WHEN DATEPART(WEEKDAY, GETDATE()) = '7' THEN 'Sat' */
+                       END                                                AS DAY_OF_KOR_WEEK     /*현재요일(1일요일~7토요일)*/
+                  FROM DUAL 
+             )     A	
+	</select>
+	
+</mapper>

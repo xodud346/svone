@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="AttrMng">
+
+      <select id="selectAttrMng" parameterType="HashMap" resultType="HashMap">
+        /* AttrMng.selectAttrMng 상품속성정보 조회 */
+        <![CDATA[
+            SELECT  A.CHK           /*CHK*/
+                  , A.CO_CD         /*회사코드*/
+                  , A.PRD_ATTR_CD   /*상품속성코드*/
+                  , A.MALL_SPR_CD   /*몰구분코드*/
+                  , A.PRNM          /*속성명*/
+                  , A.USE_YN        /*사용여부*/
+                  , A.REG_DTM       /*등록일시*/
+                  , A.REGPSN_ID     /*등록자ID*/
+                  , A.REGPSN_NM     /*등록자명*/
+                  , A.UPD_DTM       /*수정일시*/
+                  , A.UPDPSN_ID     /*수정자ID*/
+                  , A.UPDPSN_NM     /*수정자명*/
+                  , A.ATTR_CNT      /*R&D상품수 */ 
+				  , A.PRD_CLCD_CNT  /*R&D속성사용 상품군수*/
+               FROM (
+                        SELECT /*+ USE_INDEX(A TB_PR_PRD_ATTR_INFO_PK)*/
+                               '0'                                         AS CHK           /*CHK*/
+                             , A.CO_CD                                     AS CO_CD         /*회사코드*/
+                             , A.PRD_ATTR_CD                               AS PRD_ATTR_CD   /*상품속성코드*/
+                             , A.MALL_SPR_CD                               AS MALL_SPR_CD   /*몰구분코드*/
+                             , A.PRNM                                      AS PRNM          /*속성명*/
+                             , A.USE_YN                                    AS USE_YN        /*사용여부*/
+                             , TO_CHAR(A.REG_DTM,'YYYY-MM-DD  HH24:MI:SS') AS REG_DTM       /*등록일시*/
+                             , A.REGPSN_ID                                 AS REGPSN_ID     /*등록자ID*/
+                             , C.OPRTR_NM                                  AS REGPSN_NM     /*등록자명*/
+                             , A.UPDPSN_ID                                 AS UPDPSN_ID     /*수정자ID*/
+                             , TO_CHAR(A.UPD_DTM,'YYYY-MM-DD  HH24:MI:SS') AS UPD_DTM       /*수정일시*/
+                             , D.OPRTR_NM                                  AS UPDPSN_NM     /*수정자명*/
+                             , COUNT(B.PRD_ATTR_CD)                        AS ATTR_CNT      /*R&D사용품수*/ 
+                             , NVL(E.PRD_CLCD_CNT,0)                       AS PRD_CLCD_CNT  /*R&D속성사용 상품군수 */
+                          FROM SSP_APP.TB_PR_PRD_ATTR_INFO           A
+                          LEFT JOIN SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP B 
+                            ON A.PRD_ATTR_CD   = B.PRD_ATTR_CD 
+                          LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO     C
+                            ON A.REGPSN_ID     = C.OPRTR_ID
+                          LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO     D
+                            ON A.UPDPSN_ID     = D.OPRTR_ID      
+                          LEFT JOIN (
+                                         SELECT COUNT(T1.PRD_CLCD) AS PRD_CLCD_CNT
+                                              , T1.PRD_ATTR_CD     AS PRD_ATTR_CD
+                                           FROM SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP T1
+                                              , SSP_APP.TB_PR_PRD_ATTR_INFO      T2
+                                          WHERE T1.PRD_ATTR_CD = T2.PRD_ATTR_CD
+                                            AND T2.MALL_SPR_CD = #{MALL_SPR_CD}     
+                                          GROUP BY T1.PRD_ATTR_CD
+                                    )                                E
+                            ON A.PRD_ATTR_CD = E.PRD_ATTR_CD
+         ]]>           
+                         <if test="PRNM_CNT > 0">
+                         INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS           S1
+                            ON 0=0
+                           AND S1.SES_ID        = #{SES_ID}
+                           AND S1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                           AND S1.COL_ITM       = 'PRNM'
+                           AND S1.COND_DATA_VAL = A.PRNM
+                         </if>
+                         <if test="PRD_ATTR_CD_CNT > 0">
+                         INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS           S2
+                            ON 0=0
+                           AND S2.SES_ID        = #{SES_ID}
+                           AND S2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                           AND S2.COL_ITM       = 'PRD_ATTR_CD'
+                           AND S2.COND_DATA_VAL = A.PRD_ATTR_CD
+                         </if>
+                         WHERE 1=1
+                           AND A.MALL_SPR_CD    = #{MALL_SPR_CD}                    /*10:SSP, 20:RND*/
+                     <if test="CO_CD != null and CO_CD != ''">
+                         <![CDATA[
+                           AND A.CO_CD          = #{CO_CD}
+                         ]]>
+                     </if>
+                         <if test="USE_YN != null and USE_YN != ''">
+                          <![CDATA[
+                           AND A.USE_YN         = #{USE_YN}
+                           ]]>
+                         </if>
+                  <if test='(START_DT != null and START_DT != "") and (END_DT != null and END_DT != "")'>
+                    <if test="CAL_GUBUN == '10'">
+                        <![CDATA[
+                           AND A.REG_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{START_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                             AND TO_DATE(TO_CHAR(TO_DATE(#{END_DT},  'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                        ]]>
+                    </if>
+                    <if test="CAL_GUBUN == '20'">
+                        <![CDATA[
+                           AND A.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{START_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                             AND TO_DATE(TO_CHAR(TO_DATE(#{END_DT}, ' YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                        ]]>
+                    </if>
+                  </if>
+        <![CDATA[
+                         GROUP BY A.CO_CD
+                                , A.PRD_ATTR_CD
+                                , A.MALL_SPR_CD
+                                , A.PRNM
+                                , A.USE_YN
+                                , A.REG_DTM
+                                , A.UPD_DTM
+                                , A.REGPSN_ID
+                                , A.UPDPSN_ID
+                                , C.OPRTR_NM
+                                , D.OPRTR_NM
+                                , E.PRD_CLCD_CNT
+                  ) A
+              WHERE 1=1
+        ]]>
+<!--  2022-07-26 속도가 안나와서 SROT 기능 뺌.
+        <choose>
+            <when test='(SORT_COLUMN != null and SORT_COLUMN != "") and (SORT_TYPE != null and SORT_TYPE != "")'>
+             ORDER BY A.${SORT_COLUMN} ${SORT_TYPE}
+            </when>
+            <otherwise>
+             ORDER BY A.CO_CD
+                    , A.PRD_ATTR_CD
+            </otherwise>
+        </choose>
+-->
+            OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+
+
+    <select id="selectAttrMngTotCount" parameterType="HashMap" resultType="Integer">
+        /* AttrMng.selectAttrMngTotCount 속성관리 카운트 조회 */
+        <![CDATA[
+            SELECT
+                   COUNT(*) AS CNT
+              FROM (
+                       SELECT '0'                                          AS CHK           /*CHK*/
+                             , A.CO_CD                                     AS CO_CD         /*회사코드*/
+                             , A.PRD_ATTR_CD                               AS PRD_ATTR_CD   /*상품속성코드*/
+                             , A.MALL_SPR_CD                               AS MALL_SPR_CD   /*몰구분코드*/
+                             , A.PRNM                                      AS PRNM          /*속성명*/
+                             , A.USE_YN                                    AS USE_YN        /*사용여부*/
+                             , TO_CHAR(A.REG_DTM,'YYYY-MM-DD  HH24:MI:SS') AS REG_DTM       /*등록일시*/
+                             , C.OPRTR_NM                                  AS REGPSN_NM     /*등록자명*/
+                             , TO_CHAR(A.UPD_DTM,'YYYY-MM-DD  HH24:MI:SS') AS UPD_DTM       /*수정일시*/
+                             , D.OPRTR_NM                                  AS UPDPSN_NM     /*수정자명*/
+                             , COUNT(B.PRD_ATTR_CD)                        AS ATTR_CNT      /*R&D속성사용 상품군수*/ 
+                             , NVL(E.PRD_CLCD_CNT,0)                       AS PRD_CLCD_CNT  /*R&D사용품수*/
+                          FROM SSP_APP.TB_PR_PRD_ATTR_INFO           A
+                          LEFT JOIN SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP B 
+                            ON A.PRD_ATTR_CD   = B.PRD_ATTR_CD 
+                          LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO     C
+                            ON A.REGPSN_ID     = C.OPRTR_ID
+                          LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO     D
+                            ON A.UPDPSN_ID     = D.OPRTR_ID      
+                          LEFT JOIN (
+                                         SELECT COUNT(T1.PRD_CLCD) AS PRD_CLCD_CNT
+                                              , T1.PRD_ATTR_CD     AS PRD_ATTR_CD
+                                           FROM SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP T1
+                                              , SSP_APP.TB_PR_PRD_ATTR_INFO      T2
+                                          WHERE T1.PRD_ATTR_CD = T2.PRD_ATTR_CD
+                                            AND T2.MALL_SPR_CD = #{MALL_SPR_CD}     
+                                          GROUP BY T1.PRD_ATTR_CD
+                                    )                                E
+                            ON A.PRD_ATTR_CD = E.PRD_ATTR_CD
+         ]]>           
+                         <if test="PRNM_CNT > 0">
+                         INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS           S1
+                            ON 0=0
+                           AND S1.SES_ID        = #{SES_ID}
+                           AND S1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                           AND S1.COL_ITM       = 'PRNM'
+                           AND S1.COND_DATA_VAL = A.PRNM
+                         </if>
+                         <if test="PRD_ATTR_CD_CNT > 0">
+                         INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS          S2
+                            ON 0=0
+                           AND S2.SES_ID        = #{SES_ID}
+                           AND S2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                           AND S2.COL_ITM       = 'PRD_ATTR_CD'
+                           AND S2.COND_DATA_VAL = A.PRD_ATTR_CD
+                         </if>
+                         WHERE 1=1
+                           AND A.MALL_SPR_CD    = #{MALL_SPR_CD}                    /*10:SSP, 20:RND*/
+                     <if test="CO_CD != null and CO_CD != ''">
+                         <![CDATA[
+                           AND A.CO_CD          = #{CO_CD}
+                         ]]>
+                     </if>
+                         <if test="USE_YN != null and USE_YN != ''">
+                          <![CDATA[
+                           AND A.USE_YN         = #{USE_YN}
+                           ]]>
+                         </if>
+                  <if test='(START_DT != null and START_DT != "") and (END_DT != null and END_DT != "")'>
+                    <if test="CAL_GUBUN == '10'">
+                        <![CDATA[
+                           AND A.REG_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{START_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                             AND TO_DATE(TO_CHAR(TO_DATE(#{END_DT},  'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                        ]]>
+                    </if>
+                    <if test="CAL_GUBUN == '20'">
+                        <![CDATA[
+                           AND A.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{START_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                             AND TO_DATE(TO_CHAR(TO_DATE(#{END_DT},  'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                        ]]>
+                    </if>
+                  </if>
+        <![CDATA[
+                         GROUP BY A.CO_CD
+                                , A.PRD_ATTR_CD
+                                , A.MALL_SPR_CD
+                                , A.PRNM
+                                , A.USE_YN
+                                , A.REG_DTM
+                                , A.UPD_DTM
+                                , A.REGPSN_ID
+                                , A.UPDPSN_ID
+                                , C.OPRTR_NM
+                                , D.OPRTR_NM
+                                , E.PRD_CLCD_CNT
+                   ) A
+             WHERE 1=1
+        ]]>
+    </select>
+
+    <select id="selectAttrMngDtl" parameterType="HashMap" resultType="HashMap">
+        /* AttrMngDtlDao.selectAttrMngDtl 상품속성정보 조회 */
+        <![CDATA[
+            SELECT A.CO_CD       AS CO_CD                                      /*회사코드*/
+                 , A.PRD_ATTR_CD AS PRD_ATTR_CD                                /*상품속성코드*/
+                 , A.MALL_SPR_CD AS MALL_SPR_CD                                /*몰구분코드*/
+                 , A.PRNM        AS PRNM                                       /*속성명*/
+                 , A.PRNM        AS ORG_PRNM                                   /*오리지날명*/
+                 , A.USE_YN      AS USE_YN                                     /*사용여부*/
+                 , A.REGPSN_ID   AS REGPSN_ID                                  /*등록자ID*/
+                 , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM      /*등록일시*/
+                 , A.UPDPSN_ID   AS UPDPSN_ID                                  /*수정자ID*/
+                 , TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM      /*수정일시*/
+                 , NVL(C.PRD_CLCD_CNT,0)                       AS PRD_CLCD_CNT /*사용상품군수*/
+              FROM SSP_APP.TB_PR_PRD_ATTR_INFO      A
+                 , (
+                       SELECT COUNT(T1.PRD_CLCD) AS PRD_CLCD_CNT
+                            , T1.PRD_ATTR_CD     AS PRD_ATTR_CD
+                         FROM SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP T1
+                            , SSP_APP.TB_PR_PRD_ATTR_INFO T2
+                        WHERE T1.PRD_ATTR_CD    = T2.PRD_ATTR_CD
+                          AND T2.MALL_SPR_CD    = '20'
+                        GROUP BY T1.PRD_ATTR_CD 
+                   )                                C
+             WHERE A.PRD_ATTR_CD = C.PRD_ATTR_CD(+)
+               AND A.CO_CD       = #{CO_CD}
+               AND A.PRD_ATTR_CD = #{PRD_ATTR_CD}
+               AND A.MALL_SPR_CD = '20'
+        ]]>
+       
+     </select>
+    
+    <select id="selectAttrMngPKey" parameterType="HashMap" resultType="HashMap">
+        /* AttrMng.selectAttrMngPKey 속성관리 PK 조회 */
+        <![CDATA[
+            SELECT 'RP'|| LPAD(TO_CHAR(NVL(MAX(SUBSTR(PRD_ATTR_CD,3,3)),0) + 1),3,'0') AS KEY_CODE  /*일단 현재 TABLE에 5자리여서 숫자 0을 하나빼고 생성함. TODO 6자리로_20220311*/  
+			  FROM SSP_APP.TB_PR_PRD_ATTR_INFO 
+			 WHERE SUBSTR(PRD_ATTR_CD,1,2) = 'RP'
+        ]]>
+    </select>
+
+    <select id="selectAttrMngCount" parameterType="HashMap" resultType="Integer">
+        /* AttrMng.selectAttrMngCount 속성관리 카운트 조회 */
+        <![CDATA[
+            SELECT COUNT(1) AS CNT
+              FROM SSP_APP.TB_PR_PRD_ATTR_INFO
+             WHERE 1=1
+               AND CO_CD       = #{CO_CD}
+               AND MALL_SPR_CD = '20' /*몰구분코드*/
+               AND PRNM        = #{PRNM}
+              /* AND USE_YN      = 'Y' */
+        ]]>
+    </select>
+
+   <insert id="insertAttrMng" parameterType="HashMap">
+        /* AttrMng.insertAttrMng 상품속성정보 저장 */	
+        <![CDATA[
+            INSERT INTO SSP_APP.TB_PR_PRD_ATTR_INFO
+            (
+              CO_CD                       /*회사코드*/
+            , PRD_ATTR_CD                 /*상품속성코드*/
+            , MALL_SPR_CD                 /*몰구분코드*/
+            , PRNM                        /*속성명*/
+            , USE_YN                      /*사용여부*/
+            , REGPSN_ID                   /*등록자ID*/
+            , REG_DTM                     /*등록일시*/
+            )
+            VALUES
+            (
+              #{CO_CD}
+            , #{PRD_ATTR_CD}
+            , #{MALL_SPR_CD}
+            , #{PRNM}
+            , #{USE_YN}
+            , #{REGPSN_ID}
+            , SYSDATE
+            )
+        ]]>
+    </insert>
+
+    <update id="updateAttrMng" parameterType="HashMap">
+        /* AttrMng.updateAttrMng 상품속성정보 수정 */
+        <![CDATA[
+            UPDATE SSP_APP.TB_PR_PRD_ATTR_INFO
+               SET CO_CD       = #{CO_CD}                       /*회사코드*/
+                 , PRD_ATTR_CD = #{PRD_ATTR_CD}                 /*상품속성코드*/
+                 , MALL_SPR_CD = #{MALL_SPR_CD}                 /*몰구분코드*/
+                 , PRNM        = #{PRNM}                        /*속성명*/
+                 , USE_YN      = #{USE_YN}                      /*사용여부*/
+                 , UPDPSN_ID   = #{UPDPSN_ID}                   /*수정자ID*/
+                 , UPD_DTM     = SYSDATE                        /*수정일시*/
+             WHERE CO_CD       = #{CO_CD}
+               AND PRD_ATTR_CD = #{PRD_ATTR_CD}
+        ]]>
+    </update>
+</mapper>

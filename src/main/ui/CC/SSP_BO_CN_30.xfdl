@@ -1,0 +1,316 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_CN_30" width="570" height="599" titletext="서비스담당자 단일조회 팝업" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="599" width="570">
+        <Div id="Div00" text="Div00" left="20" top="20" width="530" positionstep="0" enableevent="true" tabstop="false" bottom="20">
+          <Layouts>
+            <Layout>
+              <Button id="btn_search" taborder="2" text="조회" top="41" height="26" onclick="btn_search_onclick" cssclass="btn_WF_require" width="60" right="0"/>
+              <Static id="Static60_00" taborder="0" text="서비스담당자 조회" left="0" top="0" height="21" cssclass="sta_WF_title04" width="300"/>
+              <Static id="sta_totcnt" taborder="1" text="총 0건" left="0" top="40" width="180" height="25" usedecorate="true"/>
+              <Grid id="grd_list" taborder="3" top="77" height="442" binddataset="ds_list" autofittype="col" cellsizebandtype="body" oncelldblclick="grd_list_oncelldblclick" autoenter="select" onenterdown="grd_list_onenterdown" oncellclick="grd_list_oncellclick" left="0" right="0" cellsizingtype="col" scrollbartype="auto fixed">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="86"/>
+                      <Column size="81"/>
+                      <Column size="84"/>
+                      <Column size="151"/>
+                      <Column size="82"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="31" band="head"/>
+                      <Row size="31"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell text="사번"/>
+                      <Cell col="1" text="담당자 명"/>
+                      <Cell col="2" text="조직코드"/>
+                      <Cell col="3" text="조직코드 명"/>
+                      <Cell col="4" text="직무"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="bind:EMP_NO" textAlign="center" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+                      <Cell col="1" text="bind:OPRTR_NM" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;" cssclass="grd_WF_left" textAlign="center"/>
+                      <Cell col="2" text="bind:ORG_CD" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;" textAlign="center"/>
+                      <Cell col="3" text="bind:ORG_NM" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;" textAlign="left"/>
+                      <Cell col="4" text="bind:USR_SPR_NM" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Static id="sta_noData" taborder="4" text="조회된 결과가 없습니다." left="0" top="155" height="354" textAlign="center" visible="true" right="0" onclick="Div00_sta_noData_onclick"/>
+              <Button id="btn_select" taborder="5" text="선택" left="235" top="grd_list:10" width="60" height="30" onclick="btn_select_onclick" cssclass="btn_WF_select" positionstep="0"/>
+              <Edit id="edt_maxCnt" taborder="7" left="400" top="41" height="26" text="1,000" textAlign="right" right="btn_search:4" enable="false" onkeyup="Div00_edt_maxCnt_onkeyup"/>
+              <Static id="sta_totcnt00" taborder="6" text="최대조회수" left="336" top="40" height="25" usedecorate="true" right="edt_maxCnt:4"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="START_NUM" type="INT" size="256"/>
+          <Column id="ROW_COUNT" type="INT" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="USR_SPR_CD" type="STRING" size="256"/>
+          <Column id="USR_SPR_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">1000</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="JB_NM" type="STRING" size="256"/>
+          <Column id="USR_SPR_CD" type="STRING" size="256"/>
+          <Column id="USR_SPR_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_copy">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="JB_NM" type="STRING" size="256"/>
+          <Column id="USR_SPR_CD" type="STRING" size="256"/>
+          <Column id="USR_SPR_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_CN_30
+/* 작 성 일 자 : 2022/04/25
+/* 작  성   자 : 문주환
+/* 설       명 : 서비스담당자 단일조회 팝업
+/***********************************************************/
+include "CC::CcUtils.xjs";
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+this.coCd = "";			// 회사코드
+this.empNo = "";		// 사번
+this.oprtrNm = "";		// 담당자 명
+this.orgCd = "";		// 조직코드
+this.orgNm = "";		// 조직코드 명
+this.useSprCd = "";		// 직무
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+	this.gfn_formOnLoad(this);
+	this.ds_list_copy.copyData(this.ds_list);
+	this.Div00.form.edt_maxCnt.set_value("1,000"); //초기 1000으로 셋팅
+	this.fn_paramSetting(this.parent);
+	
+	// 단축키 등록
+	this.fn_regShortCutMethod();
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (){
+	var sSvcId = "search";    
+    var sUrl = "/bo/cust/cmn/popup/select-svc-oprtr-mbr.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_list=ds_output1";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");	
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "search"){    
+		if(this.ds_list.getCount() < 1){
+			this.ds_list.copyData(this.ds_list_copy);
+			this.Div00.form.sta_noData.bringToFront();
+		}else{
+			this.Div00.form.sta_noData.sendToBack();
+		}
+		
+		this.totalCount = this.ds_list.getCount();
+		
+		this.fn_initGrid();
+		this.Div00.form.sta_totcnt.set_text("총 "+ this.gfn_appendComma(this.totalCount, 0) +"건");
+		this.Div00.form.grd_list.setFixedRow(0);
+		
+		//그리드에 포커스
+		this.Div00.form.grd_list.setFocus();
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_paramSetting = function (param){
+	this.coCd = param.coCd;
+	this.empNo = param.empNo;
+	this.oprtrNm = param.oprtrNm;
+	this.orgCd = param.orgCd;
+	this.orgNm = param.orgNm;
+	this.useSprCd = param.useSprCd;
+		
+	this.ds_search.setColumn(0, "CO_CD", param.coCd); 
+	this.ds_search.setColumn(0, "EMP_NO", this.empNo);
+	this.ds_search.setColumn(0, "OPRTR_NM", this.oprtrNm);
+	this.ds_search.setColumn(0, "ORG_CD", this.orgCd);
+	this.ds_search.setColumn(0, "ORG_NM", this.orgNm);
+	this.ds_search.setColumn(0, "USR_SPR_CD", this.useSprCd);
+		
+	if(!this.gfn_isNull(this.empNo) || !this.gfn_isNull(this.oprtrNm) || !this.gfn_isNull(this.orgCd)
+			 || !this.gfn_isNull(this.orgNm) || !this.gfn_isNull(this.useSprCd)){
+		this.fn_search();
+	}else{
+		this.fn_initGrid();
+		
+		//팝업창으로 넘어온 값이 ''면 sta_noData 안보이도록 처리
+		this.Div00.form.sta_noData.sendToBack();
+	}
+};
+
+//그리드 검색조건 셋팅
+this.fn_initGrid = function(){
+	this.ds_list.insertRow(0);
+	this.ds_list.setColumn(0, "EMP_NO",  this.ds_search.getColumn(0, "EMP_NO"));
+	this.ds_list.setColumn(0, "OPRTR_NM",  this.ds_search.getColumn(0, "OPRTR_NM"));
+	this.ds_list.setColumn(0, "ORG_CD",  this.ds_search.getColumn(0, "ORG_CD"));
+	this.ds_list.setColumn(0, "ORG_NM",  this.ds_search.getColumn(0, "ORG_NM"));
+	this.ds_list.setColumn(0, "USR_SPR_NM",  this.ds_search.getColumn(0, "USR_SPR_NM"));
+	this.ds_list.set_rowposition(-1);
+};
+
+this.fn_searchMapSetting = function(){
+	this.ds_search.setColumn(0, "EMP_NO", this.ds_list.getColumn(0, "EMP_NO"));
+	this.ds_search.setColumn(0, "OPRTR_NM", this.ds_list.getColumn(0, "OPRTR_NM"));
+	this.ds_search.setColumn(0, "ORG_CD", this.ds_list.getColumn(0, "ORG_CD"));
+	this.ds_search.setColumn(0, "ORG_NM", this.ds_list.getColumn(0, "ORG_NM"));
+	this.ds_search.setColumn(0, "USR_SPR_NM", this.ds_list.getColumn(0, "USR_SPR_NM"));
+};
+
+// 창닫기
+this.fn_closeForm = function() {
+	this.close();
+};
+
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	this.fn_regMethodENTER("btn_search_onclick");
+	this.fn_regMethodESC("fn_closeForm");
+	this.fn_regMethodShiftENTER("btn_select_onclick");
+};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo){	
+	var coCd = this.ds_search.getColumn(0, "CO_CD");
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+//그리드 셀 더블클릭 
+this.grd_list_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo){
+	if(e.row != 0){
+		var resData = {};
+		var resString = "";
+		
+		resData.CO_CD 	 = this.ds_list.getColumn(e.row, "CO_CD");   // 회사코드
+		resData.EMP_NO	 = this.ds_list.getColumn(e.row, "EMP_NO");  // 사번
+		resData.OPRTR_NM = this.ds_list.getColumn(e.row, "OPRTR_NM");// 담당자 명
+		resData.ORG_CD	 = this.ds_list.getColumn(e.row, "ORG_CD");  // 조직코드
+		resData.ORG_NM	 = this.ds_list.getColumn(e.row, "ORG_NM");  // 조직코드 명
+		resData.USR_SPR_CD	 = this.ds_list.getColumn(e.row, "USR_SPR_CD");   // 직무
+		resData.USR_SPR_NM	 = this.ds_list.getColumn(e.row, "USR_SPR_NM");   // 직무명
+		resString = JSON.stringify(resData);	
+		
+		this.close(resString);
+	}
+};
+
+//검색조건 ROW에서 enter 클릭 시 
+this.grd_list_onenterdown = function(obj:nexacro.Grid,e:nexacro.GridEditEventInfo)
+{
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+//검색조건 ROW의 CELL 클릭 시 글자 맨 끝으로 커서 가도록
+this.grd_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row == 0){
+		var cellText = obj.getCellText(e.row, e.cell);
+		if(cellText != undefined){
+			obj.setEditSelect(cellText.length, cellText.length);
+		}
+	}
+};
+
+//선택 클릭 이벤트
+this.btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var resData = {};
+	var resString = "";
+
+	if(this.ds_list.rowposition < 1){
+		alert(this.fn_getMessage("ERRC000050", "데이터")); // 선택된 데이터가 없습니다.
+
+		this.Div00.form.grd_list.setFocus();
+		return;
+	}
+	resData.CO_CD 	 = this.ds_list.getColumn(this.ds_list.rowposition, "CO_CD");   		 // 회사코드
+	resData.EMP_NO	 = this.ds_list.getColumn(this.ds_list.rowposition, "EMP_NO");   		// 사번
+	resData.OPRTR_NM = this.ds_list.getColumn(this.ds_list.rowposition, "OPRTR_NM"); 		// 담당자 명
+	resData.ORG_CD	 = this.ds_list.getColumn(this.ds_list.rowposition, "ORG_CD");   		// 조직코드
+	resData.ORG_NM	 = this.ds_list.getColumn(this.ds_list.rowposition, "ORG_NM");   		// 조직코드 명
+	resData.USR_SPR_CD	 = this.ds_list.getColumn(this.ds_list.rowposition, "USR_SPR_CD");  // 직무
+	resData.USR_SPR_NM	 = this.ds_list.getColumn(this.ds_list.rowposition, "USR_SPR_NM");  // 직무명
+	
+	resString = JSON.stringify(resData);	
+	
+	this.close(resString);
+};
+
+//최대 조회수 KEYUP 이벤트
+this.Div00_edt_maxCnt_onkeyup = function(obj:nexacro.Edit,e:nexacro.KeyEventInfo)
+{
+	var cntValue = this.gfn_removeComma(this.Div00.form.edt_maxCnt.value);
+	
+	if(!this.gfn_isNull(cntValue)){
+		this.Div00.form.edt_maxCnt.set_value(this.gfn_appendComma(cntValue, 0));
+	}else{
+		this.Div00.form.edt_maxCnt.set_value("0");
+	}
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="Div00.form.edt_maxCnt" propid="value" datasetid="ds_search" columnid="ROW_COUNT"/>
+    </Bind>
+  </Form>
+</FDL>

@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_SA_MSEARCH" width="320" height="508" titletext="멀티입력메모" onload="multiTextPopup_onload" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="508" mobileorientation="landscape" width="320">
+        <TextArea id="textContents" taborder="0" left="10" top="10" width="300" height="450" onchanged="textContents_onchanged" displaynulltext="'사업장ID TAB 운영단위ID' 입력해주세요"/>
+        <Button id="btn_del" taborder="2" text="삭제" top="textContents:10" height="30" onclick="btn_del_onclick" positionstep="0" left="250" right="10"/>
+        <Button id="btn_select" taborder="1" text="확인" top="textContents:10" width="60" height="30" onclick="btn_select_onclick" cssclass="btn_WF_select" positionstep="0" left="186"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : 영업마케팅 멀티텍스트 팝업(운영단위 조회 시에 사업장ID TAB 운영단위ID 로 써야해서 안내 문구 삽입위함)
+CREATION DATES : 2022.02.22
+CREATER        : 이민호
+*******************************************************/
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.multiTextPopup_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	if( this.parent.textId.value != undefined ) {
+		this.textContents.set_value(nexacro.replaceAll(this.parent.textId.value, ",", "\n"));
+	}
+	this.btn_select.setFocus(); // 포커스를 확인버튼에 줘서 plcae holder가 보이게
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	//ESC : 닫기기능
+	if(e.keycode == 27){
+		this.close();
+	}
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_del_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.textContents.set_value("");
+	this.textContents.setFocus();
+};
+
+this.btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var textId = this.parent.textId.id;
+	var textValue = this.textContents.value;
+	var params = {
+		textId : textId,
+		textValue : textValue == undefined ? "" : nexacro.replaceAll(this.textContents.value, "\n", ",")
+	}
+	
+	this.close(JSON.stringify(params));
+};
+]]></Script>
+  </Form>
+</FDL>

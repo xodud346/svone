@@ -1,0 +1,272 @@
+//* var ================================================================== */
+@theme-tab-height                   : 50px;
+@theme-tab-padder-horizon           : 20px;
+@theme-tab-text-color               : #555;
+@theme-tab-text-color-active        : #333;// @primary; 
+@theme-tab-line-border-color        : #e1e1e1;
+@theme-tab-line-border-color-active : #888; // @primary;
+@theme-tab-line-bg-color            : #fff;
+@theme-tab-bg-color                 : #f5f5f5;
+@theme-tab-bg-color-active          : #fff;
+
+@tab-height                         : @theme-tab-height;
+@tab-padder-horizon                 : @theme-tab-padder-horizon;
+@tab-text-color                     : @theme-tab-text-color;
+@tab-text-color-active              : @theme-tab-text-color-active;
+@tab-line-border-color              : @theme-tab-line-border-color;
+@tab-line-border-color-active       : @theme-tab-line-border-color-active;
+@tab-line-bg-color                  : @theme-tab-line-bg-color;
+
+@tab-bg-color                       : @theme-tab-bg-color;
+@tab-bg-color-active                : @theme-tab-bg-color-active;
+
+//* class ================================================================== */
+.set-tab(){
+    clear: both;
+    display: block;
+}
+
+// has line
+.set-line(){
+    height: @tab-height + 1;
+    li {
+        height: @tab-height;
+        span {
+            height: @tab-height;
+            line-height: @tab-height;
+            border-style: solid;
+            border-width: 1px;
+            border-color: @tab-line-border-color;
+            border-bottom-width: 1px;
+            border-bottom-color: @tab-line-border-color-active;
+            background-color: @tab-bg-color;
+        }
+        &:hover,
+        &.in {
+            span {
+                border-color: @tab-line-border-color-active;
+                border-bottom-color: @tab-line-bg-color;
+                background-color: @tab-bg-color-active;
+            }
+        }
+    }
+}
+
+// has bg
+.set-bg(){
+    li {
+        height: @tab-height;
+        line-height: @tab-height;
+        &:hover,
+        &.in {
+            span {
+                background-color: @tab-bg-color-active;
+                color: @tab-text-color;
+            }
+        }
+        &:first-child {
+            span { 
+                border-left-width: 0;
+            }
+        }
+    }
+    span {
+        margin-left: 0;
+        color: #fff;
+        border-width: 0;
+        border-left-width: 1px;
+        border-style: solid;
+        border-color: @tab-line-border-color;
+        background-color: @tab-bg-color;        
+    }
+}
+
+// full width
+.set-full(){
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+    li {
+        display: table-cell;
+        width: 100%;
+        height: 100%;
+        float: none;
+        text-align: center;
+        vertical-align: middle;
+        &:hover,
+        &.in {
+            span {  }
+        }
+    }
+}
+
+.set-tab(@type: a) when (@type = a){
+    .set-line();
+    .set-full();
+}
+
+.set-tab(@type: b) when (@type = b){
+    .set-line();
+    border-bottom: 1px solid @tab-line-border-color-active;
+    li {
+        margin-bottom: -1px;
+        &.in {
+            a {
+                span {
+                    color: #333;
+                    .primary {
+                        color: #2ea3d7;
+                    }
+                }
+            }
+        }
+    }
+    a { 
+        height: @tab-height;
+        line-height: @tab-height;
+        span {
+            padding: 0 70px;
+            color: #999;
+            .primary {
+                font-family: @font-family-base-eng;
+                color: #999;
+            }
+        }
+    }
+}
+
+.set-tab(@type: c) when (@type = c){
+    .set-bg();
+    .set-full();
+    margin: 0 -3px 30px -2px;
+    li {
+        a {
+            margin: 0 0 0 3px;
+        }
+        &:hover,
+        &.in {
+            span {
+                background-color: @primary;
+                color: #fff;
+            }
+        }
+    }
+    span {
+        color: #999;
+        font-size: 18px;
+        border: none;
+    }
+}
+
+.set-tab(@type: a) when (@type = d){
+    .set-bg();
+}
+
+// tabSlidr thumbnail tab
+ul.tab {
+    .reset();
+    .clearfix();
+    *zoom: 1;
+    > li {
+        float: left;
+    }
+}
+
+// Tab
+ul.tab-list {
+    .reset();
+    .clearfix();
+    *zoom: 1;
+    > li {
+        float: left;
+        span {
+            font-size: 16px;
+        }
+    }
+}
+
+.tab-list {
+    position: relative;
+    z-index: 1;
+    li {
+        a { 
+            display: block;
+            margin-left: -1px;
+        }
+        &:first-child {
+            a {
+                margin-left: 0;
+            }
+        }
+        &:hover,
+        &.in {
+            span {
+                z-index: 2;
+                color: @tab-text-color-active;
+            }
+        }
+        &:hover {
+            a, span {
+                text-decoration: none;
+            }
+        }
+    }
+    span {
+        position: relative;
+        z-index: 1;
+        display: block;
+        padding: 0 20px;
+        color: @tab-text-color;
+        .transition(~'all .1s');
+    }
+
+    // gap
+    &.has-gap {
+        li {
+            margin-left: 5px;
+            &:first-child {
+                margin-left: 0;
+            }
+        }
+    }
+
+    // direction
+    &.is-vertical {
+        li {
+            float: none;
+            margin-bottom: -1px;
+            &:first-child {
+                span {
+                    border-top-width: 0;
+                }
+            }
+            a {
+                margin-left: 0;
+            }
+            span {
+                border-left-width: 0;
+                border-top-width: 1px;
+            }
+        }
+    }
+
+    &.full {
+        .set-full();
+    }
+}
+
+//* less ================================================================== */
+.tab-list {
+    &.tab-a {
+        .set-tab(a);
+    }
+    &.tab-b {
+        .set-tab(b);
+    }
+    &.tab-c {
+        .set-tab(c);
+    }
+    &.tab-d {
+        .set-tab(d);
+    }
+}

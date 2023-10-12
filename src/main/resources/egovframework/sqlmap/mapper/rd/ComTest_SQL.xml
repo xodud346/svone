@@ -1,0 +1,761 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ComTest">
+
+    <select id="selectComTest" parameterType="HashMap" resultType="HashMap">
+        /* ComTestDao.selectComTest 상품전송정보 조회 */
+        <![CDATA[
+            SELECT '0' AS CHK                    /*CHK*/
+                 , A.IF_CO_CD                    /*IF회사코드*/
+                 , A.IF_MSG_ID                   /*IF메시지ID*/
+                 , A.IF_MSG_SEQ                  /*IF메시지순번*/
+                 , A.PRD_ID                      /*상품ID*/
+                 , A.BZPLC_ID                    /*사업장ID*/
+                 , A.OPR_UNIT_ID                 /*운영단위ID*/
+                 , A.MTL_GRAVITY                 /*물질비중*/
+                 , A.PHASE_SPR_CD                /*성상구분코드*/
+                 , A.PRD_CHRPSN_ID               /*상품담당자ID*/
+                 , A.PURG_CHRPSN_ID              /*구매담당자ID*/
+                 , A.PRD_NM                      /*상품명*/
+                 , A.PUB_ONLY_SPR_CD             /*공용전용구분코드*/
+                 , A.CTRY_SPR_CD                 /*국가구분코드*/
+                 , A.MNFR_NO                     /*제조사번호*/
+                 , A.MRO_PRD_CLCD                /*MRO상품분류코드*/
+                 , A.HUB_HNL_PSB_YN              /*허브취급가능여부*/
+                 , A.BASIS_UNIT_CD               /*기본단위코드*/
+                 , A.BASIS_UNIT_QTY              /*기본단위수량*/
+                 , A.SELL_UNIT_CD                /*판매단위코드*/
+                 , A.SELL_UNIT_QTY               /*판매단위수량*/
+                 , A.CHM_MTL_YN                  /*화학물질여부*/
+                 , A.TX_CLCD                     /*세금분류코드*/
+                 , A.REPR_SPEC                   /*대표규격*/
+                 , A.MRO_CRT_SPR_CD              /*MRO생성구분코드*/
+                 , A.INDV_PKG_SPR_CD             /*개별일괄구분코드*/
+                 , A.SND_YN                      /*송신여부*/
+                 , A.PROC_SUCC_YN                /*처리성공여부*/
+                 , A.PROC_ERRMSG                 /*처리에러메시지*/
+                 , A.PI_IFID                     /*PI인터페이스ID*/
+                 , A.PI_STAT                     /*PI수신상태*/
+                 , A.PI_MSG                      /*PI메세지*/
+                 , A.PI_DATE                     /*PI수신날짜*/
+                 , A.PI_TIME                     /*PI수신시간*/
+                 , A.PI_TID                      /*PI트랜젝션ID*/
+                 , A.REGPSN_ID                   /*등록자ID*/
+                 , A.REG_DTM                     /*등록일시*/
+                 , A.UPDPSN_ID                   /*수정자ID*/
+                 , A.UPD_DTM                     /*수정일시*/
+              FROM SSP_APP.TB_RD_PRD_TRANS_INFO A
+             WHERE 1=1
+        ]]>
+        <if test="IF_CO_CD != null and IF_CO_CD != ''">
+            <![CDATA[
+               AND A.IF_CO_CD        = #{IF_CO_CD}
+            ]]>
+        </if>
+        <if test="IF_MSG_ID != null and IF_MSG_ID != ''">
+            <![CDATA[
+               AND A.IF_MSG_ID       = #{IF_MSG_ID}
+            ]]>
+        </if>
+        <if test="IF_MSG_SEQ != null and IF_MSG_SEQ != ''">
+            <![CDATA[
+               AND A.IF_MSG_SEQ      = #{IF_MSG_SEQ}
+            ]]>
+        </if>
+        <if test="PRD_ID != null and PRD_ID != ''">
+            <![CDATA[
+               AND A.PRD_ID          = #{PRD_ID}
+            ]]>
+        </if>
+        <if test="SND_YN != null and SND_YN != ''">
+            <![CDATA[
+               AND A.SND_YN          IN (#{SND_YN})
+            ]]>
+        </if>
+    </select>
+    
+    <select id="selectComTestBatch" parameterType="HashMap" resultType="HashMap">
+        /* ComTestDao.selectComTest 상품전송정보 조회 */
+        <![CDATA[
+            SELECT '0' AS CHK                    /*CHK*/
+                 , A.IF_CO_CD                    /*IF회사코드*/
+                 , A.IF_MSG_ID                   /*IF메시지ID*/
+                 , A.IF_MSG_SEQ                  /*IF메시지순번*/
+                 , A.PRD_ID                      /*상품ID*/
+                 , A.BZPLC_ID                    /*사업장ID*/
+                 , A.OPR_UNIT_ID                 /*운영단위ID*/
+                 , A.MTL_GRAVITY                 /*물질비중*/
+                 , A.PHASE_SPR_CD                /*성상구분코드*/
+                 , A.PRD_CHRPSN_ID               /*상품담당자ID*/
+                 , A.PURG_CHRPSN_ID              /*구매담당자ID*/
+                 , A.PRD_NM                      /*상품명*/
+                 , A.PUB_ONLY_SPR_CD             /*공용전용구분코드*/
+                 , A.CTRY_SPR_CD                 /*국가구분코드*/
+                 , A.MNFR_NO                     /*제조사번호*/
+                 , A.MRO_PRD_CLCD                /*MRO상품분류코드*/
+                 , A.HUB_HNL_PSB_YN              /*허브취급가능여부*/
+                 , A.BASIS_UNIT_CD               /*기본단위코드*/
+                 , A.BASIS_UNIT_QTY              /*기본단위수량*/
+                 , A.SELL_UNIT_CD                /*판매단위코드*/
+                 , A.SELL_UNIT_QTY               /*판매단위수량*/
+                 , A.CHM_MTL_YN                  /*화학물질여부*/
+                 , A.TX_CLCD                     /*세금분류코드*/
+                 , A.REPR_SPEC                   /*대표규격*/
+                 , A.MRO_CRT_SPR_CD              /*MRO생성구분코드*/
+                 , A.INDV_PKG_SPR_CD             /*개별일괄구분코드*/
+                 , A.SND_YN                      /*송신여부*/
+                 , A.PROC_SUCC_YN                /*처리성공여부*/
+                 , A.PROC_ERRMSG                 /*처리에러메시지*/
+                 , A.PI_IFID                     /*PI인터페이스ID*/
+                 , A.PI_STAT                     /*PI수신상태*/
+                 , A.PI_MSG                      /*PI메세지*/
+                 , A.PI_DATE                     /*PI수신날짜*/
+                 , A.PI_TIME                     /*PI수신시간*/
+                 , A.PI_TID                      /*PI트랜젝션ID*/
+                 , A.REGPSN_ID                   /*등록자ID*/
+                 , A.REG_DTM                     /*등록일시*/
+                 , A.UPDPSN_ID                   /*수정자ID*/
+                 , A.UPD_DTM                     /*수정일시*/
+              FROM SSP_APP.TB_RD_PRD_TRANS_INFO A
+             WHERE 1=1
+        ]]>
+
+               AND A.SND_YN    = #{SND_YN}
+			   AND ROWNUM = 1
+             ORDER BY IF_MSG_ID ASC
+    </select>
+
+    <select id="selectComTestPKey" parameterType="HashMap" resultType="String">
+        /* ComTestDao.selectComTestPKey 상품전송정보 PK 조회 */
+        <![CDATA[
+            SELECT SQ_RD_PRD_TRANS_INFO_01.NEXTVAL AS IF_MSG_ID FROM DUAL
+        ]]>
+    </select>
+
+    <select id="selectComTestCount" parameterType="HashMap" resultType="Integer">
+        /* ComTestDao.selectComTestCount 상품전송정보 카운트 조회 */
+        <![CDATA[
+            SELECT COUNT(1) AS CNT
+              FROM SSP_APP.TB_RD_PRD_TRANS_INFO
+             WHERE 1=1
+        ]]>
+        <if test="IF_CO_CD != null and IF_CO_CD != ''">
+            <![CDATA[
+               AND IF_CO_CD        = #{IF_CO_CD}
+            ]]>
+        </if>
+        <if test="IF_MSG_ID != null and IF_MSG_ID != ''">
+            <![CDATA[
+               AND IF_MSG_ID       = #{IF_MSG_ID}
+            ]]>
+        </if>
+        <if test="IF_MSG_SEQ != null and IF_MSG_SEQ != ''">
+            <![CDATA[
+               AND IF_MSG_SEQ      = #{IF_MSG_SEQ}
+            ]]>
+        </if>
+        <if test="PRD_ID != null and PRD_ID != ''">
+            <![CDATA[
+               AND PRD_ID          = #{PRD_ID}
+            ]]>
+        </if>
+    </select>
+
+    <insert id="insertComTest" parameterType="HashMap">
+        /* ComTestDao.insertComTest 상품전송정보 저장 */	
+        <![CDATA[
+          INSERT INTO TB_RD_PRD_TRANS_INFO
+					(
+						IF_CO_CD
+						,IF_MSG_ID
+						,IF_MSG_SEQ
+						,PRD_ID
+						,BZPLC_ID
+						,OPR_UNIT_ID
+						,MTL_GRAVITY
+						,PHASE_SPR_CD
+						,PRD_CHRPSN_ID
+						,PURG_CHRPSN_ID
+						,PRD_NM
+						,PUB_ONLY_SPR_CD
+						,CTRY_SPR_CD
+						,MNFR_NO
+						,MRO_PRD_CLCD
+						,HUB_HNL_PSB_YN
+						,BASIS_UNIT_CD
+						,BASIS_UNIT_QTY
+						,SELL_UNIT_CD
+						,SELL_UNIT_QTY
+						,CHM_MTL_YN
+						,TX_CLCD
+						,REPR_SPEC
+						,MRO_CRT_SPR_CD
+						,INDV_PKG_SPR_CD
+						,SND_YN
+						,PROC_SUCC_YN
+						,PROC_ERRMSG
+						,PI_IFID
+						,PI_STAT
+						,PI_MSG
+						,PI_DATE
+						,PI_TIME
+						,PI_TID
+						,REGPSN_ID
+						,REG_DTM
+						,UPDPSN_ID
+						,UPD_DTM
+					)
+					SELECT B.CO_CD AS IF_CO_CD
+						   ,#{IF_MSG_ID} AS IF_MSG_ID
+						   ,ROWNUM+100000 AS IF_MSG_SEQ
+						   ,A.PRD_ID
+						   ,NULL AS BZPLC_ID /*사업장ID(참고용으로 확인후 변경)*/
+						   ,NULL AS OPR_UNIT_ID /*운영단위ID(참고용으로 확인후 변경)*/
+						   ,B.MTL_GRAVITY
+						   ,B.PHASE_SPR_CD
+						   ,fn_rd_chrpsn_id(B.CO_CD,B.MNFR_NO,A.PRD_CLCD,'10') AS PRD_CHRPSN_ID
+						   ,fn_rd_chrpsn_id(B.CO_CD,B.MNFR_NO,A.PRD_CLCD,'30') AS PURG_CHRPSN_ID
+						   ,A.PRD_NM
+						   ,B.PUB_ONLY_SPR_CD
+						   ,B.ORGPLC_CTRY_CD AS CTRY_SPR_CD
+						   ,B.MNFR_NO
+						   ,B.MRO_PRD_CLCD
+						   ,B.HUB_HNL_PSB_YN
+						   ,B.BASIS_UNIT_CD
+						   ,B.BASIS_UNIT_QTY
+						   ,B.SELL_UNIT_CD
+						   ,B.SELL_UNIT_QTY
+						   ,B.CHM_MTL_PRD_YN AS CHM_MTL_YN
+						   ,B.TX_CLCD
+						   ,fn_pr_attr_val_list(A.CO_CD,A.PRD_ID) AS REPR_SPEC
+						   ,DECODE(NVL(A.MRO_CRT_YN,'N'),'N','C','U') AS MRO_CRT_SPR_CD
+						   ,#{indvPkgSprCd} AS INDV_PKG_SPR_CD /*10:개별, 20:일괄*/
+						   ,'N' AS SND_YN
+						   ,'N' AS PROC_SUCC_YN
+						   ,NULL AS PROC_ERRMSG
+						   ,NULL AS PI_IFID
+						   ,NULL AS PI_STAT
+						   ,NULL AS PI_MSG
+						   ,NULL AS PI_DATE
+						   ,NULL AS PI_TIME
+						   ,NULL AS PI_TID
+						   ,#{loginId} AS REGPSN_ID
+						   ,SYSDATE AS REG_DTM
+						   ,#{loginId} AS UPDPSN_ID
+						   ,SYSDATE AS UPD_DTM
+					  FROM TB_PR_PRD_INFO A
+					       LEFT OUTER JOIN TB_PR_MRO_PRD_INFO B
+						     ON A.PRD_ID = B.PRD_ID
+					 WHERE 1=1
+					   AND A.PRD_ID = #{PRD_ID}
+        ]]>
+    </insert>
+    
+    <insert id="insertComTest2" parameterType="HashMap">
+        /* ComTestDao.insertComTest2 상품속성정보 저장 */	
+        <![CDATA[
+          INSERT INTO TB_RD_PRD_ATTR_TRANS_DTLS
+					(
+						IF_CO_CD
+						,IF_MSG_ID
+						,IF_MSG_SEQ
+						,PRD_ID
+						,MRO_ATTR_CD
+						,PRVL
+						,REGPSN_ID
+						,REG_DTM
+						,UPDPSN_ID
+						,UPD_DTM
+					)
+					SELECT B.CO_CD AS IF_CO_CD
+						   ,#{IF_MSG_ID} AS IF_MSG_ID
+						   ,ROWNUM+100000 AS IF_MSG_SEQ
+						   ,B.PRD_ID
+						   ,B.PRD_ATTR_CD AS MRO_ATTR_CD
+						   ,B.PRVL
+						   ,#{loginId} AS REGPSN_ID
+						   ,SYSDATE AS REG_DTM
+						   ,#{loginId} AS UPDPSN_ID
+						   ,SYSDATE AS UPD_DTM
+					  FROM TB_PR_PRD_INFO_ATTR_MAPP B
+					 WHERE 1=1
+					   AND B.PRD_ID = #{PRD_ID}
+        ]]>
+    </insert>
+    
+    <insert id="insertComTest3" parameterType="HashMap">
+        /* ComTestDao.insertComTest3 상품물질전송내역 저장 */	
+        <![CDATA[
+          INSERT INTO TB_RD_PRD_MTL_TRANS_DTLS
+					(
+						IF_CO_CD
+						,IF_MSG_ID
+						,IF_MSG_SEQ
+						,PRD_ID
+						,CAS_NO
+						,STR_CONTENT
+						,END_CONTENT
+						,PHBT_MTL_YN
+						,TOXIC_MTL_YN
+						,LMT_MTL_YN
+						,ACCD_PSB_MTL_YN
+						,PERMIT_MTL_YN
+						,REGPSN_ID
+						,REG_DTM
+						,UPDPSN_ID
+						,UPD_DTM
+					)
+					SELECT 
+					A1.IF_CO_CD
+					,IF_MSG_ID
+					, ROWNUM+100000 AS IF_MSG_SEQ
+					, A1.PRD_ID
+					, A1.CAS_NO
+					, A1.STR_CONTENT
+					, A1.END_CONTENT
+					, A1.PHBT_MTL_YN
+					, A1.TOXIC_MTL_YN
+					, A1.LMT_MTL_YN
+					, A1.ACCD_PSB_MTL_YN
+					, A1.PERMIT_MTL_YN
+					, A1.REGPSN_ID
+					, A1.REG_DTM
+					, A1.UPDPSN_ID
+					, A1.UPD_DTM
+					FROM
+					(
+					SELECT A.CO_CD AS IF_CO_CD
+						   ,#{IF_MSG_ID} AS IF_MSG_ID
+						   ,ROWNUM AS IF_MSG_SEQ
+						   ,A.PRD_ID
+						   ,A.CAS_NO
+						   ,A.MIN_CONTENT STR_CONTENT
+						   ,A.MAX_CONTENT AS END_CONTENT
+						   ,NVL(MAX(CASE WHEN B.MNG_CD = '106' AND A.MAX_CONTENT >= NVL(B.HAMRYANG,0) THEN 'Y' END) OVER (PARTITION BY A.PRD_ID,A.CAS_NO),'N')  AS PHBT_MTL_YN /*금지물질*/
+						   ,NVL(MAX(CASE WHEN B.MNG_CD = '103' AND A.MAX_CONTENT >= NVL(B.HAMRYANG,0) THEN 'Y' END) OVER (PARTITION BY A.PRD_ID,A.CAS_NO),'N')  AS TOXIC_MTL_YN /*유독물질*/
+						   ,NVL(MAX(CASE WHEN B.MNG_CD = '105' AND A.MAX_CONTENT >= NVL(B.HAMRYANG,0) THEN 'Y' END) OVER (PARTITION BY A.PRD_ID,A.CAS_NO),'N')  AS LMT_MTL_YN /*제한물질*/
+						   ,NVL(MAX(CASE WHEN B.MNG_CD = '107' AND A.MAX_CONTENT >= NVL(B.HAMRYANG,0) THEN 'Y' END) OVER (PARTITION BY A.PRD_ID,A.CAS_NO),'N')  AS ACCD_PSB_MTL_YN /*사고대비물질*/
+						   ,NVL(MAX(CASE WHEN B.MNG_CD = '104' AND A.MAX_CONTENT >= NVL(B.HAMRYANG,0) THEN 'Y' END) OVER (PARTITION BY A.PRD_ID,A.CAS_NO),'N')  AS PERMIT_MTL_YN /*허가물질*/
+					       ,ROW_NUMBER() OVER (PARTITION BY A.PRD_ID, A.CAS_NO ORDER BY 1) cvw_fv_chem_restrict_info_ORDER
+						   ,#{loginId} AS REGPSN_ID
+						   ,SYSDATE AS REG_DTM
+						   ,#{loginId} AS UPDPSN_ID
+						   ,SYSDATE AS UPD_DTM
+					  FROM TB_PR_PRD_CHM_MTL_DTLS A
+					  LEFT JOIN SSP_CMS.cvw_fv_chem_restrict_info B
+					    ON 1=1
+					   AND B.CAS_NO = A.CAS_NO
+					 WHERE 1=1
+					   AND A.PRD_ID = #{PRD_ID}
+					)A1
+					WHERE 1=1
+					AND A1.cvw_fv_chem_restrict_info_ORDER=1
+        ]]>
+    </insert>
+    
+    <insert id="insertComTest4" parameterType="HashMap">
+        /* ComTestDao.insertComTest 상품구매정보 저장 */	
+        <![CDATA[
+          INSERT INTO TB_RD_PURG_TRANS_INFO
+					(
+						IF_CO_CD
+						,IF_MSG_ID
+						,IF_MSG_SEQ
+						,PRD_ID
+						,CPRTCP_ID
+						,SPL_PSB_YN
+						,SPL_DIS_SBJ_CD
+						,MIN_ORD_QTY
+						,PCPRC
+						,CURR_UNIT_CD
+						,DLV_LT
+						,VLD_STR_DT
+						,VLD_END_DT
+						,MSDS_FILE_EXST_YN
+						,MSDS_FNL_CHG_DT
+						,STPRC
+						,SND_YN
+						,PROC_SUCC_YN
+						,PROC_ERRMSG
+						,PI_IFID
+						,PI_STAT
+						,PI_MSG
+						,PI_DATE
+						,PI_TIME
+						,PI_TID
+						,REGPSN_ID
+						,REG_DTM
+						,UPDPSN_ID
+						,UPD_DTM
+					)
+					SELECT B.CO_CD AS IF_CO_CD
+						   ,#{IF_MSG_ID} AS IF_MSG_ID
+						   ,ROWNUM+100000 AS IF_MSG_SEQ
+						   ,A.PRD_ID
+						   ,B.CPRTCP_ID
+						   ,A.SPL_PSB_YN
+						   ,DECODE(A.SPL_PSB_YN,'N','1') AS SPL_DIS_SBJ_CD /*협력사상품정보에 칼럼추가예정 TB_PC_CPRTCP_PRD_INFO*/
+						   ,A.MIN_ODR_QTY MIN_ORD_QTY
+						   ,C.PRD_PRC AS PCPRC
+						   ,C.CURR_UNIT_CD
+						   ,'' AS DLV_LT /*배송리드타임 칼럼추가 예정 TB_PC_CPRTCP_PRD_INFO*/
+						   ,C.VLD_STR_DT
+						   ,C.VLD_END_DT
+						   ,CASE WHEN A.MSDS_ATTC_FILEID IS NOT NULL THEN 'Y' ELSE 'N' END AS MSDS_FILE_EXST_YN
+						   ,A.MSDS_FNL_CHG_DT
+						   ,D.STPRC AS STPRC
+						   ,'N' AS SND_YN
+						   ,'N' AS PROC_SUCC_YN
+						   ,NULL AS PROC_ERRMSG
+						   ,NULL AS PI_IFID
+						   ,NULL AS PI_STAT
+						   ,NULL AS PI_MSG
+						   ,NULL AS PI_DATE
+						   ,NULL AS PI_TIME
+						   ,NULL AS PI_TID
+						   ,#{loginId} AS REGPSN_ID
+						   ,SYSDATE AS REG_DTM
+						   ,#{loginId} AS UPDPSN_ID
+						   ,SYSDATE AS UPD_DTM
+					  FROM TB_PC_CPRTCP_PRD_INFO A
+					       LEFT OUTER JOIN TB_CP_CPRTCP_BASIS B
+						     ON A.CPRTCP_ID = B.CPRTCP_ID
+					        AND B.CO_CD = A.CO_CD
+						   LEFT OUTER JOIN TB_PC_CPRTCP_PRD_PRC_INFO C 
+						     ON A.PRD_ID = C.PRD_ID 
+							AND A.CPRTCP_ID = C.CPRTCP_ID 
+					        AND C.CO_CD = A.CO_CD
+					       LEFT JOIN TB_PC_PRD_PRC_DTLS D
+					         ON 1=1
+					        AND D.CO_CD = A.CO_CD
+					        AND D.PRD_ID = A.PRD_ID
+					 WHERE 1=1
+					   AND A.PRD_ID = #{PRD_ID}
+        ]]>
+    </insert>
+    
+    <insert id="insertComTest5" parameterType="HashMap">
+        /* ComTestDao.insertComTest 상품할인정보 저장 */	
+        <![CDATA[
+          INSERT INTO TB_RD_PURG_DC_TRANS_DTLS
+					(
+						IF_CO_CD
+						,IF_MSG_ID
+						,IF_MSG_SEQ
+						,PRD_ID
+						,CPRTCP_ID
+						,DC_TP_CD
+						,DC_SEQ
+						,RND_DC_VLD_STR_DTM
+						,RND_DC_VLD_END_DTM
+						,DC_AMT
+						,RND_DC_SPR_CD
+						,QTY_ITV_STR
+						,QTY_ITV_END
+						,REGPSN_ID
+						,REG_DTM
+						,UPDPSN_ID
+						,UPD_DTM
+					)
+					SELECT A.CO_CD  AS IF_CO_CD
+						   ,#{IF_MSG_ID} AS IF_MSG_ID
+						   ,LPAD(ROW_NUMBER() OVER (ORDER BY A.PRD_ID,A.CPRTCP_ID,A.PRC_COND_SPR_CD,A.PRC_COND_SEQ),10,'0')+100000 AS IF_MSG_SEQ
+						   ,A.PRD_ID
+						   ,A.CPRTCP_ID
+						   ,A.PRC_COND_SPR_CD AS DC_TP_CD
+						   ,A.PRC_COND_SEQ AS DC_SEQ
+						   ,A.PERD_STR_DT AS RND_DC_VLD_STR_DTM
+						   ,A.PERD_END_DT AS RND_DC_VLD_END_DTM
+						   ,A.DC_AMT
+						   ,'1' AS RND_DC_SPR_CD /*1:금액,2:비율*/
+						   ,A.STR_QTY_CNT AS QTY_ITV_STR
+						   ,A.END_QTY_CNT AS QTY_ITV_END
+						   ,#{loginId} AS REGPSN_ID
+						   ,SYSDATE AS REG_DTM
+						   ,#{loginId} AS UPDPSN_ID
+						   ,SYSDATE AS UPD_DTM
+					  FROM TB_PC_PRC_COND_DTLS A
+					 WHERE 1=1
+					   AND A.PRC_COND_SPR_CD IN ('ZM01','ZM02')
+					   AND A.PRD_ID = #{PRD_ID}
+					ORDER BY PRD_ID,CPRTCP_ID,DC_TP_CD,DC_SEQ
+        ]]>
+    </insert>
+
+    <update id="updateComTest" parameterType="HashMap">
+        /* ComTestDao.updateComTest 상품전송정보 수정 */
+        <![CDATA[
+            UPDATE SSP_APP.TB_RD_PRD_TRANS_INFO
+               SET
+                  SND_YN                    = 'P'                      /*송신여부*/
+             WHERE 1=1
+               AND IF_CO_CD        = #{ifCoCd}
+               AND IF_MSG_ID       = #{ifMsgId}
+        ]]>
+    </update>
+    
+    <update id="updateComTest2" parameterType="HashMap">
+        /* ComTestDao.updateComTest 상품전송정보 수정 */
+        <![CDATA[
+            UPDATE SSP_APP.TB_RD_PURG_TRANS_INFO
+               SET
+                  SND_YN                    = 'P'                      /*송신여부*/
+             WHERE 1=1
+               AND IF_CO_CD        = #{ifCoCd}
+               AND IF_MSG_ID       = #{ifMsgId}
+        ]]>
+    </update>
+
+    <update id="mergeComTest" parameterType="HashMap">
+        /* ComTestDao.mergeComTest 상품전송정보 저장/수정 */
+        <![CDATA[
+            MERGE INTO SSP_APP.TB_RD_PRD_TRANS_INFO A
+                 USING DUAL
+                    ON (
+                               A.IF_CO_CD      = #{IF_CO_CD}
+                           AND A.IF_MSG_ID     = #{IF_MSG_ID}
+                           AND A.IF_MSG_SEQ    = #{IF_MSG_SEQ}
+                           AND A.PRD_ID        = #{PRD_ID}
+                       )
+                  WHEN MATCHED THEN
+                        UPDATE SET
+                               A.IF_CO_CD                  = #{IF_CO_CD}                    /*IF회사코드*/
+                             , A.IF_MSG_ID                 = #{IF_MSG_ID}                   /*IF메시지ID*/
+                             , A.IF_MSG_SEQ                = #{IF_MSG_SEQ}                  /*IF메시지순번*/
+                             , A.PRD_ID                    = #{PRD_ID}                      /*상품ID*/
+                             , A.BZPLC_ID                  = #{BZPLC_ID}                    /*사업장ID*/
+                             , A.OPR_UNIT_ID               = #{OPR_UNIT_ID}                 /*운영단위ID*/
+                             , A.MTL_GRAVITY               = #{MTL_GRAVITY}                 /*물질비중*/
+                             , A.PHASE_SPR_CD              = #{PHASE_SPR_CD}                /*성상구분코드*/
+                             , A.PRD_CHRPSN_ID             = #{PRD_CHRPSN_ID}               /*상품담당자ID*/
+                             , A.PURG_CHRPSN_ID            = #{PURG_CHRPSN_ID}              /*구매담당자ID*/
+                             , A.PRD_NM                    = #{PRD_NM}                      /*상품명*/
+                             , A.PUB_ONLY_SPR_CD           = #{PUB_ONLY_SPR_CD}             /*공용전용구분코드*/
+                             , A.CTRY_SPR_CD               = #{CTRY_SPR_CD}                 /*국가구분코드*/
+                             , A.MNFR_NO                   = #{MNFR_NO}                     /*제조사번호*/
+                             , A.MRO_PRD_CLCD              = #{MRO_PRD_CLCD}                /*MRO상품분류코드*/
+                             , A.HUB_HNL_PSB_YN            = #{HUB_HNL_PSB_YN}              /*허브취급가능여부*/
+                             , A.BASIS_UNIT_CD             = #{BASIS_UNIT_CD}               /*기본단위코드*/
+                             , A.BASIS_UNIT_QTY            = #{BASIS_UNIT_QTY}              /*기본단위수량*/
+                             , A.SELL_UNIT_CD              = #{SELL_UNIT_CD}                /*판매단위코드*/
+                             , A.SELL_UNIT_QTY             = #{SELL_UNIT_QTY}               /*판매단위수량*/
+                             , A.CHM_MTL_YN                = #{CHM_MTL_YN}                  /*화학물질여부*/
+                             , A.TX_CLCD                   = #{TX_CLCD}                     /*세금분류코드*/
+                             , A.REPR_SPEC                 = #{REPR_SPEC}                   /*대표규격*/
+                             , A.MRO_CRT_SPR_CD            = #{MRO_CRT_SPR_CD}              /*MRO생성구분코드*/
+                             , A.INDV_PKG_SPR_CD           = #{INDV_PKG_SPR_CD}             /*개별일괄구분코드*/
+                             , A.SND_YN                    = #{SND_YN}                      /*송신여부*/
+                             , A.PROC_SUCC_YN              = #{PROC_SUCC_YN}                /*처리성공여부*/
+                             , A.PROC_ERRMSG               = #{PROC_ERRMSG}                 /*처리에러메시지*/
+                             , A.PI_IFID                   = #{PI_IFID}                     /*PI인터페이스ID*/
+                             , A.PI_STAT                   = #{PI_STAT}                     /*PI수신상태*/
+                             , A.PI_MSG                    = #{PI_MSG}                      /*PI메세지*/
+                             , A.PI_DATE                   = #{PI_DATE}                     /*PI수신날짜*/
+                             , A.PI_TIME                   = #{PI_TIME}                     /*PI수신시간*/
+                             , A.PI_TID                    = #{PI_TID}                      /*PI트랜젝션ID*/
+                             , A.REGPSN_ID                 = #{REGPSN_ID}                   /*등록자ID*/
+                             , A.REG_DTM                   = SYSDATE                        /*등록일시*/
+                             , A.UPDPSN_ID                 = #{UPDPSN_ID}                   /*수정자ID*/
+                             , A.UPD_DTM                   = SYSDATE                        /*수정일시*/
+                  WHEN NOT MATCHED THEN
+                            INSERT
+                            (
+                                   A.IF_CO_CD
+                                 , A.IF_MSG_ID
+                                 , A.IF_MSG_SEQ
+                                 , A.PRD_ID
+                                 , A.BZPLC_ID
+                                 , A.OPR_UNIT_ID
+                                 , A.MTL_GRAVITY
+                                 , A.PHASE_SPR_CD
+                                 , A.PRD_CHRPSN_ID
+                                 , A.PURG_CHRPSN_ID
+                                 , A.PRD_NM
+                                 , A.PUB_ONLY_SPR_CD
+                                 , A.CTRY_SPR_CD
+                                 , A.MNFR_NO
+                                 , A.MRO_PRD_CLCD
+                                 , A.HUB_HNL_PSB_YN
+                                 , A.BASIS_UNIT_CD
+                                 , A.BASIS_UNIT_QTY
+                                 , A.SELL_UNIT_CD
+                                 , A.SELL_UNIT_QTY
+                                 , A.CHM_MTL_YN
+                                 , A.TX_CLCD
+                                 , A.REPR_SPEC
+                                 , A.MRO_CRT_SPR_CD
+                                 , A.INDV_PKG_SPR_CD
+                                 , A.SND_YN
+                                 , A.PROC_SUCC_YN
+                                 , A.PROC_ERRMSG
+                                 , A.PI_IFID
+                                 , A.PI_STAT
+                                 , A.PI_MSG
+                                 , A.PI_DATE
+                                 , A.PI_TIME
+                                 , A.PI_TID
+                                 , A.REGPSN_ID
+                                 , A.REG_DTM
+                                 , A.UPDPSN_ID
+                                 , A.UPD_DTM
+                             )VALUES
+                             (
+                                   #{IF_CO_CD}
+                                 , #{IF_MSG_ID}
+                                 , #{IF_MSG_SEQ}
+                                 , #{PRD_ID}
+                                 , #{BZPLC_ID}
+                                 , #{OPR_UNIT_ID}
+                                 , #{MTL_GRAVITY}
+                                 , #{PHASE_SPR_CD}
+                                 , #{PRD_CHRPSN_ID}
+                                 , #{PURG_CHRPSN_ID}
+                                 , #{PRD_NM}
+                                 , #{PUB_ONLY_SPR_CD}
+                                 , #{CTRY_SPR_CD}
+                                 , #{MNFR_NO}
+                                 , #{MRO_PRD_CLCD}
+                                 , #{HUB_HNL_PSB_YN}
+                                 , #{BASIS_UNIT_CD}
+                                 , #{BASIS_UNIT_QTY}
+                                 , #{SELL_UNIT_CD}
+                                 , #{SELL_UNIT_QTY}
+                                 , #{CHM_MTL_YN}
+                                 , #{TX_CLCD}
+                                 , #{REPR_SPEC}
+                                 , #{MRO_CRT_SPR_CD}
+                                 , #{INDV_PKG_SPR_CD}
+                                 , #{SND_YN}
+                                 , #{PROC_SUCC_YN}
+                                 , #{PROC_ERRMSG}
+                                 , #{PI_IFID}
+                                 , #{PI_STAT}
+                                 , #{PI_MSG}
+                                 , #{PI_DATE}
+                                 , #{PI_TIME}
+                                 , #{PI_TID}
+                                 , #{REGPSN_ID}
+                                 , SYSDATE
+                                 , #{UPDPSN_ID}
+                                 , SYSDATE
+                             )
+        ]]>
+    </update>
+
+    <delete id="deleteComTest" parameterType="HashMap">
+        /* ComTestDao.deleteComTest 상품전송정보 삭제 */
+        <![CDATA[
+            DELETE FROM SSP_APP.TB_RD_PRD_TRANS_INFO
+             WHERE 1=1
+               AND IF_CO_CD        = #{IF_CO_CD}
+               AND IF_MSG_ID       = #{IF_MSG_ID}
+               AND IF_MSG_SEQ      = #{IF_MSG_SEQ}
+               AND PRD_ID          = #{PRD_ID}
+        ]]>
+    </delete>
+    
+    <select id="selectComTestPrd" parameterType="HashMap" resultType="HashMap">
+     <![CDATA[
+    	SELECT '0' AS CHK
+    			,PRD_ID 
+    			, PRD_NM 
+    	  FROM TB_PR_PRD_INFO 
+    	 WHERE rownum < 1000
+    	  AND MALL_SPR_CD = '20' 
+    	  AND PRD_CLCD IS NULL
+    	 ]]>
+    </select>
+    
+    <insert id="insertComTest6" parameterType="HashMap">
+        /* ComTestDao.insertComTest6 상품전송정보 저장 */	
+        <![CDATA[
+          INSERT INTO TB_RD_PRD_STATS_TRANS_INFO
+					(
+						IF_CO_CD
+						,IF_MSG_ID
+						,IF_MSG_SEQ
+						,PRD_ID
+						,MRO_PRD_STATS_CD
+						,SND_YN
+						,PROC_SUCC_YN
+						,PROC_ERRMSG
+						,PI_IFID
+						,PI_STAT
+						,PI_MSG
+						,PI_DATE
+						,PI_TIME
+						,PI_TID
+						,REGPSN_ID
+						,REG_DTM
+						,UPDPSN_ID
+						,UPD_DTM
+					)
+					SELECT A.CO_CD AS IF_CO_CD
+						   ,#{IF_MSG_ID} AS IF_MSG_ID
+						   ,ROWNUM+100000 AS IF_MSG_SEQ
+						   ,A.PRD_ID
+						   ,MRO_PRD_STATS_CD
+						   ,'N' AS SND_YN
+						   ,'N' AS PROC_SUCC_YN
+						   ,NULL AS PROC_ERRMSG
+						   ,NULL AS PI_IFID
+						   ,NULL AS PI_STAT
+						   ,NULL AS PI_MSG
+						   ,NULL AS PI_DATE
+						   ,NULL AS PI_TIME
+						   ,NULL AS PI_TID
+						   ,#{loginId} AS REGPSN_ID
+						   ,SYSDATE AS REG_DTM
+						   ,#{loginId} AS UPDPSN_ID
+						   ,SYSDATE AS UPD_DTM
+					  FROM TB_PR_MRO_PRD_INFO A
+					 WHERE 1=1
+					   AND A.PRD_ID = #{PRD_ID}
+        ]]>
+    </insert>
+    
+    <update id="updateComTest3" parameterType="HashMap">
+        /* ComTestDao.updateComTest 상품전송정보 수정 */
+        <![CDATA[
+            UPDATE SSP_APP.TB_RD_PRD_STATS_TRANS_INFO
+               SET
+                  SND_YN                    = 'P'                      /*송신여부*/
+             WHERE 1=1
+               AND IF_CO_CD        = #{ifCoCd}
+               AND IF_MSG_ID       = #{ifMsgId}
+        ]]>
+    </update>
+    
+    <select id="selectComTest1303" parameterType="HashMap" resultType="HashMap">
+        /* ComTestDao.selectComTest 상품전송정보 조회 */
+        <![CDATA[
+            SELECT '0' AS CHK                    /*CHK*/
+                 	,A.IF_CO_CD
+					,A.IF_MSG_ID
+					,A.IF_MSG_SEQ
+					,A.PRD_ID
+					,A.MRO_PRD_STATS_CD
+					,A.SND_YN
+					,A.PROC_SUCC_YN
+					,A.PROC_ERRMSG
+					,A.PI_IFID
+					,A.PI_STAT
+					,A.PI_MSG
+					,A.PI_DATE
+					,A.PI_TIME
+					,A.PI_TID
+					,A.REGPSN_ID
+					,A.REG_DTM
+					,A.UPDPSN_ID
+					,A.UPD_DTM
+              FROM SSP_APP.TB_RD_PRD_STATS_TRANS_INFO A
+             WHERE 1=1
+        ]]>
+
+               AND A.SND_YN    = #{SND_YN}
+			   AND ROWNUM = 1
+             ORDER BY IF_MSG_ID ASC
+    </select>
+    
+</mapper>

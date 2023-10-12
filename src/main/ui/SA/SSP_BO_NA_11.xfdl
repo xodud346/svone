@@ -1,0 +1,578 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_NA_11" width="1336" height="846" titletext="배지 목록" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="846" mobileorientation="landscape" width="1336">
+        <Div id="div_search" taborder="0" text="Div01" left="0" top="0" height="138" right="0" onkeyup="div_search_onkeyup">
+          <Layouts>
+            <Layout>
+              <Static id="Static06" taborder="6" left="129" top="51" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+              <Static id="Static02" taborder="1" left="129" top="20" height="32" cssclass="sta_cm_box02L_tdt" text="" right="20"/>
+              <Static id="Static04" taborder="2" text="등록자" left="862" top="20" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static05" taborder="3" text="기간" left="20" top="51" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Combo id="Combo50" taborder="4" text="Combo00" left="159" top="-115" width="150" height="24" index="-1"/>
+              <Combo id="Combo51" taborder="5" text="Combo00" left="1021" top="-115" width="150" height="24" index="-1"/>
+              <Edit id="edt_bgNm" taborder="8" left="571" top="24" width="233" height="24" initvalueid=""/>
+              <Button id="btn_search" taborder="10" text="조회" top="93" height="24" onclick="btn_search_onclick" cssclass="btn_WF_require" right="20" width="60"/>
+              <Button id="btn_reset" taborder="9" text="초기화" top="Static06:10" height="24" onclick="btn_reset_onclick" width="60" right="btn_search:4"/>
+              <Static id="Static08" taborder="11" text="~" left="303" top="55" width="9" height="24"/>
+              <Combo id="cmb_inqPerdSprCd" taborder="12" text="" left="461" top="55" width="100" height="24" innerdataset="ds_inqPerdSprCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" onitemchanged="cmb_inqPerdSprCd_onitemchanged"/>
+              <Static id="Static01" taborder="0" text="사용여부" left="20" top="20" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Combo id="cbo_useYn" taborder="13" left="Static01:10" top="24" width="200" height="24" index="0" text="전체" innerdataset="ds_useYn"/>
+              <Edit id="edt_regpsnId" taborder="14" left="1002" top="24" width="96" height="24"/>
+              <Edit id="edt_regpsnNm" taborder="15" left="1102" top="24" width="130" height="24"/>
+              <Button id="btn_regpsnPop" taborder="16" left="1236" top="24" width="24" height="24" cssclass="btn_WF_search02" onclick="btn_regpsnPop_onclick"/>
+              <Static id="Static03" taborder="7" text="배지명" left="431" top="20" width="130" height="32" cssclass="sta_cm_box01L_tdt" onclick="Div_top_info_Static22_00_onclick"/>
+              <Calendar id="cal_fromDate" taborder="17" left="159" top="55" width="140" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd"/>
+              <Calendar id="cal_toDate" taborder="18" left="316" top="55" width="140" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd"/>
+              <Static id="StaticBgWgtYn" taborder="19" text="검색가중치 적용여부" left="862" top="52" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Radio id="rdo_bgWgtYn" taborder="20" left="1003" top="51" width="253" height="32" innerdataset="ds_bgWgtYn" codecolumn="BG_WGT_YN_CD" datacolumn="BG_WGT_YN_NM" direction="vertical"/>
+            </Layout>
+          </Layouts>
+          <InitValue>
+            <Combo id="cbo_useYn" innerdataset="ds_useYn" datacolumn="USE_YN_NM" codecolumn="USE_YN"/>
+          </InitValue>
+        </Div>
+        <Div id="div_paging" taborder="6" left="7" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" right="23" text="" height="38" bottom="38"/>
+        <Button id="btn_layoutReset" taborder="5" text="레이아웃 초기화" top="140" height="28" width="100" right="21" onclick="btn_layoutReset_onclick"/>
+        <Button id="btn_layoutSave" taborder="3" text="레이아웃 저장" top="140" height="28" right="btn_layoutReset:4" width="100" onclick="btn_layoutSave_onclick"/>
+        <Button id="btn_regist" taborder="2" text="등록" top="140" width="81" onclick="btn_regist_onclick" right="btn_layoutSave:4" height="28"/>
+        <Grid id="grd_bgList" taborder="1" left="20" binddataset="ds_bgList" autofittype="col" autoenter="select" oncellclick="grd_bgList_oncellclick" autosizingtype="none" right="20" nodatatext="조회된 데이터가 없습니다." top="btn_regist:10" bottom="div_paging:30" cellmovingtype="col">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="80"/>
+                <Column size="200"/>
+                <Column size="500"/>
+                <Column size="180"/>
+                <Column size="129"/>
+                <Column size="129"/>
+                <Column size="131"/>
+                <Column size="100"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="30"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="normal" edittype="none" text="번호"/>
+                <Cell col="1" text="배지이미지"/>
+                <Cell col="2" text="배지명"/>
+                <Cell col="3" text="검색가중치 적용여부"/>
+                <Cell col="4" text="등록자 ID"/>
+                <Cell col="5" text="등록자"/>
+                <Cell col="6" text="등록일"/>
+                <Cell col="7" text="상태" autosizecol="default"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:BG_SEQ" displaytype="normal" edittype="none"/>
+                <Cell col="1" displaytype="imagecontrol" cursor="pointer" color="#000000" imagestretch="fixaspectratio" expr="&quot;/co/file-download.do?docRegId=&quot; + DOC_REG_ID + &quot;&amp;docRegSeq=&quot; + DOC_REG_SEQ"/>
+                <Cell col="2" text="bind:BG_NM" displaytype="decoratetext" expr="BG_NM  == '' ? BG_NM : &quot;&lt;u v='true'&gt;&quot;+BG_NM+&quot;&lt;/u&gt;&quot;" color="#290ccf"/>
+                <Cell col="3" text="bind:BG_WGT_YN" expr="BG_WGT_YN == 'Y' ? '적용' : '미적용' "/>
+                <Cell col="4" text="bind:REGPSN_ID"/>
+                <Cell col="5" text="bind:REGPSN_NM"/>
+                <Cell col="6" text="bind:REG_DTM" displaytype="normal" color="#000000" calendardateformat="yyyy-MM-dd"/>
+                <Cell col="7" expr="USE_YN == 'Y' ? '사용' : '미사용' " text="bind:USE_YN"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="totalPageCount" taborder="4" text="(총 0건, 0 / 0)" left="20" top="150" width="300" onclick="totalPageCount_onclick" bottom="grd_bgList:10" usedecorate="true"/>
+        <Static id="Static00_02_01_00" taborder="7" text="H20" left="0" top="118" width="1336" height="20" background="pink" visible="false" textAlign="center"/>
+        <Button id="btn_excelDown" taborder="8" text="엑셀다운로드" height="28" cssclass="btn_WF_excel" textPadding="0px" width="110" right="314" onclick="btn_excel_onclick" top="140"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="BG_NM" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REGPSN_NM" type="STRING" size="256"/>
+          <Column id="FROM_DATE" type="STRING" size="256"/>
+          <Column id="TO_DATE" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="BG_WGT_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM"/>
+            <Col id="ROW_COUNT"/>
+            <Col id="BG_NM"/>
+            <Col id="USE_YN"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_bgList">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BG_SEQ" type="STRING" size="256"/>
+          <Column id="BG_NM" type="STRING" size="256"/>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="DOC_REG_SEQ" type="STRING" size="256"/>
+          <Column id="SSO_SVCE_URL" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="REGPSN_NM" type="STRING" size="256"/>
+          <Column id="BG_WGT_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_useYn">
+        <ColumnInfo>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="USE_YN_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="USE_YN"/>
+            <Col id="USE_YN_NM">전체</Col>
+          </Row>
+          <Row>
+            <Col id="USE_YN">Y</Col>
+            <Col id="USE_YN_NM">사용</Col>
+          </Row>
+          <Row>
+            <Col id="USE_YN_NM">미 사용</Col>
+            <Col id="USE_YN">N</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_inqPerdSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_optrInfo">
+        <ColumnInfo>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_bgWgtYn">
+        <ColumnInfo>
+          <Column id="BG_WGT_YN_CD" type="STRING" size="256"/>
+          <Column id="BG_WGT_YN_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="BG_WGT_YN_CD"/>
+            <Col id="BG_WGT_YN_NM">전체</Col>
+          </Row>
+          <Row>
+            <Col id="BG_WGT_YN_CD">Y</Col>
+            <Col id="BG_WGT_YN_NM">적용</Col>
+          </Row>
+          <Row>
+            <Col id="BG_WGT_YN_CD">N</Col>
+            <Col id="BG_WGT_YN_NM">미적용</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : 배지 목록
+CREATION DATES : 2022.02.22
+CREATER        : 이민호
+*******************************************************/
+/* 스크립트 인클루드 */
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+this.preSelectRowPosition = 0;
+
+//등록자 자동조회 위한 변후
+this.oprtrInfoCount = 0;
+this.selectRegpsnId = "";
+this.selectRegpsnNm = "";
+this.fv_oApp = nexacro.getApplication();
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+
+	//공통코드 조회
+	this.fn_commonCodeSearch();
+
+	//조회기간 셋(초기화 여부)
+	this.fn_setSearchDate("Y");
+
+	//조회함수
+	//this.fn_search(0);
+	
+	//배지 검색가중치 적용여부 조건 세팅
+	this.div_search.form.rdo_bgWgtYn.set_index(0);
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	// CTRL+ENTER KEY
+	if(e.keycode == 13 && e.ctrlkey){
+		this.btn_search_onclick();
+	}
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회
+this.fn_search = function(page)
+{
+	var sSvcId = "selectBgList";
+	var sUrl = "/sa/bg/select-bg-list.do";
+	var inDs = "ds_search=ds_search"
+	var outDs = "ds_bgList=ds_output1";
+	var arg;
+	var callback = "fn_callback";
+
+	// 조회버튼 클릭시 페이징 초기화 시킨다.
+	if( page == 0 ) {
+		this.div_paging.uPage=1;
+		this.div_paging.uPageNum=0;
+		this.ds_search.setColumn(0,"START_NUM", 0);
+		this.ds_search.setColumn(0,"ROW_COUNT", this.div_paging.uPageRowCnt);
+	}
+
+	this.ds_search.setColumn(0,"CO_CD", this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD"));
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+};
+
+//공통코드조회
+this.fn_commonCodeSearch = function()
+{
+	var sSvcId = "commonCodeSearch";
+	var sUrl = "/co/select-common-code-list.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_inqPerdSprCd=ds_output1";
+	var arg = "";
+
+	this.ds_search.setColumn(0, "CODE_LIST", "INQ_PERD_SPR_CD");
+	this.ds_search.setColumn(0, "LANG_CD", "KO");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callback");
+};
+
+//팝업 입력창에 입력 후 엔터 칠 경우.
+this.fn_oprtrInfoSearch = function() {
+	var sSvcId = "selectMbrOprtrInfoList";
+	var sUrl = "/co/popup/select-mbr-oprtr-info-list.do";
+	var inDs = "ds_search=ds_optrInfo";
+	var outDs = "";
+	var arg = "";
+	
+	this.ds_optrInfo.setColumn(0, "LANG_CD", "KO");
+	this.ds_optrInfo.setColumn(0, "EMP_NO", this.ds_search.getColumn(0, "REGPSN_ID"));
+	this.ds_optrInfo.setColumn(0, "OPRTR_NM", this.ds_search.getColumn(0, "REGPSN_NM"));
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callback");
+}
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+//조회 트랜잭션 콜백함수
+this.fn_callback = function(svcID, errorCode, errorMsg) {
+	if(svcID == "selectBgList"){
+		this.preSelectRowPosition = 0;
+
+		// 조회 카운트가 없으면 데이터셋이 날라감으로 강제 설정
+//      if( this.ds_bgList.rowcount == 0 ) {
+//          this.ds_bgList.copyData(this.ds_bgListCopy);
+//      }
+
+		//paging 처리
+		this.div_paging.form.cfn_createPage(this.div_paging, this.totalCount, this.div_paging.uPageRowCnt, "fn_pageCallback");
+
+	} else if( svcID == "commonCodeSearch" ) {
+		this.div_search.form.cmb_inqPerdSprCd.set_index(1);
+	} else if( svcID == "selectMbrOprtrInfoList" ) {
+		if( this.oprtrInfoCount > 1 ) {
+			this.fn_popup("oprtrInfoPop");
+		} else if( this.oprtrInfoCount == 1 ) {
+			this.ds_search.setColumn(0, "REGPSN_ID", this.selectRegpsnId);
+			this.ds_search.setColumn(0, "REGPSN_NM", this.selectRegpsnNm);
+		} else {
+			alert(this.fn_getMessage("ERRN000035")); // 검색된 내용이 없습니다.
+		}
+	}
+}
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+
+	var oPaging = this.div_paging;
+
+	if(sFlag){
+		this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.ds_search.setColumn(0,"ROW_COUNT", this.div_paging.uPageRowCnt);
+		this.fn_search();
+	}
+
+	//var sTotText = "(총 "+ this.totalCount+"건, "+ oPaging.uPage +" / "+ oPaging.uPageCnt +"P)";
+	var sTotText = "(<b v='true'>총 "+ this.totalCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+	this.totalPageCount.set_text(sTotText);
+}
+
+//정렬 콜백
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_bgList"){
+		oSortInfo = this.grd_bgList.uaSortInfo;
+
+		this.ds_search.setColumn(0,"SORT_COLUMN", oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE", oSortInfo.status);
+
+		this.fn_search();
+	}
+};
+
+//팝업콜백
+this.fn_popupCallback = function(sPopupId, sRetValue) {
+	var resData = "";
+	var sIdList = "";
+	var sNmList = "";
+
+	if(sRetValue == undefined){
+		return;
+	}else{
+		resData = JSON.parse(sRetValue);
+	}
+
+	//등록자 팝업
+	if( sPopupId == "oprtrInfoPop" ){
+		this.ds_search.setColumn(0, "REGPSN_ID", resData.OPRTR_ID);
+		this.ds_search.setColumn(0, "REGPSN_NM", resData.OPRTR_NM);
+	}
+
+}
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function()
+{
+	//grid 초기 설정
+	this.grd_bgList.uSortFlag = "false";
+	this.grd_bgList.uServerSortFlag = "true";
+	this.grd_bgList.uSortCallback = "fn_sortCallback";
+	this.grd_bgList.uCellSizeType = "true";
+
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 20;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;
+	
+	//grid 개인화(전제조건 : grid Head가 무조건 1Row인 경우)
+	this.uGridList = "grd_bgList";	
+	this.grd_bgList.uRightMouse = "true";	
+	this.grd_bgList.uPersonalFlag = "true";	
+	this.grd_bgList.uDefaultFormat = "BG_SEQ,SSO_SVCE_URL,BG_NM,REGPSN_ID,REGPSN_NM,REG_DTM,USE_YN";
+}
+
+this.cfn_personalPopupClose = function(sRet)
+{
+	this.grd_bgList.set_formats(sRet);
+	this.pdiv_personal.closePopup();
+}
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+//조회기간 재설정
+this.fn_setSearchDate = function(resetYn) {
+
+	var term = this.div_search.form.cmb_inqPerdSprCd.value;
+	if(resetYn == "Y") {
+		term = 2;
+	}
+	var objDate = new Date();
+	var sToday = objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0');
+
+	/*
+	1	1일
+	2	1주일
+	3	2주일
+	4	1개월
+	5	3개월
+	6	6개월
+	7	1년
+	*/
+	if( term == undefined ) term = "2";
+	
+	if( term == "1" ) {
+		objDate.setDate(objDate.getDate() );
+	} else if( term == "2" ) {
+		objDate.setDate(objDate.getDate() -6);		
+	} else if( term == "3" ) {
+		objDate.setDate(objDate.getDate() -13);
+	} else if( term == "4" ) {
+		objDate.setMonth(objDate.getMonth() -1);
+		objDate.setDate(objDate.getDate() +1);
+	} else if( term == "5" ) {
+		objDate.setMonth(objDate.getMonth() -3);
+		objDate.setDate(objDate.getDate() +1);
+	} else if( term == "6" ) {
+		objDate.setMonth(objDate.getMonth() -6);
+		objDate.setDate(objDate.getDate() +1);
+	} else if( term == "7" ) {
+		objDate.setMonth(objDate.getMonth() -12);
+		objDate.setDate(objDate.getDate() +1);
+	}
+
+	this.div_search.form.cal_fromDate.set_value(objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0'));
+	this.div_search.form.cal_toDate.set_value(sToday);
+}
+
+//팝업호출
+this.fn_popup = function(type) {
+	var objParam = {coCd : this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD")
+				   , empNo : this.div_search.form.edt_regpsnId.value
+				   , oprtrNm : this.div_search.form.edt_regpsnNm.value};
+
+	if( type == "oprtrInfoPop" ){ // 등록자 조회 팝업
+		objParam.empNp = this.ds_search.getColumn(0, "REGPSN_ID");
+		objParam.oprtrNm = this.ds_search.getColumn(0, "REGPSN_NM");
+		this.gfn_openPopup("oprtrInfoPop", "CO_POP::SSP_BO_PP_27.xfdl", objParam, "fn_popupCallback");
+
+	}
+}
+
+/**
+ * 이미지 불러오기
+ */
+this.fn_getImage = function(sVal)
+{
+	var imageUrl = "";
+	
+	imageUrl = nexacro.getApplication().gds_sspHosts.getColumn(0, "HOST_SSP") + "/co/file-download.do?docRegId=" + sVal + "&docRegSeq=1";
+	
+	//trace(imageUrl);
+
+	return imageUrl;
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//초기화 버튼
+this.btn_reset_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.clearData();
+	this.ds_search.addRow();
+	this.div_search.form.cbo_useYn.set_index(0);
+	this.div_search.form.cmb_inqPerdSprCd.set_index(1);
+	this.div_search.form.rdo_bgWgtYn.set_index(0);
+	
+	this.fn_setSearchDate("Y");
+};
+
+//조회 버튼
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.div_search.form.cal_fromDate.value > this.div_search.form.cal_toDate.value){
+		alert(this.fn_getMessage("ERRN000102")); // 종료일이 시작일보다 작습니다.
+		this.fn_setSearchDate();
+		return;
+	}
+	this.fn_search(0);
+};
+
+//등록버튼
+this.btn_regist_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var objParam = {
+			pageNum:this.div_paging.uPage
+			,coCd:this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD")
+		};
+	this.gfn_openPopup("bgRegistPop", "SA::SSP_BO_NA_12.xfdl", objParam);
+};
+
+//그리드 ONCLICK
+this.grd_bgList_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.col == this.grd_bgList.getBindCellIndex("body", "BG_NM")) {
+		//this.go("SA::ssp_bo_na_13.xfdl");
+		var objDs = obj.getBindDataset();
+		var intRow = objDs.rowposition;
+		var objParam = {
+			coCd:this.ds_bgList.getColumn(intRow, "CO_CD")
+			, bgSeq:this.ds_bgList.getColumn(intRow, "BG_SEQ")
+			, pageNum:this.div_paging.uPage
+		};
+		this.gfn_openPopup("BgDetailPop", "SA::SSP_BO_NA_13.xfdl", objParam);
+	}
+};
+
+//조회 기간 변경 이벤트
+this.cmb_inqPerdSprCd_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_setSearchDate();
+};
+
+//등록자 팝업
+this.btn_regpsnPop_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_popup("oprtrInfoPop");
+};
+
+//레이아웃 저장
+this.btn_layoutSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.gfn_personalSave("grd_bgList", this.grd_bgList.getCurFormatString());		
+};
+
+//레이아웃 초기화
+this.btn_layoutReset_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.gfn_personalReset("grd_bgList");	
+	this.grd_bgList.set_formats(this.grd_bgList.uOrgFormat);
+};
+
+//조회영역 엔터 칠 경우
+this.div_search_onkeyup = function(obj:nexacro.Div,e:nexacro.KeyEventInfo)
+{
+	if( e.keycode == 13 ) {
+		if( e.fromobject.valueOf() == "[object Edit]" ) {
+			if( e.fromobject.id == "edt_regpsnId" || e.fromobject.id == "edt_regpsnNm") {
+				this.fn_oprtrInfoSearch();
+			} else {
+				this.fn_search(0);
+			}
+		}
+	}
+};
+
+this.btn_excel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ofn_exportExcel({form:this, grid:this.grd_bgList, fileName:"배지목록"});
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item3" compid="div_search.form.edt_bgNm" propid="value" datasetid="ds_search" columnid="BG_NM"/>
+      <BindItem id="item1" compid="div_search.form.cbo_useYn" propid="value" datasetid="ds_search" columnid="USE_YN"/>
+      <BindItem id="item5" compid="div_search.form.edt_regpsnId" propid="value" datasetid="ds_search" columnid="REGPSN_ID"/>
+      <BindItem id="item6" compid="div_search.form.edt_regpsnNm" propid="value" datasetid="ds_search" columnid="REGPSN_NM"/>
+      <BindItem id="item4" compid="div_search.form.cal_fromDate" propid="value" datasetid="ds_search" columnid="FROM_DATE"/>
+      <BindItem id="item0" compid="div_search.form.cal_toDate" propid="value" datasetid="ds_search" columnid="TO_DATE"/>
+      <BindItem id="item2" compid="div_search.form.rdo_bgWgtYn" propid="value" datasetid="ds_search" columnid="BG_WGT_YN"/>
+    </Bind>
+  </Form>
+</FDL>

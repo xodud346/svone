@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcPrdDlcstDtls">
+
+	<select id="selectPrdDlcstHstList" parameterType="HashMap" resultType="HashMap">
+        /* PcPrdDlcstDtls.selectPrdDlcstHstList */
+        SELECT * FROM (
+        SELECT  A.REG_DTM,
+        		A.BZPLC_ID,
+                '수량' AS UNIT,
+                A.DLCST_SPR_CD,
+                FN_COM_DTL_CDNM('KO','DLCST_SPR_CD',A.DLCST_SPR_CD) AS DLCST_SPR_NM,
+                A.QTY_ITV_STR,
+                A.QTY_ITV_END,
+                A.EXTR_AMT,
+                'KRW' AS CUR_UNT_CD,
+                TO_CHAR(TO_DATE(A.DLCST_STR_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') AS DLCST_STR_DTM,
+                TO_CHAR(TO_DATE(A.DLCST_END_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') AS DLCST_END_DTM,
+                A.UPDPSN_ID,
+                B.OPRTR_NM,
+                A.DLCST_SEQ
+        FROM    TB_PC_PRD_DLCST_DTLS  A
+                LEFT OUTER JOIN
+                TB_CO_MBR_OPRTR_INFO B
+                ON A.UPDPSN_ID = B.OPRTR_ID
+        WHERE   A.CO_CD = #{coCd}
+          AND   A.PRD_ID = LPAD(#{prdId},18,0)
+          <choose>
+          	<when test="pbSpr == 1 and bzplcId == '*'.toString()">
+          AND   A.BZPLC_ID != '*'
+          	</when>
+          	<otherwise>
+          AND   A.BZPLC_ID = #{bzplcId}
+          	</otherwise>
+          </choose>
+                   
+           <if test="inqSpr != null and inqSpr !=2 ">
+          	<if test="strDtm != null and strDtm!= ''.toString()">
+          AND 	A.REG_DTM <![CDATA[>=]]> TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS')
+          	</if>
+          	<if test="endDtm != null and endDtm!= ''.toString()">
+          AND 	A.REG_DTM <![CDATA[<]]> TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')
+          	</if> 
+          </if>
+          <if test="inqSpr != null and inqSpr !=1 ">
+          	<if test="strDtm != null and strDtm!= ''.toString()">
+          AND 	A.DLCST_STR_DTM <![CDATA[>=]]> #{strDtm}||'000000'
+          	</if>
+          	<if test="endDtm != null and endDtm!= ''.toString()">
+          AND 	A.DLCST_STR_DTM <![CDATA[<]]> #{endDtm}||'235959'
+          	</if>
+          </if>
+          
+          
+        )A
+        <choose>
+            <when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+                ORDER BY A.${sortColumn} ${sortType}
+            </when>
+            <otherwise>ORDER BY A.DLCST_STR_DTM DESC, DLCST_SPR_CD, QTY_ITV_STR</otherwise>
+        </choose>
+        OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>
+
+    <select id="selectPrdDlcstHstCount" parameterType="hashMap" resultType="integer">
+        /* PcPrdDlcstDtls.selectPrdDlcstHstCount */
+        SELECT
+            COUNT(0)
+        FROM TB_PC_PRD_DLCST_DTLS A
+        WHERE   A.CO_CD = #{coCd}
+          AND   A.PRD_ID = LPAD(#{prdId},18,0)
+          <choose>
+          	<when test="pbSpr == 1 and bzplcId == '*'.toString()">
+          AND   A.BZPLC_ID != '*'
+          	</when>
+          	<otherwise>
+          AND   A.BZPLC_ID = #{bzplcId}
+          	</otherwise>
+          </choose>
+          <if test="inqSpr != null and inqSpr !=2 ">
+          	<if test="strDtm != null and strDtm!= ''.toString()">
+          AND 	A.REG_DTM <![CDATA[>=]]> TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS')
+          	</if>
+          	<if test="endDtm != null and endDtm!= ''.toString()">
+          AND 	A.REG_DTM <![CDATA[<]]> TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')
+          	</if> 
+          </if>
+          <if test="inqSpr != null and inqSpr !=1 ">
+          	<if test="strDtm != null and strDtm!= ''.toString()">
+          AND 	A.DLCST_STR_DTM <![CDATA[>=]]> #{strDtm}||'000000'
+          	</if>
+          	<if test="endDtm != null and endDtm!= ''.toString()">
+          AND 	A.DLCST_STR_DTM <![CDATA[<]]> #{endDtm}||'235959'
+          	</if>
+          </if>
+    </select>
+
+    <insert id="insertToPrdDlcstDtls" parameterType="hashMap">
+    /* PcPrdDlcstDtls.insertToPrdDlcstDtls */
+    INSERT INTO TB_PC_PRD_DLCST_DTLS(CO_CD, BZPLC_ID, PRD_ID, DLCST_SEQ, DLCST_SPR_CD, QTY_ITV_STR, QTY_ITV_END
+            , EXTR_AMT, DLCST_STR_DTM, DLCST_END_DTM, REGPSN_ID, REG_DTM, UPDPSN_ID, UPD_DTM
+            )
+    VALUES(#{coCd},#{bzplcId},LPAD(#{prdId},18,0),FN_PC_HIST_SEQ_CRT('PRD_DLCST_DTLS'),#{dlcstSprCd}, #{qtyItvStr}, #{qtyItvEnd}, #{extrAmt},
+        #{dlcstStrDtm},#{dlcstEndDtm},#{regpsnId},SYSDATE,#{updpsnId},SYSDATE)
+    </insert>
+
+    <update id="updateToPrdDlcstDtls" parameterType="hashMap">
+    /* PcPrdDlcstDtls.updateToPrdDlcstDtls */
+    UPDATE TB_PC_PRD_DLCST_DTLS T
+        SET     UPDPSN_ID = #{updpsnId}
+               ,UPD_DTM = SYSDATE
+               ,QTY_ITV_STR = #{qtyItvStr}
+               ,QTY_ITV_END = #{qtyItvEnd}
+               ,EXTR_AMT = #{extrAmt}
+               ,DLCST_STR_DTM = #{dlcstStrDtm}
+               ,DLCST_END_DTM = #{dlcstEndDtm}
+    WHERE  T.CO_CD = #{coCd}
+      and  T.BZPLC_ID = #{bzplcId}
+      and  T.PRD_ID = LPAD(#{prdId},18,0)
+      and  T.DLCST_SEQ = #{dlcstSeq}
+      and  T.DLCST_SPR_CD = #{dlcstSprCd}
+    </update>
+
+    <delete id="deleteToPrdDlcstDtls" parameterType="hashMap">
+    /* PcPrdDlcstDtls.deleteToPrdDlcstDtls */
+    DELETE TB_PC_PRD_DLCST_DTLS T
+    WHERE  T.CO_CD = #{coCd}
+      and  T.BZPLC_ID = #{bzplcId}
+      and  T.PRD_ID = LPAD(#{prdId},18,0)
+      and  T.DLCST_SEQ = #{dlcstSeq}
+      and  T.DLCST_SPR_CD = #{dlcstSprCd}
+    </delete>
+
+     <insert id="updateToPrdDlcstDtlsHist" statementType="CALLABLE">
+    { Call SP_PC_PRD_DLCST_DTLS_HIST(
+                 #{rtnCd,         mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴코드 */
+               , #{rtnMsg,        mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴메시지 */
+               , #{iudGb,        mode=IN, jdbcType=VARCHAR}
+               , #{coCd,          mode=IN, jdbcType=VARCHAR}
+               , #{bzplcId,       mode=IN, jdbcType=VARCHAR}
+               , LPAD(#{prdId,         mode=IN, jdbcType=VARCHAR},18,0)
+               , #{dlcstSprCd,     mode=IN, jdbcType=VARCHAR}
+               , #{dlcstStrDtm,     mode=IN, jdbcType=VARCHAR}
+               , #{regpsnId,      mode=IN, jdbcType=VARCHAR}
+    )}
+    </insert>
+    
+    <update id="updatePcPrdDlcsHistPairUpdateUser" parameterType="hashMap">
+		UPDATE TB_PC_PRD_DLCST_DTLS T1
+		SET UPDPSN_ID	=	(
+			SELECT	A.* FROM	(
+				SELECT	T2.UPDPSN_ID
+				FROM SSP_APP.TB_PC_PRD_DLCST_DTLS T2
+				WHERE T2.CO_CD		=	#{coCd}
+				AND T2.BZPLC_ID	=	#{bzplcId}
+				AND T2.PRD_ID	=	LPAD(#{prdId}, 18, 0)
+				AND T2.DLCST_SPR_CD	=	#{dlcstSprCd}
+				AND T2.DLCST_STR_DTM	=	#{dlcstStrDtm}
+				ORDER BY T2.UPD_DTM DESC, T2.DLCST_SEQ DESC
+			)	A
+			WHERE ROWNUM = '1'
+		)
+		WHERE  T1.CO_CD = #{coCd}
+		AND	T1.BZPLC_ID			=	#{bzplcId}
+		AND	T1.PRD_ID 			= LPAD(#{prdId},18,0)
+		AND	T1.DLCST_SPR_CD		=	#{dlcstSprCd}
+		AND	T1.DLCST_STR_DTM	=	#{dlcstStrDtm}
+    </update>
+
+</mapper>

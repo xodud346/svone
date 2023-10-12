@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PrProductAdd">
+   
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품목록
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.03.22
+    ******************************************************************************
+    -->
+    <select id="selectProductAddCount" parameterType="HashMap" resultType="Integer">
+        /* PrProductAdd.selectProductAddCount */
+        SELECT COUNT(*) FROM (
+        SELECT
+            MROPRD.CO_CD ,
+            MROPRD.PRD_ID , --상품번호
+            REPR.REPR_PRD_GRP_ID ,  --대표상품그룹ID
+            (SELECT D.PRD_ID FROM TB_PR_REPR_PRD_MNG_DTL D WHERE D.REPR_PRD_GRP_ID = REPR.REPR_PRD_GRP_ID AND D.REPR_PRD_SPR_RSN_CD = 
+            (SELECT MIN(REPR_PRD_SPR_RSN_CD) FROM TB_PR_REPR_PRD_MNG_DTL DD WHERE DD.REPR_PRD_GRP_ID  = REPRB.REPR_PRD_GRP_ID AND DD.SSP_PRD_YN = 'Y' AND REPR_PRD_SPR_RSN_CD IN ('1', '2'))) REPR_PRD_ID, --대표상품ID         
+            SSP_APP.FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD',MROPRD.PUB_ONLY_SPR_CD) PUB_ONLY_SPR_CD, --공용전용구분코드
+            SSP_APP.FN_COM_DTL_CDNM('KO', 'REPR_PRD_SPR_CD', DECODE(REPR.REPR_PRD_SPR_YN, 'N', '3', REPR.REPR_PRD_SPR_RSN_CD)) REPR_PRD_SPR_CD,   --대표상품구분코드 피통합,가격,품질
+            MROPRD.MRO_PRD_CLCD, --카테고리
+            --SSP_APP.FN_PR_MRO_FULL_CLSF_NM(MROPRD.CO_CD, MROPRD.MRO_PRD_CLCD) MRO_PRD_CLSF_NM,   --카테고리명
+            SUBSTR(CATE.FULL_MRO_PRD_CLSF_NM, 1, INSTR(CATE.FULL_MRO_PRD_CLSF_NM, '>') - 1) AS MAIN_MRO_PRD_CLSF_NM, --SMRO대분류명
+            CATE.FULL_MRO_PRD_CLSF_NM AS MRO_PRD_CLSF_NM, --SMRO분류명
+            MROPRD.PRD_NM ,     --상품명
+            REPRB.REG_DTM REPR_REG_DTM, --대표상품 등록일
+            REPRB.REGPSN_ID REPR_REGPSN_ID, --요청자(대표상품등록자)
+            MROPRD.SSP_PRD_REG_REQ_ID NEW_PRD_REQ_NO, --요청번호
+            DECODE(PRD.REG_PROC_PRD_STATS_CD, NULL, 'REQ', '10', 'ACCEPT', '20', 'COMP') PROC_STATS_CD,
+            PRD.REGPSN_ID SSP_REGPSN_ID,    --등록자
+            PRD.REG_DTM SSP_REG_DTM,    --SSP등록일자
+            PRD.UPD_DTM SSP_UPD_DTM --SSP등록일자
+        FROM
+            SSP_APP.TB_PR_MRO_PRD_INFO MROPRD
+            INNER JOIN (SELECT MRO_PRD_CLCD, CO_CD
+			             , MRO_PRD_CLSF_NM AS MRO_PRD_CLSF_NM
+			             , SUBSTR(SYS_CONNECT_BY_PATH(MRO_PRD_CLSF_NM, '>'),2) AS FULL_MRO_PRD_CLSF_NM
+			         FROM SSP_APP.TB_PR_MRO_PRD_CLSF_INFO
+			        WHERE 1=1
+			          AND PRD_CLSF_LVL = 4
+			        START WITH HRNK_MRO_PRD_CLCD IS NULL
+			      CONNECT BY PRIOR MRO_PRD_CLCD = HRNK_MRO_PRD_CLCD  ) CATE 
+                    ON MROPRD.CO_CD = CATE.CO_CD AND MROPRD.MRO_PRD_CLCD = CATE.MRO_PRD_CLCD 
+            INNER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_DTL REPR  --대표상품
+                ON MROPRD.CO_CD = REPR.CO_CD AND MROPRD.PRD_ID = REPR.PRD_ID AND REPR.SSP_PRD_YN = 'Y'
+            INNER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_BASIS REPRB   --대표상품
+                ON REPRB.CO_CD = REPR.CO_CD AND REPR.REPR_PRD_GRP_ID = REPRB.REPR_PRD_GRP_ID AND REPRB.REPR_PRD_GRP_USEYN = 'Y'
+            LEFT OUTER JOIN SSP_APP.TB_PR_REG_PROC_PRD_INFO PRD 
+                ON MROPRD.CO_CD = PRD.CO_CD AND MROPRD.PRD_ID = PRD.PRD_ID 
+            <include refid="prProductAddWhere"/>
+        ) TB
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품목록
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.03.22
+    ******************************************************************************
+    -->
+    <select id="selectProductAddList" parameterType="HashMap" resultType="HashMap">
+        /* PrProductAdd.selectProductAddList */
+        SELECT 
+            TB.*,
+            DECODE(PROC_STATS_CD, 'ACCEPT', 0, NULL) CHK,
+            TO_NUMBER(TB.PRD_ID) PRD_ID_VIEW,
+            TO_NUMBER(TB.REPR_PRD_GRP_ID) REPR_PRD_GRP_ID_VIEW,
+            TO_NUMBER(TB.REPR_PRD_ID) REPR_PRD_ID_VIEW,
+            DECODE(PROC_STATS_CD, 'REQ', '요청', 'ACCEPT', '접수', '완료') PROC_STATS_CD_NM
+        FROM(
+            SELECT
+                MROPRD.CO_CD ,
+                MROPRD.PRD_ID , --상품번호
+                REPR.REPR_PRD_GRP_ID ,  --대표상품그룹ID
+                (SELECT D.PRD_ID FROM TB_PR_REPR_PRD_MNG_DTL D WHERE D.REPR_PRD_GRP_ID = REPR.REPR_PRD_GRP_ID AND D.REPR_PRD_SPR_RSN_CD = 
+                (SELECT MIN(REPR_PRD_SPR_RSN_CD) FROM TB_PR_REPR_PRD_MNG_DTL DD WHERE DD.REPR_PRD_GRP_ID  = REPRB.REPR_PRD_GRP_ID AND DD.SSP_PRD_YN = 'Y' AND REPR_PRD_SPR_RSN_CD IN ('1', '2'))) REPR_PRD_ID, --대표상품ID         
+                SSP_APP.FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD',MROPRD.PUB_ONLY_SPR_CD) PUB_ONLY_SPR_CD, --공용전용구분코드
+                SSP_APP.FN_COM_DTL_CDNM('KO', 'REPR_PRD_SPR_CD', DECODE(REPR.REPR_PRD_SPR_YN, 'N', '3', REPR.REPR_PRD_SPR_RSN_CD)) REPR_PRD_SPR_CD,   --대표상품구분코드 피통합,가격,품질
+                MROPRD.MRO_PRD_CLCD, --카테고리
+                --SSP_APP.FN_PR_MRO_FULL_CLSF_NM(MROPRD.CO_CD, MROPRD.MRO_PRD_CLCD) MRO_PRD_CLSF_NM,   --카테고리명
+                SUBSTR(CATE.FULL_MRO_PRD_CLSF_NM, 1, INSTR(CATE.FULL_MRO_PRD_CLSF_NM, '>') - 1) AS MAIN_MRO_PRD_CLSF_NM, --SMRO대분류명
+                CATE.FULL_MRO_PRD_CLSF_NM AS MRO_PRD_CLSF_NM, --SMRO분류명
+                MROPRD.PRD_NM , --상품명
+                SSP_APP.FN_PR_ATTR_VAL_LIST(MROPRD.CO_CD, MROPRD.PRD_ID) ATTR_VAL, --속성명(대표규격)
+                TO_CHAR(REPRB.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') REPR_REG_DTM, --대표상품 등록일
+                REPRB.REGPSN_ID REPR_REGPSN_ID, --요청자(대표상품등록자)
+                MROPRD.SSP_PRD_REG_REQ_ID NEW_PRD_REQ_NO, --요청번호
+                DECODE(PRD.REG_PROC_PRD_STATS_CD, NULL, 'REQ', '10', 'ACCEPT', '20', 'COMP') PROC_STATS_CD,   --처리상태
+                -- SSP-2954_결함_김소희_상품_상품추가등록자등록일시변경요청
+                CASE WHEN PRD.REG_PROC_PRD_STATS_CD = '20' 
+                     THEN (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = PRD.CO_CD AND OPR.OPRTR_ID = NVL(PRD.UPDPSN_ID, PRD.REGPSN_ID))
+                     ELSE CASE WHEN PRD.REG_PROC_PRD_STATS_CD != '20' 
+                               THEN NULL
+                         END
+                END AS SSP_REGPSN_ID, --등록자
+                CASE WHEN PRD.REG_PROC_PRD_STATS_CD = '20' 
+                     THEN TO_CHAR ( PRD.UPD_DTM , 'YYYY-MM-DD HH24:MI:SS' ) 
+                     ELSE CASE WHEN PRD.REG_PROC_PRD_STATS_CD  != '20' 
+                               THEN NULL
+                          END
+                END AS SSP_REG_DTM --SSP등록일자
+            FROM
+                SSP_APP.TB_PR_MRO_PRD_INFO MROPRD
+                INNER JOIN (SELECT MRO_PRD_CLCD, CO_CD
+			             , MRO_PRD_CLSF_NM AS MRO_PRD_CLSF_NM
+			             , SUBSTR(SYS_CONNECT_BY_PATH(MRO_PRD_CLSF_NM, '>'),2) AS FULL_MRO_PRD_CLSF_NM
+			         FROM SSP_APP.TB_PR_MRO_PRD_CLSF_INFO
+			        WHERE 1=1
+			          AND PRD_CLSF_LVL = 4
+			        START WITH HRNK_MRO_PRD_CLCD IS NULL
+			      CONNECT BY PRIOR MRO_PRD_CLCD = HRNK_MRO_PRD_CLCD  ) CATE 
+                    ON MROPRD.CO_CD = CATE.CO_CD AND MROPRD.MRO_PRD_CLCD = CATE.MRO_PRD_CLCD 
+                INNER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_DTL REPR  --대표상품
+                    ON MROPRD.CO_CD = REPR.CO_CD AND MROPRD.PRD_ID = REPR.PRD_ID AND REPR.SSP_PRD_YN = 'Y'
+                INNER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_BASIS REPRB   --대표상품
+                    ON REPRB.CO_CD = REPR.CO_CD AND REPR.REPR_PRD_GRP_ID = REPRB.REPR_PRD_GRP_ID AND REPRB.REPR_PRD_GRP_USEYN = 'Y'
+                LEFT OUTER JOIN SSP_APP.TB_PR_REG_PROC_PRD_INFO PRD 
+                    ON MROPRD.CO_CD = PRD.CO_CD AND MROPRD.PRD_ID = PRD.PRD_ID 
+                <include refid="prProductAddWhere"/>
+            ) TB
+        <if test="SORT_COLUMN != null and SORT_COLUMN != ''">
+            ORDER BY ${SORT_COLUMN} ${SORT_TYPE}
+        </if>
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+    
+    <sql id="prProductAddWhere">
+        WHERE 1=1 AND MROPRD.CO_CD = #{CO_CD}
+        <if test="PRD_ID != null and PRD_ID != ''">
+            <if test=" PRD_ID_MULTI > 0 ">
+                AND EXISTS (
+                            SELECT 'X' 
+                            FROM TB_OD_ODR_INQ_TGT_DTLS T1
+                            WHERE T1.SES_ID = #{SES_ID}
+			                    AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+			                    AND T1.COL_ITM = 'PRD_ID_MULTI'
+			                    <if test="PRD_ID_TYPE == 1"> AND MROPRD.PRD_ID = LPAD(T1.COND_DATA_VAL,18,'0') </if>
+			                    <if test="PRD_ID_TYPE == 2"> AND REPRB.REPR_PRD_GRP_ID = LPAD(T1.COND_DATA_VAL,10,'0') </if>
+					            <if test="PRD_ID_TYPE == 3"> AND MROPRD.SSP_PRD_REG_REQ_ID = T1.COND_DATA_VAL </if>
+		                    )
+            </if>
+        </if>
+        <if test="PRD_NM != null and PRD_NM != ''">
+            AND MROPRD.PRD_NM LIKE '%'||#{PRD_NM}||'%' --상품명
+        </if>
+        <if test="MRO_PRD_CLCD != null and MRO_PRD_CLCD != ''">
+            AND REGEXP_LIKE(CATE.MRO_PRD_CLCD, #{MRO_PRD_CLCD})        --MRO카테고리ID
+        </if>
+        <if test="MRO_PRD_CLSF_NM != null and MRO_PRD_CLSF_NM != ''">
+            AND REGEXP_LIKE(CATE.MRO_PRD_CLSF_NM, #{MRO_PRD_CLSF_NM})  --MRO카테고리명
+        </if>
+        <if test="MAIN_MRO_PRD_CLSF_NM != null and MAIN_MRO_PRD_CLSF_NM != ''">
+            AND REGEXP_LIKE(SUBSTR(CATE.FULL_MRO_PRD_CLSF_NM, 1, INSTR(CATE.FULL_MRO_PRD_CLSF_NM, '>') - 1), #{MAIN_MRO_PRD_CLSF_NM})  --MRO대분류명
+        </if>
+        <choose>
+        	<when test="DATE_UNIT != null and DATE_UNIT != ''">
+        		<choose>
+        			<when test="DATE_TYPE == 1">
+        				AND REPRB.REG_DTM --대표상품그룹등록일
+        			</when>
+        			<otherwise>
+        				AND PRD.REG_DTM   --SSP등록일
+        			</otherwise>
+        		</choose>
+        		BETWEEN TO_DATE(#{START_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{END_DTM}||'235959', 'YYYYMMDDHH24MISS')     --날짜 공통 코드 검색
+        	</when>
+        	<otherwise>
+        		<if test="START_DTM != null and START_DTM != '' and END_DTM != null and END_DTM != ''">
+        			<choose>
+        				<when test="DATE_TYPE == 1">
+        					AND REPRB.REG_DTM --대표상품그룹등록일
+        				</when>
+        				<otherwise>
+        					AND PRD.REG_DTM   --SSP등록일
+        				</otherwise>
+        			</choose>
+        			BETWEEN TO_DATE(#{START_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{END_DTM}||'235959', 'YYYYMMDDHH24MISS') --날짜 직접 입력 검색
+        		</if>
+        	</otherwise>
+        </choose>
+        <if test="REPR_PRD_SPR_CD != null and REPR_PRD_SPR_CD != ''">
+            AND DECODE(REPR.REPR_PRD_SPR_YN, 'N', '3', REPR.REPR_PRD_SPR_RSN_CD) = #{REPR_PRD_SPR_CD}  --대표상품구분
+        </if>
+        <if test="PUB_ONLY_SPR_CD != null and PUB_ONLY_SPR_CD != ''">
+            AND MROPRD.PUB_ONLY_SPR_CD = #{PUB_ONLY_SPR_CD}   --공용전용구분
+        </if>
+        <if test="PROC_STATS_CD != null and PROC_STATS_CD != ''">
+            AND DECODE(PRD.REG_PROC_PRD_STATS_CD, NULL, 'REQ', '10', 'ACCEPT', '20', 'COMP') = #{PROC_STATS_CD}  --처리상태
+        </if>
+    </sql>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품상세
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.03.22
+    ******************************************************************************
+    -->
+    <select id="selectProductAddBasicInfo" parameterType="HashMap" resultType="HashMap">
+        /* PrProductAdd.selectProductAddBasicInfo */
+        SELECT 
+            TB.*,
+            TO_NUMBER(PRD_ID) PRD_ID_VIEW,
+            TO_NUMBER(REPR_PRD_ID) REPR_PRD_ID_VIEW,
+            TO_NUMBER(REPR_PRD_GRP_ID) REPR_PRD_GRP_ID_VIEW
+        FROM (
+	        SELECT
+	            MROPRD.CO_CD,   --회사코드
+	            MROPRD.PRD_ID,  --상품ID
+	            (SELECT D.PRD_ID FROM TB_PR_REPR_PRD_MNG_DTL D WHERE D.REPR_PRD_GRP_ID = REPR.REPR_PRD_GRP_ID AND D.REPR_PRD_SPR_RSN_CD = 
+	            (SELECT MIN(REPR_PRD_SPR_RSN_CD) FROM TB_PR_REPR_PRD_MNG_DTL DD WHERE DD.REPR_PRD_GRP_ID  = REPRB.REPR_PRD_GRP_ID AND DD.SSP_PRD_YN = 'Y' AND REPR_PRD_SPR_RSN_CD IN ('1', '2'))) REPR_PRD_ID, --대표상품ID
+	            REPR.REPR_PRD_GRP_ID ,  --대표상품그룹ID
+	            MROPRD.PRD_NM,  --상품명
+	            SSP_APP.FN_COM_DTL_CDNM('KO', 'MRO_PRD_STATS_CD', MROPRD.MRO_PRD_STATS_CD) MRO_PRD_STATS_CD,    --MRO상품상태코드
+	            SSP_APP.FN_PR_ATTR_VAL_LIST(MROPRD.CO_CD, MROPRD.PRD_ID) ATTR_VAL, --속성명(대표규격)
+	            SSP_APP.FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD',MROPRD.PUB_ONLY_SPR_CD) PUB_ONLY_SPR_CD, --공용전용구분코드
+	            CASE WHEN BASIS_UNIT_CD = NVL(SELL_UNIT_CD, BASIS_UNIT_CD) 
+                     THEN NVL(BASIS_UNIT_QTY, '1') || BASIS_UNIT_CD
+                     ELSE NVL(SELL_UNIT_QTY, '1') || SELL_UNIT_CD || '(' || NVL(BASIS_UNIT_QTY, '1') || BASIS_UNIT_CD || ')' 
+                END AS SELL_UNIT_CD,    --주문단위
+	            MNFR.MNFR_NO,--제조사명
+	            MNFR.MNFR_NM,--제조사명
+	            MROPRD.ORGPLC_CTRY_CD ORGPLC_CTRY_CD,
+	            (SELECT CTRY_NM FROM SSP_APP.TB_CO_CTRY_INFO CTRY WHERE CTRY.CO_CD = MROPRD.CO_CD AND CTRY.CTRY_SPR_CD = MROPRD.ORGPLC_CTRY_CD)  ORGPLC_CTRY_CD_NM, --원산지
+	            DECODE(MROPRD.MULT_SELL_UNIT_QTY, 0, '', MROPRD.MULT_SELL_UNIT_QTY) MULT_SELL_UNIT_QTY, --배수주문수량
+	            SSP_APP.FN_COM_DTL_CDNM('KO','MALL_SPR_CD',MROPRD.MALL_SPR_CD) MALL_SPR_CD, --몰구분
+	            MROPRD.SSP_PRD_REG_REQ_ID, --요청번호
+	            DECODE(PRD.REG_PROC_PRD_STATS_CD, NULL, 'REQ', '10', 'ACCEPT', '20', 'COMP') PROC_STATS_CD,
+	            TO_CHAR(REPRB.REG_DTM , 'YYYY.MM.DD HH24:MI:SS') REPR_REG_DTM, --대표상품등록일
+	            TO_CHAR(PRD.REG_DTM, 'YYYY.MM.DD HH24:MI:SS') SSP_REG_DTM, --SSP등록일
+	            PRD.PRD_CLCD, --SSP카테고리
+	            MROPRD.QCK_DLV_YN MROPRD_QCK_DLV_YN,   --빠른배송여부
+	            PRD.PRD_DTL_DESC,  --상품상세설명
+	            MROPRD.MRO_PRD_CLCD,
+	            MROPRD.SSP_PRD_REG_REQ_ID NEW_PRD_REQ_NO, --요청번호
+                MROPRD.PURG_CHRPSN_ID PURG_OPRTR_ID,    --구매담당자
+                (SELECT OPR.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = MROPRD.CO_CD AND OPR.OPRTR_ID = MROPRD.PURG_CHRPSN_ID) PURG_OPRTR_NM,
+                PRDPSN.PRD_CLSF_CHRPSN_ID PRD_OPRTR_ID, --상품담당자
+                (SELECT OPR.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = MROPRD.CO_CD AND OPR.OPRTR_ID = PRDPSN.PRD_CLSF_CHRPSN_ID) PRD_OPRTR_NM,
+                MDPSN.PRD_CLSF_CHRPSN_ID MD_OPRTR_ID,   --MD담당자
+                (SELECT OPR.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = MROPRD.CO_CD AND OPR.OPRTR_ID = MDPSN.PRD_CLSF_CHRPSN_ID) MD_OPRTR_NM
+	        FROM
+	            SSP_APP.TB_PR_MRO_PRD_INFO MROPRD
+	            INNER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_DTL REPR  --대표상품
+	               ON MROPRD.CO_CD = REPR.CO_CD AND MROPRD.PRD_ID = REPR.PRD_ID AND REPR.SSP_PRD_YN = 'Y'
+	            INNER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_BASIS REPRB   --대표상품
+	               ON REPRB.CO_CD = REPR.CO_CD AND REPR.REPR_PRD_GRP_ID = REPRB.REPR_PRD_GRP_ID
+	            INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR   --제조원
+	               ON MNFR.CO_CD = MROPRD.CO_CD AND MNFR.MNFR_NO = MROPRD.MNFR_NO
+	            LEFT OUTER JOIN SSP_APP.TB_PR_REG_PROC_PRD_INFO PRD 
+                    ON PRD.CO_CD = MROPRD.CO_CD AND PRD.PRD_ID = MROPRD.PRD_ID
+                LEFT OUTER JOIN TB_PR_PRD_CLSF_CHRPSN_INFO  PRDPSN
+                    ON PRDPSN.CO_CD = PRD.CO_CD AND PRDPSN.PRD_CLSF_CHRPSN_SPR_CD = '10' AND PRDPSN.PRD_CLSF_CHRPSN_TP_CD = '10'  
+                    AND PRDPSN.PRD_CLSF_CHRPSN_USEYN = 'Y' AND PRDPSN.MNFR_NO = '*' AND PRDPSN.PRD_CLCD = PRD.PRD_CLCD AND ROWNUM = 1
+                LEFT OUTER JOIN TB_PR_PRD_CLSF_CHRPSN_INFO  MDPSN
+                    ON MDPSN.CO_CD = PRD.CO_CD AND MDPSN.PRD_CLSF_CHRPSN_SPR_CD = '10' AND MDPSN.PRD_CLSF_CHRPSN_TP_CD = '20' 
+                    AND MDPSN.PRD_CLSF_CHRPSN_USEYN = 'Y' AND MDPSN.MNFR_NO = '*' AND MDPSN.PRD_CLCD = PRD.PRD_CLCD AND ROWNUM = 1
+	        WHERE MROPRD.CO_CD = #{CO_CD} AND MROPRD.PRD_ID = #{PRD_ID}
+        ) TB
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품 > 등록처리 > 상품 마스터 테이블
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <insert id="insertPrdInfo" parameterType="HashMap">
+        /* PrProductAdd.insertPrdInfo */
+        INSERT INTO SSP_APP.TB_PR_PRD_INFO
+          (CO_CD,
+            PRD_ID,
+            PRD_NM,
+            MALL_SPR_CD,
+            PRC_APLY_SPR_CD,
+            NOTI_ITM_ID,
+            BRND_NM,
+            SSP_REPR_ATTR,
+            PRD_CLCD,
+            PRD_USE_YN,
+            DOC_REG_ID,
+            PRD_DTL_DESC,
+            HASH_TAG,
+            PRD_NUSE_RSN_CD,
+            BG_SEQ,
+            BG_APLY_STR_DTM,
+            BG_APLY_END_DTM,
+            RND_MSDS_URL,
+            UPD_RSN,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES(#{CO_CD},
+            #{PRD_ID},
+            #{PRD_NM},
+            #{MALL_SPR_CD},
+            #{PRC_APLY_SPR_CD},
+            #{NOTI_ITM_ID},
+            #{BRND_NM},
+            (SELECT LISTAGG(PRVL,';') WITHIN GROUP(ORDER BY A.SRT_SO) FROM  TB_PR_REG_PROC_PRD_INFO_ATTR_MAPP A INNER JOIN TB_PR_PRD_ATTR_INFO C 
+			ON A.CO_CD = C.CO_CD AND A.PRD_ATTR_CD = C.PRD_ATTR_CD AND C.USE_YN = 'Y'
+			WHERE A.CO_CD = #{CO_CD} AND A.PRD_ID = #{PRD_ID} ) ,
+            #{PRD_CLCD},
+            #{PRD_USE_YN},
+            #{DOC_REG_ID},
+            #{PRD_DTL_DESC},
+            #{HASH_TAG},
+            #{PRD_NUSE_RSN_CD},
+            #{BG_SEQ},
+            TO_DATE(#{BG_APLY_STR_DTM}, 'YYYYMMDD'),
+            TO_DATE(#{BG_APLY_END_DTM}, 'YYYYMMDD'),
+            #{RND_MSDS_URL},
+            #{UPD_RSN},
+            #{SESSION_OPRTR_ID},
+            SYSDATE)
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품 > 접수처리
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <insert id="insertRegProcPrdInfo" parameterType="HashMap">
+        /* PrProductAdd.insertRegProcPrdInfo */
+		MERGE INTO SSP_APP.TB_PR_REG_PROC_PRD_INFO USING DUAL
+		ON (CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID})
+		WHEN NOT MATCHED THEN
+		    INSERT
+		        (CO_CD,
+		        PRD_ID,
+		        REG_PROC_PRD_STATS_CD,
+		        REGPSN_ID,
+		        REG_DTM)
+		    VALUES
+		        (#{CO_CD},
+		        #{PRD_ID},
+		        '10',
+		        #{SESSION_OPRTR_ID},
+		        SYSDATE)
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품 > 등록처리 > 등록처리 상품 마스터
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <update id="updateRegProcPrdInfo" parameterType="HashMap">
+        /* PrProductAdd.updateRegProcPrdInfo */
+		UPDATE
+		    SSP_APP.TB_PR_REG_PROC_PRD_INFO
+		SET
+		    PRD_NM = #{PRD_NM},
+		    MALL_SPR_CD = #{MALL_SPR_CD},
+		    NOTI_ITM_ID = #{NOTI_ITM_ID},
+		    BRND_NM = #{BRND_NM},
+		    PRD_CLCD = #{PRD_CLCD},
+		    PRD_USE_YN = #{PRD_USE_YN},
+		    PRD_DTL_DESC = #{PRD_DTL_DESC},
+		    HASH_TAG = #{HASH_TAG},
+		    BG_SEQ = #{BG_SEQ},
+		    BG_APLY_STR_DTM = TO_DATE(#{BG_APLY_STR_DTM}, 'YYYYMMDD'),
+		    BG_APLY_END_DTM = TO_DATE(#{BG_APLY_END_DTM}, 'YYYYMMDD'),
+		    REG_PROC_PRD_STATS_CD = '20',
+		    UPDPSN_ID = #{SESSION_OPRTR_ID},
+		    UPD_DTM = (SELECT SUB.REG_DTM FROM SSP_APP.TB_PR_PRD_INFO SUB WHERE SUB.CO_CD = #{CO_CD} AND SUB.PRD_ID = #{PRD_ID})
+		WHERE
+		    CO_CD = #{CO_CD}
+		    AND PRD_ID = #{PRD_ID}
+    </update>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품 > 등록처리 > 속성정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <insert id="insertPrdInfoAttrMap" parameterType="HashMap">
+        /* PrProductAdd.insertRegProcPrdInfoAttrMap */
+        INSERT INTO SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP
+		    (CO_CD,
+		    PRD_ID,
+		    PRD_ATTR_CD,
+		    SRT_SO,
+		    PRVL,
+		    REGPSN_ID,
+		    REG_DTM)
+		VALUES(#{CO_CD},
+		    #{PRD_ID},
+		    #{PRD_ATTR_CD},
+		    (SELECT NVL(MAX(SRT_SO), 0)+1 FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP WHERE CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID}),
+		    #{PRVL},
+		    #{SESSION_OPRTR_ID},
+		    SYSDATE)
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품 > 등록처리 > 등록처리 속성정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <insert id="insertRegProcPrdInfoAttrMap" parameterType="HashMap">
+        /* PrProductAdd.insertRegProcPrdInfoAttrMap */
+        INSERT INTO SSP_APP.TB_PR_REG_PROC_PRD_INFO_ATTR_MAPP
+            (CO_CD,
+            PRD_ID,
+            PRD_ATTR_CD,
+            SRT_SO,
+            PRVL,
+            REGPSN_ID,
+            REG_DTM)
+        SELECT 
+            CO_CD,
+            PRD_ID,
+            PRD_ATTR_CD,
+            SRT_SO,
+            PRVL,
+            REGPSN_ID,
+            REG_DTM
+        FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP
+        WHERE CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID}
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품 > 등록처리 > 고시정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <insert id="insertPrdNotiItmMapp" parameterType="HashMap">
+        /* PrProductAdd.insertRegProcPrdNotiItmMapp */
+        INSERT INTO SSP_APP.TB_PR_PRD_NOTI_ITM_MAPP
+            (CO_CD,
+            NOTI_ITM_ID,
+            NOTI_ITM_DTL_NO,
+            PRD_ID,
+            PRD_NOTI_ITM_MAPP_CTS,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES(#{CO_CD},
+            #{NOTI_ITM_ID},
+            #{NOTI_ITM_DTL_NO},
+            #{PRD_ID},
+            #{PRD_NOTI_ITM_MAPP_CTS},
+            #{SESSION_OPRTR_ID},
+            SYSDATE)
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품 > 등록처리 > 등록처리 고시정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <insert id="insertRegProcPrdNotiItmMapp" parameterType="HashMap">
+        /* PrProductAdd.insertRegProcPrdNotiItmMapp */
+        INSERT INTO SSP_APP.TB_PR_REG_PROC_PRD_NOTI_ITM_MAPP
+		    (CO_CD,
+		    NOTI_ITM_ID,
+		    NOTI_ITM_DTL_NO,
+		    PRD_ID,
+		    PRD_NOTI_ITM_MAPP_CTS,
+		    REGPSN_ID,
+		    REG_DTM)
+		SELECT 
+            CO_CD,
+            NOTI_ITM_ID,
+            NOTI_ITM_DTL_NO,
+            PRD_ID,
+            PRD_NOTI_ITM_MAPP_CTS,
+            REGPSN_ID,
+            REG_DTM
+		FROM SSP_APP.TB_PR_PRD_NOTI_ITM_MAPP
+        WHERE CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID}
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품상세 > SSP속성정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <select id="selectSspAttrList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectSspAttrList */
+        SELECT 
+            ATTRINFO.CO_CD ,
+            ATTRINFO.PRD_ATTR_CD ,
+            ATTRINFO.PRNM ,
+            PRDATTR.PRD_ID ,
+            PRDATTR.PRVL ,
+            MAND_YN,
+            '' PRD_CLCD,
+			'' PRD_GRP_ID,
+			'N' BSS_PRD_YN,
+			'' BSS_ATTR_YN,
+			'' PRD_GRP_SPR_CD,
+			'N' DEL_YN,
+			'' DataSetRowType2,
+			'N' GRP_PRD_YN,
+			NVL(SRT.EXPS_YN, 'Y') EXPS_YN
+        FROM 
+            SSP_APP.TB_PR_PRD_CLSF_INFO CATE
+            INNER JOIN  SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP ATTRMAP
+                ON CATE.CO_CD = ATTRMAP.CO_CD AND CATE.PRD_CLCD = ATTRMAP.PRD_CLCD
+            INNER JOIN SSP_APP.TB_PR_PRD_ATTR_INFO ATTRINFO
+                ON ATTRINFO.CO_CD = ATTRMAP.CO_CD AND ATTRINFO.PRD_ATTR_CD = ATTRMAP.PRD_ATTR_CD AND ATTRINFO.USE_YN = 'Y'
+            LEFT OUTER JOIN SSP_APP.TB_PR_REG_PROC_PRD_INFO_ATTR_MAPP PRDATTR 
+                ON PRDATTR.CO_CD = ATTRINFO.CO_CD AND PRDATTR.PRD_ATTR_CD = ATTRINFO.PRD_ATTR_CD AND PRDATTR.PRD_ID = #{PRD_ID}
+            LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+                ON ATTRMAP.CO_CD = SRT.CO_CD AND SRT.PRD_CLCD = ATTRMAP.PRD_CLCD AND ATTRMAP.PRD_ATTR_CD = SRT.INTG_ATTR_CD AND SRT.INTG_ATTR_SPR_CD = '10'
+        WHERE CATE.USE_YN = 'Y'
+            AND CATE.CO_CD = #{CO_CD}
+            AND CATE.PRD_CLCD = #{PRD_CLCD}
+        ORDER BY NVL(SRT.SRT_SO, ATTRMAP.SRT_SO)
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품상세 > SSP부가정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <select id="selectSspAddInfo" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectSspAddInfo */
+        SELECT
+            PRD.CO_CD ,
+            PRD.PRD_ID ,
+            PRD.BRND_NM ,
+            HASH_TAG ,
+            BG.BG_SEQ ,
+            BG.BG_NM ,
+            PRD.BG_APLY_STR_DTM ,
+            PRD.BG_APLY_END_DTM ,
+            SSP_APP.FN_COM_DTL_CDNM('KO','DISP_PRD_SPR_CD', DISP.DISP_PRD_SPR_CD) DISP_PRD_SPR_CD, --전시상품구분
+            #{contextRealPath}||BG.ATFL_STOR_PATH||BG.ORI_ATFL_NM BG_IMG,
+            BG.ATFL_STOR_PATH,
+            BG.ORI_ATFL_NM,
+            BG.ATFL_NM
+        FROM
+            SSP_APP.TB_PR_REG_PROC_PRD_INFO PRD
+            LEFT OUTER JOIN (SELECT
+                                BG.CO_CD,
+                                BG.BG_SEQ,
+                                BG.BG_NM,
+                                BG.DOC_REG_ID,
+                                DOC.ATFL_STOR_PATH,
+                                DOC.ORI_ATFL_NM,
+                                DOC.ATFL_NM
+                            FROM 
+                                TB_SA_BG_INFO BG
+                                INNER JOIN TB_CO_ATFL_DTLS DOC
+                                    ON BG.DOC_REG_ID = DOC.DOC_REG_ID
+                            WHERE BG.CO_CD = #{CO_CD}
+                                AND BG.USE_YN = 'Y') BG
+            ON PRD.CO_CD = BG.CO_CD AND PRD.BG_SEQ = BG.BG_SEQ
+            LEFT OUTER JOIN TB_PR_DISP_BASIS DISP
+            ON PRD.CO_CD = DISP.CO_CD AND PRD.PRD_CLCD = DISP.PRD_CLCD 
+        WHERE PRD.CO_CD = #{CO_CD}
+            AND PRD.PRD_ID = #{PRD_ID}
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품상세 > 고시정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <select id="selectProductNoticeList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectProductNoticeList */
+        SELECT
+            DTL.CO_CD,
+            DTL.NOTI_ITM_ID,
+            BASIS.NOTI_ITM_NM ,
+            DTL.NOTI_ITM_DTL_NO,
+            DTL.NOTI_ITM_DTL_NM,
+            MAPP.PRD_NOTI_ITM_MAPP_CTS
+        FROM
+            SSP_APP.TB_PR_NOTI_ITM_DTL DTL 
+            INNER JOIN SSP_APP.TB_PR_NOTI_ITM_BASIS BASIS 
+                ON DTL.CO_CD = BASIS.CO_CD AND DTL.NOTI_ITM_ID = BASIS.NOTI_ITM_ID AND BASIS.USE_YN = 'Y'  
+            LEFT OUTER JOIN SSP_APP.TB_PR_REG_PROC_PRD_NOTI_ITM_MAPP MAPP
+                ON DTL.CO_CD = MAPP.CO_CD AND DTL.NOTI_ITM_ID = MAPP.NOTI_ITM_ID AND DTL.NOTI_ITM_DTL_NO = MAPP.NOTI_ITM_DTL_NO AND MAPP.PRD_ID = #{PRD_ID}
+        WHERE DTL.CO_CD = #{CO_CD} AND DTL.NOTI_ITM_ID = NVL(#{NOTI_ITM_ID},
+                                                             (SELECT DECODE(#{NOTI_ITM_ID}, NOTI_ITM_ID, NOTI_ITM_ID, NOTI_ITM_ID) 
+                                                             FROM TB_PR_REG_PROC_PRD_INFO 
+                                                             WHERE CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID})
+                                                            )
+        ORDER BY NOTI_ITM_DTL_NO
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품상세 > 이미지정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.04.13
+    ******************************************************************************
+    -->
+    <select id="selectRegProcProductImageList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectRegProcProductImageList */
+        SELECT 
+            #{CO_CD} CO_CD,
+            #{PRD_ID} PRD_ID, 
+            DOC_REG_ID,
+            DOC_REG_SEQ,
+            ATFL_NM,
+            ATFL_LEN,
+            ATFL_STOR_PATH,
+            STOR_PLC_SPR_CD,
+            ORI_ATFL_NM,
+            SAP_DOC_ID,
+            RMKS_CTS,
+            ETC_FDS_1,
+            ETC_FDS_2,
+            ETC_FDS_3,
+            ETC_FDS_4,
+            ETC_FDS_5,
+            REG_DTM,
+            REGPSN_ID,
+            UPD_DTM,
+            UPDPSN_ID ,
+            #{contextRealPath}||ATFL_STOR_PATH||ORI_ATFL_NM PRD_IMG
+        FROM SSP_APP.TB_CO_ATFL_DTLS 
+        WHERE 
+            ETC_FDS_1 = #{PRD_ID} 
+            AND ETC_FDS_2 IN ('60', '61', '62', '63', '80') --상품이미지 고정
+    </select>
+    
+</mapper>

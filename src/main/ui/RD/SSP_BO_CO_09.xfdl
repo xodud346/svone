@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form" width="850" height="750" titletext="FILE(UPLOAD/DOWNLOAD)" onload="form_onload">
+    <Layouts>
+      <Layout height="750" mobileorientation="landscape" width="850" stepcount="0">
+        <Edit id="edt_lageCdNm" taborder="0" left="68" top="424" width="145" height="26" text="Edit" maxheight="26" minheight="" maxlength="50" autoselect="true" readonly="true"/>
+        <Button id="btn_fileSearch" taborder="1" text="파일찾기" left="222" top="345" width="93" height="26" onclick="btn_fileSearch_onclick"/>
+        <FileUpload id="FileUploadSingle" taborder="2" left="222" top="315" width="348" height="24" onerror="FileUploadSingle_onerror" onitemchanged="FileUploadSingle_onitemchanged" onsuccess="FileUploadSingle_onsuccess" visible="false"/>
+        <Static id="Static60_00" taborder="3" cssclass="sta_WF_box03" left="20" top="9" right="270" height="31" wordWrap="char" text="업로드 &amp; 다운로드 공통모듈은 업무별로 따로 생성하여 사용하세요." font="bold 18px/normal &quot;Malgun Gothic&quot;,&quot;굴림체&quot;"/>
+        <Static id="Static60_00_01" taborder="4" cssclass="sta_WF_box03" left="20" top="40" right="270" height="31" wordWrap="char" text="파일업로드 성공시에 Dataset으로 리턴합니다." font="bold 18px/normal &quot;Malgun Gothic&quot;,&quot;굴림체&quot;"/>
+        <ImageViewer id="imgViewer" taborder="5" left="70" top="276" width="143" height="142" stretch="fit"/>
+        <Grid id="Grid00" taborder="6" left="220" top="377" height="129" binddataset="ds_downLoad" autofittype="col" right="40">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row band="head" size="24"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="CHK"/>
+                <Cell col="1" text="DOC_REG_ID"/>
+                <Cell col="2" text="DOC_REG_SEQ"/>
+                <Cell col="3" text="ATFL_NM"/>
+                <Cell col="4" text="ORI_ATFL_NM"/>
+                <Cell col="5" text="ATFL_LEN"/>
+                <Cell col="6" text="ATFL_STOR_PATH"/>
+                <Cell col="7" text="FILE_TYPE"/>
+                <Cell col="8" text="ETC_FDS_1"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:CHK"/>
+                <Cell col="1" text="bind:DOC_REG_ID"/>
+                <Cell col="2" text="bind:DOC_REG_SEQ"/>
+                <Cell col="3" text="bind:ATFL_NM"/>
+                <Cell col="4" text="bind:ORI_ATFL_NM"/>
+                <Cell col="5" text="bind:ATFL_LEN"/>
+                <Cell col="6" text="bind:ATFL_STOR_PATH"/>
+                <Cell col="7" text="bind:FILE_TYPE"/>
+                <Cell col="8" text="bind:ETC_FDS_1"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_fileSingle">
+        <ColumnInfo>
+          <Column id="CHK" type="string" size="32"/>
+          <Column id="DOC_REG_ID" type="string" size="32"/>
+          <Column id="DOC_REG_SEQ" type="string" size="32"/>
+          <Column id="ATFL_NM" type="string" size="32"/>
+          <Column id="ORI_ATFL_NM" type="string" size="32"/>
+          <Column id="ATFL_LEN" type="bigdecimal" size="8"/>
+          <Column id="ATFL_STOR_PATH" type="string" size="32"/>
+          <Column id="FILE_TYPE" type="string" size="32"/>
+          <Column id="ETC_FDS_1" type="string" size="32"/>
+          <Column id="ETC_FDS_2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_uploadResult">
+        <ColumnInfo>
+          <Column id="CHK" type="string" size="32"/>
+          <Column id="DOC_REG_ID" type="string" size="32"/>
+          <Column id="DOC_REG_SEQ" type="string" size="32"/>
+          <Column id="ATFL_NM" type="string" size="32"/>
+          <Column id="ORI_ATFL_NM" type="string" size="32"/>
+          <Column id="ATFL_LEN" type="bigdecimal" size="8"/>
+          <Column id="ATFL_STOR_PATH" type="string" size="32"/>
+          <Column id="FILE_TYPE" type="string" size="32"/>
+          <Column id="ETC_FDS_1" type="string" size="32"/>
+          <Column id="ETC_FDS_2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_downLoad">
+        <ColumnInfo>
+          <Column id="CHK" type="string" size="32"/>
+          <Column id="DOC_REG_ID" type="string" size="32"/>
+          <Column id="DOC_REG_SEQ" type="string" size="32"/>
+          <Column id="ATFL_NM" type="string" size="32"/>
+          <Column id="ORI_ATFL_NM" type="string" size="32"/>
+          <Column id="ATFL_LEN" type="bigdecimal" size="8"/>
+          <Column id="ATFL_STOR_PATH" type="string" size="32"/>
+          <Column id="FILE_TYPE" type="string" size="32"/>
+          <Column id="ETC_FDS_1" type="string" size="32"/>
+          <Column id="ETC_FDS_2" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[include "RD::rdMain.xjs"
+this.init_file_path = "upload";
+this.lv_save_path   = "RD";
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+/***********************************************************************************************/
+this.form_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.gfn_formOnLoad(this);
+	
+	// 파일업로드 확장자 필터기능
+	this.FileUploadSingle.set_filefilter("Image Files |*.jpg;*.jpeg;*.png;*.gif;*.ico|JPEG(*.jpg,jpeg)|*.jpg;*.jpeg|PNG(*.png)|*.png|GIF(*.gif)|*.gif|ICO(*.ico)|*.ico|");
+};
+/************************************************************************************************
+ * CALLBACK 콜백 처리부분
+ ************************************************************************************************/
+// 한개파일찾기
+this.btn_fileSearch_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	//this.edt_lageCdNm.set_value("");                 // 파일명 초기화
+	this.FileUploadSingle.deleteItem(0);               // FileUpload 0번째 삭제
+	this.FileUploadSingle.appendItem();                // FileUpload 0번째 추가
+	this.FileUploadSingle.filefindbuttons[0].click();  // 파일 선택 다일로그박스 활성화	
+};
+
+ /************************************************************************************************
+ * 업로드
+ * 화면에 fileupload 컴포넌트를 사이즈 0 으로 생성합니다. 
+ ************************************************************************************************/
+
+this.FileUploadSingle_onitemchanged = function(obj:nexacro.FileUpload,e:nexacro.FileUploadItemChangeEventInfo)
+{
+	var sCompValue = this.FileUploadSingle.value;   					// 파일 업로드 로컬패스(전용브라우저 가능)
+	var start = sCompValue.lastIndexOf(".");	   						// [object Grid]
+	if( start > -1) 
+	{
+		sCompValue = sCompValue.substr(start + 1, sCompValue.length);  // 확장자명
+	}
+
+	if(!(sCompValue.toUpperCase() == "PNG" || sCompValue.toUpperCase() == "JPG"))
+	{
+		this.gfn_alert("MSG00046","파일 정보","","information");  // 파일형식이 아닙니다.
+		return false;
+	}
+	var sFilePath = this.FileUploadSingle.value;                        // 파이로 로컬풀패스
+	var dirExpt   = nexacro.toNumber(sFilePath.lastIndexOf("\\"))+1;    // 파일이름 시작위치
+	var sFileName = sFilePath.substr(dirExpt);                          // 파일명
+
+	this.ds_fileSingle.clearData();
+	var nRow      = this.ds_fileSingle.addRow();
+	this.ds_fileSingle.setColumn(nRow, "ATFL_STOR_PATH", sFilePath);         // 싱글 파일 패스
+	this.ds_fileSingle.setColumn(nRow, "ATFL_NM",        sFileName);         // 싱글 파일 명
+
+	var objEnv  = nexacro.getEnvironment();
+	var svcUrl  = objEnv.services["svcUrl"].url;               			// web서버 URL ex)http://localhost:8080/
+	var strUrl  = svcUrl + "rd/file-upload-dowload/save-file-upload-dowload.do?";    // BLOB변환 && 파일업로드 기능
+	    strUrl += "savePath=" + this.init_file_path;               		// 메인폴더 경로
+
+	if(!this.gfn_isNull(this.lv_save_path))                    			
+	{
+		strUrl += "/" + this.lv_save_path;                              // 서브폴더 경로
+	}
+
+	strUrl += "&docRegId="    + this.gfn_nvl(this.ds_uploadResult.getColumn(0,"DOC_REG_ID"),"");
+	strUrl += "&etcFds2='1'";
+
+	var bSucc = this.FileUploadSingle.upload(strUrl); 					// 파일 업로드  
+};
+
+this.FileUploadSingle_onsuccess = function(obj:nexacro.FileUpload,e:nexacro.FileUploadEventInfo)
+{
+	/**
+		e.datasets[0] 를 이용하여 서버에 업로드된 파일의 정보를 DB에 저장합니다.
+		파일업로드 성공시에 Dataset으로 리턴합니다.
+	*/
+	//trace("fileUpload_onsuccess >> " + e.datasets[0].saveXML());
+	this.ds_uploadResult.assign(e.datasets[0]);
+	this.ds_uploadResult.clear();
+	this.ds_uploadResult.copyData(e.datasets[0]);	
+
+	this.fn_setFileImageUpload(this.ds_uploadResult,this.ds_downLoad,this.imgViewer);
+};
+
+this.FileUploadSingle_onerror = function(obj:nexacro.FileUpload,e:nexacro.FileUploadErrorEventInfo)
+{
+	alert("fileUpload_onerror >> " + e.errormsg);
+};]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="edt_lageCdNm" propid="value" datasetid="ds_fileSingle" columnid="ATFL_NM"/>
+    </Bind>
+  </Form>
+</FDL>

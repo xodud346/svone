@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   
+<!--
+******************************************************************************
+* SELECT : R&D상품담당자관리
+* 작성자 : 
+* 작성 일자 : 2022.03.27
+******************************************************************************
+-->
+<mapper namespace="RdPrdChrpsn">
+
+    <select id="selectPersonCount" parameterType="HashMap" resultType="Integer">
+        /* RdPrdChrpsn.selectPersonCount */
+        SELECT
+            COUNT(*)
+        FROM
+              SSP_APP.TB_PR_PRD_CLSF_INFO A
+            , SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO B
+            , SSP_APP.TB_CO_MBR_OPRTR_INFO C
+        WHERE 1=1            
+            AND A.CO_CD = B.CO_CD AND B.PRD_CLCD = A.PRD_CLCD
+            AND A.CO_CD = C.CO_CD(+) AND B.PRD_CLSF_CHRPSN_ID = C.OPRTR_ID(+)
+        <include refid="prPersonWhere"/>
+    </select>
+    
+    <!-- 담당자  목록 -->
+    <select id="selectPersonList" parameterType="HashMap" resultType="HashMap">
+        /* RdPrdChrpsn.selectPersonList_selectPersonList */
+        SELECT
+            B.CO_CD,
+            B.PRD_CLSF_CHRPSN_ID,
+            PRD_CLSF_CHRPSN_SEQ,
+            C.ORG_NM ,
+            C.EMP_NO ,
+            C.OPRTR_NM,
+            A.PRD_CLCD,
+            SSP_APP.FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD) PRD_CLSF_NM ,
+            B.MALL_SPR_CD,
+            B.PRD_CLSF_CHRPSN_TP_CD,
+            B.PRD_CLSF_CHRPSN_USEYN,
+            B.PRD_CLSF_CHRPSN_SPR_CD,
+            B.UPD_RSN,
+            B.REG_DTM,
+            B.REGPSN_ID,
+            B.UPD_DTM,
+            B.UPDPSN_ID,
+            B.MNFR_NO, /*제조사번호*/
+            (SELECT E.MRO_MNFR_NM FROM SSP_APP.TB_PR_MNFR_INFO E WHERE E.CO_CD = B.CO_CD AND E.MNFR_NO = B.MNFR_NO) MNFR_NM /*제조원명*/
+        FROM
+              SSP_APP.TB_PR_PRD_CLSF_INFO A
+            , SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO B
+            , SSP_APP.TB_CO_MBR_OPRTR_INFO C
+        WHERE 1=1            
+            AND A.CO_CD = B.CO_CD AND B.PRD_CLCD = A.PRD_CLCD
+            AND A.CO_CD = C.CO_CD(+) AND B.PRD_CLSF_CHRPSN_ID = C.OPRTR_ID(+)
+        <include refid="prPersonWhere"/>
+        <if test="SORT_COLUMN != null and SORT_COLUMN != ''">
+            ORDER BY ${SORT_COLUMN} ${SORT_TYPE}
+        </if>
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+    
+    <sql id="prPersonWhere">
+        AND A.CO_CD = #{CO_CD} AND A.LWST_CD_YN  = 'Y'
+        AND PRD_CLSF_CHRPSN_TP_CD = #{PRD_CLSF_CHRPSN_TP_CD} /* 10: 상품담당자, 30:구매담당자*/
+        AND B.MALL_SPR_CD = #{MALL_SPR_CD}  /*10 : SPP , 20 : RND*/
+        <if test="PRD_CLCD != null and PRD_CLCD != ''">
+            AND A.PRD_CLCD = #{PRD_CLCD}
+        </if>
+        <if test="MNFR_NO != null and MNFR_NO != ''">
+            AND B.MNFR_NO = #{MNFR_NO}
+        </if>
+        <if test="PRD_CLSF_CHRPSN_USEYN != null and PRD_CLSF_CHRPSN_USEYN != ''">
+            AND B.PRD_CLSF_CHRPSN_USEYN = #{PRD_CLSF_CHRPSN_USEYN}
+        </if>
+        <if test="PSN_ID != null and PSN_ID != ''">
+            <if test="PSN_TYPE == 1">
+                AND B.PRD_CLSF_CHRPSN_ID = #{PSN_ID}
+            </if>
+            <if test="PSN_TYPE == 2">
+                AND B.REGPSN_ID = #{PSN_ID}
+            </if>
+            <if test="PSN_TYPE == 3">
+                AND B.UPDPSN_ID = #{PSN_ID}
+            </if>
+        </if>
+        <if test="ORG_CD != null and ORG_CD != ''">
+            AND C.ORG_CD = #{ORG_CD}
+        </if>
+        <if test="DATE_UNIT != null and DATE_UNIT != ''">
+            <if test="DATE_TYPE == 1">
+                AND B.REG_DTM
+            </if>
+            <if test="DATE_TYPE == 2">
+                AND B.UPD_DTM 
+            </if>
+            BETWEEN TO_DATE(#{DTM_START}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{DTM_END}||'235959', 'YYYYMMDDHH24MISS')
+        </if>
+        <if test="PRD_CLSF_CHRPSN_SPR_CD != null and PRD_CLSF_CHRPSN_SPR_CD != ''">
+            <if test="PRD_CLSF_CHRPSN_SPR_CD != 0">
+                AND B.PRD_CLSF_CHRPSN_SPR_CD = #{PRD_CLSF_CHRPSN_SPR_CD}
+            </if>
+        </if>
+    </sql>
+    
+    <select id="selectPersonSprCd" parameterType="HashMap" resultType="String">
+        /* RdPrdChrpsn.selectPersonSprCd */
+        SELECT
+            NVL(MAX('20'), '10') PRD_CLSF_CHRPSN_SPR_CD
+        FROM
+            SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO 
+        WHERE PRD_CLCD = #{PRD_CLCD}
+            AND PRD_CLSF_CHRPSN_TP_CD = #{PRD_CLSF_CHRPSN_TP_CD}
+            AND PRD_CLSF_CHRPSN_SPR_CD = '10'
+            AND MNFR_NO = '*'
+    </select>
+    
+    <insert id="insertPerson" parameterType="HashMap">
+        /* RdPrdChrpsn.insertPerson_insertPerson */
+        <selectKey keyProperty="PRD_CLSF_CHRPSN_SEQ" resultType="Integer" order="BEFORE">   
+            SELECT SSP_APP.SQ_PR_PRD_CLSF_CHRPSN_INFO_01.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO
+            SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO
+        (CO_CD,
+            PRD_CLSF_CHRPSN_ID,
+            PRD_CLCD,
+            MNFR_NO,
+            PRD_CLSF_CHRPSN_SEQ,
+            MALL_SPR_CD,
+            PRD_CLSF_CHRPSN_TP_CD,
+            PRD_CLSF_CHRPSN_USEYN,
+            PRD_CLSF_CHRPSN_SPR_CD,
+            UPD_RSN,
+            REG_DTM,
+            REGPSN_ID,
+            UPD_DTM,
+            UPDPSN_ID)
+        VALUES(#{CO_CD},
+            #{PRD_CLSF_CHRPSN_ID},
+            #{PRD_CLCD},
+            #{MNFR_NO},
+            #{PRD_CLSF_CHRPSN_SEQ},
+            #{MALL_SPR_CD},
+            #{PRD_CLSF_CHRPSN_TP_CD},
+            #{PRD_CLSF_CHRPSN_USEYN},
+            #{PRD_CLSF_CHRPSN_SPR_CD},
+            #{UPD_RSN},
+            SYSDATE,
+            'TEST',
+            SYSDATE,
+            'TEST')
+    </insert>
+    
+    <select id="selectPersonDuplicateCheck" parameterType="HashMap" resultType="String">
+        /* RdPrdChrpsn.selectPersonDuplicateCheck */
+        SELECT
+            COUNT(*)
+        FROM
+            SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO 
+            WHERE CO_CD = #{CO_CD}
+            AND PRD_CLCD = #{PRD_CLCD}
+            AND PRD_CLSF_CHRPSN_ID = #{EMP_NO}
+            AND PRD_CLSF_CHRPSN_TP_CD = #{PRD_CLSF_CHRPSN_TP_CD}
+            AND MNFR_NO = #{MNFR_NO}
+    </select>
+    
+    <select id="selectPersonDetail" parameterType="HashMap" resultType="HashMap">
+        /* RdPrdChrpsn.selectPersonDetail */
+        SELECT
+            A.CO_CD,
+            (SELECT '('||OPR.OPRTR_ID||')'||' '||OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.OPRTR_ID = A.PRD_CLSF_CHRPSN_ID) PRD_CLSF_CHRPSN_ID,
+            A.PRD_CLCD,
+            A.PRD_CLSF_CHRPSN_SEQ,
+            SSP_APP.FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD) PRD_CLSF_NM,
+            A.MALL_SPR_CD,
+            A.PRD_CLSF_CHRPSN_TP_CD,
+            A.PRD_CLSF_CHRPSN_USEYN,
+            DECODE(A.PRD_CLSF_CHRPSN_SPR_CD, '10', '정', '부') PRD_CLSF_CHRPSN_SPR_CD,
+            A.UPD_RSN,
+            TO_CHAR(REG_DTM, 'yyyy.MM.dd HH24:mi:ss') REG_DTM,
+            (SELECT '('||OPR.OPRTR_ID||')'||' '||OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.OPRTR_ID = A.REGPSN_ID) REGPSN_ID,
+            TO_CHAR(UPD_DTM, 'yyyy.MM.dd HH24:mi:ss') UPD_DTM,
+            (SELECT '('||OPR.OPRTR_ID||')'||' '||OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.OPRTR_ID = A.UPDPSN_ID) UPDPSN_ID
+        FROM
+            SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO A
+        WHERE A.CO_CD = #{CO_CD}
+            AND A.PRD_CLCD = #{PRD_CLCD}
+            AND A.PRD_CLSF_CHRPSN_ID = #{PRD_CLSF_CHRPSN_ID}
+            AND A.MNFR_NO = #{MNFR_NO}
+    </select>
+    
+    <update id="updatePerson" parameterType="HashMap">
+        /* RdPrdChrpsn.updatePerson */
+        UPDATE
+            SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO
+        SET
+            PRD_CLSF_CHRPSN_USEYN = NVL(#{PRD_CLSF_CHRPSN_USEYN}, PRD_CLSF_CHRPSN_USEYN),
+            <if test="NEW_PRD_CLSF_CHRPSN_ID != null and NEW_PRD_CLSF_CHRPSN_ID != ''">
+                 PRD_CLSF_CHRPSN_ID = #{NEW_PRD_CLSF_CHRPSN_ID},
+            </if>
+            UPD_RSN = #{UPD_RSN},
+            UPD_DTM = SYSDATE,
+            UPDPSN_ID = 'TEST'
+        WHERE
+            CO_CD = #{CO_CD}
+            AND PRD_CLSF_CHRPSN_ID = #{PRD_CLSF_CHRPSN_ID}
+            AND PRD_CLCD = #{PRD_CLCD}
+            AND PRD_CLSF_CHRPSN_SEQ = #{PRD_CLSF_CHRPSN_SEQ}
+            AND MNFR_NO = #{MNFR_NO}
+    </update>
+    
+    <insert id="insertPersonHistory" parameterType="HashMap">
+        /* RdPrdChrpsn.insertPerson_insertPersonHistory */
+        INSERT INTO 
+            SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO_HST
+		(CO_CD,
+		    PRD_CLCD,
+		    PRD_CLSF_CHRPSN_ID,
+		    MNFR_NO,
+		    PRD_CLSF_CHRPSN_SEQ,
+		    HST_SEQ,
+		    UPD_RSN,
+		    DATA_CHG_TP_CD,
+		    MALL_SPR_CD,
+		    PRD_CLSF_CHRPSN_TP_CD,
+		    PRD_CLSF_CHRPSN_USEYN,
+		    PRD_CLSF_CHRPSN_SPR_CD,
+		    REGPSN_ID,
+		    REG_DTM,
+		    UPDPSN_ID,
+		    UPD_DTM)
+		SELECT
+		    CO_CD,
+		    PRD_CLCD,
+		    PRD_CLSF_CHRPSN_ID,
+		    MNFR_NO,
+		    PRD_CLSF_CHRPSN_SEQ,
+		    SSP_APP.SQ_PR_PRD_CLSF_CHRPSN_INFO_HST_01.NEXTVAL,
+		    UPD_RSN,
+		    #{DATA_CHG_TP_CD},
+		    MALL_SPR_CD,
+		    PRD_CLSF_CHRPSN_TP_CD,
+            PRD_CLSF_CHRPSN_USEYN,
+            PRD_CLSF_CHRPSN_SPR_CD,
+		    REGPSN_ID,
+		    REG_DTM,
+		    UPDPSN_ID,
+		    UPD_DTM
+		FROM
+		    SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO
+		WHERE CO_CD = #{CO_CD}
+            AND PRD_CLCD = #{PRD_CLCD}
+            AND PRD_CLSF_CHRPSN_ID = NVL(#{NEW_PRD_CLSF_CHRPSN_ID}, #{PRD_CLSF_CHRPSN_ID})
+            AND PRD_CLSF_CHRPSN_SEQ = #{PRD_CLSF_CHRPSN_SEQ}
+            AND MNFR_NO = #{MNFR_NO}
+    </insert>
+    
+</mapper>

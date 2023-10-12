@@ -1,0 +1,769 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="work04" width="1336" height="846" titletext="메뉴권한변경이력조회" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="720" mobileorientation="landscape" width="1280">
+        <Div id="Div00" taborder="0" text="Div00" left="0" top="0" height="150" cssclass="div_WF_SearchArea" right="0" onkeyup="Div00_onkeyup">
+          <Layouts>
+            <Layout>
+              <!--Search 1번째 줄 -->
+              <Static id="static01" taborder="1" left="20" top="21" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+              <Static id="sta_transDtm" taborder="5" text="처리일자" left="20" top="21" width="100" height="32" cssclass="sta_cm_box01L"/>
+              <Calendar id="cal_sendStrDate" taborder="6" left="125" top="25" width="125" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd"/>
+              <Static id="sta_between" taborder="22" text="~" left="254" top="24" width="9" height="24"/>
+              <Calendar id="cal_sendEndDate" taborder="7" left="265" top="25" width="125" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd"/>
+              <Combo id="cmb_inqPerdSprCd" taborder="8" left="395" top="25" width="107" height="24" innerdataset="ds_inqPerdSprCd" datacolumn="COM_DTL_CD_NM" codecolumn="COM_DTL_CD" index="-1" text="선택" onitemchanged="cmb_inqPerdSprCd_onitemchanged"/>
+              <Static id="sta_authGrpCd" taborder="9" text="권한그룹" top="21" height="32" cssclass="sta_cm_box01L" width="70" left="510"/>
+              <Combo id="cmb_authGrpCd" taborder="10" left="586" top="25" width="294" height="24" innerdataset="ds_authGrpCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" value="0" index="-1" visible="true"/>
+              <Static id="sta_authRoleCd" taborder="9" text="권한역할" top="21" height="32" cssclass="sta_cm_box01L" width="70" left="890"/>
+              <Combo id="cmb_authRoleCd" taborder="10" left="970" top="24" width="330" height="24" innerdataset="ds_authRoleCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" value="0" index="-1" visible="true"/>
+              <!--Search 2번째 줄 -->
+              <Static id="static02" taborder="2" left="20" top="52" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+              <Static id="sta_chgItmSpr" taborder="14" text="변경항목/구분" left="20" top="52" width="100" height="32" cssclass="sta_cm_box01L"/>
+              <Combo id="cmb_chgItm" taborder="24" left="125" top="56" width="185" height="24" innerdataset="ds_chgItm" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" value="0" index="0" visible="true"/>
+              <Static id="sta_slash" taborder="26" text="/" left="314" top="53" width="9" height="24"/>
+              <Combo id="cmb_chgSpr" taborder="25" left="322" top="56" width="180" height="24" innerdataset="ds_chgSpr" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" value="0" index="0" visible="true"/>
+              <Static id="sta_orgCd" taborder="16" text="부서" left="510" top="52" width="70" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_orgCd" taborder="15" left="586" top="56" width="244" height="24" onchanged="div00_edt_orgCd_onchanged"/>
+              <Button id="btn_orgMltPop00" taborder="27" left="834" height="24" cssclass="btn_WF_multi" width="24" bottom="69" onclick="Div00_btn_orgMltPop_onclick"/>
+              <Button id="btn_orgTxt00" taborder="28" left="856" height="24" cssclass="btn_WF_document" width="24" bottom="69" onclick="Div00_btn_orgTxt_onclick"/>
+              <Static id="sta_oprtr" taborder="21" text="사용자" left="890" top="52" width="70" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_oprtr" taborder="18" left="970" top="56" width="285" height="24"/>
+              <Button id="btn_oprtrMltPop" taborder="19" left="1258" height="24" cssclass="btn_WF_multi" width="24" bottom="70" onclick="Div00_btn_oprtrMltPop_onclick"/>
+              <Button id="btn_oprtrTxt" taborder="20" left="1280" height="24" cssclass="btn_WF_document" width="24" bottom="70" onclick="Div00_btn_oprtrTxt_onclick"/>
+              <!--Search 3번째 줄 -->
+              <Static id="static03" taborder="3" left="20" top="83" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+              <Static id="sta_rsn" taborder="23" text="사유" left="20" top="83" width="100" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_rsn" taborder="17" left="125" top="87" width="755" height="24" onchanged="Div00_edt_rsns_onchanged"/>
+              <!-- 초기화, 조회버튼 -->
+              <Button id="btnClear" taborder="4" text="초기화" top="124" width="60" height="26" right="85" onclick="Div00_btnClear_onclick"/>
+              <Button id="btn_search" taborder="0" text="조회" top="124" width="60" height="26" cssclass="btn_WF_require" right="20" onclick="Div00_btn_search_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Grid id="grd_list" taborder="3" left="20" top="204" binddataset="ds_coMnuAuthChghstList" autofittype="col" cssclass="grd_WF_list" nodatatext="조회된 결과가 없습니다." readonly="true" positionstep="0" right="20" bottom="99" selecttype="area" cellmovingtype="none" autoenter="select">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="70"/>
+                <Column size="120"/>
+                <Column size="113"/>
+                <Column size="125"/>
+                <Column size="116"/>
+                <Column size="100"/>
+                <Column size="125"/>
+                <Column size="182"/>
+                <Column size="105"/>
+                <Column size="120"/>
+                <Column size="120"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="NO"/>
+                <Cell col="1" text="항목"/>
+                <Cell col="2" text="구분"/>
+                <Cell col="3" text="권한그룹"/>
+                <Cell col="4" text="권한역할"/>
+                <Cell col="5" text="부서"/>
+                <Cell col="6" text="사용자"/>
+                <Cell col="7" text="사유"/>
+                <Cell col="8" text="처리자"/>
+                <Cell col="9" text="처리일자"/>
+                <Cell col="10" text="비고"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:CHG_SEQ" textAlign="center"/>
+                <Cell col="1" text="bind:CHG_ITM" textAlign="center"/>
+                <Cell col="2" text="bind:CHG_SPR" textAlign="center"/>
+                <Cell col="3" text="bind:AUTH_GRP_CD" textAlign="center"/>
+                <Cell col="4" text="bind:AUTH_ROLE_CD" textAlign="center"/>
+                <Cell col="5" text="bind:ORG_CD" textAlign="center"/>
+                <Cell col="6" text="bind:OPRTR_ID" textAlign="center"/>
+                <Cell col="7" text="bind:RSN" textAlign="center"/>
+                <Cell col="8" text="bind:REGPSN_ID" textAlign="center"/>
+                <Cell col="9" text="bind:REG_DTM"/>
+                <Cell col="10" text="bind:BIGO"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="totalPageCount" taborder="1" text="(총 0건, 1 / 1)" left="20" top="179" width="200" height="25" usedecorate="true"/>
+        <Button id="btnLayoutClear" taborder="6" text="레이아웃 초기화" top="171" textPadding="0px" width="110" right="251" onclick="btnLayoutClear_onclick" height="28"/>
+        <Button id="btnLayoutSave" taborder="5" text="레이아웃 저장" top="171" textPadding="0px" width="110" right="365" onclick="btnLayoutSave_onclick" height="28"/>
+        <Button id="btnExcel" taborder="3" text="엑셀다운로드" top="170" cssclass="btn_WF_excel" textPadding="0px" width="110" right="btnLayoutSave:-339" height="28" onclick="btnExcel_onclick"/>
+        <Combo id="cbo_page" taborder="9" displayrowcount="5" innerdataset="ds_page" codecolumn="COUNT" datacolumn="COUNT_NM" index="0" text="10" value="10" onitemchanged="cbo_page_onitemchaged" top="170" left="btnExcel:5" height="28" width="110"/>
+        <Div id="div_paging" taborder="4" left="20" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="grd_list:30" text="" right="20" height="36"/>
+        <Grid id="grd_excel" taborder="4" left="20" top="1019" binddataset="ds_excel" autofittype="col" cssclass="grd_WF_list" nodatatext="조회된 결과가 없습니다." readonly="true" positionstep="0" right="20" bottom="-294" selecttype="area" cellmovingtype="none" autoenter="select" visible="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="70"/>
+                <Column size="120"/>
+                <Column size="113"/>
+                <Column size="125"/>
+                <Column size="116"/>
+                <Column size="100"/>
+                <Column size="125"/>
+                <Column size="182"/>
+                <Column size="105"/>
+                <Column size="120"/>
+                <Column size="120"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="NO"/>
+                <Cell col="1" text="항목"/>
+                <Cell col="2" text="구분"/>
+                <Cell col="3" text="권한그룹"/>
+                <Cell col="4" text="권한역할"/>
+                <Cell col="5" text="부서"/>
+                <Cell col="6" text="사용자"/>
+                <Cell col="7" text="사유"/>
+                <Cell col="8" text="처리자"/>
+                <Cell col="9" text="처리일자"/>
+                <Cell col="10" text="비고"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:CHG_SEQ" textAlign="center"/>
+                <Cell col="1" text="bind:CHG_ITM" textAlign="center"/>
+                <Cell col="2" text="bind:CHG_SPR" textAlign="center"/>
+                <Cell col="3" text="bind:AUTH_GRP_CD" textAlign="center"/>
+                <Cell col="4" text="bind:AUTH_ROLE_CD" textAlign="center"/>
+                <Cell col="5" text="bind:ORG_CD" textAlign="center"/>
+                <Cell col="6" text="bind:OPRTR_ID" textAlign="center"/>
+                <Cell col="7" text="bind:RSN" textAlign="center"/>
+                <Cell col="8" text="bind:REGPSN_ID" textAlign="center"/>
+                <Cell col="9" text="bind:REG_DTM"/>
+                <Cell col="10" text="bind:BIGO"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="STR_DTM" type="STRING" size="256"/>
+          <Column id="END_DTM" type="STRING" size="256"/>
+          <Column id="INQ_PERD_SPR_CD" type="STRING" size="256"/>
+          <Column id="AUTH_GRP_CD" type="STRING" size="256"/>
+          <Column id="AUTH_ROLE_CD" type="STRING" size="256"/>
+          <Column id="CHG_ITM" type="STRING" size="256"/>
+          <Column id="CHG_SPR" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD_CNT" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_ID_CNT" type="STRING" size="256"/>
+          <Column id="RSN" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_search_origin">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="STR_DTM" type="STRING" size="256"/>
+          <Column id="END_DTM" type="STRING" size="256"/>
+          <Column id="INQ_PERD_SPR_CD" type="STRING" size="256"/>
+          <Column id="AUTH_GRP_CD" type="STRING" size="256"/>
+          <Column id="AUTH_ROLE_CD" type="STRING" size="256"/>
+          <Column id="CHG_ITM" type="STRING" size="256"/>
+          <Column id="CHG_SPR" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD_CNT" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_ID_CNT" type="STRING" size="256"/>
+          <Column id="RSN" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_inqPerdSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_chgItm">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_chgSpr">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_authGrpCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_authRoleCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_select" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="SES_ID" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="COL_ITM" type="STRING" size="256"/>
+          <Column id="COND_DATA_VAL" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_coMnuAuthChghstList">
+        <ColumnInfo>
+          <Column id="CHG_SEQ" type="STRING" size="256"/>
+          <Column id="CHG_ITM" type="STRING" size="256"/>
+          <Column id="AUTH_GRP_CD" type="STRING" size="256"/>
+          <Column id="AUTH_SPR_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="RSN" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="BIGO" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_excel">
+        <ColumnInfo>
+          <Column id="CHG_SEQ" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="CHG_ITM" type="STRING" size="256"/>
+          <Column id="AUTH_GRP_CD" type="STRING" size="256"/>
+          <Column id="AUTH_SPR_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="RSN" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="BIGO" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_page">
+        <ColumnInfo>
+          <Column id="COUNT" type="STRING" size="256"/>
+          <Column id="COUNT_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COUNT">20</Col>
+            <Col id="COUNT_NM">20개씩</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">50</Col>
+            <Col id="COUNT_NM">50개씩</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">100</Col>
+            <Col id="COUNT_NM">100개씩</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">1000</Col>
+            <Col id="COUNT_NM">1000개씩</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_YA_21
+/* 작 성 일 자 : 2023/06/02
+/* 작  성   자 : 이상민민
+/* 설       명 : 시스템관리 > SMS발송이력조회
+/***********************************************************/
+
+
+/* 스크립트 인클루드 */
+include "CO::coUtils.xjs";
+include "OD::odUtils.xjs";
+include "CC::CcUtils.xjs";
+include "RD::rdMain.xjs";
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/	
+this.fv_oApp 			= nexacro.getApplication();		//application object 
+this.fv_sessionData 	= this.getSession(); 			//session object
+this.totalCount 		= 0; 							//토탈카운트
+this.pageViewCnt		= 50; 							//페이지당 보여줄 목록 개수
+this.check 				= 0;							//초기 checkbox 셋팅값
+this.formId             = this.fn_getFormId(this);      // 등록한 폼의 아디을 기지고 오는 함수
+
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+			
+	//공통코드 조회(조회기간구분코드)
+	this.fn_commonCodeSearch();	
+	
+	// 그리드 헤드클릭이벤트 내부함수 : (헤드클릭시 체크 무력화)
+	this._gfnHeadCheckSelectAll = function(){};	
+	
+	//회사코드 설정
+	this.ds_search.setColumn(0,"CO_CD",this.fv_sessionData.coCd);
+					
+	//검색 초기값 설정
+	this.ds_search_origin.copyData(this.ds_search);			
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "Div00_btn_search_onclick",
+		SHIFT_ENTER : "",
+		SHIFT_S : "",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_inqPerdSprCd=ds_output1 ds_authGrpCd=ds_output2 ds_authRoleCd=ds_output3 ds_chgItm=ds_output4 ds_chgSpr=ds_output5";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "CODE_LIST", "INQ_PERD_SPR_CD,AUTH_GRP_CD,AUTH_ROLE_CD,CHG_ITM,CHG_SPR");
+	this.ds_search.setColumn(0, "LANG_CD", "KO");
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//조회
+this.fn_search = function(page) {
+	var sSvcId = "selectMenuAuthChgHstList";  
+    var sUrl = "/co/mnu-auth-chg-hst/select-mnu-auth-chg-hst-list.do";
+	var inDs = "ds_search=ds_search"
+    var outDs = "ds_coMnuAuthChghstList=ds_output1";
+    var arg;
+    var callback = "fn_callBack";
+		 
+	// 멀티입력 검색조건 Set
+	this.fn_setMultiSearch(this.formId,"ORG_CD", this.ds_search.getColumn(0,"ORG_CD"));       		// 부서
+	this.fn_setMultiSearch(this.formId,"OPRTR_ID", this.ds_search.getColumn(0,"OPRTR_ID"));  	    // 사용자
+		
+    // 멀티입력조건 임시 테이블 저장 서비스 호출	
+    if(this.ds_select.getRowCount() > 0)
+    {        
+		this.fn_insertMultiData("fn_callBack");
+		this.ds_search.setColumn(0,"INQ_COND_DTLS", this.formId);
+    };
+	 	 
+	 // 조회버튼 클릭시 페이징 초기화 시킨다.
+	 this.ds_search.setColumn(0,"ROW_COUNT", this.cbo_page.value);	
+	 
+	 // 최초 조회일 경우,
+	 if( page == 0 ) {
+		this.div_paging.uPage=1;
+		this.div_paging.uPageNum=0;
+		this.ds_search.setColumn(0,"START_NUM", 0);				
+	 }
+	 // 페이지 전환일 경우
+	 else{	 
+		 this.ds_search.setColumn(0,"START_NUM", this.div_paging.uPageNum);	 		 
+	 }
+	 
+	 this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+//엑셀다운로드
+this.fn_excel_download = function() {
+	 var sSvcId = "selectMenuAuthChgHstExcel";  
+     var sUrl = "/co/mnu-auth-chg-hst/select-mnu-auth-chg-hst-list.do";
+	 var inDs = "ds_search=ds_search"
+     var outDs = "ds_excel=ds_output1";
+     var arg;
+     var callback = "fn_callBack";
+	 	 
+	this.ds_search.setColumn(0,"START_NUM", null);
+	this.ds_search.setColumn(0,"ROW_COUNT", null);
+	 
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+	
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+
+	switch(svcID) {
+		case "commonCodeSearch" : 
+		
+			// 조회조건(기간) 기본값 셋팅
+			this.Div00.form.cmb_inqPerdSprCd.set_index(1);
+			this.fn_setPeriodDate();
+			
+			// 권한그룹 기본값 셋팅
+			this.ds_authGrpCd.insertRow(0);
+			this.ds_authGrpCd.setColumn(0, "COM_DTL_CD", "%");
+			this.ds_authGrpCd.setColumn(0, "COM_DTL_CD_NM", "-- 전체 --");			
+			this.Div00.form.cmb_authGrpCd.set_index(0);
+			
+			// 권한역할 기본값 셋팅
+			this.ds_authRoleCd.insertRow(0);
+			this.ds_authRoleCd.setColumn(0, "COM_DTL_CD", "%");
+			this.ds_authRoleCd.setColumn(0, "COM_DTL_CD_NM", "-- 전체 --");			
+			this.Div00.form.cmb_authRoleCd.set_index(0);
+			
+			// 변경항목 기본값 셋팅
+			this.ds_chgItm.insertRow(0);
+			this.ds_chgItm.setColumn(0, "COM_DTL_CD", "%");
+			this.ds_chgItm.setColumn(0, "COM_DTL_CD_NM", "-- 전체 --");			
+			this.Div00.form.cmb_chgItm.set_index(0);
+			
+			// 변경구분 기본값 셋팅
+			this.ds_chgSpr.insertRow(0);
+			this.ds_chgSpr.setColumn(0, "COM_DTL_CD", "%");
+			this.ds_chgSpr.setColumn(0, "COM_DTL_CD_NM", "-- 전체 --");			
+			this.Div00.form.cmb_chgSpr.set_index(0);
+			
+			// 조회결과 갯수 셋팅
+			this.cbo_page.set_index(1)
+					
+			break;
+			
+		case "selectMenuAuthChgHstList" : 			
+			
+			this.div_paging.set_visible(this.totalCount > 0);
+			
+			//페이징 처리			
+			this.div_paging.form.cfn_createPage(this.div_paging, this.totalCount, this.cbo_page.value, "fn_pageCallback");			
+			// Multi검색조회 데이터 존재시 초기화
+			this.fn_deleteMultiData("fn_callBack");
+	
+			break;
+			
+		case "selectMenuAuthChgHstExcel" : 		
+			this.ofn_exportExcel({ form:this, grid:this.grd_excel, fileName:"메뉴권한변경이력조회" });					
+			break;
+				
+		default : "";
+	}
+	
+}
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;
+
+	if(sFlag){
+		//this.ds_search.setColumn(0,"START_NUM", (oPaging.uPageNum == 0 || oPaging.uPageNum == 1 ? 0 : ( oPaging.uPageNum -1 ) * 10));
+		this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.ds_search.setColumn(0,"ROW_COUNT", this.div_paging.uPageNum);	
+		this.fn_search();
+	}	
+	
+	var sTotText = "(총 "+ this.gfn_appendComma(oPaging.uTotCount, 0)+"건, "+ oPaging.uPage +" / "+ oPaging.uPageCnt +")";
+	this.totalPageCount.set_text(sTotText);
+}
+
+//정렬 콜백
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_list"){
+		oSortInfo = this.grd_list.uaSortInfo;
+		
+		this.ds_search.setColumn(0,"SORT_COLUMN", oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE", oSortInfo.status);
+		
+		this.fn_search();
+	}
+};
+
+//조건 팝업 콜백
+this.fn_popupCallback = function(sPopupId, sRetValue){
+	var resData = "";
+	var sIdList = "";
+	var sNmList = "";
+	
+	if(sRetValue == undefined){
+		return;
+	}else{
+		resData = JSON.parse(sRetValue);
+	}
+			
+	switch(sPopupId){	
+	
+		case "orgMultiPop":		
+			for(var i=0; i<resData.length; i++){	
+				var rtnData = JSON.parse(resData[i]);
+				sIdList += rtnData.ORG_CD + ",";
+				sNmList += rtnData.ORG_NM + ",";
+			}
+			this.ds_search.setColumn(0,"ORG_CD",sIdList.replace(/,\s*$/, ""));
+			this.ds_search.setColumn(0,"ORG_NM",sNmList.replace(/,\s*$/, ""));	
+			break;			
+			
+		case "oprtrMultiPop":		
+			for(var i=0; i<resData.length; i++){	
+				var rtnData = JSON.parse(resData[i]);
+				sIdList += rtnData.OPRTR_ID + ",";
+				sNmList += rtnData.OPRTR_NM + ",";
+			}
+			this.ds_search.setColumn(0,"OPRTR_ID",sIdList.replace(/,\s*$/, ""));
+			this.ds_search.setColumn(0,"OPRTR_NM",sNmList.replace(/,\s*$/, ""));	
+			break;
+			
+		default : 
+			break;
+	}
+};
+
+//조건 멀티 텍스트 팝업 콜백
+this.fn_multiTextPopupCallback = function(objID, rtnValue) {
+	var resParam = JSON.parse(rtnValue);					
+	var splitedStringArr = resParam.textValue.split(",");
+
+	switch(objID){		
+	
+		case "orgMultiTextPopup":
+			this.ds_search.setColumn(0,"ORG_CD",this.gfn_allTrim(resParam.textValue).replace(/,\s*$/, ""));
+			this.ds_search.setColumn(0,"ORG_NM",this.gfn_allTrim(resParam.textValue).replace(/,\s*$/, ""));										
+			break;
+		
+		case "oprtrMultiTextPopup":
+			this.ds_search.setColumn(0,"OPRTR_ID",this.gfn_allTrim(resParam.textValue).replace(/,\s*$/, ""));										
+			break;	
+			
+		default : 
+			break;
+	}
+}
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+
+	//grid 초기 설정
+	this.grd_list.uSortFlag = "false";
+	this.grd_list.uServerSortFlag = "true";
+	this.grd_list.uSortCallback = "fn_sortCallback";	
+	this.grd_list.uCellSizeType = "true";
+	
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 10;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;
+	
+	//grid 개인화(전제조건 : grid Head가 무조건 1Row인 경우)
+	this.uGridList = "grd_list";
+	this.grd_list.uRightMouse = "true";
+	this.grd_list.uPersonalFlag = "true";
+	this.grd_list.uDefaultFormat = "ROW_NO,CHG_ITM,CHG_SPR,AUTH_GRP_CD,AUTH_ROLE_CD,ORG_CD,OPRTR_NM,RSN,REGPSN_ID,REGPSN_DTM,BIGO";
+	
+}
+
+this.cfn_personalPopupClose = function(sRet){
+	this.grd_list.set_formats(sRet);
+	this.pdiv_personal.closePopup();
+}
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+// 검색영역 초기화
+this.clear = function() {
+	//검색 초기값 설정
+	this.ds_search.copyData(this.ds_search_origin);
+	
+	// 발송일자 설정			
+	this.Div00.form.cmb_inqPerdSprCd.set_index(1);			
+	this.fn_setPeriodDate();
+	
+	// 권한그룹 기본값 셋팅
+	this.Div00.form.cmb_authGrpCd.set_index(0);
+	
+	// 권한역할 기본값 셋팅
+	this.Div00.form.cmb_authRoleCd.set_index(0);
+	
+	// 변경항목 기본값 셋팅
+	this.Div00.form.cmb_chgItm.set_index(0);
+	
+	// 변경구분 기본값 셋팅
+	this.Div00.form.cmb_chgSpr.set_index(0);
+	
+	// Multi검색조회 데이터 존재시 초기화
+    this.fn_deleteMultiData("fn_callBack");
+				
+	// 조회결과 갯수 셋팅
+	this.cbo_page.set_index(1);
+};
+
+//조회기간 설정
+this.fn_setPeriodDate = function(){
+	var term = this.Div00.form.cmb_inqPerdSprCd.value;
+	
+	if(term == "1") { this.Div00.form.cal_sendStrDate.set_value(this.gfn_addDate(this.gfn_getDate(),0)); } //1일
+	else if(term == "2") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addDate(this.gfn_getDate(),-6)) } //1주
+	else if(term == "3") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addDate(this.gfn_getDate(),-13)); } //2주
+	else if(term == "4") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addMonth(this.gfn_addDate(this.gfn_getDate(),+1),-1)); } //1개월
+	else if(term == "5") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addMonth(this.gfn_addDate(this.gfn_getDate(),+1),-3)); } //3개월
+	else if(term == "6") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addMonth(this.gfn_addDate(this.gfn_getDate(),+1),-6)); } //6개월
+	else if(term == "7") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addMonth(this.gfn_addDate(this.gfn_getDate(),+1),-12)); } //1년
+		
+	this.Div00.form.cal_sendEndDate.set_value(this.gfn_getDate());		
+}
+
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+//조회버튼
+this.Div00_btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search(0);
+};
+
+//레이아웃 저장 버튼
+this.btnLayoutSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.gfn_personalSave("grd_list", this.grd_list.getCurFormatString()); 
+};
+
+//레이아웃 초기화
+this.btnLayoutClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	//suOrgFormat
+	this.gfn_personalReset("grd_list"); 
+	this.grd_list.set_formats(this.grd_list.uOrgFormat);
+};
+
+//초기화 
+this.Div00_btnClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.clear();
+};
+
+// 엑셀추출버튼
+this.btnExcel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_search.getRowType(0) == Dataset.ROWTYPE_UPDATE) {
+		alert(this.gfn_getMessage("COMS000007")); //조회 조건이 변경 되었습니다.\n다시 조회하시기 바랍니다.
+		return false;
+	}
+	
+	this.fn_excel_download();	
+};
+
+// 발송일자 기간 설정
+this.cmb_inqPerdSprCd_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_setPeriodDate();
+};
+
+//페이징 갯수 목록 변경시
+this.cbo_page_onitemchaged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.Div00_btn_search_onclick();
+};
+
+//부서 조건 팝업
+this.Div00_btn_orgMltPop_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+	
+	var objParam = {
+		coCd : this.fv_sessionData.coCd,		
+		orgId: this.Div00.form.edt_orgCd.value,
+		orgNm: ""
+	};
+	this.gfn_openPopup("orgMultiPop", "CO_POP::SSP_BO_PP_46.xfdl", objParam);
+};
+
+//부서 조건 텍스트 입력 팝업
+this.Div00_btn_orgTxt_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = {
+		textId : this.Div00.form.edt_orgCd
+	};
+	
+	var options = {};
+	options.title = "부서";
+
+	this.gfn_openPopup("orgMultiTextPopup", "CO_POP::SSP_BO_PP_13.xfdl", params,  "fn_multiTextPopupCallback", options);
+};
+
+//사용자 조건 팝업
+this.Div00_btn_oprtrMltPop_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+	
+	var objParam = {
+		coCd : this.fv_sessionData.coCd,		
+		orgId: this.Div00.form.edt_oprtr.value,
+		orgNm: ""
+	};
+	this.gfn_openPopup("oprtrMultiPop", "CO_POP::SSP_BO_PP_47.xfdl", objParam);
+};
+
+//사용자 조건 텍스트 입력 팝업
+this.Div00_btn_oprtrTxt_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = {
+		textId : this.Div00.form.edt_oprtr
+	};
+	
+	var options = {};
+	options.title = "사용자";
+
+	this.gfn_openPopup("oprtrMultiTextPopup", "CO_POP::SSP_BO_PP_13.xfdl", params,  "fn_multiTextPopupCallback", options);
+};]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="form.cbo_page" propid="value" datasetid="ds_search" columnid="ROW_COUNT"/>
+      <BindItem id="item1" compid="Div00.form.cal_sendStrDate" propid="value" datasetid="ds_search" columnid="STR_DTM"/>
+      <BindItem id="item2" compid="Div00.form.cal_sendEndDate" propid="value" datasetid="ds_search" columnid="END_DTM"/>
+      <BindItem id="item3" compid="Div00.form.cmb_authGrpCd" propid="value" datasetid="ds_search" columnid="AUTH_GRP_CD"/>
+      <BindItem id="item4" compid="Div00.form.cmb_authRoleCd" propid="value" datasetid="ds_search" columnid="AUTH_ROLE_CD"/>
+      <BindItem id="item5" compid="Div00.form.cmb_chgItm" propid="value" datasetid="ds_search" columnid="CHG_ITM"/>
+      <BindItem id="item6" compid="Div00.form.cmb_chgSpr" propid="value" datasetid="ds_search" columnid="CHG_SPR"/>
+      <BindItem id="item7" compid="Div00.form.edt_orgCd" propid="value" datasetid="ds_search" columnid="ORG_CD"/>
+      <BindItem id="item8" compid="Div00.form.edt_oprtr" propid="value" datasetid="ds_search" columnid="OPRTR_ID"/>
+      <BindItem id="item9" compid="Div00.form.edt_rsn" propid="value" datasetid="ds_search" columnid="RSN"/>
+    </Bind>
+  </Form>
+</FDL>

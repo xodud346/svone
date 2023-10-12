@@ -1,0 +1,250 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PP_03_05" width="1296" height="280" titletext="이미지 정보" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="280" width="1296">
+        <Static id="Static60_00" taborder="0" text="이미지 정보" left="0" top="1" height="30" cssclass="sta_WF_title02" width="300"/>
+        <Static id="Static20_001" taborder="1" left="0" top="32" cssclass="sta_WF_image_bg" text="" right="0" bottom="0"/>
+        <Div id="img_box60" taborder="2" text="imgBox" left="3.24%" top="51" width="13.12%" bottom="4">
+          <Layouts>
+            <Layout>
+              <Static id="Static00" taborder="0" text="상품이미지" left="0" top="-1" width="100.00%" height="20" textAlign="center"/>
+              <ImageViewer id="img_prdImage60" taborder="1" left="10" width="150" height="150" cssclass="productImage" onclick="Div_prd_imgbox_img_box01_ImageViewer00_onclick" text="" fittocontents="none" stretch="fit" top="37" cursor="pointer"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="img_box61" taborder="3" text="imgBox" left="21.76%" top="51" width="13.12%" bottom="4">
+          <Layouts>
+            <Layout>
+              <Static id="Static00" taborder="0" text="상품이미지" left="0" top="-1" width="100.00%" height="20" textAlign="center"/>
+              <ImageViewer id="img_prdImage61" taborder="1" left="10" top="37" width="150" height="150" cssclass="productImage" fittocontents="none" stretch="fit" onclick="Div_prd_imgbox_img_box01_ImageViewer00_onclick" cursor="pointer"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="img_box62" taborder="4" text="imgBox" left="40.28%" top="51" width="13.12%" bottom="4">
+          <Layouts>
+            <Layout>
+              <Static id="Static00" taborder="0" text="상품이미지" left="0" top="-1" width="100.00%" height="20" textAlign="center"/>
+              <ImageViewer id="img_prdImage62" taborder="1" left="10" top="37" width="150" height="150" cssclass="productImage" fittocontents="none" stretch="fit" onclick="Div_prd_imgbox_img_box01_ImageViewer00_onclick" cursor="pointer"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="img_box80" taborder="5" text="imgBox" top="51" width="13.12%" left="82.72%" bottom="4">
+          <Layouts>
+            <Layout>
+              <Static id="Static00" taborder="0" text="상세이미지" left="0" top="-1" width="90.00%" height="20" textAlign="center"/>
+              <ImageViewer id="img_prdImage80" taborder="1" left="0" top="37" width="150" height="150" cssclass="productImage" fittocontents="none" stretch="fit" onclick="Div_prd_imgbox_img_box01_ImageViewer00_onclick" cursor="pointer"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="img_box63" taborder="6" text="imgBox" left="58.80%" top="51" width="13.12%" bottom="4">
+          <Layouts>
+            <Layout>
+              <Static id="Static00" taborder="0" text="상품이미지" left="0" top="-1" width="100.00%" height="20" textAlign="center"/>
+              <ImageViewer id="img_prdImage63" taborder="1" left="10" top="37" width="150" height="150" cssclass="productImage" fittocontents="none" stretch="fit" onclick="Div_prd_imgbox_img_box01_ImageViewer00_onclick" cursor="pointer"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_img">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="DOC_REG_SEQ" type="STRING" size="256"/>
+          <Column id="ATFL_NM" type="STRING" size="256"/>
+          <Column id="ATFL_LEN" type="STRING" size="256"/>
+          <Column id="ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="STOR_PLC_SPR_CD" type="STRING" size="256"/>
+          <Column id="ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="SAP_DOC_ID" type="STRING" size="256"/>
+          <Column id="RMKS_CTS" type="STRING" size="256"/>
+          <Column id="ETC_FDS_1" type="STRING" size="256"/>
+          <Column id="ETC_FDS_2" type="STRING" size="256"/>
+          <Column id="ETC_FDS_3" type="STRING" size="256"/>
+          <Column id="ETC_FDS_4" type="STRING" size="256"/>
+          <Column id="ETC_FDS_5" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="PRD_IMG" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 2022.03.17 조지훈
+*******************************************************/
+include "RD::rdMain.xjs"
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.fCallBackFn = "";	//콜백
+this.pageMode = "edit";	//기본edit모드
+this.sSvcID = "";
+this.contextRealPath = "";
+this.loaded = false;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{	
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회  
+this.fn_call = function(){
+	var sSvcId = "sspPrdImg"; 
+	var sUrl = "/pr/prd-mng/select-product-image-list.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_img=imageList";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack", false);
+};
+
+//조회  
+this.fn_regProcCall = function(){
+	var sSvcId = "sspPrdImg"; 
+	var sUrl = "/pr/prd-add/select-reg-proc-product-image-list.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_img=imageList";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack", false);
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(errorCode != 0 && errorCode != -100){
+		trace(errorMsg);
+	}
+	
+	switch(svcID){
+		case "sspPrdImg":
+			var arr = ['60', '61', '62', '63', '80'];
+			for(var i=0; i<arr.length;i++){
+				//var sImgPath = 'file://'+this.ds_img.getColumn(this.ds_img.findRowExpr("ETC_FDS_2=="+arr[i]), "PRD_IMG");
+				var ORI_ATFL_NM = this.ds_img.getColumn(this.ds_img.findRowExpr("ETC_FDS_2=="+arr[i]), "ORI_ATFL_NM");
+				var ATFL_STOR_PATH = this.ds_img.getColumn(this.ds_img.findRowExpr("ETC_FDS_2=="+arr[i]), "ATFL_STOR_PATH");
+				var ATFL_NM = this.ds_img.getColumn(this.ds_img.findRowExpr("ETC_FDS_2=="+arr[i]), "ATFL_NM");
+				var newPath = this.fn_imageViewerUrl(ATFL_STOR_PATH, ATFL_NM, ORI_ATFL_NM);
+				this['img_box'+arr[i]].form['img_prdImage'+arr[i]].set_image(newPath);
+			}
+			
+			this.loaded = true;
+			
+			break;
+			
+	}
+	
+	//부모창 결과리턴
+	if(!this.gfn_isNull(this.fCallBackFn)){
+		this.lookupFunc(this.fCallBackFn).call(this.sSvcID, errorCode, errorMsg, {id:this.sSvcID, status:this.loaded});
+	}
+	
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+/*
+서비스ID(콜백ID)
+파라미터맵,
+콜백펑션, 
+페이지타입 옵션 : edit:수정모드, read:읽기모드
+*/
+this.cfn_read = function(svcID, params, callBackFunction, pageMode){
+	var paramArr = [{id:'coCd', name:'회사코드'}];
+	for(var i = 0; i<paramArr.length; i++){
+		if(this.gfn_isNull(params[paramArr[i]['id']])){
+			alert(this.titletext+' > 필수값 오류 > '+paramArr[i]['name']);
+			return false;
+		}
+	}
+	this.fn_init(svcID, params, callBackFunction, pageMode);
+	this.fn_call();
+}
+
+//등록처리전용(상품추가메뉴 전용)
+this.cfn_regProcRead = function(svcID, params, callBackFunction, pageMode){
+	var paramArr = [{id:'coCd', name:'회사코드'}, {id:'prdId', name:'상품ID'}];
+	for(var i = 0; i<paramArr.length; i++){
+		if(this.gfn_isNull(params[paramArr[i]['id']])){
+			alert(this.titletext+' > 필수값 오류 > '+paramArr[i]['name']);
+			return false;
+		}
+	}
+	this.fn_init(svcID, params, callBackFunction, pageMode);
+	this.fn_regProcCall();
+}
+
+//사이즈 조절 필요시 호출
+this.cfn_resize = function(width, height){
+	if(!this.gfn_isNull(width)){
+		this.set_width(width);
+	}
+	if(!this.gfn_isNull(height)){
+		this.set_height(height);
+	}
+}
+
+//필요값 리턴
+this.cfn_getData = function(){
+	var returnObject = {
+		'DOC_REG_ID' : this.ds_img.getColumn(0, "DOC_REG_ID")
+	};
+	
+	return returnObject;
+};
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_init = function(svcID, params, callBackFunction, pageMode) {
+	var coCd = params.coCd;
+	var prdId = params.prdId;
+	var docRegId = params.docRegId;
+	this.sSvcID = svcID;
+	this.fCallBackFn = callBackFunction;
+	this.ds_search.setColumn(0, "CO_CD", coCd);
+	this.ds_search.setColumn(0, "PRD_ID", prdId);
+	this.ds_search.setColumn(0, "DOC_REG_ID", docRegId);
+
+}
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+this.Div_prd_imgbox_img_box01_ImageViewer00_onclick = function(obj:nexacro.ImageViewer,e:nexacro.ClickEventInfo)
+{
+	if(obj.imageheight>0 && obj.imagewidth>0){
+		var params = {
+			url:obj.image
+		};
+		var options = {};
+		this.gfn_openPopup('imageViewer', "PR_POP::SSP_BO_PA_03_05_01.xfdl", params,  "fn_popupCallback", options);
+	}
+	
+};
+
+
+]]></Script>
+  </Form>
+</FDL>

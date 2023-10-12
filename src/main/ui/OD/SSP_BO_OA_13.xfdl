@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_OA_13" width="600" height="530" titletext="비용이체계정 단일팝업" onload="SSP_BO_OA_13_onload" onkeyup="SSP_BO_OA_13_onkeyup">
+    <Layouts>
+      <Layout height="530" width="600">
+        <Grid id="grid_list01" taborder="0" left="20" top="60" right="20" autofittype="col" nodatatext="조회된 결과가 없습니다." binddataset="ds_list01" autoenter="select" oncelldblclick="grid_list01_oncelldblclick" bottom="59" selecttype="row" font="12px/normal &quot;맑은 고딕&quot;">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="0"/>
+                <Column size="110"/>
+                <Column size="180"/>
+                <Column size="110"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="normal" edittype="none" text="선택"/>
+                <Cell col="1" text="계정 ID"/>
+                <Cell col="2" text="계정 명"/>
+                <Cell col="3" text="계정 CD"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="checkboxcontrol" edittype="none" text="bind:CHK"/>
+                <Cell col="1" text="bind:ACCT_ID"/>
+                <Cell col="2" text="bind:ACCT_NM"/>
+                <Cell col="3" text="bind:ACCT_CD"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_confirm" taborder="1" text="확인" onclick="btn_confirm_onclick" height="30" bottom="20" cssclass="btn_WF_select" right="20" width="60"/>
+        <Static id="sta_totcnt" taborder="2" text="총 124건이 검색되었습니다." left="20" usedecorate="true" width="300" visible="false" bottom="20" height="29" font="12px/normal &quot;맑은 고딕&quot;"/>
+        <Static id="staticTitle" taborder="3" text="비용 이체 부서 계정" left="20" top="20" height="21" cssclass="sta_WF_title04" width="300"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[// 비용이체부서 변경
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+include "OD::odUtils.xjs";
+
+this.totalCount = 0;
+this.fv_coCd = "";
+this.fv_mbrId = "";
+this.fv_deptId = "";
+
+/***********************************************************************************************
+* FORM EVENT 영역
+************************************************************************************************/
+
+this.SSP_BO_OA_13_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	this.resetScroll();
+	this.fn_odCommLoading();
+	
+	this.fv_coCd = this.parent.pv1;
+    this.fv_mbrId = this.parent.pv2;
+	this.fv_deptId = this.parent.pv3;
+	
+	this.fn_searchMapSetting();
+	this.fn_search();
+	
+	this.fn_regShortCutMethod();
+};
+
+this.SSP_BO_OA_13_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function() {
+	var sSvcId = "selectCostTrnsfDeptAcctList";
+	var sUrl = "/od/odrPopup/selectCostTrnsfDeptAcctList.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_list01=ds_output1";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "TOTAL_COUNT", -1);
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "selectCostTrnsfDeptAcctList"){
+		this.sta_totcnt.set_text("(총 "+ this.gfn_appendComma(this.totalCount, 0) +"건)");
+		this.sta_totcnt.set_visible(true);
+	}
+};
+
+/***********************************************************************************************
+* POPUP CALLBACK 영역
+************************************************************************************************/
+
+
+/***********************************************************************************************
+* 사용자 함수 영역
+************************************************************************************************/
+this.fn_searchMapSetting = function() {
+	this.ds_search.setColumn(0, "START_NUM", 0);
+	this.ds_search.setColumn(0, "CO_CD", this.fv_coCd);
+	this.ds_search.setColumn(0, "MBR_ID", this.fv_mbrId);
+	this.ds_search.setColumn(0, "DEPT_ID", this.fv_deptId);
+};
+
+this.fn_closeForm = function(shouldReturn) {
+	if (shouldReturn) {
+		var resData = {};
+		var resString = "";
+		var row = this.ds_list01.rowposition;
+		resData.ACCT_ID = this.ds_list01.getColumn(row, "ACCT_ID");
+		resData.ACCT_NM = this.ds_list01.getColumn(row, "ACCT_NM");
+		resData.ACCT_CD = this.ds_list01.getColumn(row, "ACCT_CD");
+		resString = JSON.stringify(resData);
+		this.close(resString);
+	}
+	else {
+		this.close(0);
+	}
+};
+
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	//this.fn_regMethodENTER("fn_search");
+	this.fn_regMethodESC("fn_esc");
+	this.fn_regMethodShiftENTER("btn_confirm_onclick");
+};
+
+this.fn_esc = function() {
+	this.close(0);
+};
+
+/***********************************************************************************************
+* BUTTON EVENT 영역
+************************************************************************************************/
+this.btn_confirm_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if (this.ds_list01.rowposition < 0) {
+		alert(this.fn_getMessage("ERRS000137"));
+		return;
+	}
+	
+	this.fn_closeForm(true);
+};
+
+/***********************************************************************************************
+* GRID EVENT 영역
+************************************************************************************************/
+
+this.grid_list01_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	this.fn_closeForm(true);
+};
+
+]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="TOTAL_COUNT" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">1000</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list01">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

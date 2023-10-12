@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcCustPremrt">
+
+	<sql id="CustPremrtWhere">
+		<if test="useYn != null and useYn!= ''.toString()">
+		    AND	A.USE_YN = #{useYn}
+		</if>
+		<if test="coCd != null and coCd!= ''.toString()">
+		    AND	A.CO_CD = #{coCd}
+		</if>
+	</sql>
+
+	<!-- 일반고객할증율 매익률 목록 -->
+    <select id="selectCustPremrtList" parameterType="HashMap" resultType="HashMap">
+        /* PcCustPremrt.selectCustPremrtList */
+        SELECT * FROM (
+	        SELECT	
+	        	A.CO_CD,
+				A.SEQ,
+				A.PREMRT,
+				A.REG_RSN,
+				A.USE_YN,
+				DECODE(A.USE_YN, 'Y', '사용', 'N', '미사용','')  AS USE_YN_NM,
+				A.REGPSN_ID,
+				TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS') AS REG_DTM,
+				A.UPDPSN_ID,
+				TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM,
+				B.OPRTR_NM
+			FROM TB_PC_GEN_CUST_PREMRT_INFO A
+			LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+				ON A.CO_CD = B.CO_CD
+				AND A.REGPSN_ID = B.OPRTR_ID
+			<where>
+			 	<include refid="CustPremrtWhere" />
+			</where>
+		)A
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.SEQ DESC</otherwise>
+		</choose>
+		OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <select id="selectCustPremrtCount" parameterType="hashMap" resultType="integer">
+    	/* PcCustPremrt.selectCustPremrtCount */
+		SELECT
+			COUNT(0)
+		 FROM TB_PC_GEN_CUST_PREMRT_INFO A
+		 <where>
+		 	<include refid="CustPremrtWhere" />
+		</where>
+    </select>
+    
+    <!-- 일반고객할증율 매익률 목록 -->
+    <select id="selectCustPremrtDetail" parameterType="HashMap" resultType="HashMap">
+        /* PcCustPremrt.selectCustPremrtDetail */
+        SELECT	
+	        	A.CO_CD,
+				A.SEQ,
+				TO_CHAR(A.PREMRT, 'FM9,999,999,990.00')||'%'AS PREMRT,
+				A.REG_RSN,
+				A.USE_YN,
+				DECODE(A.USE_YN, 'Y', '사용', 'N', '미사용','')  AS USE_YN_NM,
+				'('||A.REGPSN_ID||')'||B.OPRTR_NM AS REGPSN_ID,
+				TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS') AS REG_DTM,
+				A.UPDPSN_ID,
+				TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM,
+				B.OPRTR_NM
+			FROM TB_PC_GEN_CUST_PREMRT_INFO A
+			LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+			ON A.CO_CD = B.CO_CD
+			AND A.REGPSN_ID = B.OPRTR_ID
+		<where>
+		 	<include refid="CustPremrtWhere" />
+		</where>
+    </select>
+    
+    <insert id="insertCustPremrt" parameterType="HashMap">
+    	/* 일반고객할증율 등록 - insertCustPremrt */
+        INSERT INTO TB_PC_GEN_CUST_PREMRT_INFO(
+			CO_CD
+			, SEQ
+			, PREMRT
+			, REG_RSN
+			, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+			) 
+		VALUES(
+			  #{coCd}
+			, NVL((SELECT MAX(SEQ)+1 FROM TB_PC_GEN_CUST_PREMRT_INFO),0)
+			, #{PREMRT}
+			, #{regRsn}
+			, 'Y'
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE)
+    </insert>
+    
+    <!-- 일반고객할증율 매익률 수정 -->
+    <update id="updateCustPremrt" parameterType="HashMap">
+        /* PcDetrInfo.updateCustPremrt */
+        UPDATE	TB_PC_GEN_CUST_PREMRT_INFO 
+		SET	 
+			UPDPSN_ID = #{updpsnId}
+		 	,UPD_DTM = SYSDATE
+	 	<if test="useYn != null and useYn != ''.toString()">
+		    , USE_YN = #{useYn}
+		</if>
+		WHERE USE_YN = 'Y'
+    </update>
+    
+    
+</mapper>

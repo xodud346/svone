@@ -1,0 +1,778 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PrSeries">
+
+    <select id="selectProductSeriesList" parameterType="HashMap" resultType="HashMap">
+        /* PrSeries.selectProductSeriesList */
+        SELECT 
+               <if test="PRD_ID != null and PRD_ID != ''">
+                <if test="PRD_ID_TYPE == 1">
+               DISTINCT
+               </if>
+               </if>
+               A.CO_CD
+             , A.PRD_GRP_ID
+             , A.PRD_GRP_SPR_CD
+             , SSP_APP.FN_COM_DTL_CDNM_NVL('KO','PRD_GRP_SPR_CD',A.PRD_GRP_SPR_CD, '-') AS PRD_GRP_SPR_NM
+             , A.PRD_GRP_NM
+             , (SELECT COUNT(0)FROM SSP_APP.TB_PR_PRD_GRP_DTL AA WHERE A.PRD_GRP_ID = AA.PRD_GRP_ID ) AS PRD_GRP_CNT
+             , LTRIM(B.PRD_ID,'0') AS PRD_ID
+             , B.PRD_NM
+             , DECODE(A.USE_YN,'Y','사용','미사용') AS USE_YN
+             , A.REGPSN_ID
+             , C.OPRTR_NM AS REGPSN_NM
+             , A.UPDPSN_ID
+             , D.OPRTR_NM AS UPDPSN_NM
+             , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+             , TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM
+             , B.BSS_PRD_YN
+             , SSP_APP.FN_PR_ATTR_VAL_LIST_ALL(A.CO_CD, B.PRD_ID) AS PRD_ATTR_VAL
+             , B.PRD_CLCD
+        FROM SSP_APP.TB_PR_PRD_GRP_BASIS A
+           , ( SELECT CO_CD
+                    , PRD_GRP_ID
+                    , MAX(PRD_ID)   AS PRD_ID
+                    , MAX(PRD_NM)   AS PRD_NM
+                    , MAX(PRD_ID_INFO) AS PRD_ID_INFO
+                    , MAX(PRD_NM_INFO) AS PRD_NM_INFO
+                    , MAX(BSS_PRD_YN) AS BSS_PRD_YN
+                    , MAX(PRD_CLCD) AS PRD_CLCD
+                 FROM ( SELECT /*+ USE_NL(T1 T2) index(T2 TB_PR_PRD_INFO_PK) */ 
+                               T1.CO_CD
+                             , T1.PRD_GRP_ID
+                             , T1.PRD_ID
+                             , T2.PRD_NM
+                             , '' AS PRD_ID_INFO
+                             , '' AS PRD_NM_INFO
+                             , T1.BSS_PRD_YN
+                             , T2.PRD_CLCD
+                          FROM SSP_APP.TB_PR_PRD_GRP_DTL T1
+                             , SSP_APP.TB_PR_PRD_INFO    T2
+                             , SSP_APP.TB_PR_PRD_GRP_BASIS T3
+                         WHERE T1.CO_CD = T2.CO_CD
+                           AND T1.PRD_ID = T2.PRD_ID
+                           AND T1.BSS_PRD_YN = 'Y'
+                           AND T1.CO_CD = T3.CO_CD
+                           AND T1.PRD_GRP_ID = T3.PRD_GRP_ID
+                           AND T1.CO_CD = #{CO_CD}
+                           AND T3.MALL_SPR_CD = #{MALL_SPR_CD}
+                           <if test="PRD_ID != null and PRD_ID != ''">
+                           <if test="PRD_ID_TYPE == 1"> 
+                           AND EXISTS (SELECT 'X' 
+                                         FROM TB_OD_ODR_INQ_TGT_DTLS A1
+                                        WHERE A1.SES_ID = #{SES_ID}
+                                          AND A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                                          AND A1.COL_ITM = 'PRD_ID'
+                                        AND T1.PRD_ID = LPAD(A1.COND_DATA_VAL,18,'0') ) 
+                           </if>   
+                           </if>
+                        UNION ALL
+                        SELECT /*+ USE_NL(T1 T2) index(T2 TB_PR_PRD_INFO_PK) */ 
+                               T1.CO_CD
+                             , T1.PRD_GRP_ID
+                             , '' AS PRD_ID
+                             , '' AS PRD_NM
+                             , LISTAGG(DISTINCT T1.PRD_ID, ',' ON OVERFLOW TRUNCATE '...' WITHOUT COUNT) WITHIN GROUP(ORDER BY T1.PRD_ID) AS PRD_ID_INFO
+                             , LISTAGG(DISTINCT T2.PRD_NM, ',' ON OVERFLOW TRUNCATE '...' WITHOUT COUNT) WITHIN GROUP(ORDER BY T1.PRD_ID) AS PRD_NM_INFO
+                             , '' AS BSS_PRD_YN
+                             , '' AS PRD_CLCD
+                          FROM SSP_APP.TB_PR_PRD_GRP_DTL T1
+                             , SSP_APP.TB_PR_PRD_INFO    T2
+                             , SSP_APP.TB_PR_PRD_GRP_BASIS T3
+                         WHERE T1.CO_CD = T2.CO_CD 
+                           AND T1.PRD_ID = T2.PRD_ID    
+                           AND T1.CO_CD = T3.CO_CD
+                           AND T1.PRD_GRP_ID = T3.PRD_GRP_ID
+                           AND T1.CO_CD = #{CO_CD}
+                           AND T3.MALL_SPR_CD = #{MALL_SPR_CD}
+                           <if test="PRD_ID != null and PRD_ID != ''">
+                           <if test="PRD_ID_TYPE == 1"> 
+                           AND EXISTS (SELECT 'X' 
+                                         FROM TB_OD_ODR_INQ_TGT_DTLS A1
+                                        WHERE A1.SES_ID = #{SES_ID}
+                                          AND A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                                          AND A1.COL_ITM = 'PRD_ID'
+                                          AND T1.PRD_ID = LPAD(A1.COND_DATA_VAL,18,'0') ) 
+                           </if>   
+                           </if>
+                         GROUP BY T1.CO_CD, T1.PRD_GRP_ID
+                      ) GROUP BY CO_CD, PRD_GRP_ID
+              )B
+            , TB_CO_MBR_OPRTR_INFO C 
+            , TB_CO_MBR_OPRTR_INFO D 
+           <if test="PRD_ID != null and PRD_ID != ''">
+                <if test="PRD_ID_TYPE == 1">
+            , (SELECT LEVEL AS LV FROM DUAL CONNECT BY LEVEL <![CDATA[ <= ]]>50)E
+                </if>
+           </if>
+        WHERE 1=1
+          AND A.CO_CD = B.CO_CD(+)
+          AND A.PRD_GRP_ID = B.PRD_GRP_ID(+)
+          AND A.REGPSN_ID = C.OPRTR_ID(+)
+          AND A.UPDPSN_ID = D.OPRTR_ID(+)
+          AND A.CO_CD = #{CO_CD}
+          AND A.MALL_SPR_CD = #{MALL_SPR_CD}
+          <if test="PRD_GRP_SPR_CD != null and PRD_GRP_SPR_CD != ''">
+          AND A.PRD_GRP_SPR_CD = #{PRD_GRP_SPR_CD}
+          </if>
+          <if test="USE_YN != null and USE_YN != ''">
+          AND A.USE_YN = #{USE_YN}
+          </if>
+          <if test="PRD_ID != null and PRD_ID != ''">
+             AND EXISTS (SELECT 'X' 
+                     FROM TB_OD_ODR_INQ_TGT_DTLS T1
+                     WHERE T1.SES_ID = #{SES_ID}
+                         AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                         AND T1.COL_ITM = 'PRD_ID'
+                         <if test="PRD_ID_TYPE == 1"> AND REGEXP_SUBSTR(B.PRD_ID_INFO,'[^,]+',1,E.LV) = LPAD(T1.COND_DATA_VAL,18,'0') ) </if>   
+                         <if test="PRD_ID_TYPE == 2"> AND A.PRD_GRP_ID = T1.COND_DATA_VAL ) </if>   
+          </if>
+          <if test="KEYWORD != null and KEYWORD != ''">
+              <choose>
+                <when test="KEYWORD_TYPE == 1">
+                  AND A.PRD_GRP_NM LIKE '%'||#{KEYWORD}||'%'
+                </when>
+                <otherwise>
+                  AND B.PRD_NM_INFO LIKE '%'||#{KEYWORD}||'%'
+                </otherwise>
+              </choose>
+          </if>
+          <choose>
+            <when test="OPRTR_TYPE == 1">
+              <if test="OPRTR_ID != null and OPRTR_ID != ''">
+              AND A.REGPSN_ID = #{OPRTR_ID}
+              </if>
+              <if test="OPRTR_NM != null and OPRTR_NM != ''">
+              AND C.OPRTR_NM LIKE '%'|| #{OPRTR_NM} || '%'
+              </if>
+            </when>
+            <otherwise>
+              <if test="OPRTR_ID != null and OPRTR_ID != ''">
+              AND A.UPDPSN_ID = #{OPRTR_ID}
+              </if>
+              <if test="OPRTR_NM != null and OPRTR_NM != ''">
+              AND D.OPRTR_NM LIKE '%'|| #{OPRTR_NM} || '%'
+              </if>
+            </otherwise>
+          </choose>
+          <if test="START_DT != null and START_DT != ''">
+              <choose>
+                 <when test="DATE_TYPE == 1">
+                  AND TO_CHAR(A.REG_DTM,'YYYYMMDD') BETWEEN #{START_DT} AND #{END_DT}
+                </when>
+                <otherwise>
+                  AND TO_CHAR(A.UPD_DTM,'YYYYMMDD') BETWEEN #{START_DT} AND #{END_DT}
+                </otherwise>
+              </choose>
+          </if>
+          <choose>
+            <when test="SORT_COLUMN != null and SORT_COLUMN != ''">
+                ORDER BY ${SORT_COLUMN} ${SORT_TYPE}
+            </when>
+            <otherwise>
+                ORDER BY A.PRD_GRP_ID DESC
+            </otherwise>
+          </choose>
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY 
+    </select>
+    
+    <select id="selectProductSeriesCount" parameterType="HashMap" resultType="integer">
+        /* PrSeries.selectProductSeriesCount */
+       SELECT COUNT(1) 
+         FROM (SELECT 
+                      <if test="PRD_ID != null and PRD_ID != ''">
+                      <if test="PRD_ID_TYPE == 1">
+                      DISTINCT 
+                      </if>
+                      </if>
+			          A.CO_CD
+			        , A.PRD_GRP_ID
+			        , A.PRD_GRP_SPR_CD
+			        , B.PRD_ID
+			        , B.PRD_ID_INFO
+		        FROM SSP_APP.TB_PR_PRD_GRP_BASIS A
+		           , ( SELECT CO_CD
+		                    , PRD_GRP_ID
+		                    , MAX(PRD_ID)   AS PRD_ID
+		                    , MAX(PRD_NM)   AS PRD_NM
+		                    , MAX(PRD_ID_INFO) AS PRD_ID_INFO
+		                    , MAX(PRD_NM_INFO) AS PRD_NM_INFO
+		                    , MAX(BSS_PRD_YN) AS BSS_PRD_YN
+		                    , MAX(PRD_CLCD) AS PRD_CLCD
+		                 FROM ( SELECT /*+ USE_NL(T1 T2) INDEX(T2 TB_PR_PRD_INFO_PK) */ 
+		                               T1.CO_CD
+		                             , T1.PRD_GRP_ID
+		                             , T1.PRD_ID
+		                             , T2.PRD_NM
+		                             , '' AS PRD_ID_INFO
+		                             , '' AS PRD_NM_INFO
+		                             , T1.BSS_PRD_YN
+		                             , T2.PRD_CLCD
+		                          FROM SSP_APP.TB_PR_PRD_GRP_DTL T1
+		                             , SSP_APP.TB_PR_PRD_INFO    T2
+		                             , SSP_APP.TB_PR_PRD_GRP_BASIS T3
+		                         WHERE T1.CO_CD = T2.CO_CD 
+		                           AND T1.PRD_ID = T2.PRD_ID
+		                           AND T1.BSS_PRD_YN = 'Y'
+		                           AND T1.CO_CD = T3.CO_CD
+		                           AND T1.PRD_GRP_ID = T3.PRD_GRP_ID
+		                           AND T1.CO_CD = #{CO_CD}
+		                           AND T3.MALL_SPR_CD = #{MALL_SPR_CD}
+		                           <if test="PRD_ID != null and PRD_ID != ''">
+		                           <if test="PRD_ID_TYPE == 1"> 
+		                           AND EXISTS (SELECT 'X' 
+		                                         FROM TB_OD_ODR_INQ_TGT_DTLS A1
+		                                        WHERE A1.SES_ID = #{SES_ID}
+		                                          AND A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+		                                          AND A1.COL_ITM = 'PRD_ID'
+		                                          AND T1.PRD_ID = LPAD(A1.COND_DATA_VAL,18,'0') ) 
+		                           </if>   
+		                           </if>
+		                        UNION ALL
+		                        SELECT /*+ USE_NL(T1 T2) INDEX(T2 TB_PR_PRD_INFO_PK) */ 
+		                               T1.CO_CD
+		                             , T1.PRD_GRP_ID
+		                             , '' AS PRD_ID
+		                             , '' AS PRD_NM
+		                             , LISTAGG(DISTINCT T1.PRD_ID, ',' ON OVERFLOW TRUNCATE '...' WITHOUT COUNT) WITHIN GROUP(ORDER BY T1.PRD_ID) AS PRD_ID_INFO
+                             		 , LISTAGG(DISTINCT T2.PRD_NM, ',' ON OVERFLOW TRUNCATE '...' WITHOUT COUNT) WITHIN GROUP(ORDER BY T1.PRD_ID) AS PRD_NM_INFO
+		                             , '' AS BSS_PRD_YN
+		                             , '' AS PRD_CLCD
+		                          FROM SSP_APP.TB_PR_PRD_GRP_DTL T1
+		                             , SSP_APP.TB_PR_PRD_INFO    T2
+		                             , SSP_APP.TB_PR_PRD_GRP_BASIS T3
+		                         WHERE T1.CO_CD = T2.CO_CD 
+		                           AND T1.PRD_ID = T2.PRD_ID    
+		                           AND T1.CO_CD = T3.CO_CD
+		                           AND T1.PRD_GRP_ID = T3.PRD_GRP_ID
+		                           AND T1.CO_CD = #{CO_CD}
+		                           AND T3.MALL_SPR_CD = #{MALL_SPR_CD}
+		                           <if test="PRD_ID != null and PRD_ID != ''">
+		                           <if test="PRD_ID_TYPE == 1">
+		                           AND EXISTS (SELECT 'X' 
+		                                         FROM TB_OD_ODR_INQ_TGT_DTLS A1
+		                                        WHERE A1.SES_ID = #{SES_ID}
+		                                          AND A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+		                                          AND A1.COL_ITM = 'PRD_ID'
+		                                          AND T1.PRD_ID = LPAD(A1.COND_DATA_VAL,18,'0') ) 
+		                           </if>   
+		                           </if>
+		                         GROUP BY T1.CO_CD, T1.PRD_GRP_ID
+		                      ) GROUP BY CO_CD, PRD_GRP_ID
+		              )B
+		            , TB_CO_MBR_OPRTR_INFO C 
+		            , TB_CO_MBR_OPRTR_INFO D   
+		            <if test="PRD_ID != null and PRD_ID != ''">
+		                <if test="PRD_ID_TYPE == 1">
+		            , (SELECT LEVEL AS LV FROM DUAL CONNECT BY LEVEL <![CDATA[ <= ]]>50)E
+		                </if>
+		            </if>
+		        WHERE 1=1
+		          AND A.CO_CD = B.CO_CD(+)
+		          AND A.PRD_GRP_ID = B.PRD_GRP_ID(+)
+		          AND A.CO_CD = #{CO_CD}
+		          AND A.REGPSN_ID = C.OPRTR_ID(+)
+		          AND A.UPDPSN_ID = D.OPRTR_ID(+)
+		          AND A.MALL_SPR_CD = #{MALL_SPR_CD}
+		          <if test="PRD_GRP_SPR_CD != null and PRD_GRP_SPR_CD != ''">
+		          AND A.PRD_GRP_SPR_CD = #{PRD_GRP_SPR_CD}
+		          </if>
+		          <if test="USE_YN != null and USE_YN != ''">
+		          AND A.USE_YN = #{USE_YN}
+		          </if>
+		          <if test="PRD_ID != null and PRD_ID != ''">
+		             AND EXISTS (SELECT 'X' 
+		                     FROM TB_OD_ODR_INQ_TGT_DTLS T1
+		                     WHERE T1.SES_ID = #{SES_ID}
+		                         AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+		                         AND T1.COL_ITM = 'PRD_ID'
+		                         <if test="PRD_ID_TYPE == 1"> AND REGEXP_SUBSTR(B.PRD_ID_INFO,'[^,]+',1,E.LV) = LPAD(T1.COND_DATA_VAL,18,'0') ) /* 상품ID */</if>   
+		                         <if test="PRD_ID_TYPE == 2"> AND A.PRD_GRP_ID = T1.COND_DATA_VAL ) /* 시리즈ID */</if>   
+		          </if>
+		          <if test="KEYWORD != null and KEYWORD != ''">
+		              <choose>
+		                <when test="KEYWORD_TYPE == 1">
+		                  AND A.PRD_GRP_NM LIKE '%'||#{KEYWORD}||'%'
+		                </when>
+		                <otherwise>
+		                  AND B.PRD_NM LIKE '%'||#{KEYWORD}||'%'
+		                </otherwise>
+		              </choose>
+		          </if>
+		          <choose>
+		             <when test="OPRTR_TYPE == 1">
+		               <if test="OPRTR_ID != null and OPRTR_ID != ''">
+		               AND A.REGPSN_ID = #{OPRTR_ID}
+		               </if>
+		               <if test="OPRTR_NM != null and OPRTR_NM != ''">
+		               AND C.OPRTR_NM LIKE '%'|| #{OPRTR_NM} || '%'
+		               </if>
+		             </when>
+		             <otherwise>
+		               <if test="OPRTR_ID != null and OPRTR_ID != ''">
+		               AND A.UPDPSN_ID = #{OPRTR_ID}
+		               </if>
+		               <if test="OPRTR_NM != null and OPRTR_NM != ''">
+		               AND D.OPRTR_NM LIKE '%'|| #{OPRTR_NM} || '%'
+		               </if>
+		             </otherwise>
+		           </choose>
+		          <if test="START_DT != null and START_DT != ''">
+		              <choose>
+		                <when test="DATE_TYPE == 1">
+		                  AND TO_CHAR(A.REG_DTM,'YYYYMMDD') BETWEEN #{START_DT} AND #{END_DT}
+		                </when>
+		                <otherwise>
+		                  AND TO_CHAR(A.UPD_DTM,'YYYYMMDD') BETWEEN #{START_DT} AND #{END_DT}
+		                </otherwise>
+		              </choose>
+		          </if>
+		      )
+    </select>
+    
+    <select id="selectProductSeriesBasis" parameterType="HashMap" resultType="HashMap">
+        /* PrSeries.selectProductSeries */
+        SELECT A.CO_CD
+             , A.PRD_GRP_ID
+             , A.PRD_GRP_SPR_CD
+             , A.PRD_GRP_NM
+             , A.MALL_SPR_CD
+             , A.USE_YN
+             , A.UPD_RSN
+             , A.REGPSN_ID
+             , B.OPRTR_NM AS REGPSN_NM
+             , A.UPDPSN_ID
+             , C.OPRTR_NM AS UPDPSN_NM
+             , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+             , TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM
+          FROM SSP_APP.TB_PR_PRD_GRP_BASIS A
+             , SSP_APP.TB_CO_MBR_OPRTR_INFO B 
+             , SSP_APP.TB_CO_MBR_OPRTR_INFO C  
+         WHERE 1=1
+           AND A.REGPSN_ID = B.OPRTR_ID(+)
+           AND A.UPDPSN_ID = C.OPRTR_ID(+)
+           AND A.PRD_GRP_ID = #{PRD_GRP_ID}
+           AND A.CO_CD = #{CO_CD}
+           AND A.MALL_SPR_CD = #{MALL_SPR_CD}
+    </select>
+    
+    <select id="selectProductSeriesDtl01" parameterType="HashMap" resultType="HashMap">
+        /* PrSeries.selectProductSeriesDtl01 */
+      SELECT DISTINCT  * FROM (
+        SELECT NULL AS CHK
+             , DECODE(A.BSS_PRD_YN,'Y','기준상품',TO_NUMBER(A.PRD_SEQ)) AS PRD_NUM
+             , A.CO_CD
+             , A.PRD_GRP_ID
+             , LTRIM(A.PRD_ID,'0') AS PRD_ID
+             , F.PRD_NM
+             , B.MRO_PRD_ATTR_VAL
+             , DECODE(A.BSS_PRD_YN, 'Y', '{'||C.PRNM || ':' || C.PRVL||'}', G.PRD_ATTR_VAL) AS SSP_PRD_ATTR_VAL  
+             , DECODE(A.BSS_PRD_YN, 'Y', C.SRT_SO, 1) AS SSP_PRD_ATTR_SEQ
+             , A.BSS_PRD_ATTR_INFO
+             , DECODE(A.BSS_PRD_YN, 'Y', C.PRD_ATTR_CD, NULL) AS PRD_ATTR_CD
+             , CASE WHEN INSTR( A.BSS_PRD_ATTR_INFO,C.PRD_ATTR_CD) > 0 THEN 'Y' ELSE NULL END AS BASS_CHK
+             , F.SELL_UNIT_QTY || F.SELL_UNIT_CD AS SELL_UNIT
+             , F.SELL_UNIT_QTY
+             , F.SELL_UNIT_CD
+             , F.ORGPLC_CTRY_CD
+             , D.CTRY_NM
+             , F.MNFR_NO
+             , E.MNFR_NM
+             , A.PRD_SEQ
+             , A.BSS_PRD_YN
+             , H.PRD_GRP_SPR_CD
+             , I.PRD_USE_YN
+        FROM SSP_APP.TB_PR_PRD_GRP_DTL A
+           , (SELECT CO_CD, PRD_ID, LISTAGG('{'||PRNM ||':'|| PRVL||'}', ',') WITHIN GROUP(ORDER BY ATTR_SEQ) AS MRO_PRD_ATTR_VAL
+                FROM SSP_APP.TB_PR_MRO_PRD_INFO_ATTR_MAPP
+                GROUP BY CO_CD, PRD_ID
+              )B
+           , (SELECT T1.CO_CD, T1.PRD_ID, T2.PRNM, T1.PRVL, T1.PRD_ATTR_CD, T1.SRT_SO
+                FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP T1
+                   , SSP_APP.TB_PR_PRD_ATTR_INFO T2
+               WHERE T1.CO_CD = T2.CO_CD AND T1.PRD_ATTR_CD = T2.PRD_ATTR_CD
+              )C
+            , (SELECT T3.CO_CD, T3.PRD_ID, LISTAGG('{'||T4.PRNM ||':'|| T3.PRVL||'}', ',') WITHIN GROUP(ORDER BY T3.SRT_SO) AS PRD_ATTR_VAL
+                FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP T3
+                   , SSP_APP.TB_PR_PRD_ATTR_INFO T4
+               WHERE T3.CO_CD = T4.CO_CD AND T3.PRD_ATTR_CD = T4.PRD_ATTR_CD
+               GROUP BY T3.CO_CD, T3.PRD_ID
+              )G 
+            , SSP_APP.TB_CO_CTRY_INFO D
+            , SSP_APP.TB_PR_MNFR_INFO E
+            , SSP_APP.TB_PR_MRO_PRD_INFO F
+            , TB_PR_PRD_GRP_BASIS H
+            , TB_PR_PRD_INFO I
+        WHERE 1=1
+          AND A.CO_CD = B.CO_CD(+)
+          AND A.CO_CD = C.CO_CD(+)
+          AND A.CO_CD = D.CO_CD
+          AND A.CO_CD = E.CO_CD
+          AND A.CO_CD = F.CO_CD
+          AND A.CO_CD = G.CO_CD(+)
+          AND A.CO_CD = H.CO_CD
+          AND A.CO_CD = I.CO_CD
+          AND A.PRD_ID = B.PRD_ID(+)
+          AND A.PRD_ID = C.PRD_ID(+)
+          AND A.PRD_ID = F.PRD_ID
+          AND A.PRD_ID = G.PRD_ID(+)
+          AND A.PRD_ID = I.PRD_ID
+          AND A.PRD_GRP_ID = H.PRD_GRP_ID
+          AND F.ORGPLC_CTRY_CD = D.CTRY_SPR_CD
+          AND F.MNFR_NO = E.MNFR_NO
+          AND A.CO_CD = #{CO_CD}
+          AND A.PRD_GRP_ID = #{PRD_GRP_ID}
+        GROUP BY A.CO_CD
+             , A.PRD_GRP_ID
+             , A.PRD_ID
+             , F.PRD_NM
+             , B.MRO_PRD_ATTR_VAL
+             , C.PRNM
+             , C.PRVL
+             , G.PRD_ATTR_VAL
+             , A.BSS_PRD_ATTR_INFO
+             , C.PRD_ATTR_CD
+             , F.SELL_UNIT_QTY 
+             , F.SELL_UNIT_CD
+             , F.ORGPLC_CTRY_CD
+             , D.CTRY_NM
+             , F.MNFR_NO
+             , E.MNFR_NM
+             , A.PRD_SEQ
+             , A.BSS_PRD_YN
+             , C.SRT_SO
+             , H.PRD_GRP_SPR_CD
+             , I.PRD_USE_YN
+             )
+         ORDER BY PRD_SEQ, SSP_PRD_ATTR_SEQ
+         
+    </select>
+    
+    <select id="selectProductSeriesDtl02" parameterType="HashMap" resultType="HashMap">
+        /* PrSeries.selectProductSeriesDtl02 */
+        SELECT NULL AS CHK
+             , A.CO_CD
+             , A.PRD_GRP_ID
+             , LTRIM(A.PRD_ID,'0') AS PRD_ID
+             , B.PRD_NM
+             , A.BSS_PRD_YN
+             , A.PRD_SEQ
+             , A.BSS_PRD_ATTR_INFO
+             , SSP_APP.FN_PR_ATTR_VAL_LIST_ALL(#{CO_CD}, A.PRD_ID) AS PRD_ATTR_VAL
+             , B.ORGPLC_CTRY_CD
+             , C.CTRY_NM
+             , B.MNFR_NO
+             , D.MNFR_NM
+             , B.SELL_UNIT_QTY || B.SELL_UNIT_CD AS SELL_UNIT
+             , F.PRD_USE_YN
+          FROM SSP_APP.TB_PR_PRD_GRP_DTL A
+             , SSP_APP.TB_PR_MRO_PRD_INFO B
+             , SSP_APP.TB_CO_CTRY_INFO C
+             , SSP_APP.TB_PR_MNFR_INFO D
+             , TB_PR_PRD_INFO F
+         WHERE 1=1
+           AND A.CO_CD = B.CO_CD
+           AND A.CO_CD = C.CO_CD
+           AND A.CO_CD = D.CO_CD
+           AND A.CO_CD = F.CO_CD
+           AND A.PRD_ID = B.PRD_ID
+           AND A.PRD_ID = F.PRD_ID
+           AND B.ORGPLC_CTRY_CD = C.CTRY_SPR_CD
+           AND B.MNFR_NO = D.MNFR_NO
+           AND A.CO_CD = #{CO_CD}
+           AND A.PRD_GRP_ID = #{PRD_GRP_ID}
+         ORDER BY A.PRD_SEQ
+    </select>
+    
+    <select id="selectSeriesTemp01" parameterType="HashMap" resultType="HashMap">
+        /* PrSeries.selectSeriesTemp01 */
+       SELECT DISTINCT * 
+         FROM (
+            SELECT A.CO_CD
+                 , LTRIM(A.PRD_ID,'0') AS PRD_ID
+                 , C.PRD_NM
+                 , LISTAGG('{'||A.PRNM ||':'|| A.PRVL||'}', ',') WITHIN GROUP(ORDER BY A.ATTR_SEQ) AS MRO_PRD_ATTR_VAL
+                <choose>
+                <when test='BSS_PRD_YN == "Y"'>
+                 , B.SSP_PRD_ATTR_VAL
+                 , B.PRD_ATTR_CD
+                 , B.SRT_SO
+                </when>
+                <otherwise>
+                 , F.SSP_PRD_ATTR_VAL
+                </otherwise>
+                </choose>
+                 , C.SELL_UNIT_QTY || C.SELL_UNIT_CD AS SELL_UNIT
+                 , C.ORGPLC_CTRY_CD
+                 , D.CTRY_NM
+                 , C.MNFR_NO
+                 , E.MNFR_NM
+            FROM SSP_APP.TB_PR_MRO_PRD_INFO_ATTR_MAPP A
+               <choose>
+               <when test='BSS_PRD_YN == "Y"'>
+                , (SELECT T1.CO_CD, T1.PRD_ID, T1.PRD_ATTR_CD, '{'||T2.PRNM || ':' || T1.PRVL||'}' AS SSP_PRD_ATTR_VAL, T1.SRT_SO
+                    FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP T1
+                       , SSP_APP.TB_PR_PRD_ATTR_INFO T2
+                   WHERE T1.CO_CD = T2.CO_CD AND T1.PRD_ATTR_CD = T2.PRD_ATTR_CD
+                  )B
+              </when>
+               <otherwise>
+                , (SELECT T3.CO_CD, T3.PRD_ID, LISTAGG('{'||T4.PRNM ||':'|| T3.PRVL||'}', ',') WITHIN GROUP(ORDER BY T3.SRT_SO) AS SSP_PRD_ATTR_VAL
+                    FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP T3
+                       , SSP_APP.TB_PR_PRD_ATTR_INFO T4
+                   WHERE T3.CO_CD = T4.CO_CD AND T3.PRD_ATTR_CD = T4.PRD_ATTR_CD
+                   GROUP BY T3.CO_CD, T3.PRD_ID
+                  )F   
+              </otherwise>
+               </choose>
+                , SSP_APP.TB_PR_MRO_PRD_INFO C
+                , SSP_APP.TB_CO_CTRY_INFO D
+                , SSP_APP.TB_PR_MNFR_INFO E
+            WHERE 1=1
+              <choose>
+              <when test='BSS_PRD_YN == "Y"'>
+              AND A.CO_CD = B.CO_CD(+)
+              AND A.PRD_ID = B.PRD_ID(+)
+              </when>
+              <otherwise>
+              AND A.CO_CD = F.CO_CD(+)
+              AND A.PRD_ID = F.PRD_ID(+)
+              </otherwise>
+              </choose>
+              AND A.CO_CD = C.CO_CD
+              AND A.CO_CD = D.CO_CD
+              AND A.CO_CD = E.CO_CD
+              AND A.PRD_ID = C.PRD_ID
+              AND C.ORGPLC_CTRY_CD = D.CTRY_SPR_CD
+              AND C.MNFR_NO = E.MNFR_NO
+              AND A.CO_CD = #{CO_CD}
+              AND A.PRD_ID = LPAD(#{PRD_ID},18,'0')
+            GROUP BY A.CO_CD
+                 , A.PRD_ID
+                 , C.PRD_NM
+                   <choose>
+                   <when test='BSS_PRD_YN == "Y"'>
+                 , B.SSP_PRD_ATTR_VAL
+                 , B.PRD_ATTR_CD
+                 , B.SRT_SO
+                   </when>
+                   <otherwise>
+                 , F.SSP_PRD_ATTR_VAL
+                   </otherwise>
+                   </choose>
+                 , C.SELL_UNIT_QTY
+                 , C.SELL_UNIT_CD
+                 , C.ORGPLC_CTRY_CD
+                 , D.CTRY_NM
+                 , C.MNFR_NO
+                 , E.MNFR_NM
+            )
+        <if test='BSS_PRD_YN == "Y"'>
+        ORDER BY SRT_SO
+        </if>
+    </select>
+    
+    <select id="selectSeriesTemp02" parameterType="HashMap" resultType="HashMap">
+        /* PrSeries.selectSeriesTemp02 */
+        SELECT A.CO_CD
+             , LTRIM(A.PRD_ID,'0') AS PRD_ID
+             , A.PRD_NM
+             , SSP_APP.FN_PR_ATTR_VAL_LIST_ALL(#{CO_CD}, A.PRD_ID) AS PRD_ATTR_VAL
+             , A.SELL_UNIT_QTY || A.SELL_UNIT_CD AS SELL_UNIT
+             , A.ORGPLC_CTRY_CD
+             , B.CTRY_NM
+             , A.MNFR_NO
+             , C.MNFR_NM
+          FROM SSP_APP.TB_PR_MRO_PRD_INFO  A
+             , SSP_APP.TB_CO_CTRY_INFO B
+             , SSP_APP.TB_PR_MNFR_INFO C
+         WHERE 1=1
+           AND A.CO_CD = #{CO_CD}
+           AND A.PRD_ID = LPAD(#{PRD_ID},18,'0')
+           AND A.CO_CD = B.CO_CD
+           AND A.CO_CD = C.CO_CD
+           AND A.ORGPLC_CTRY_CD = B.CTRY_SPR_CD
+           AND A.MNFR_NO = C.MNFR_NO  
+    </select>
+    
+    <select id="selectPrdGrpId" parameterType="HashMap" resultType="String">
+        /* PrSeries.selectPrdGrpId */
+        SELECT 'S'|| LPAD(TO_CHAR(NVL(MAX(SUBSTR(PRD_GRP_ID,2)), 0) + 1), 7, '0') AS PRD_GRP_ID
+          FROM SSP_APP.TB_PR_PRD_GRP_BASIS 
+         WHERE CO_CD = #{CO_CD}
+           AND MALL_SPR_CD = #{MALL_SPR_CD}
+    </select>
+    
+    <insert id="insertProductSeriesBasis" parameterType="HashMap">
+        /* PrSeries.insertProductSeriesBasis */
+        INSERT INTO SSP_APP.TB_PR_PRD_GRP_BASIS (
+              CO_CD
+            , PRD_GRP_ID
+            , PRD_GRP_SPR_CD
+            , PRD_GRP_NM
+            , MALL_SPR_CD
+            , USE_YN
+            , UPD_RSN
+            , REGPSN_ID
+            , REG_DTM
+            , UPDPSN_ID 
+            , UPD_DTM
+        ) VALUES (
+              #{CO_CD}
+            , #{PRD_GRP_ID}
+            , #{PRD_GRP_SPR_CD}
+            , #{PRD_GRP_NM}
+            , #{MALL_SPR_CD}
+            , #{USE_YN}
+            , #{UPD_RSN}
+            , #{USER_ID}
+            , SYSDATE
+            , #{USER_ID}
+            , SYSDATE
+        )    
+    </insert>
+    
+    <insert id="insertProductSeriesDtl" parameterType="HashMap">
+        /* PrSeries.insertProductSeriesDtl */
+        INSERT INTO SSP_APP.TB_PR_PRD_GRP_DTL (
+              CO_CD
+            , PRD_GRP_ID
+            , PRD_ID
+            , BSS_PRD_YN
+            , PRD_SEQ
+            , BSS_PRD_ATTR_INFO
+            , UPD_RSN
+            , REGPSN_ID
+            , REG_DTM
+            , UPDPSN_ID 
+            , UPD_DTM
+        ) VALUES (
+              #{CO_CD}
+            , #{PRD_GRP_ID}
+            , LPAD(#{PRD_ID},18,'0')
+            , #{BSS_PRD_YN}
+            , #{PRD_SEQ}
+            , #{BSS_PRD_ATTR_INFO}
+            , #{UPD_RSN}
+            , #{USER_ID}
+            , SYSDATE
+            , #{USER_ID}
+            , SYSDATE
+        )    
+    </insert>
+    
+    <update id="updateProductSeriesBasis" parameterType="HashMap">
+        /* PrSeries.updateProductSeriesBasis */
+        UPDATE SSP_APP.TB_PR_PRD_GRP_BASIS
+           SET PRD_GRP_NM   = #{PRD_GRP_NM}
+             , USE_YN       = #{USE_YN}
+             , UPD_RSN      = #{UPD_RSN}
+             , UPD_DTM      = SYSDATE
+             , UPDPSN_ID    = #{USER_ID}
+         WHERE CO_CD        = #{CO_CD}
+           AND PRD_GRP_ID   = #{PRD_GRP_ID}    
+    </update>
+    
+    <update id="updateProductSeriesDtl" parameterType="HashMap">
+        /* PrSeries.updateProductSeriesDtl */
+        UPDATE SSP_APP.TB_PR_PRD_GRP_DTL
+           SET PRD_SEQ      = #{PRD_SEQ}
+             , BSS_PRD_ATTR_INFO = #{BSS_PRD_ATTR_INFO}
+             , UPD_RSN      = #{UPD_RSN}
+             , UPD_DTM      = SYSDATE
+             , UPDPSN_ID    = #{USER_ID}
+         WHERE CO_CD        = #{CO_CD}
+           AND PRD_GRP_ID   = #{PRD_GRP_ID}
+           AND PRD_ID       = LPAD(#{PRD_ID},18,'0')
+    </update>
+    
+    <delete id="deleteProductSeriesDtl" parameterType="HashMap">
+        /* PrSeries.deleteProductSeriesDtl */
+        DELETE FROM SSP_APP.TB_PR_PRD_GRP_DTL
+         WHERE CO_CD        = #{CO_CD}
+           AND PRD_GRP_ID   = #{PRD_GRP_ID}
+           AND PRD_ID       = LPAD(#{PRD_ID},18,'0')
+    </delete>
+        
+    <insert id="insertProductSeriesBasisHst" parameterType="HashMap">
+        /* PrSeries.insertProductSeriesBasisHst */
+        INSERT INTO TB_PR_PRD_GRP_BASIS_HST (
+              CO_CD
+            , PRD_GRP_ID
+            , HST_SEQ
+            , UPD_RSN
+            , DATA_CHG_TP_CD
+            , PRD_GRP_SPR_CD
+            , PRD_GRP_NM
+            , MALL_SPR_CD
+            , USE_YN
+            , REGPSN_ID
+            , REG_DTM
+            , UPDPSN_ID
+            , UPD_DTM
+        ) VALUES (
+              #{CO_CD}
+            , #{PRD_GRP_ID}
+            , (SELECT NVL(MAX(HST_SEQ),0)+1 FROM TB_PR_PRD_GRP_BASIS_HST)
+            , #{UPD_RSN}
+            , #{DATA_CHG_TP_CD}
+            , #{PRD_GRP_SPR_CD}
+            , #{PRD_GRP_NM}
+            , #{MALL_SPR_CD}
+            , #{USE_YN}
+            , #{USER_ID}
+            , SYSDATE
+            , #{USER_ID}
+            , SYSDATE
+        )   
+    </insert>
+        
+    <insert id="insertProductSeriesDtlHst" parameterType="HashMap">
+        /* PrSeries.insertProductSeriesDtlHst */
+        INSERT INTO TB_PR_PRD_GRP_DTL_HST (
+              CO_CD
+            , PRD_GRP_ID
+            , PRD_ID
+            , HST_SEQ
+            , DATA_CHG_TP_CD
+            , BSS_PRD_YN
+            , PRD_SEQ
+            , BSS_PRD_ATTR_INFO
+            , UPD_RSN
+            , REGPSN_ID
+            , REG_DTM
+            , UPDPSN_ID
+            , UPD_DTM
+        ) VALUES (
+              #{CO_CD}
+            , #{PRD_GRP_ID}
+            , LPAD(#{PRD_ID},18,'0')
+            , (SELECT NVL(MAX(HST_SEQ),0)+1 FROM TB_PR_PRD_GRP_DTL_HST)
+            , #{DATA_CHG_TP_CD}
+            , #{BSS_PRD_YN}
+            , #{PRD_SEQ}
+            , #{BSS_PRD_ATTR_INFO}
+            , #{UPD_RSN}
+            , #{USER_ID}
+            , SYSDATE
+            , #{USER_ID}
+            , SYSDATE
+        )
+    </insert>
+    
+    <select id="selectSeriesBssTmp" parameterType="HashMap" resultType="integer">
+        /* PrSeries.selectSeriesBssTmp */
+         SELECT COUNT(*)
+           FROM TB_PR_PRD_GRP_DTL D
+           JOIN TB_PR_PRD_GRP_BASIS B 
+           	ON D.PRD_GRP_ID = B.PRD_GRP_ID
+          WHERE 1=1
+            AND D.CO_CD = B.CO_CD
+            AND D.BSS_PRD_YN = 'Y'
+            AND B.USE_YN = 'Y'
+            AND D.CO_CD = #{CO_CD}
+            AND PRD_ID = LPAD(#{PRD_ID}, 18, '0')   
+    </select>    
+    
+</mapper>

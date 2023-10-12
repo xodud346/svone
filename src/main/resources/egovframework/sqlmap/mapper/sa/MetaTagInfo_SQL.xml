@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="MetaTagInfo">
+
+    <!--
+    ******************************************************************************
+    * SELECT : 메타 태그 정보
+    * 작성자 : 김윤호
+    * 작성 일자 : 2023.05.23
+    ******************************************************************************
+    -->
+    
+    <select id="selectMetaTagInfoSeq" parameterType="HashMap" resultType="HashMap">
+		/* MetaTagInfo.selectMetaTagInfoSeq | 메타 태그 정보 시퀀스 값 조회 */
+		
+		SELECT SQ_SA_META_TAG_INFO_01.NEXTVAL AS META_TAG_SEQ
+		FROM DUAL
+    </select>
+    
+    <select id="selectMetaTagInfoListCount" parameterType="HashMap" resultType="Integer">
+    	/* MetaTagInfo.selectMetaTagInfoListCount | 메타 태그 정보 리스트 카운트 */
+    	
+    	SELECT COUNT(1)
+    	FROM TB_SA_META_TAG_INFO
+    </select>
+    
+    <select id="selectMetaTagInfoList" parameterType="HashMap" resultType="HashMap">
+    	/* MetaTagInfo.selectMetaTagInfoList | 메타 태그 정보 리스트 조회*/
+    	
+    	SELECT A.CO_CD
+    			, A.META_TAG_SEQ
+    			, A.USE_YN
+    			, CASE WHEN A.USE_YN = 'Y' THEN '사용'
+    				   WHEN A.USE_YN = 'N' THEN '미사용'
+    				   ELSE ''
+    			  END AS USE_YN_NM
+    			, A.CHN_TP_CD
+    			, CASE WHEN A.CHN_TP_CD = 'P' THEN 'PC'
+    				   WHEN A.CHN_TP_CD = 'M' THEN 'Mobile'
+    				   WHEN A.CHN_TP_CD = 'C' THEN '공통'
+    				   ELSE ''
+    			  END AS CHN_TP_CD_NM
+    			, A.EXPS_PAGE_NM
+    			, TO_CHAR(A.REG_DTM, 'YYYY.MM.DD') AS REG_DTM
+    			, A.REGPSN_ID
+    			, B.OPRTR_NM AS REGPSN_NM
+    			, CASE WHEN A.EXPS_PAGE_NM = 'Default' THEN '1'
+    				   ELSE '2'
+    		      END AS DEFAULT_SORT   		     
+    	FROM TB_SA_META_TAG_INFO A
+    	INNER JOIN TB_CO_MBR_OPRTR_INFO B
+		ON B.OPRTR_ID = A.REGPSN_ID
+    	ORDER BY DEFAULT_SORT ASC, A.META_TAG_SEQ DESC
+    	OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY   
+    </select>
+    
+    <select id="selectMetaTagInfo" parameterType="HashMap" resultType="HashMap">
+    	/* MetaTagInfo.selectMetaTagInfo | 메타 태그 정보 상세 */
+    	
+    	SELECT CO_CD
+				, META_TAG_SEQ
+				, CHN_TP_CD
+				, EXPS_PAGE_NM
+				, TGT_URL
+				, OG_TTL
+				, OG_DESC
+				, OG_IMG
+				, OG_URL
+				, USE_YN
+				, REGPSN_ID
+				, TO_CHAR(REG_DTM, 'YYYY.MM.DD') AS REG_DTM
+				, UPDPSN_ID
+				, TO_CHAR(UPD_DTM, 'YYYY.MM.DD') AS UPD_DTM
+				, CASE WHEN EXPS_PAGE_NM = 'Default' THEN '1'
+    				   ELSE '2'
+    		      END AS DEFAULT_SORT 
+    	FROM TB_SA_META_TAG_INFO
+    	WHERE CO_CD = #{CO_CD}
+    	AND META_TAG_SEQ = #{META_TAG_SEQ}
+    </select>
+    
+    <insert id="insertMetaTagInfo" parameterType="HashMap">
+		/* MetaTagInfo.insertMetaTagInfo | 메타 태그 정보 등록 */
+		
+		INSERT INTO TB_SA_META_TAG_INFO
+			( CO_CD
+			, META_TAG_SEQ
+			, CHN_TP_CD
+			, EXPS_PAGE_NM
+			, TGT_URL
+			, OG_TTL
+			, OG_DESC
+			, OG_IMG
+			, OG_URL
+			, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+			)
+		VALUES
+			( #{CO_CD}
+			, #{META_TAG_SEQ}
+			, #{CHN_TP_CD}
+			, #{EXPS_PAGE_NM}
+			, #{TGT_URL}
+			, #{OG_TTL}
+			, #{OG_DESC}
+			, #{OG_IMG}
+			, #{OG_URL}
+			, #{USE_YN}
+			, #{REGPSN_ID}
+			, SYSDATE
+			, #{UPDPSN_ID}
+			, SYSDATE
+			)
+    </insert>
+
+    <update id="MetaTagInfo.updateMetaTagInfo" parameterType="HashMap">
+		/* MetaTagInfo.updateMetaTagInfo | 메타 태그 정보 수정 */
+		
+		UPDATE TB_SA_META_TAG_INFO
+		SET CHN_TP_CD = #{CHN_TP_CD}    
+			, EXPS_PAGE_NM = #{EXPS_PAGE_NM} 
+			, TGT_URL = #{TGT_URL}      
+			, OG_TTL = #{OG_TTL}       
+			, OG_DESC = #{OG_DESC}      
+			, OG_IMG = #{OG_IMG}       
+			, OG_URL = #{OG_URL}       
+			, USE_YN = #{USE_YN}       
+			, UPDPSN_ID = #{UPDPSN_ID}    
+			, UPD_DTM = SYSDATE
+		WHERE CO_CD = #{CO_CD}
+		AND META_TAG_SEQ = #{META_TAG_SEQ}          
+    </update>
+
+    <delete id="deleteMetaTagInfo" parameterType="HashMap">
+		/* MetaTagInfo.deleteMetaTagInfo | 메타 태그 정보 삭제 */
+		
+		DELETE
+		FROM TB_SA_META_TAG_INFO
+		WHERE CO_CD = #{CO_CD}
+		AND META_TAG_SEQ = #{META_TAG_SEQ}
+    </delete>
+
+    
+    
+</mapper>

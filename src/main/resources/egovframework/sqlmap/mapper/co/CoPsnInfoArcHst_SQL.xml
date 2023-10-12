@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- SSP_APP.SQ_CO_ERROR_LOG_01.nextval -->
+<mapper namespace="CoPsnInfoArcHst">
+	<insert id="insertCoPsnInfoArcHst" parameterType="HashMap">
+		INSERT INTO TB_CO_PSN_INFO_APRC_HST (
+			  CNCT_SEQ
+			, CNCT_HR
+			, ORG_CD
+			, OPRTR_ID
+			, PSTN_NM
+			, PGM_ID
+			, CNSOL_IP_ADDR
+			, DB_WRK
+			, INQ_CNT
+			, DB_INQ
+			, DOWN_RSN 
+		) VALUES (
+			  SSP_APP.SQ_PSN_INFO_ARC_HST_01.nextval
+			, SYSDATE
+			, #{orgCd}
+			, #{oprtrId}
+			, #{pstnNm}
+			, #{pgmId}
+			, #{cnsolIpAddr}
+			, #{dbWrk}
+			, #{inqCnt}
+			, #{dbInq}
+			, #{downRsn} 
+		)
+	</insert>
+	
+	<select id="selectCount" parameterType="HashMap" resultType="int">
+	<![CDATA[
+		SELECT COUNT(*) AS ROW_COUNT FROM (
+			${bindSql}		
+		) COUNT_TABLE
+	]]>
+	</select>
+	
+	<select id="selectPgmInfo" parameterType="HashMap" resultType="HashMap">
+		SELECT 
+				PGM_ID, PGM_NM
+		FROM 
+				TB_CO_SYS_PGM_INFO I
+		WHERE 
+				I.PSN_INFO_YN='Y'
+	  			AND I.PGM_CALL_PATH=#{uri}
+	</select>
+	
+	<resultMap id="coPsnInfoArcHstMap" type="Map">
+		<result property="DB_INQ" column="DB_INQ" jdbcType="CLOB" javaType="java.lang.String"/>
+	</resultMap>
+	
+	<select id="selectCoPsnInfoArcHstList" parameterType="HashMap" resultMap="coPsnInfoArcHstMap">
+		SELECT      /* selectCoPsnInfoArcHstList */
+		              A.CNCT_SEQ
+					, A.CNCT_HR
+					, A.ORG_CD
+					, A.OPRTR_ID
+					, A.PSTN_NM
+					, A.PGM_ID
+					, A.CNSOL_IP_ADDR
+					, CASE 
+							WHEN A.DB_WRK='SELECT' THEN '조회'
+							WHEN A.DB_WRK='INSERT' THEN '삽입'
+							WHEN A.DB_WRK='UPDATE' THEN '갱신'
+							WHEN A.DB_WRK='DELETE' THEN '삭제'
+							WHEN A.DB_WRK='DOWNLOAD' THEN '일반 다운로드'
+							WHEN A.DB_WRK='BIGDOWNLOAD' THEN '대용량 다운로드'
+							ELSE ''
+					  END AS DB_WRK
+					, A.INQ_CNT
+					, A.DB_INQ
+					, A.OPRTR_NM
+					, A.ORG_NM
+					, A.SYS_SPR_CD
+					, A.PGM_NM
+					, A.DOWN_RSN
+		 FROM (
+				SELECT 
+						A.CNCT_SEQ
+						, A.CNCT_HR
+						, A.ORG_CD
+						, A.OPRTR_ID
+						, A.PSTN_NM
+						, A.PGM_ID
+						, A.CNSOL_IP_ADDR
+						, A.DB_WRK
+						, A.INQ_CNT
+						, A.DB_INQ
+						, B.OPRTR_NM
+						, B.ORG_NM
+						, B.SYS_SPR_CD
+						, T4.PGM_NM
+						, A.DOWN_RSN 
+				FROM 
+						TB_CO_PSN_INFO_APRC_HST A
+						JOIN (
+								SELECT 
+										  M.OPRTR_ID
+										, M.OPRTR_NM
+										, M.PSTN_NM
+										, O.ORG_CD
+										, O.ORG_NM
+										, 'BO' SYS_SPR_CD
+								FROM 		
+										TB_CO_MBR_OPRTR_INFO M
+										JOIN 
+												TB_CO_MBR_OPRTR_ORG_INFO O	
+										ON
+											O.ORG_CD=M.ORG_CD
+								UNION
+								SELECT 
+										  M.MBR_ID AS OPRTR_ID
+										, M.MBR_NM AS OPRTR_NM
+										, D.DEPT_NM AS PSTN_NM
+										, O.OPR_UNIT_ID AS ORG_CD
+										, O.OPR_UNIT_NM AS ORG_NM
+										, 'FO' SYS_SPR_CD
+								FROM 
+										TB_CC_MBR_BASIS M
+										JOIN 
+												TB_CC_DEPT_BASIS D
+										ON
+												M.BZPLC_ID=D.BZPLC_ID
+												AND M.DEPT_ID=D.DEPT_ID
+										JOIN 
+												TB_CC_OPR_UNIT_BASIS O 
+										ON
+												D.OPR_UNIT_ID=O.OPR_UNIT_ID
+												AND D.BZPLC_ID=O.BZPLC_ID
+										JOIN 
+												TB_CC_BZPLC_BASIS B
+										ON
+												B.BZPLC_ID=D.BZPLC_ID
+						) B
+						ON
+							A.ORG_CD=B.ORG_CD
+							AND A.OPRTR_ID=B.OPRTR_ID
+						<if test=" deptId > 0 ">
+					         JOIN
+					         TB_OD_ODR_INQ_TGT_DTLS   T3
+					         ON  T3.SES_ID = #{sesId}
+					         AND T3.INQ_COND_DTLS = #{inqCondDtls}
+					         AND T3.COL_ITM = 'DEPT_ID'
+					         AND T3.COND_DATA_VAL = A.ORG_CD
+				        </if>
+				        LEFT OUTER JOIN TB_CO_SYS_PGM_INFO T4
+				        ON T4.PGM_ID=A.PGM_ID
+						<where>
+							<include refid="coPsnInfoArcHstListWhere" />
+						</where>
+			) A
+			<if test="sortColumn != null and sortColumn != ''">
+				ORDER BY A.${sortColumn} ${sortType}
+			</if>
+			<if test="sortColumn == null or sortColumn == ''">
+				ORDER BY CNCT_SEQ DESC
+			</if>
+			<if test="startNum != null and startNum != '' and rowCount != null and rowCount != ''">
+				OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+			</if>
+	</select>	
+	
+	<select id="selectCoPsnInfoArcHstListCnt" parameterType="HashMap" resultType="Integer">
+			SELECT 
+					COUNT(1)
+			FROM 
+					TB_CO_PSN_INFO_APRC_HST A
+					JOIN (
+							SELECT 
+									  M.OPRTR_ID
+									, M.OPRTR_NM
+									, M.PSTN_NM
+									, O.ORG_CD
+									, O.ORG_NM
+									, 'BO' SYS_SPR_CD
+							FROM 		
+									TB_CO_MBR_OPRTR_INFO M
+									JOIN 
+											TB_CO_MBR_OPRTR_ORG_INFO O	
+									ON
+										O.ORG_CD=M.ORG_CD
+							UNION
+							SELECT 
+									  M.MBR_ID AS OPRTR_ID
+									, M.MBR_NM AS OPRTR_NM
+									, D.DEPT_NM AS PSTN_NM
+									, O.OPR_UNIT_ID AS ORG_CD
+									, O.OPR_UNIT_NM AS ORG_NM
+									, 'FO' SYS_SPR_CD
+							FROM 
+									TB_CC_MBR_BASIS M
+									JOIN 
+											TB_CC_DEPT_BASIS D
+									ON
+											M.BZPLC_ID=D.BZPLC_ID
+											AND M.DEPT_ID=D.DEPT_ID
+									JOIN 
+											TB_CC_OPR_UNIT_BASIS O 
+									ON
+											D.OPR_UNIT_ID=O.OPR_UNIT_ID
+											AND D.BZPLC_ID=O.BZPLC_ID
+									JOIN 
+											TB_CC_BZPLC_BASIS B
+									ON
+											B.BZPLC_ID=D.BZPLC_ID
+					) B
+					ON
+						A.ORG_CD=B.ORG_CD
+						AND A.OPRTR_ID=B.OPRTR_ID
+					<if test=" deptId > 0 ">
+				         JOIN
+				         TB_OD_ODR_INQ_TGT_DTLS   T3
+				         ON  T3.SES_ID = #{sesId}
+				         AND T3.INQ_COND_DTLS = #{inqCondDtls}
+				         AND T3.COL_ITM = 'DEPT_ID'
+				         AND T3.COND_DATA_VAL = A.ORG_CD
+			        </if>
+			        LEFT OUTER JOIN TB_CO_SYS_PGM_INFO T4
+				        ON T4.PGM_ID=A.PGM_ID
+			        <where>
+						<include refid="coPsnInfoArcHstListWhere" />
+					</where>
+	</select>
+	
+	<sql id="coPsnInfoArcHstListWhere">
+    	<if test="cnctHrStartDtm != null and cnctHrStartDtm != '' and cnctHrEndDtm != null and cnctHrEndDtm != ''">
+			<![CDATA[
+				 AND A.CNCT_HR >= TO_DATE(#{cnctHrStartDtm}, 'YYYYMMDD')
+				 AND A.CNCT_HR < TO_DATE(#{cnctHrEndDtm}, 'YYYYMMDD') + 1
+			]]>
+		</if>
+		<if test="sysSprCd != null and sysSprCd != ''">
+			AND B.SYS_SPR_CD = #{sysSprCd}
+		</if>
+		<if test="oprtrId != null and oprtrId !=''">
+			 AND A.OPRTR_ID = #{oprtrId}
+		</if>
+		<if test="cnsolIpAddr != null and  cnsolIpAddr !=''">
+			AND A.CNSOL_IP_ADDR LIKE '%' || #{cnsolIpAddr} || '%'
+		</if>
+		<if test="dbWrk != null and dbWrk !=''">
+			AND A.DB_WRK=#{dbWrk}
+		</if>				
+	</sql>
+</mapper>

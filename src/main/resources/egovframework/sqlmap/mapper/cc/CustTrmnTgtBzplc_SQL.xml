@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.cust.trmn.tgt.bzplc">
+
+   <!--
+    ******************************************************************************
+    * SELECT : 
+    * 작성자 : moonjooh
+    * 작성 일자 : 2022-05-09
+    ******************************************************************************
+    -->
+    <select id="selectCustTrmnTgtBzplc" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.cust.bgt.chmAprvl.selectCustTrmnTgtBzplc 일반고객 종결대상 사업장 목록 조회 */
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+        	SELECT '0' AS CHK
+        		 , A.CO_CD 																		/* 회사코드	*/
+				 , NVL2(B.TRMN_PROC_DTM, '종결', '종결대기') AS STATE								/* 상태		*/
+				 , A.BZPLC_ID																	/* 사업장ID 	*/ 
+				 , A.BZPLC_NM																	/* 사업장명 	*/
+				 , B.OPR_UNIT_ID																/* 운영단위ID */
+				 , C.OPR_UNIT_NM																/* 운영단위명 	*/
+				 , B.TRMN_TGT_TP_CD																/* 종결대상유형 */
+				 , A.BIZNO																		/* 사업자등록번호 */
+				 , A.CONT_STR_DT																/* 계약시작일 */
+				 , B.BAT_PROC_DTM																/* 배치수신일자 */
+				 , B.TRMN_PROC_DTM																/* 종결요청일자 */
+				 , B.TRMN_PROC_REQR_ID 															/* 종결요청자ID*/
+				 , D.OPRTR_NM AS TRMN_PROC_REQR_NM												/* 종결요청자 	*/
+			FROM TB_CC_BZPLC_BASIS A
+			JOIN TB_CC_BZPLC_TRMN_TGT_DTLS B 
+				ON A.CO_CD = B.CO_CD AND A.BZPLC_ID = B.BZPLC_ID
+			LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS C 
+				ON C.CO_CD = B.CO_CD AND C.BZPLC_ID = B.BZPLC_ID AND C.OPR_UNIT_ID = B.OPR_UNIT_ID 
+			LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO D
+				ON D.CO_CD = B.CO_CD AND D.OPRTR_ID = B.TRMN_PROC_REQR_ID
+			<if test=" bzplcId > 0 ">
+				JOIN TB_OD_ODR_INQ_TGT_DTLS   T1
+				ON  T1.SES_ID = #{sesId}
+				AND T1.INQ_COND_DTLS = #{inqCondDtls}
+				AND T1.COL_ITM = 'BZPLC_ID'
+				AND T1.COND_DATA_VAL = B.BZPLC_ID
+			</if>
+			<if test=" oprUnitId > 0 ">
+				JOIN TB_OD_ODR_INQ_TGT_DTLS   T3
+				ON  T3.SES_ID = #{sesId}
+				AND T3.INQ_COND_DTLS = #{inqCondDtls}
+				AND T3.COL_ITM = 'OPR_UNIT_ID'
+				AND T3.COND_DATA_VAL = B.OPR_UNIT_ID
+			</if>
+	        <where>
+	        	A.CUST_SPR_CD = 30
+	          	<if test='trmnTgtTpCd != null and trmnTgtTpCd != "" '> 
+	        		AND TRMN_TGT_TP_CD = #{trmnTgtTpCd}
+	            </if>
+	          	<if test='TYPE != null and TYPE != "" '> 
+	        		<if test='TYPE == "1" '> 
+		        		AND B.TRMN_PROC_DTM IS NULL
+		            </if>
+	        		<if test='TYPE == "2" '> 
+		        		AND B.TRMN_PROC_DTM IS NOT NULL
+		            </if>
+	            </if>
+		        <if test="fromDate != null and fromDate != '' and toDate != null and toDate != ''">
+					<![CDATA[ 
+					AND TO_DATE(TO_CHAR(B.BAT_PROC_DTM, 'YYYY-MM-DD'), 'YYYY-MM-DD') >= TO_DATE(#{fromDate}, 'YYYY-MM-DD') 
+					AND TO_DATE(TO_CHAR(B.BAT_PROC_DTM, 'YYYY-MM-DD'), 'YYYY-MM-DD') <= TO_DATE(#{toDate}, 'YYYY-MM-DD') 
+					]]>
+				</if>
+	        </where>
+			<if test="sortColumn != null and sortColumn != ''"> 
+	        ORDER BY ${sortColumn} ${sortType}
+	        </if> 
+	        <if test="sortColumn == null or sortColumn == ''"> 
+			ORDER BY STATE DESC, TRMN_PROC_DTM, TRMN_TGT_TP_CD, BZPLC_NM ASC 
+	        </if>
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+    </select>
+	
+	
+	<update id="updateMbrNoUse" parameterType="HashMap">
+		/* com.ssp.bo.cust.trmn.tgt.bzplc.updateMbrNoUse 일반고객 종결대상 사업장 종결처리 - 회원 */
+		UPDATE TB_CC_MBR_BASIS
+		   SET MBR_USE_CD  = 'Q'
+		     , UPDPSN_ID   = #{oprtrId}
+		     , UPD_DTM     = SYSTIMESTAMP
+		 WHERE CO_CD 	   = #{coCd}
+		   AND BZPLC_ID    = #{bzplcId}
+		   AND MBR_USE_CD  NOT IN ( 'Q' )
+	</update>
+	
+	<update id="updateDeptNoUse" parameterType="HashMap">
+		/* com.ssp.bo.cust.trmn.tgt.bzplc.updateDeptNoUse 일반고객 종결대상 사업장 종결처리 - 부서 */
+		UPDATE TB_CC_DEPT_BASIS
+		   SET USE_YN	   = 'N'
+		     , UPDPSN_ID   = #{oprtrId}
+		     , UPD_DTM     = SYSTIMESTAMP
+		 WHERE CO_CD 	   = #{coCd}
+		   AND BZPLC_ID    = #{bzplcId}
+		   <if test='oprUnitId != null and "".equals(oprUnitId.trim())'>AND OPR_UNIT_ID = #{oprUnitId}</if>
+	</update>
+	
+	<update id="updateOprUnitNoUse" parameterType="HashMap">
+		/* com.ssp.bo.cust.trmn.tgt.bzplc.updateOprUnitNoUse 일반고객 종결대상 사업장 종결처리 - 운영단위 */
+		UPDATE TB_CC_OPR_UNIT_BASIS
+		   SET USE_YN	   = 'N'
+		     , UPDPSN_ID   = #{oprtrId}
+		     , UPD_DTM     = SYSTIMESTAMP
+		 WHERE CO_CD 	   = #{coCd}
+		   AND BZPLC_ID    = #{bzplcId}
+		   AND OPR_UNIT_ID = #{oprUnitId}
+	</update>
+	
+	<update id="updateBzplcNoUse" parameterType="HashMap">
+		/* com.ssp.bo.cust.trmn.tgt.bzplc.updateBzplcNoUse 일반고객 종결대상 사업장 종결처리 - 사업장 */
+		UPDATE TB_CC_BZPLC_BASIS
+		   SET USE_YN	   = 'N'
+		     , UPDPSN_ID   = #{oprtrId}
+		     , UPD_DTM     = SYSTIMESTAMP
+		 WHERE CO_CD 	   = #{coCd}
+		   AND BZPLC_ID    = #{bzplcId}
+	</update>
+	
+	<update id="updateTrmnTgtBzplc" parameterType="HashMap">
+		/* com.ssp.bo.cust.bgt.chmAprvl.updateTrmnTgtBzplc 일반고객 종결대상 사업장 종결처리 - 종결결과 저장 */
+		UPDATE TB_CC_BZPLC_TRMN_TGT_DTLS
+		   SET TRMN_PROC_DTM 	 = SYSDATE
+		     , TRMN_PROC_REQR_ID = #{oprtrId}
+		     , UPDPSN_ID   = #{oprtrId}
+		     , UPD_DTM     = SYSTIMESTAMP
+		 WHERE CO_CD 	   = #{coCd}
+		   AND BZPLC_ID    = #{bzplcId}
+		   AND OPR_UNIT_ID = #{oprUnitId}
+	</update>
+	
+</mapper>

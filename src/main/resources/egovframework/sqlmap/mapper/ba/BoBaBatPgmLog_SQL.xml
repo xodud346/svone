@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="boBaBatPgmLog">
+
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 실행이력 조회
+	* 작성자 : spect22
+	* 작성 일자 : 2022-12-27
+	******************************************************************************
+	-->
+	<select id="selectBatPgmLogList" parameterType="com.ssp.core.ba.vo.BaBatPgmLogVo" resultType="com.ssp.core.ba.vo.BaBatPgmLogVo">
+		/* boBaBatPgmLog.selectBatPgmLogList */
+		SELECT
+			ROWNUM AS NO
+		,	S1.*
+		FROM (
+			SELECT
+				A.STR_DTM				--시작일시
+			,	A.END_DTM				--종료일시
+			,	B.BAT_SERVER_SEQ		--배치서버SEQ
+			,	B.SERVER_NM				--배치서버
+			,	C.BAT_PGM_SEQ			--배치프로그램SEQ
+			,	C.BAT_PGM_ID			--배치프로그램ID
+			,	C.CLASS_METHOD_NM		--클래스_메소드명
+			,	C.BAT_PGM_NM			--배치프로그램명
+			,	A.EXCE_STATS_CD
+			,	(
+					SELECT
+						COM_DTL_CD_NM
+					FROM
+						TB_CO_COM_CD_DTL
+					WHERE
+						LANG_CD = 'KO'
+						AND USE_YN = 'Y'
+						AND COM_CLSF_CD =  'EXCE_STATS_CD'
+						AND	COM_DTL_CD = A.EXCE_STATS_CD
+				) AS EXCE_STATS_CD_TXT
+			,	A.TGT_CNT				--대상건수
+			,	0 AS SUCC_CNT			--성공건수
+			,	A.LOG_LVL				--로그레벨
+			,	A.MSG					--메시지
+			,	A.ERROR_DTLS			--Exception
+			FROM
+				TB_CO_BAT_EXCE_LOG_HST A	--배치프로그램로그
+			,	TB_CO_BAT_SERVER_INFO B		--배치서버
+			,	TB_CO_BAT_PGM_INFO C			--배치프로그램
+			<where>
+				A.BAT_SERVER_SEQ = B.BAT_SERVER_SEQ (+)
+			AND	A.BAT_PGM_SEQ = C.BAT_PGM_SEQ (+)
+				<include refid="batPgmLogListWhere" />
+			</where>
+		) S1
+		<if test="pageMode == 'detail'">
+			WHERE ROWNUM &lt; 6
+		</if>
+		<if test="sortColumn != null and sortColumn != ''">
+			ORDER BY S1.${sortColumn} ${sortType}
+		</if>
+		<if test="sortColumn == null or sortColumn == ''">
+			ORDER BY ROWNUM ASC
+		</if>
+		<if test="startNum != null and startNum > -1">
+			OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+		</if>
+	</select>
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 실행이력 카운트
+	* 작성자 : spect22
+	* 작성 일자 : 2023-01-02
+	******************************************************************************
+	-->
+	<select id="selectBatPgmLogListCount" parameterType="com.ssp.core.ba.vo.BaBatPgmLogVo" resultType="integer">
+		/* boBaBatPgmLog.selectBatPgmLogListCount */
+		SELECT
+			COUNT(0)
+		FROM
+			TB_CO_BAT_EXCE_LOG_HST A	--배치프로그램로그
+		,	TB_CO_BAT_SERVER_INFO B		--배치서버
+		,	TB_CO_BAT_PGM_INFO C			--배치프로그램
+		<where>
+			A.BAT_SERVER_SEQ = B.BAT_SERVER_SEQ (+)
+		AND	A.BAT_PGM_SEQ = C.BAT_PGM_SEQ (+) AND A.BAT_SERVER_SEQ = C.BAT_SERVER_SEQ (+)
+			<include refid="batPgmLogListWhere" />
+		</where>
+	</select>
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 실행이력 조건절
+	* 작성자 : spect22
+	* 작성 일자 : 2023-01-02
+	******************************************************************************
+	-->
+	<sql id="batPgmLogListWhere">
+		<if test="thmeDomnCd != null and !thmeDomnCd.equals('') ">
+				AND C.THME_DOMN_CD = #{thmeDomnCd}
+		</if>
+		<if test="batServerSeq != null and !batServerSeq.equals('') and batServerSeq != 0 ">
+			AND A.BAT_SERVER_SEQ = #{batServerSeq}
+		</if>
+		<if test="batPgmSeq != null and !batPgmSeq.equals('') and batPgmSeq != 0 ">
+			AND A.BAT_PGM_SEQ = #{batPgmSeq}
+		</if>
+		<if test="strDtm != null and !strDtm.equals('') and endDtm != null and !endDtm.equals('')">
+			AND (
+				TO_CHAR(A.STR_DTM, 'YYYYMMDD') &gt;= #{strDtm} AND TO_CHAR(A.STR_DTM, 'YYYYMMDD') &lt;= #{endDtm}
+				OR
+				TO_CHAR(A.END_DTM, 'YYYYMMDD') &gt;= #{strDtm} AND TO_CHAR(A.END_DTM, 'YYYYMMDD') &lt;= #{endDtm}
+			)
+		</if>
+
+		/* 다음 실행일시 검색조건은 BaBatPgmLogServiceImpl에서 처리 */
+
+		<if test="exceStatsCd != null and !exceStatsCd.equals('')">
+			AND A.EXCE_STATS_CD = #{exceStatsCd}
+		</if>
+		<if test="classMethodNm != null and !classMethodNm.equals('')">
+			AND C.CLASS_METHOD_NM LIKE '%' || #{classMethodNm} || '%'
+		</if>
+		ORDER BY A.BAT_EXCE_LOG_SEQ DESC
+	</sql>
+</mapper>

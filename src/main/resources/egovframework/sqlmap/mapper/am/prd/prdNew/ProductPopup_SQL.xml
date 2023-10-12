@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CommonManagerPrd">
+
+	<!-- 담당자 리스트 조건절 -->
+	<sql id="operatorWhere">
+		A.CO_CD= #{coCd}
+		<if test="chrpsnId != null and chrpsnId !='' ">
+			AND A.CHRPSN_ID = #{chrpsnId}
+		</if>
+		<if test="chrpsnNm != null and chrpsnNm !='' ">
+			AND B.MEM_NM = #{chrpsnNm}
+		</if>	
+	</sql>
+
+	<!-- 담당자  리스트 갯수 -->
+	<select id="operatorCount" parameterType="hashMap" resultType="integer">
+		/* CommonManager.operatorCount */
+		SELECT
+			COUNT(0)
+		FROM (
+				SELECT
+					1
+				FROM
+				
+					TB_SG_RQST_PROC A
+					 LEFT JOIN TB_FC_MEM_BASIS B
+					 ON (A.CHRPSN_ID = B.MEM_ID)   
+				<where>
+					<include refid="operatorWhere" />
+				</where>
+				GROUP BY A.CHRPSN_ID
+			 ) S
+	</select>
+
+	<!-- 담당자 리스트 조회 -->
+	<select id="operatorList" parameterType="hashMap" resultType="hashMap">
+		/* CommonManager.operatorList */
+		SELECT
+			S2.*
+		FROM
+			(   SELECT
+					ROWNUM AS RNUM,
+					S1.*
+				FROM
+					(
+						SELECT
+		
+							CHRPSN_ID
+						   ,MAX(B.MEM_NM) CHRPSN_NM /*  담당자명 */
+						FROM
+							TB_SG_RQST_PROC A
+							LEFT JOIN TB_FC_MEM_BASIS B
+							ON (A.CHRPSN_ID = B.MEM_ID)   							
+						<where>
+							<include refid="operatorWhere" />
+						</where>
+						GROUP BY A.CHRPSN_ID
+					) S1
+			)
+			S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+
+
+	<!-- 처리자 리스트 조건절 -->
+	<sql id="employeeWhere">
+		A.CO_CD= #{coCd}
+		<if test="dealrId != null and dealrId !='' ">
+			AND A.DEALR_ID = #{dealrId}
+		</if>
+		<if test="dealrNm != null and dealrNm !='' ">
+			AND B.MEM_NM = #{dealrNm}
+		</if>
+	</sql>
+
+	<!-- 처리자 리스트 갯수 -->
+	<select id="employeeCount" parameterType="hashMap" resultType="integer">
+		/* CommonManager.employeeCount */
+		SELECT
+			COUNT(0)
+		FROM (
+				SELECT
+					1
+				FROM
+				
+					TB_SG_RQST_PROC A
+					 LEFT JOIN TB_FC_MEM_BASIS B
+					 ON (A.DEALR_ID = B.MEM_ID)   
+				<where>
+					<include refid="requestWhere" />
+				</where>
+				GROUP BY A.DEALR_ID
+			 ) S
+	</select>
+
+	<!--처리자 리스트 조회  -->
+	<select id="employeePopList" parameterType="hashMap" resultType="hashMap">
+		/* CommonManager.employeePopList */
+		SELECT
+			S2.*
+		FROM
+			(   SELECT
+					ROWNUM AS RNUM,
+					S1.*
+				FROM
+					(
+						SELECT
+
+							DEALR_ID
+						   ,MAX(B.MEM_NM) DEALR_NM /*  처리자명 */
+						FROM
+							TB_SG_RQST_PROC A
+							LEFT JOIN TB_FC_MEM_BASIS B
+							ON (A.REQR_ID = B.MEM_ID)   							
+						<where>
+							<include refid="employeeWhere" />
+						</where>
+						GROUP BY A.DEALR_ID
+					) S1
+			)
+			S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+	
+	<!-- 요청자 리스트 조건절 -->
+	<sql id="requestWhere">
+		A.CO_CD= #{coCd}
+		<if test="reqrId != null and reqrId !='' ">
+			AND A.REQR_ID = #{reqrId}
+		</if>
+		<if test="reqrNm != null and reqrNm !='' ">
+			AND B.MEM_NM = #{reqrNm}
+		</if>
+	</sql>
+
+	<!-- 요청자 리스트 갯수 -->
+	<select id="requestCount" parameterType="hashMap" resultType="integer">
+		/* CommonManager.requestCount */
+		SELECT 
+			COUNT(0)
+		FROM (
+				SELECT
+					1
+				FROM
+				
+					TB_SG_RQST_PROC A
+					 LEFT JOIN TB_FC_MEM_BASIS B
+					 ON (A.REQR_ID = B.MEM_ID)   
+					 LEFT JOIN TB_FC_MEM_LOGIN_INFO C
+					 ON (A.REQR_ID = C.MEM_ID)  
+				<where>
+					<include refid="requestWhere" />
+				</where>
+				GROUP BY A.REQR_ID
+			 ) S
+			 	
+	</select>
+
+	<!--요청자 리스트 조회  -->
+	<select id="requestPopList" parameterType="hashMap" resultType="hashMap">
+		/* CommonManager.requestPopList */
+		SELECT
+			S2.*
+		FROM
+			(   SELECT
+					ROWNUM AS RNUM,
+					S1.*
+				FROM
+					(
+						SELECT
+							 A.REQR_ID
+							,MAX(B.MEM_NM)   REQR_NM    /*  요청자명 */
+		    				,MAX(C.LOGIN_ID) LOGIN_ID   /*  로그인ID */
+						FROM
+							TB_SG_RQST_PROC A
+							 LEFT JOIN TB_FC_MEM_BASIS B
+							 ON (A.REQR_ID = B.MEM_ID)   
+							 LEFT JOIN TB_FC_MEM_LOGIN_INFO C
+							 ON (A.REQR_ID = C.MEM_ID)  
+						<where>
+							<include refid="requestWhere" />
+						</where>
+						GROUP BY A.REQR_ID
+					) S1
+			)
+			S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+
+</mapper>

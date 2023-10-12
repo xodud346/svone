@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="multiTextPopup" width="600" height="580" titletext="New Form" onload="multiTextPopup_onload">
+    <Layouts>
+      <Layout height="580" mobileorientation="landscape" width="600">
+        <TextArea id="textContents" taborder="0" left="33" top="33" width="527" height="374"/>
+        <Button id="Button00" taborder="1" text="적용" left="230" top="475" width="120" height="50" onclick="Button00_onclick"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[
+this.multiTextPopup_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	if( this.parent.textId.value != undefined ) {
+		this.textContents.set_value(nexacro.replaceAll(this.parent.textId.value, ",", "\n"));
+	}
+	
+};
+
+this.Button00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var textId = this.parent.textId.id;
+	var textValue = this.textContents.value;
+	var params = {
+		textId : textId,
+		textValue : textValue == undefined ? "" : nexacro.replaceAll(this.textContents.value, "\n", ",")
+	}
+	
+	this.close(JSON.stringify(params));
+};
+]]></Script>
+  </Form>
+</FDL>

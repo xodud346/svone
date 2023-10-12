@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="BrandManager">
+	<!-- 관리자 > 시스템 관리 > 브랜드 관리 > 조건절  -->
+    <sql id="BrandManagerWhere">
+        <if test="searchBrandNm != null and searchBrandNm != ''">
+            AND BND_MST_BRAND_NM LIKE '%' || UPPER(#{searchBrandNm}) || '%'
+        </if>
+        <if test="searchBrandUseYn != null and searchBrandUseYn != ''">
+            AND BND_MST_USE_YN = #{searchBrandUseYn}
+        </if>
+    </sql>
+    
+	<!-- 관리자 > 시스템 관리 > 브랜드 관리 목록 갯수 -->
+	<select id="selectBrandManagerListCount" parameterType="HashMap" resultType="Integer">
+		/* BrandManager.selectBrandManagerListCount */
+		SELECT
+			COUNT(1)
+		FROM
+			T_BND_MST
+		WHERE 	
+			1=1
+			<include refid="BrandManagerWhere"/>
+	</select>
+	
+	<!-- 관리자 > 사이트 관리 > 브랜드 관리 목록 -->
+	<select id="selectBrandManagerList" parameterType="HashMap" resultType="HashMap">
+		/* BrandManager.selectBrandManagerList */
+		SELECT
+			S2.*
+		FROM
+		(
+			SELECT
+				ROWNUM AS RNUM,
+				S1.*
+			FROM
+			(
+				SELECT		
+					BND_MST_IDX,
+				    BND_MST_BRAND_NM,
+				    BND_MST_SERV,
+				    BND_MST_USE_YN,
+				    BND_MST_REG_DT
+				FROM T_BND_MST
+				WHERE
+					1=1
+					<include refid="BrandManagerWhere"/>
+				ORDER BY BND_MST_REG_DT DESC
+			) S1			
+		) S2
+        <if test="startNum != null and startNum != '' and endNum != null and endNum != ''">
+            WHERE 
+                S2.RNUM BETWEEN #{startNum} AND #{endNum}
+        </if>
+	</select>
+	
+	<!-- 관리자 > 시스템관리 > 브랜드 관리 등록 -->
+	<insert id="insertBrandManager" parameterType="HashMap">
+        <selectKey resultType="Integer" keyProperty="BND_MST_IDX" order="BEFORE">
+            SELECT SEQ_BND_MST_IDX.NEXTVAL AS BND_MST_IDX FROM DUAL
+        </selectKey>
+		/* BrandManager.insertBrandManager */
+		INSERT INTO
+			T_BND_MST
+			(
+				BND_MST_IDX,
+				BND_MST_BRAND_NM,
+				BND_MST_QLY_ASR,
+				BND_MST_SERV,
+				BND_MST_DTL,
+				BND_MST_USE_YN,
+				BND_MST_REG_DT,
+				BND_MST_REG_ID,
+				BND_MST_REG_IP
+			)
+		VALUES
+			(
+				#{BND_MST_IDX},
+				#{BND_MST_BRAND_NM},
+				#{BND_MST_QLY_ASR},
+				#{BND_MST_SERV},
+				#{BND_MST_DTL},
+				NVL(#{BND_MST_USE_YN},'Y'),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				#{BND_MST_REG_ID},
+				#{BND_MST_REG_IP}	
+			)
+	</insert>
+	
+	<!-- 관리자 > 시스템 관리 > 브랜드 관리 상세 -->
+	<select id="selectBrandManagerInfo" parameterType="HashMap" resultType="HashMap">
+		/* BrandManager.selectBrandManagerInfo */
+		SELECT
+		    BND_MST_IDX,
+		    BND_MST_BRAND_NM,
+		    BND_MST_QLY_ASR,
+		    BND_MST_SERV,
+		    BND_MST_DTL,
+		    BND_MST_USE_YN
+		FROM 
+			T_BND_MST
+		WHERE
+			BND_MST_IDX = #{BND_MST_IDX} 
+	</select>
+	
+	<!-- 관리자 > 시스템 관리 > 브랜드 정보 수정-->
+	<update id="updateBrandManager" parameterType="HashMap">
+		/* BrandManager.updateBrandManager */
+		UPDATE 
+			T_BND_MST
+		SET
+			BND_MST_QLY_ASR = #{BND_MST_QLY_ASR},
+			BND_MST_SERV = #{BND_MST_SERV},
+			BND_MST_DTL = #{BND_MST_DTL},
+			BND_MST_USE_YN = NVL(#{BND_MST_USE_YN},'Y'),
+			BND_MST_UPD_IP = #{BND_MST_UPD_IP},
+			BND_MST_UPD_ID = #{BND_MST_UPD_ID},
+			BND_MST_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		WHERE 
+			BND_MST_IDX = #{BND_MST_IDX}
+	</update>
+	
+	<!-- 관리자 > 시스템관리 > 브랜드관리 > 브랜드명 중복체크 -->
+	<select id="selectBrandManagerNmCheckCount" parameterType="HashMap" resultType="Integer">
+		/* BrandManager.selectBrandManagerNmCheckCount*/
+		SELECT
+			COUNT(1)
+		FROM
+			T_BND_MST
+		WHERE
+			BND_MST_BRAND_NM = #{BND_MST_BRAND_NM}
+	</select>
+	
+</mapper>

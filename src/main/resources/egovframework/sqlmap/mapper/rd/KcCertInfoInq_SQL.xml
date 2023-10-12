@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="KcCertInfoInq">
+
+    <select id="selectKcCertInfoInq" parameterType="HashMap" resultType="HashMap">
+        /* KcCertInfoInq.selectKcCertInfoInq KC인증정보 조회 */
+        <![CDATA[
+            SELECT '0'                                                           AS CHK                /*CHK*/
+                 , A.CO_CD                                                       AS CO_CD              /*회사코드 PK*/
+                 , A.PRD_ID                                                      AS PRD_ID             /*상품ID PK*/
+                 , A.CPRTCP_ID                                                   AS CPRTCP_ID          /*협력사ID PK*/
+                 , A.KC_CERT_ITM_NO                                              AS KC_CERT_ITM_NO     /*KC인증항목번호 PK*/
+                 , A.KC_CERT_YN                                                  AS KC_CERT_YN         /*KC인증대상여부*/
+                 , A.KC_CERT_CD                                                  AS KC_CERT_CD         /*인증코드*/
+                 , SSP_APP.FN_COM_DTL_CDNM(#{LANG_CD},'KC_CERT_CD',A.KC_CERT_CD) AS KC_CERT_NM         /*인증명*/
+                 , A.KC_CERT_NO                                                  AS KC_CERT_NO         /*인증번호*/
+                 , A.MEMO_CTS                                                    AS MEMO_CTS           /*메모내용*/
+                 , A.DOC_REG_ID                                                  AS DOC_REG_ID         /*첨부파일ID*/
+                 , B.ATFL_NM                                                     AS ATFL_NM            /*논리파일명*/
+                 , B.ATFL_STOR_PATH                                              AS ATFL_STOR_PATH     /*파일경로*/
+                 , B.ORI_ATFL_NM                                                 AS ORI_ATFL_NM        /*물리파일명*/
+              FROM SSP_APP.TB_PR_KC_CERT_INFO   A
+              LEFT JOIN SSP_APP.TB_CO_ATFL_DTLS B
+                ON 1=1
+               AND B.DOC_REG_ID = A.DOC_REG_ID
+             WHERE 1=1
+               AND A.CO_CD     = #{CO_CD}
+               AND A.PRD_ID    = LPAD(#{PRD_ID},18,0)
+               AND A.CPRTCP_ID = #{CPRTCP_ID}
+             ORDER BY A.KC_CERT_ITM_NO
+        ]]>
+    </select>
+
+    <select id="selectKcCertInfoListInq" parameterType="HashMap" resultType="HashMap">
+        /* KcCertInfoInq.selectKcCertInfoListInq  KC인증정보리스트 조회 */
+        <![CDATA[
+            SELECT COM_DTL_CD                                                   AS COM_DTL_CD           /*코드*/
+                 , COM_DTL_CD_NM                                                AS COM_DTL_CD_NM        /*코드명*/
+                 , COM_USR_DEFN_NM_5                                            AS COM_USR_DEFN_NM_5    /*대상여부*/
+                 , DECODE(COM_USR_DEFN_NM_5,'Y','대상','N','면제')              AS COM_USR_DEFN_NM_5_NM /*대상여부*/
+                 , COM_USR_DEFN_NM_3                                            AS COM_USR_DEFN_NM_3    /*인증번호*/
+                 , DECODE(COM_USR_DEFN_NM_3,'Y','필수','N','선택','X','비활성') AS COM_USR_DEFN_NM_3_NM /*인증번호*/
+                 , COM_USR_DEFN_NM_1                                            AS COM_USR_DEFN_NM_1    /*첨부파일*/
+                 , DECODE(COM_USR_DEFN_NM_1,'Y','필수','N','선택','X','비활성') AS COM_USR_DEFN_NM_1_NM /*첨부파일*/
+              FROM SSP_APP.TB_CO_COM_CD_DTL A
+             WHERE 1=1
+               AND LANG_CD     = #{LANG_CD}
+               AND COM_CLSF_CD = 'KC_CERT_CD'
+               AND USE_YN      = 'Y'
+             ORDER BY SRT_SO
+        ]]>
+    </select>
+
+    <select id="selectKcCertInfoAttcFileDtlsInq" parameterType="HashMap" resultType="HashMap">
+        /* KcCertInfoInq.selectKcCertInfoAttcFileDtlsInq KC인증정보첨부파일내역 조회 */
+        <![CDATA[
+            SELECT B.DOC_REG_ID                  /*문서등록ID*/
+                 , B.DOC_REG_SEQ                 /*문서등록순번*/
+                 , B.ATFL_NM                     /*첨부파일명*/
+                 , B.ATFL_LEN                    /*첨부파일길이*/
+                 , B.ATFL_STOR_PATH              /*첨부파일저장경로*/
+                 , B.STOR_PLC_SPR_CD             /*저장장소구분코드*/
+                 , B.ORI_ATFL_NM                 /*원첨부파일명*/
+                 , B.SAP_DOC_ID                  /*SAP문서ID*/
+                 , B.RMKS_CTS                    /*비고내용*/
+                 , B.ETC_FDS_1                   /*기타필드1*/
+                 , B.ETC_FDS_2                   /*기타필드2*/
+                 , B.ETC_FDS_3                   /*기타필드3*/
+                 , B.ETC_FDS_4                   /*기타필드4*/
+                 , B.ETC_FDS_5                   /*기타필드5*/
+                 , B.REG_DTM                     /*등록일시*/
+                 , B.REGPSN_ID                   /*등록자ID*/
+                 , B.UPD_DTM                     /*수정일시*/
+                 , B.UPDPSN_ID                   /*수정자ID*/
+              FROM SSP_APP.TB_PR_KC_CERT_INFO   A
+              LEFT JOIN SSP_APP.TB_CO_ATFL_DTLS B
+                ON 1=1
+               AND B.DOC_REG_ID = A.DOC_REG_ID
+             WHERE 1=1
+               AND A.CO_CD     = #{CO_CD}
+               AND A.PRD_ID    = LPAD(#{PRD_ID},18,0)
+               AND A.CPRTCP_ID = #{CPRTCP_ID}
+        ]]>
+    </select>
+
+    <select id="selectTbRdReqCprtcpConsnKcCertInfo" parameterType="HashMap" resultType="HashMap">
+        /* KcCertInfoInq.selectTbRdReqCprtcpConsnKcCertInfo 요청협력사합의KC인증정보 조회 */
+        <![CDATA[
+           SELECT '0'                      AS CHK                     /*CHK*/
+                , A1.CO_CD                 AS CO_CD                   /*회사코드 PK*/ 
+                , A1.CONT_NO               AS CONT_NO                 /*계약번호*/    
+                , A1.CONT_CHG_DGRCNT       AS CONT_CHG_DGRCNT         /*계약변경차수*/  
+                , A1.PRD_ID                AS PRD_ID                  /*상품ID*/    
+                , A1.CPRTCP_ID             AS CPRTCP_ID               /*협력사ID PK*/
+                , A1.KC_CERT_ITM_NO        AS KC_CERT_ITM_NO          /*KC인증항목번호*/
+                , A1.KC_CERT_YN            AS KC_CERT_YN              /*KC인증여부*/  
+                , A1.KC_CERT_CD            AS KC_CERT_CD              /*KC인증코드*/  
+                , A1.KC_CERT_NM            AS KC_CERT_NM              /*인증명*/     
+                , A1.KC_CERT_NO	           AS KC_CERT_NO	          /*KC인증번호*/  
+                , A1.DOC_REG_ID	           AS DOC_REG_ID	          /*문서등록ID*/  
+                , A1.MEMO_CTS	           AS MEMO_CTS	              /*메모내용*/    
+                , A1.ATFL_NM               AS ATFL_NM                 /*논리파일명*/   
+                , A1.ATFL_STOR_PATH        AS ATFL_STOR_PATH          /*파일경로*/    
+                , A1.ORI_ATFL_NM           AS ORI_ATFL_NM             /*물리파일명*/   
+             FROM (
+                   SELECT A.CO_CD                                                       AS CO_CD                   /*회사코드 PK*/
+                        , A.CONT_NO                                                     AS CONT_NO                 /*계약번호*/
+                        , A.CONT_CHG_DGRCNT                                             AS CONT_CHG_DGRCNT         /*계약변경차수*/
+                        , A.PRD_ID	                                                    AS PRD_ID                  /*상품ID*/
+                        , #{CPRTCP_ID}                                                  AS CPRTCP_ID               /*협력사ID PK*/
+                        , A.KC_CERT_ITM_NO 	                                            AS KC_CERT_ITM_NO          /*KC인증항목번호*/
+                        , A.KC_CERT_YN	                                                AS KC_CERT_YN              /*KC인증여부*/
+                        , A.KC_CERT_CD	                                                AS KC_CERT_CD              /*KC인증코드*/
+                        , SSP_APP.FN_COM_DTL_CDNM(#{LANG_CD},'KC_CERT_CD',A.KC_CERT_CD) AS KC_CERT_NM              /*인증명*/
+                        , A.KC_CERT_NO	                                                AS KC_CERT_NO	           /*KC인증번호*/
+                        , A.DOC_REG_ID	                                                AS DOC_REG_ID	           /*문서등록ID*/
+                        , A.MEMO_CTS	                                                AS MEMO_CTS	               /*메모내용*/
+                        , B.ATFL_NM                                                     AS ATFL_NM                 /*논리파일명*/
+                        , B.ATFL_STOR_PATH                                              AS ATFL_STOR_PATH          /*파일경로*/
+                        , B.ORI_ATFL_NM                                                 AS ORI_ATFL_NM             /*물리파일명*/
+                     FROM SSP_APP.TB_RD_REQ_CPRTCP_CONSN_KC_CERT_INFO A
+                     LEFT JOIN SSP_APP.TB_CO_ATFL_DTLS                B
+                       ON 1=1
+                      AND B.DOC_REG_ID = A.DOC_REG_ID
+                    WHERE A.CO_CD           = #{CO_CD}
+                      AND A.CONT_NO         = #{CONT_NO}
+                      AND A.CONT_CHG_DGRCNT = #{CONT_CHG_DGRCNT}
+                      AND A.PRD_ID          = LPAD(#{PRD_ID},18,0)
+                  ) A1
+            WHERE 1=1
+            ORDER BY A1.KC_CERT_ITM_NO
+        ]]>
+    </select>
+
+    <select id="selectKcCertReqCprtcpAttcFileInq" parameterType="HashMap" resultType="HashMap">
+        /* KcCertInfoInq.selectKcCertReqCprtcpAttcFileInq KC인증요청협력사첨부파일 조회 */
+        <![CDATA[
+            SELECT B.DOC_REG_ID                  /*문서등록ID*/
+                 , B.DOC_REG_SEQ                 /*문서등록순번*/
+                 , B.ATFL_NM                     /*첨부파일명*/
+                 , B.ATFL_LEN                    /*첨부파일길이*/
+                 , B.ATFL_STOR_PATH              /*첨부파일저장경로*/
+                 , B.STOR_PLC_SPR_CD             /*저장장소구분코드*/
+                 , B.ORI_ATFL_NM                 /*원첨부파일명*/
+                 , B.SAP_DOC_ID                  /*SAP문서ID*/
+                 , B.RMKS_CTS                    /*비고내용*/
+                 , B.ETC_FDS_1                   /*기타필드1*/
+                 , B.ETC_FDS_2                   /*기타필드2*/
+                 , B.ETC_FDS_3                   /*기타필드3*/
+                 , B.ETC_FDS_4                   /*기타필드4*/
+                 , B.ETC_FDS_5                   /*기타필드5*/
+                 , B.REG_DTM                     /*등록일시*/
+                 , B.REGPSN_ID                   /*등록자ID*/
+                 , B.UPD_DTM                     /*수정일시*/
+                 , B.UPDPSN_ID                   /*수정자ID*/
+              FROM SSP_APP.TB_RD_REQ_CPRTCP_CONSN_KC_CERT_INFO A
+             INNER JOIN SSP_APP.TB_CO_ATFL_DTLS                B
+                ON 1=1
+               AND B.DOC_REG_ID = A.DOC_REG_ID
+             WHERE 1=1
+               AND A.CO_CD           = #{CO_CD}
+               AND A.CONT_NO         = #{CONT_NO}
+               AND A.CONT_CHG_DGRCNT = #{CONT_CHG_DGRCNT}
+               AND A.PRD_ID          = LPAD(#{PRD_ID},18,0)
+        ]]>
+    </select>
+
+    <insert id="insertTbRdReqCprtcpConsnKcCertInfo" parameterType="HashMap">
+        /* KcCertInfoInq.insertTbRdReqCprtcpConsnKcCertInfo 요청협력사합의KC인증정보 저장 */	
+        <![CDATA[
+            INSERT INTO SSP_APP.TB_RD_REQ_CPRTCP_CONSN_KC_CERT_INFO
+            (
+              CO_CD                       /*회사코드*/
+            , CONT_NO                     /*계약번호*/
+            , CONT_CHG_DGRCNT             /*계약변경차수*/
+            , PRD_ID                      /*상품ID*/
+            , KC_CERT_ITM_NO              /*KC인증항목번호*/
+            , KC_CERT_YN                  /*KC인증여부*/
+            , KC_CERT_CD                  /*KC인증코드*/
+            , KC_CERT_NO                  /*KC인증번호*/
+            , DOC_REG_ID                  /*문서등록ID*/
+            , MEMO_CTS                    /*메모내용*/
+            , REGPSN_ID                   /*등록자ID*/
+            , REG_DTM                     /*등록일시*/
+            , UPDPSN_ID                   /*수정자ID*/
+            , UPD_DTM                     /*수정일시*/
+            )
+            VALUES
+            (
+              #{CO_CD}
+            , #{CONT_NO}
+            , #{CONT_CHG_DGRCNT}
+            , LPAD(#{PRD_ID},18,0)
+            , (
+               SELECT NVL(MAX(TO_NUMBER(KC_CERT_ITM_NO))+1,'1') AS KC_CERT_ITM_NO
+                 FROM SSP_APP.TB_RD_REQ_CPRTCP_CONSN_KC_CERT_INFO
+                WHERE CO_CD           = #{CO_CD}
+                  AND CONT_NO         = #{CONT_NO}
+                  AND CONT_CHG_DGRCNT = #{CONT_CHG_DGRCNT}
+                  AND PRD_ID          = LPAD(#{PRD_ID},18,0)
+              )
+            , #{KC_CERT_YN}
+            , #{KC_CERT_CD}
+            , #{KC_CERT_NO}
+            , #{DOC_REG_ID}
+            , #{MEMO_CTS}
+            , #{REGPSN_ID}
+            , SYSDATE
+            , #{UPDPSN_ID}
+            , SYSDATE
+            )
+        ]]>
+    </insert>
+
+    <delete id="deleteTbRdReqCprtcpConsnKcCertInfo" parameterType="HashMap">
+        /* KcCertInfoInq.deleteTbRdReqCprtcpConsnKcCertInfo 요청협력사합의KC인증정보 삭제 */
+        <![CDATA[
+            DELETE FROM SSP_APP.TB_RD_REQ_CPRTCP_CONSN_KC_CERT_INFO
+             WHERE CO_CD           = #{CO_CD}
+               AND CONT_NO         = #{CONT_NO}
+               AND CONT_CHG_DGRCNT = #{CONT_CHG_DGRCNT}
+               AND PRD_ID          = #{PRD_ID}
+               AND KC_CERT_ITM_NO  = #{KC_CERT_ITM_NO}
+        ]]>
+    </delete>
+
+    <insert id="insertKcCertInfoInq" parameterType="HashMap">
+        /* KcCertInfoInq.insertKcCertInfoInq  저장 */	
+        <![CDATA[
+            INSERT INTO SSP_APP.TB_PR_KC_CERT_INFO
+            (
+              CO_CD                       /*회사코드*/
+            , PRD_ID                      /*상품ID*/
+            , CPRTCP_ID                   /*협력사ID*/
+            , KC_CERT_ITM_NO              /*KC인증항목번호*/
+            , KC_CERT_YN                  /*KC인증여부*/
+            , KC_CERT_CD                  /*KC인증코드*/
+            , KC_CERT_NO                  /*KC인증번호*/
+            , ATFL_PATH                   /*첨부파일경로*/
+            , ATFL_NM                     /*첨부파일명*/
+            , DOC_REG_ID                  /*문서등록ID*/
+            , SAP_DOC_ID                  /*SAP문서ID*/
+            , MEMO_CTS                    /*메모내용*/
+            , REG_DTM                     /*등록일시*/
+            , REGPSN_ID                   /*등록자ID*/
+            , UPD_DTM                     /*수정일시*/
+            , UPDPSN_ID                   /*수정자ID*/
+            )
+            VALUES
+            (
+              #{CO_CD}
+            , LPAD(#{PRD_ID},18,0)
+            , #{CPRTCP_ID}
+            , (
+               SELECT NVL(MAX(TO_NUMBER(KC_CERT_ITM_NO))+1,'1') AS KC_CERT_ITM_NO
+                 FROM SSP_APP.TB_PR_KC_CERT_INFO
+                WHERE CO_CD     = #{CO_CD}
+                  AND PRD_ID    = LPAD(#{PRD_ID},18,0)
+                  AND CPRTCP_ID = #{CPRTCP_ID}
+              )
+            , #{KC_CERT_YN}
+            , #{KC_CERT_CD}
+            , #{KC_CERT_NO}
+            , #{ATFL_PATH}
+            , #{ATFL_NM}
+            , #{DOC_REG_ID}
+            , #{SAP_DOC_ID}
+            , #{MEMO_CTS}
+            , SYSDATE
+            , #{REGPSN_ID}
+            , SYSDATE
+            , #{UPDPSN_ID}
+            )
+        ]]>
+    </insert>
+
+    <update id="updateKcCertInfoInq" parameterType="HashMap">
+        /* KcCertInfoInq.updateKcCertInfoInq KC인증정보 수정 */
+        <![CDATA[
+            UPDATE SSP_APP.TB_PR_KC_CERT_INFO
+               SET KC_CERT_YN     = #{KC_CERT_YN}                  /*KC인증여부*/
+                 , KC_CERT_CD     = #{KC_CERT_CD}                  /*KC인증코드*/
+                 , KC_CERT_NO     = #{KC_CERT_NO}                  /*KC인증번호*/
+                 , ATFL_PATH      = #{ATFL_STOR_PATH}              /*첨부파일경로*/
+                 , ATFL_NM        = #{ATFL_NM}                     /*첨부파일명*/
+                 , DOC_REG_ID     = #{DOC_REG_ID}                  /*문서등록ID*/
+                 , SAP_DOC_ID     = #{SAP_DOC_ID}                  /*SAP문서ID*/
+                 , MEMO_CTS       = #{MEMO_CTS}                    /*메모내용*/
+                 , UPD_DTM        = SYSDATE                        /*수정일시*/
+                 , UPDPSN_ID      = #{UPDPSN_ID}                   /*수정자ID*/
+             WHERE CO_CD          = #{CO_CD}
+               AND PRD_ID         = #{PRD_ID}
+               AND CPRTCP_ID      = #{CPRTCP_ID}
+               AND KC_CERT_ITM_NO = #{KC_CERT_ITM_NO}
+        ]]>
+    </update>
+
+    <delete id="deleteKcCertInfoInq" parameterType="HashMap">
+        /* KcCertInfoInq.deleteKcCertInfoInq KC인증정보 삭제 */
+        <![CDATA[
+            DELETE FROM SSP_APP.TB_PR_KC_CERT_INFO
+             WHERE CO_CD          = #{CO_CD}
+               AND PRD_ID         = #{PRD_ID}
+               AND CPRTCP_ID      = #{CPRTCP_ID}
+               AND KC_CERT_ITM_NO = #{KC_CERT_ITM_NO}
+        ]]>
+    </delete>
+</mapper>

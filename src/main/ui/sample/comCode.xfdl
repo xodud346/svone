@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="comCode" width="1280" height="720" titletext="New Form" ondrag="comCode_ondrag" ondrop="comCode_ondrop" ondragmove="comCode_ondragmove">
+    <Layouts>
+      <Layout height="720" mobileorientation="landscape" width="1280">
+        <Combo id="Combo00" taborder="0" text="Combo00" left="61" top="82" width="279" height="68" innerdataset="ds_combo" codecolumn="CODE" datacolumn="NAME"/>
+        <Button id="Button00" taborder="1" text="transaction" left="363" top="88" width="120" height="50" onclick="Button00_onclick"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[
+this.Button00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_combo.copyData(this.ds_temp,true);
+	this.fn_callback("comCode",0,"");
+};
+
+
+this.fn_callback = function(sSeviceId, nErrCd, sErrM){
+	if(sSeviceId == "comCode"){
+		this.ds_combo.insertRow(0);
+		this.ds_combo.setColumn(0,"NAME","전체");
+	}
+};   
+this.comCode_ondrag = function(obj:nexacro.Form,e:nexacro.DragEventInfo)
+{
+	var oStatic = new Static();
+trace(" e.screenx===>"+ e.screenx);	
+trace(" e.screeny===>"+ e.screeny);
+trace("e.clientx ===> " + e.clientx);
+trace("e.clienty ===> " + e.clienty);
+	var nLeft = e.clientx;
+	var nTop = e.clienty;
+	oStatic.init( "staDrag", nLeft, nTop, 200,50);
+	this.addChild("staDrag",oStatic);
+	oStatic.set_background("#bcbcbc");
+	oStatic.set_text("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+	oStatic.show();
+	return true;
+};
+
+this.comCode_ondrop = function(obj:nexacro.Form,e:nexacro.DragEventInfo)
+{
+trace("grd_mainList_ondrop");
+	var oStatic = this.removeChild("staDrag");
+trace(oStatic);	
+	oStaticdestroy();	
+};
+
+this.comCode_ondragmove = function(obj:nexacro.Form,e:nexacro.DragEventInfo)
+{
+trace("grd_mainList_ondragmove");
+	var nLeft = e.clientx;
+	var nTop = e.clienty;
+	this.staDrag.move(nLeft,nTop);	
+};
+
+this.Calendar00_onchanged = function(obj:nexacro.Calendar,e:nexacro.ChangeEventInfo)
+{
+	
+};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_combo">
+        <ColumnInfo>
+          <Column id="CODE" type="STRING" size="256"/>
+          <Column id="NAME" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_temp">
+        <ColumnInfo>
+          <Column id="CODE" type="STRING" size="256"/>
+          <Column id="NAME" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CODE">1</Col>
+            <Col id="NAME">A</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">2</Col>
+            <Col id="NAME">B</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">3</Col>
+            <Col id="NAME">C</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">4</Col>
+            <Col id="NAME">D</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">5</Col>
+            <Col id="NAME">E</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

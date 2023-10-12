@@ -1,0 +1,839 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="work04" width="1336" height="846" titletext="SMS발송이력조회" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="720" mobileorientation="landscape" width="1280">
+        <Button id="btnLayoutClear" taborder="6" text="레이아웃 초기화" top="171" textPadding="0px" width="110" right="251" onclick="btnLayoutClear_onclick" height="28"/>
+        <Button id="btnLayoutSave" taborder="5" text="레이아웃 저장" top="171" textPadding="0px" width="110" right="365" onclick="btnLayoutSave_onclick" height="28"/>
+        <Div id="Div00" taborder="0" text="Div00" left="0" top="0" height="150" cssclass="div_WF_SearchArea" right="0" onkeyup="Div00_onkeyup">
+          <Layouts>
+            <Layout>
+              <!--Search 1번째 줄 -->
+              <Static id="static01" taborder="1" left="20" top="21" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+              <Static id="sta_transDtm" taborder="5" text="발송일자" left="20" top="21" width="70" height="32" cssclass="sta_cm_box01L"/>
+              <Calendar id="cal_sendStrDate" taborder="6" left="95" top="25" width="125" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd"/>
+              <Static id="sta_between" taborder="10" text="~" left="224" top="24" width="9" height="24"/>
+              <Calendar id="cal_sendEndDate" taborder="7" left="235" top="25" width="125" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd"/>
+              <Combo id="cmb_inqPerdSprCd" taborder="8" left="365" top="25" width="107" height="24" innerdataset="ds_inqPerdSprCd" datacolumn="COM_DTL_CD_NM" codecolumn="COM_DTL_CD" index="-1" text="선택" onitemchanged="cmb_inqPerdSprCd_onitemchanged"/>
+              <Static id="sta_custIssNo" taborder="9" text="메시지 구분" top="21" height="32" cssclass="sta_cm_box01L" width="100" left="480"/>
+              <Combo id="cmb_custIssNo" taborder="10" left="586" top="25" width="294" height="24" innerdataset="ds_custIssNo" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" value="0" index="0" visible="true" enable="false"/>
+              <Static id="cmb_smsSendRsltCd" taborder="11" text="발송상태" left="890" top="21" width="70" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_smsSendRsltCd" taborder="12" left="970" top="25" width="309" height="24" enable="true" readonly="true" background="transparent" text="AAA" color="black" oneditclick="div00_btn_smsSendRsltCd_onclick" tooltiptype="default"/>
+              <Button id="btn_smsSendRsltCd" taborder="13" left="1279" top="25" height="24" cssclass="btn_WF_multiCombo" width="24" text="" onclick="div00_btn_smsSendRsltCd_onclick" border="1px solid gainsboro"/>
+              <!--Search 2번째 줄 -->
+              <Static id="static02" taborder="1" left="20" top="52" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+              <Static id="sta_cbTelNo" taborder="15" text="발송번호" left="20" top="52" width="70" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_cbTelNo" taborder="18" left="95" top="56" width="265" height="24" onchanged="div00_edt_cbTelNo_onchanged"/>
+              <Button id="btn_cbTelNo" taborder="19" left="365" top="56" height="24" cssclass="btn_WF_document" width="24" onclick="Div00_cbTelNo_onclick"/>
+              <Static id="sta_telNo" taborder="20" text="수신번호" left="480" top="52" width="100" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_telNo" taborder="18" left="586" top="56" width="265" height="24" onchanged="div00_edt_cbTelNo_onchanged"/>
+              <Button id="btn_telNo" taborder="21" left="856" top="56" height="24" cssclass="btn_WF_document" width="24" onclick="Div00_telNo_onclick"/>
+              <Static id="sta_mbr" taborder="26" text="회원" left="890" top="52" width="70" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_mbr" taborder="23" left="970" top="56" width="285" height="24"/>
+              <Button id="btn_mbrMltPop" taborder="24" left="1258" height="24" cssclass="btn_WF_multi" width="24" bottom="70" onclick="Div00_btn_mbrMltPop_onclick"/>
+              <Button id="btn_mbrTxt" taborder="25" left="1280" height="24" cssclass="btn_WF_document" width="24" bottom="70" onclick="Div00_btn_mbrTxt_onclick"/>
+              <!--Search 3번째 줄 -->
+              <Static id="static03" taborder="1" left="20" top="83" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+              <Static id="sta_transMsg" taborder="27" text="메시지" left="20" top="83" width="70" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_TransMsg" taborder="22" left="95" top="86" width="785" height="24" onchanged="Div00_edt_prdId_onchanged"/>
+              <!-- 초기화, 조회버튼 -->
+              <Button id="btnClear" taborder="4" text="초기화" top="124" width="60" height="26" right="85" onclick="Div00_btnClear_onclick"/>
+              <Button id="btn_search" taborder="0" text="조회" top="124" width="60" height="26" cssclass="btn_WF_require" right="20" onclick="Div00_btn_search_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Grid id="grd_list" taborder="2" left="20" top="206" bottom="66" binddataset="ds_list" autofittype="none" right="20" autosizingtype="none" nodatatext="조회 결과가 없습니다." autoenter="select" cellsizingtype="both" oncellclick="grd_list_oncellclick" selecttype="area" cellmovingtype="col" griduserproperty="sort">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="68"/>
+                <Column size="158"/>
+                <Column size="95"/>
+                <Column size="210"/>
+                <Column size="108"/>
+                <Column size="130"/>
+                <Column size="190"/>
+                <Column size="502"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="NO"/>
+                <Cell col="1" text="발송일자"/>
+                <Cell col="2" text="메시지 순번"/>
+                <Cell col="3" text="메시지 구분"/>
+                <Cell col="4" text="발송번호"/>
+                <Cell col="5" text="수신번호"/>
+                <Cell col="6" text="발송상태"/>
+                <Cell col="7" text="메세지"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="text" text="bind:ROW_NO"/>
+                <Cell col="1" text="bind:TRANS_DTM" displaytype="text"/>
+                <Cell col="2" text="bind:MSG_UNQ_NO" displaytype="text"/>
+                <Cell col="3" text="bind:CUST_ISS_NO" displaytype="normal"/>
+                <Cell col="4" text="bind:CB_TEL_NO" displaytype="normal"/>
+                <Cell col="5" text="bind:TEL_NO" displaytype="normal"/>
+                <Cell col="6" text="bind:SMS_SEND_RSLT_CD" displaytype="normal"/>
+                <Cell col="7" text="bind:TRANS_MSG" displaytype="normal"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="totalPageCount" taborder="1" text="(총 0건, 1 / 1)" left="20" width="270" usedecorate="true" bottom="grd_list:5" height="25"/>
+        <Button id="btnExcel" taborder="3" text="엑셀다운로드" top="171" cssclass="btn_WF_excel" textPadding="0px" width="110" right="btnLayoutSave:-338" height="28" onclick="btnExcel_onclick"/>
+        <Combo id="cbo_page" taborder="9" displayrowcount="5" innerdataset="ds_page" codecolumn="COUNT" datacolumn="COUNT_NM" index="0" text="10" value="10" onitemchanged="cbo_page_onitemchaged" top="171" left="btnExcel:5" height="28" width="110"/>
+        <Div id="div_paging" taborder="4" left="20" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="grd_list:30" text="" right="20" height="36"/>
+        <Grid id="grd_list_excel" taborder="7" left="-20" top="1155" bottom="-364" binddataset="ds_list_excel" autofittype="col" right="-104" autosizingtype="none" nodatatext="조회 결과가 없습니다." autoenter="select" cellsizingtype="both" oncellclick="grd_list_oncellclick" selecttype="cell" visible="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="68"/>
+                <Column size="158"/>
+                <Column size="95"/>
+                <Column size="210"/>
+                <Column size="108"/>
+                <Column size="130"/>
+                <Column size="190"/>
+                <Column size="502"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell col="0" text="NO"/>
+                <Cell col="1" text="발송일자"/>
+                <Cell col="2" text="메시지 순번"/>
+                <Cell col="3" text="메시지 구분"/>
+                <Cell col="4" text="발송번호"/>
+                <Cell col="5" text="수신번호"/>
+                <Cell col="6" text="발송상태"/>
+                <Cell col="7" text="메세지"/>
+              </Band>
+              <Band id="body">
+                <Cell/>
+                <Cell displaytype="text" text="bind:ROW_NO"/>
+                <Cell col="1" text="bind:TRANS_DTM" displaytype="text"/>
+                <Cell col="2" text="bind:MSG_UNQ_NO" displaytype="text"/>
+                <Cell col="3" text="bind:CUST_ISS_NO" displaytype="normal"/>
+                <Cell col="4" text="bind:CB_TEL_NO" displaytype="normal"/>
+                <Cell col="5" text="bind:TEL_NO" displaytype="normal"/>
+                <Cell col="6" text="bind:SMS_SEND_RSLT_CD" displaytype="normal"/>
+                <Cell col="7" text="bind:TRANS_MSG" displaytype="normal"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Grid id="grd_smsSendRsltCd" taborder="14" left="1030" top="49" width="250" height="240" binddataset="ds_smsSendRsltCd" scrollbartype="none none" visible="false" color="transparent" background="" onkillfocus="grd_smsSendRsltCd_onkillfocus" onkeydown="grd_smsSendRsltCd_onkeydown" onheadclick="grd_smsSendRsltCd_onheadclick" onsummaryclick="grd_smsSendRsltCd_onsummaryclick" oncellclick="grd_smsSendRsltCd_oncellclick">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="24"/>
+                <Column size="226"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+                <Row size="24" band="summ"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" displaytype="normal" edittype="none" text="전체"/>
+              </Band>
+              <Band id="body">
+                <Cell edittype="checkbox" displaytype="checkboxcontrol" text="bind:CHK"/>
+                <Cell col="1" text="bind:COM_DTL_CD_NM" textAlign="left"/>
+              </Band>
+              <Band id="summary">
+                <Cell colspan="2" text="확인" displaytype="buttoncontrol" edittype="button"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="ROW_NO" type="STRING" size="256"/>
+          <Column id="TRANS_DTM" type="STRING" size="256"/>
+          <Column id="MSG_UNQ_NO" type="STRING" size="256"/>
+          <Column id="CUST_ISS_NO" type="STRING" size="256"/>
+          <Column id="CB_TEL_NO" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="SEND_RSLT_CD" type="STRING" size="256"/>
+          <Column id="TRANS_MSG" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="TRANS_STR_DTM" type="STRING" size="256"/>
+          <Column id="TRANS_END_DTM" type="STRING" size="256"/>
+          <Column id="CUST_ISS_NO" type="STRING" size="256"/>
+          <Column id="SMS_SEND_RSLT_CD" type="STRING" size="256"/>
+          <Column id="CB_TEL_NO" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="MBR_NM" type="STRING" size="256"/>
+          <Column id="TRANS_MSG" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SES_ID" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="CB_TEL_NO_CNT" type="STRING" size="256"/>
+          <Column id="TEL_NO_CNT" type="STRING" size="256"/>
+          <Column id="MBR_ID_CNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list_excel">
+        <ColumnInfo>
+          <Column id="ROW_NO" type="STRING" size="256"/>
+          <Column id="TRANS_DTM" type="STRING" size="256"/>
+          <Column id="MSG_UNQ_NO" type="STRING" size="256"/>
+          <Column id="CUST_ISS_NO" type="STRING" size="256"/>
+          <Column id="CB_TEL_NO" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="SEND_RSLT_CD" type="STRING" size="256"/>
+          <Column id="TRANS_MSG" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_page">
+        <ColumnInfo>
+          <Column id="COUNT" type="STRING" size="256"/>
+          <Column id="COUNT_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COUNT">20</Col>
+            <Col id="COUNT_NM">20개씩</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">50</Col>
+            <Col id="COUNT_NM">50개씩</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">100</Col>
+            <Col id="COUNT_NM">100개씩</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">1000</Col>
+            <Col id="COUNT_NM">1000개씩</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_inqPerdSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_custIssNo">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_smsSendRsltCd" useclientlayout="true" cancolumnchange="ds_smsSendRsltCd_cancolumnchange" oncolumnchanged="ds_smsSendRsltCd_oncolumnchanged" filterstr="COM_USR_DEFN_NM_1.indexOf('S') != -1">
+        <ColumnInfo>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_1" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search_origin">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="TRANS_STR_DTM" type="STRING" size="256"/>
+          <Column id="TRANS_STR_END" type="STRING" size="256"/>
+          <Column id="CUST_ISS_NO" type="STRING" size="256"/>
+          <Column id="SMS_SEND_RSLT_CD" type="STRING" size="256"/>
+          <Column id="CB_TEL_NO" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="TRANS_MSG" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_select" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="SES_ID" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="COL_ITM" type="STRING" size="256"/>
+          <Column id="COND_DATA_VAL" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_YA_21
+/* 작 성 일 자 : 2023/06/02
+/* 작  성   자 : 이상민민
+/* 설       명 : 시스템관리 > SMS발송이력조회
+/***********************************************************/
+
+
+/* 스크립트 인클루드 */
+include "CO::coUtils.xjs";
+include "OD::odUtils.xjs";
+include "CC::CcUtils.xjs";
+include "RD::rdMain.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/	
+this.fv_oApp 			= nexacro.getApplication();		//application object 
+this.fv_sessionData 	= this.getSession(); 			//session object
+this.totalCount 		= 0; 							//토탈카운트
+this.pageViewCnt		= 50; 							//페이지당 보여줄 목록 개수
+this.check 				= 0;							//초기 checkbox 셋팅값
+this.formId             = this.fn_getFormId(this);      // 등록한 폼의 아디을 기지고 오는 함수
+
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+			
+	//공통코드 조회(조회기간구분코드)
+	this.fn_commonCodeSearch();	
+	
+	// 그리드 헤드클릭이벤트 내부함수 : (헤드클릭시 체크 무력화)
+	this._gfnHeadCheckSelectAll = function(){};	
+	
+	//회사코드 설정
+	this.ds_search.setColumn(0,"CO_CD",this.fv_sessionData.coCd);
+					
+	//검색 초기값 설정
+	this.ds_search_origin.copyData(this.ds_search);			
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "Div00_btn_search_onclick",
+		SHIFT_ENTER : "",
+		SHIFT_S : "",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_inqPerdSprCd=ds_output1 ds_transFormCd=ds_output2 ds_smsSendRsltCd=ds_output3 ds_custIssNo=ds_output4";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "CODE_LIST", "INQ_PERD_SPR_CD,TRANS_FORM_CD,SMS_SEND_RSLT_CD,CUST_ISS_NO");
+	this.ds_search.setColumn(0, "LANG_CD", "KO");
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//조회
+this.fn_search = function(page) {
+	var sSvcId = "selectSmsSendHstList";  
+    var sUrl = "/co/sms/select-sms-send-hst-list.do";
+	var inDs = "ds_search=ds_search"
+    var outDs = "ds_list=ds_output1";
+    var arg;
+    var callback = "fn_callBack";
+	 
+	 
+	// Multi검색조회 데이터 존재시 초기화
+	//this.fn_deleteMultiData("fn_callBack");
+	 
+	// 멀티입력 검색조건 Set
+	this.fn_setMultiSearch(this.formId,"CB_TEL_NO",  this.ds_search.getColumn(0,"CB_TEL_NO"));  	// 발송번호
+	this.fn_setMultiSearch(this.formId,"TEL_NO", this.ds_search.getColumn(0,"TEL_NO"));       		// 수신번호
+	this.fn_setMultiSearch(this.formId,"MBR_ID", this.ds_search.getColumn(0,"MBR_ID"));  	      	// 회원
+		
+    // 멀티입력조건 임시 테이블 저장 서비스 호출	
+    if(this.ds_select.getRowCount() > 0)
+    {        
+		this.fn_insertMultiData("fn_callBack");
+		this.ds_search.setColumn(0,"INQ_COND_DTLS", this.formId);
+    };
+	 	 
+	 // 조회버튼 클릭시 페이징 초기화 시킨다.
+	 this.ds_search.setColumn(0,"ROW_COUNT", this.cbo_page.value);	
+	 
+	 // 최초 조회일 경우,
+	 if( page == 0 ) {
+		this.div_paging.uPage=1;
+		this.div_paging.uPageNum=0;
+		this.ds_search.setColumn(0,"START_NUM", 0);				
+	 }
+	 // 페이지 전환일 경우
+	 else{	 
+		 this.ds_search.setColumn(0,"START_NUM", this.div_paging.uPageNum);	 		 
+	 }
+	 
+	 this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+this.fn_excel_download = function() {
+	 var sSvcId = "selectSmsSendHstExcel";  
+     var sUrl = "/co/sms/select-sms-send-hst-list.do";
+	 var inDs = "ds_search=ds_search"
+     var outDs = "ds_list_excel=ds_output1";
+     var arg;
+     var callback = "fn_callBack";
+	 	 
+	this.ds_search.setColumn(0,"START_NUM", null);
+	this.ds_search.setColumn(0,"ROW_COUNT", null);
+	 
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+	
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+
+	switch(svcID) {
+		case "commonCodeSearch" : 
+		
+			// 발송일자 설정			
+			this.Div00.form.cmb_inqPerdSprCd.set_index(1);			
+			this.fn_setPeriodDate();
+			
+			// 메시지 구분 설정
+			this.ds_custIssNo.insertRow(0);
+			this.ds_custIssNo.setColumn(0, "COM_DTL_CD", '%');
+			this.ds_custIssNo.setColumn(0, "COM_DTL_CD_NM", '전체');
+			this.Div00.form.cmb_custIssNo.set_index(0);	
+						
+			// 발송상태 기본값 셋팅
+			this.ds_smsSendRsltCd.setColumn(0, 'CHK', '1');  // 결과수신대기(기본)
+			this.ds_smsSendRsltCd.setColumn(2, 'CHK', '1');  // 전송성공(기본)
+			
+			// 조회결과 갯수 셋팅
+			this.cbo_page.set_index(1);
+					
+			break;
+			
+		case "selectSmsSendHstList" : 			
+			
+			this.div_paging.set_visible(this.totalCount > 0);
+			
+			//페이징 처리			
+			this.div_paging.form.cfn_createPage(this.div_paging, this.totalCount, this.cbo_page.value, "fn_pageCallback");			
+			break;
+			
+		case "selectSmsSendHstExcel" : 		
+			this.ofn_exportExcel({ form:this, grid:this.grd_list_excel, fileName:"SMS발송이력조회" });					
+			break;
+				
+		default : "";
+	}
+	
+}
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;
+
+	if(sFlag){
+		//this.ds_search.setColumn(0,"START_NUM", (oPaging.uPageNum == 0 || oPaging.uPageNum == 1 ? 0 : ( oPaging.uPageNum -1 ) * 10));
+		this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.ds_search.setColumn(0,"ROW_COUNT", this.div_paging.uPageNum);	
+		this.fn_search();
+	}	
+	
+	var sTotText = "(총 "+ this.gfn_appendComma(oPaging.uTotCount, 0)+"건, "+ oPaging.uPage +" / "+ oPaging.uPageCnt +")";
+	this.totalPageCount.set_text(sTotText);
+}
+
+//정렬 콜백
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_list"){
+		oSortInfo = this.grd_list.uaSortInfo;
+		
+		this.ds_search.setColumn(0,"SORT_COLUMN", oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE", oSortInfo.status);
+		
+		this.fn_search();
+	}
+};
+
+//조건 팝업 콜백
+this.fn_popupCallback = function(sPopupId, sRetValue){
+	var resData = "";
+	var sIdList = "";
+	var sNmList = "";
+	
+	if(sRetValue == undefined){
+		return;
+	}else{
+		resData = JSON.parse(sRetValue);
+	}
+			
+	switch(sPopupId){	
+	
+		case "mbrMultiPop":		
+			for(var i=0; i<resData.length; i++){	
+				var rtnData = JSON.parse(resData[i]);
+				sIdList += rtnData.MBR_ID + ",";
+				sNmList += rtnData.MBR_NM + ",";
+			}
+			this.ds_search.setColumn(0,"MBR_ID",sIdList.replace(/,\s*$/, ""));
+			this.ds_search.setColumn(0,"MBR_NM",sNmList.replace(/,\s*$/, ""));	
+			break;
+		default : 
+			break;
+	}
+};
+
+//조건 멀티 텍스트 팝업 콜백
+this.fn_multiTextPopupCallback = function(objID, rtnValue) {
+	var resParam = JSON.parse(rtnValue);					
+	var splitedStringArr = resParam.textValue.split(",");
+
+	switch(objID){		
+	
+		case "cbTelNoMultiTextPopup":
+			this.ds_search.setColumn(0,"CB_TEL_NO",this.gfn_allTrim(resParam.textValue).replace(/,\s*$/, ""));										
+			break;
+			
+		case "telNoMultiTextPopup":
+			this.ds_search.setColumn(0,"TEL_NO",this.gfn_allTrim(resParam.textValue).replace(/,\s*$/, ""));										
+			break;	
+			
+		case "mbrMultiTextPopup":
+			this.ds_search.setColumn(0,"MBR_ID",this.gfn_allTrim(resParam.textValue).replace(/,\s*$/, ""));
+			this.ds_search.setColumn(0,"MBR_NM",this.gfn_allTrim(resParam.textValue).replace(/,\s*$/, ""));										
+			break;
+			
+		default : 
+			break;
+	}
+}
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+
+	//grid 초기 설정
+	this.grd_list.uSortFlag = "false";
+	this.grd_list.uServerSortFlag = "true";
+	this.grd_list.uSortCallback = "fn_sortCallback";	
+	this.grd_list.uCellSizeType = "true";
+	
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 10;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;
+	
+	//grid 개인화(전제조건 : grid Head가 무조건 1Row인 경우)
+	this.uGridList = "grd_list";
+	this.grd_list.uRightMouse = "true";
+	this.grd_list.uPersonalFlag = "true";
+	this.grd_list.uDefaultFormat = "ROW_NO,TRANS_DTM,CUST_ISS_NO,CB_TEL_NO,TEL_NO,SMS_SEND_RSLT_CD,TRANS_MSG";
+	
+}
+
+this.cfn_personalPopupClose = function(sRet){
+	this.grd_list.set_formats(sRet);
+	this.pdiv_personal.closePopup();
+}
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+// 검색영역 초기화
+this.clear = function() {
+	//검색 초기값 설정
+	this.ds_search.copyData(this.ds_search_origin);
+	
+	// 메시지 구분 설정
+	this.Div00.form.cmb_custIssNo.set_index(0);
+	
+	// 발송일자 설정			
+	this.Div00.form.cmb_inqPerdSprCd.set_index(1);			
+	this.fn_setPeriodDate();
+	
+	// Multi검색조회 데이터 존재시 초기화
+    this.fn_deleteMultiData("fn_callBack");
+	
+	//발송상태 항목 설정
+	this.grd_smsSendRsltCd_init(this.grd_smsSendRsltCd);
+				
+	// 조회결과 갯수 셋팅
+	this.cbo_page.set_index(1);
+};
+
+//조회기간 설정
+this.fn_setPeriodDate = function(){
+	var term = this.Div00.form.cmb_inqPerdSprCd.value;
+	
+	if(term == "1") { this.Div00.form.cal_sendStrDate.set_value(this.gfn_addDate(this.gfn_getDate(),0)); } //1일
+	else if(term == "2") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addDate(this.gfn_getDate(),-6)) } //1주
+	else if(term == "3") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addDate(this.gfn_getDate(),-13)); } //2주
+	else if(term == "4") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addMonth(this.gfn_addDate(this.gfn_getDate(),+1),-1)); } //1개월
+	else if(term == "5") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addMonth(this.gfn_addDate(this.gfn_getDate(),+1),-3)); } //3개월
+	else if(term == "6") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addMonth(this.gfn_addDate(this.gfn_getDate(),+1),-6)); } //6개월
+	else if(term == "7") {this.Div00.form.cal_sendStrDate.set_value(this.gfn_addMonth(this.gfn_addDate(this.gfn_getDate(),+1),-12)); } //1년
+		
+	this.Div00.form.cal_sendEndDate.set_value(this.gfn_getDate());		
+}
+
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+// 발송상태 EDIT 클릭
+this.div00_btn_smsSendRsltCd_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    this.grd_smsSendRsltCd.set_visible(!this.grd_smsSendRsltCd.visible);
+	if(this.grd_smsSendRsltCd.visible) {
+		this.grd_smsSendRsltCd.setFocus();
+	}	
+};
+
+// 발송상태 Dataset
+this.ds_smsSendRsltCd_oncolumnchanged = function(obj:nexacro.NormalDataset,e:nexacro.DSColChangeEventInfo)
+{
+    var status = new Array();
+	var stname = new Array();
+	for(var i = 0; i <= this.ds_smsSendRsltCd.rowcount; i++) {
+		if(this.ds_smsSendRsltCd.getColumn(i, "CHK") == '1') {
+			status[status.length] = this.ds_smsSendRsltCd.getColumn(i, "COM_DTL_CD"   );
+			stname[stname.length] = this.ds_smsSendRsltCd.getColumn(i, "COM_DTL_CD_NM");
+		}
+	}
+
+	// 발송상태값 설정
+	this.ds_search.setColumn(0, "SMS_SEND_RSLT_CD", status.join(","));	
+	this.Div00.form.edt_smsSendRsltCd.set_value(stname.join(","));	
+	var btooltip = (this.gfn_lengthByte(this.Div00.form.edt_smsSendRsltCd.value) * 6) > (this.Div00.form.edt_smsSendRsltCd.width - 10);
+	this.Div00.form.edt_smsSendRsltCd.set_tooltiptext(btooltip ? this.Div00.form.edt_smsSendRsltCd.value : null);	
+};
+
+// 발송상태 에디터박스 버튼
+this.Div00_btn_smsSendRsltCd_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    this.grd_smsSendRsltCd.set_visible(!this.grd_smsSendRsltCd.visible);
+ 	if(this.grd_smsSendRsltCd.visible) {
+  		this.grd_smsSendRsltCd.setFocus();
+  	}
+};
+
+
+// 발송상태 Dataset
+this.ds_smsSendRsltCd_cancolumnchange = function(obj:nexacro.NormalDataset,e:nexacro.DSColChangeEventInfo)
+{
+	return e.newvalue == '1' || this.ds_smsSendRsltCd.getCaseCount("CHK == '1'") > 1;
+};
+
+
+// 발송상태 조회조건 그리드 클릭
+this.grd_smsSendRsltCd_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.cell == this.grd_smsSendRsltCd.getBindCellIndex("Body", "COM_DTL_CD_NM")) {
+		this.ds_smsSendRsltCd.setColumn(this.ds_smsSendRsltCd.rowposition, "CHK", (this.ds_smsSendRsltCd.getColumn(this.ds_smsSendRsltCd.rowposition, "CHK") == '1' ? '0' : '1'));
+	}
+};
+
+// 발송상태 그리드 닫기
+this.grd_smsSendRsltCd_onkillfocus = function(obj:nexacro.Grid,e:nexacro.KillFocusEventInfo)
+{
+	if(e.newcomponent.id != this.Div00.form.edt_smsSendRsltCd.id && e.newcomponent.id != this.Div00.form.btn_smsSendRsltCd.id) {
+		this.grd_smsSendRsltCd.set_visible(false);
+	}
+};
+
+// 발송상태 그리드 키 다운
+this.grd_smsSendRsltCd_onkeydown = function(obj:nexacro.Grid,e:nexacro.KeyEventInfo)
+{
+    if(e.keycode == 32 && this.grd_smsSendRsltCd.getCellPos() != this.grd_smsSendRsltCd.getBindCellIndex("Body", "CHK")) {
+		this.ds_smsSendRsltCd.setColumn(this.ds_smsSendRsltCd.rowposition, "CHK", (this.ds_smsSendRsltCd.getColumn(this.ds_smsSendRsltCd.rowposition, "CHK") == '1' ? '0' : '1'));
+	} else if(e.keycode == 13) {
+		this.grd_smsSendRsltCd.set_visible(false);
+	}
+};
+
+// 발송상태 그리드 헤더 클릭
+this.grd_smsSendRsltCd_onheadclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+    var cell = obj.getBindCellIndex("body", "CHK");
+	var val = (obj.getCellProperty("head", cell, "text")||'0') == '0' ? '1' : '0';
+	
+	obj.setCellProperty("head", cell, "text", val);
+
+    this.ds_smsSendRsltCd.setColumn(0, 'CHK', '1');  // 결과수신대기(기본)
+	this.ds_smsSendRsltCd.setColumn(2, 'CHK', '1');  // 전송성공(기본)
+		
+	for(var i = 1; i < this.ds_smsSendRsltCd.rowcount; i++) {
+	    if (i != 0 && i != 2 ){
+			this.ds_smsSendRsltCd.setColumn(i, "CHK", val);
+		}
+	}	
+};
+
+// 발송상태 그리드 초기화
+this.grd_smsSendRsltCd_init = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+    var cell = obj.getBindCellIndex("body", "CHK");
+	var val = "0";
+	
+	obj.setCellProperty("Head", cell, "text", val);
+    
+	this.ds_smsSendRsltCd.set_enableevent(false);
+ 	for(var i = this.ds_smsSendRsltCd.rowcount; i >= 0; i--) {
+ 	    this.ds_smsSendRsltCd.setColumn(i, "CHK", val);	
+ 	}
+	this.ds_smsSendRsltCd.set_enableevent(true);
+
+	this.ds_smsSendRsltCd.setColumn(0, 'CHK', '1');  // 결과수신대기(기본)
+	this.ds_smsSendRsltCd.setColumn(2, 'CHK', '1');  // 전송성공(기본)
+};
+
+// 발송상태 그리드 확인 버튼
+this.grd_smsSendRsltCd_onsummaryclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	this.grd_smsSendRsltCd.set_visible(false);
+};
+
+//발송번호 텍스트 입력 팝업
+this.Div00_cbTelNo_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = {
+		textId : this.Div00.form.edt_cbTelNo
+	};
+	
+	var options = {};
+	options.title = "발송번호";
+
+	this.gfn_openPopup("cbTelNoMultiTextPopup", "CO_POP::SSP_BO_PP_13.xfdl", params,  "fn_multiTextPopupCallback", options);
+};
+
+//수신번호 텍스트 입력 팝업
+this.Div00_telNo_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = {
+		textId : this.Div00.form.edt_telNo
+	};
+	
+	var options = {};
+	options.title = "발송번호";
+
+	this.gfn_openPopup("telNoMultiTextPopup", "CO_POP::SSP_BO_PP_13.xfdl", params,  "fn_multiTextPopupCallback", options);
+};
+
+//회원 조건 팝업
+this.Div00_btn_mbrMltPop_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_trimDatasetRow(this.ds_search); //데이터셋 일괄 공백제거
+	
+	var objParam = {
+		coCd : this.fv_sessionData.coCd,		
+		mbrId: this.Div00.form.edt_mbr.value,
+		mbrNm: ""
+	};
+	this.gfn_openPopup("mbrMultiPop", "CO_POP::SSP_BO_PP_25.xfdl", objParam);
+};
+
+//회원 조건 텍스트 입력 팝업
+this.Div00_btn_mbrTxt_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = {
+		textId : this.Div00.form.edt_mbr
+	};
+	
+	var options = {};
+	options.title = "회원";
+
+	this.gfn_openPopup("mbrMultiTextPopup", "CO_POP::SSP_BO_PP_13.xfdl", params,  "fn_multiTextPopupCallback", options);
+};
+
+//조회버튼
+this.Div00_btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search(0);
+};
+
+//레이아웃 저장 버튼
+this.btnLayoutSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.gfn_personalSave("grd_list", this.grd_list.getCurFormatString()); 
+};
+
+//레이아웃 초기화
+this.btnLayoutClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	//suOrgFormat
+	this.gfn_personalReset("grd_list"); 
+	this.grd_list.set_formats(this.grd_list.uOrgFormat);
+};
+
+//초기화 
+this.Div00_btnClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.clear();
+};
+
+// 엑셀추출버튼
+this.btnExcel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_search.getRowType(0) == Dataset.ROWTYPE_UPDATE) {
+		alert(this.gfn_getMessage("COMS000007")); //조회 조건이 변경 되었습니다.\n다시 조회하시기 바랍니다.
+		return false;
+	}
+	
+	this.fn_excel_download();	
+};
+
+// 발송일자 기간 설정
+this.cmb_inqPerdSprCd_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_setPeriodDate();
+};
+
+//페이징 갯수 목록 변경시
+this.cbo_page_onitemchaged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.Div00_btn_search_onclick();
+};]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="form.cbo_page" propid="value" datasetid="ds_search" columnid="ROW_COUNT"/>
+      <BindItem id="item1" compid="Div00.form.cal_sendStrDate" propid="value" datasetid="ds_search" columnid="TRANS_STR_DTM"/>
+      <BindItem id="item2" compid="Div00.form.cal_sendEndDate" propid="value" datasetid="ds_search" columnid="TRANS_END_DTM"/>
+      <BindItem id="item3" compid="Div00.form.cmb_custIssNo" propid="value" datasetid="ds_search" columnid="CUST_ISS_NO"/>
+      <BindItem id="item5" compid="Div00.form.edt_cbTelNo" propid="value" datasetid="ds_search" columnid="CB_TEL_NO"/>
+      <BindItem id="item6" compid="Div00.form.edt_telNo" propid="value" datasetid="ds_search" columnid="TEL_NO"/>
+      <BindItem id="item7" compid="Div00.form.edt_mbr" propid="value" datasetid="ds_search" columnid="MBR_ID"/>
+      <BindItem id="item8" compid="Div00.form.edt_TransMsg" propid="value" datasetid="ds_search" columnid="TRANS_MSG"/>
+    </Bind>
+  </Form>
+</FDL>

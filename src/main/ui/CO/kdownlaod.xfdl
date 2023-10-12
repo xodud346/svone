@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="kdownlaod" width="1280" height="720" titletext="New Form">
+    <Layouts>
+      <Layout height="720" width="1280">
+        <RaonkUpload id="RaonkUpload01" taborder="0" left="74" top="140" width="862" height="272" RAONKUPLOAD_OnError="RaonkUpload01_RAONKUPLOAD_OnError" RAONKUPLOAD_CreationComplete="RaonkUpload01_RAONKUPLOAD_CreationComplete" Mode="view" RAONKUPLOAD_AfterAddAllFile="RaonkUpload01_RAONKUPLOAD_AfterAddAllFile"/>
+        <Button id="Button00" taborder="1" text="Button00" left="84" top="44" width="150" height="32" onclick="Button00_onclick"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[function fn_addFile() {
+	
+
+	// 실제 서버상의 파일을 작성합니다.
+	this.RAONKUPLOAD.AddUploadedFile('1', '전경\\전경사진.jpg', 'http://10.59.132.132:5730/raonkupload/sdk/sample/images/Panorama/ViewPhotos.jpg', '87325', '');
+	this.RAONKUPLOAD.AddUploadedFile('2', '전경\\전경사진1.jpg', 'http://10.59.132.132:5730/raonkupload/sdk/sample/images/Panorama/ViewPhotos.jpg', '87325', '');
+    this.RAONKUPLOAD.AddUploadedFile('3', '풍경\\이미지\\풍경이미지.bmp','http://10.59.132.132:5730/raonkupload/sdk/sample/images/Scenery/image/CreativeImages.bmp', '2359350', '');
+	this.RAONKUPLOAD.AddUploadedFile('4', '계절\\봄\\느낌\\봄을느껴봅시다.gif', 'http://10.59.132.132:5730/raonkupload/sdk/sample/images/season/spring/feeling/Lets_feel_the_spring.gif', '192866', '');
+}
+
+
+this.Button00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+fn_addFile();
+};
+
+this.RaonkUpload01_RAONKUPLOAD_OnError = function(obj:nexacro.RaonkUpload, paramObj:nexacro.RaonkUploadEventInfo)
+{
+	console.log('Error : ' + paramObj.userdata.strCode + ', ' + paramObj.userdata.strMessage);
+
+    if (paramObj.userdata.arrUploadedFileList != null && paramObj.userdata.arrUploadedFileList != '') {
+			console.log('다운로드 된 파일 리스트');
+            
+			var uploadedFileLen = paramObj.userdata.arrUploadedFileList.length;
+                
+			for (var i = 0; i < uploadedFileLen; i++) {
+				console.log(paramObj.userdata.arrUploadedFileList[i].uploadName + ', ' + paramObj.userdata.arrUploadedFileList[i].uploadPath);
+
+				// originName: paramObj.arrUploadedFileList[i].originName
+				// fileSize: paramObj.arrUploadedFileList[i].fileSize
+				// uploadName: paramObj.arrUploadedFileList[i].uploadName
+				// uploadPath: paramObj.arrUploadedFileList[i].uploadPath
+				// logicalPath: paramObj.arrUploadedFileList[i].logicalPath
+				// order: paramObj.arrUploadedFileList[i].order
+				// status: paramObj.arrUploadedFileList[i].status
+				// customValue: paramObj.arrUploadedFileList[i].customValue
+				// responseCustomValue: paramObj.arrUploadedFileList[i].responseCustomValue
+            }
+    }
+};
+
+this.RaonkUpload01_RAONKUPLOAD_CreationComplete = function(obj:nexacro.RaonkUpload,  paramObj:nexacro.RaonkUploadEventInfo)
+{
+      console.log('다운로드 생성 완료 : ' + obj.id);
+};
+
+this.RaonkUpload01_RAONKUPLOAD_AfterAddAllFile = function(obj:nexacro.RaonkUpload, paramObj:nexacro.RaonkUploadEventInfo)
+{
+	console.log("다운로드 추가 완료");
+};
+]]></Script>
+  </Form>
+</FDL>

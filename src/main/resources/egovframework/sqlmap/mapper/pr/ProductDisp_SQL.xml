@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.pr.prProductDisp">
+   
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 기본정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <select id="selectDispBasis" parameterType="HashMap" resultType="HashMap">
+        SELECT
+            DISP.CO_CD,
+            DISP.PRD_CLCD,
+            SSP_APP.FN_PR_FULL_CLSF_NM(DISP.CO_CD, DISP.PRD_CLCD) PRD_CLSF_NM,
+            TO_NUMBER(DISP.REPR_PRD_ID) REPR_PRD_ID,
+            DISP.DISP_PRD_NM,
+            DISP.USE_YN,
+            DISP.DISP_PRD_SPR_CD,
+            DISP.ADD_INFO_SET_YN,
+            DISP.PRFRT,
+            DISP.UPD_RSN,
+            DISP.SRT_SO,
+            DISP.REGPSN_ID,
+            DISP.REG_DTM,
+            DISP.UPDPSN_ID,
+            DISP.UPD_DTM
+        FROM
+            SSP_APP.TB_PR_DISP_BASIS DISP, SSP_APP.TB_PR_PRD_CLSF_INFO CLSF
+        WHERE DISP.CO_CD = CLSF.CO_CD AND DISP.PRD_CLCD = CLSF.PRD_CLCD AND DISP.CO_CD = #{CO_CD} AND DISP.PRD_CLCD = #{PRD_CLCD}
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 대표상품정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <select id="selectDispReprProductInfo" parameterType="HashMap" resultType="HashMap">
+        SELECT 
+            PRD.CO_CD ,
+            TO_NUMBER(PRD.PRD_ID) PRD_ID_VIEW,
+            PRD.PRD_ID,
+            PRD.PRD_NM,
+            PRD.PRD_CLCD ,  
+            SSP_APP.FN_PR_FULL_CLSF_NM(PRD.CO_CD, PRD.PRD_CLCD) PRD_CLSF_NM,
+            SSP_APP.FN_PR_ATTR_VAL_LIST(PRD.CO_CD, PRD.PRD_ID) ATTR_VAL,
+            MNFR.MNFR_NM ,
+            CTRY.CTRY_NM, 
+            CASE WHEN BASIS_UNIT_CD = NVL(SELL_UNIT_CD, BASIS_UNIT_CD) 
+                     THEN NVL(BASIS_UNIT_QTY, '1') || BASIS_UNIT_CD
+                     ELSE NVL(SELL_UNIT_QTY, '1') || SELL_UNIT_CD || '(' || NVL(BASIS_UNIT_QTY, '1') || BASIS_UNIT_CD || ')' 
+                END AS SELL_UNIT_CD ,
+            SSP_APP.FN_COM_DTL_CDNM('KO', 'USE_YN', PRD.PRD_USE_YN) PRD_USE_YN
+        FROM SSP_APP.TB_PR_PRD_INFO PRD
+        INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO MPRD
+            ON MPRD.CO_CD = PRD.CO_CD AND MPRD.PRD_ID = PRD.PRD_ID
+        LEFT OUTER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR
+            ON MNFR.CO_CD = PRD.CO_CD AND MNFR.MNFR_NO = MPRD.MNFR_NO
+        LEFT OUTER JOIN SSP_APP.TB_CO_CTRY_INFO CTRY
+            ON CTRY.CO_CD = PRD.CO_CD AND CTRY.CTRY_SPR_CD  = MPRD.ORGPLC_CTRY_CD
+        WHERE PRD.CO_CD = #{CO_CD} AND PRD.PRD_ID = LPAD(#{PRD_ID}, 18, '0')
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 옵션정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <select id="selectDispOptnBasis" parameterType="HashMap" resultType="HashMap">
+        SELECT
+            CO_CD,
+            PRD_CLCD,
+            OPTN_ITM_NO,
+            OPTN_NM,
+            MAND_YN,
+            IPT_TYPE_CD,
+            SRT_SO,
+            REGPSN_ID,
+            REG_DTM,
+            UPDPSN_ID,
+            UPD_DTM
+        FROM
+            SSP_APP.TB_PR_DISP_OPTN_BASIS
+        WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD}
+        ORDER BY SRT_SO, OPTN_ITM_NO
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 옵션상세
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <select id="selectDispOptnDtl" parameterType="HashMap" resultType="HashMap">
+        SELECT
+            D.CO_CD,
+            D.PRD_CLCD,
+            (SELECT OPTN_NM FROM SSP_APP.TB_PR_DISP_OPTN_BASIS S WHERE S.CO_CD = D.CO_CD AND S.PRD_CLCD = D.PRD_CLCD AND S.OPTN_ITM_NO = D.OPTN_ITM_NO AND ROWNUM = 1) OPTN_NM,
+            COUNT(D.OPTN_ITM_NO) OVER(PARTITION BY D.OPTN_ITM_NO) OPTN_CNT,
+            D.OPTN_ITM_NO,
+            D.OPTN_DTL_ITM_NO,
+            D.OPTN_DTL_NM,
+            D.SRT_SO,
+            D.OPTN_DTL_CTS,
+            D.DOC_REG_ID,
+            D.DOC_REG_ID ASIS_DOC_REG_ID,
+            (SELECT ATFL_NM FROM SSP_APP.TB_CO_ATFL_DTLS S WHERE S.DOC_REG_ID = D.DOC_REG_ID AND S.DOC_REG_SEQ = 1) ATFL_NM,
+            D.REGPSN_ID,
+            D.REG_DTM,
+            D.UPDPSN_ID,
+            D.UPD_DTM,
+            B.IPT_TYPE_CD
+        FROM
+            SSP_APP.TB_PR_DISP_OPTN_BASIS B
+        INNER JOIN SSP_APP.TB_PR_DISP_OPTN_DTL D
+            ON B.CO_CD = D.CO_CD AND B.PRD_CLCD = D.PRD_CLCD AND B.OPTN_ITM_NO = D.OPTN_ITM_NO 
+        WHERE B.CO_CD = #{CO_CD} AND B.PRD_CLCD = #{PRD_CLCD}
+        ORDER BY B.SRT_SO, B.OPTN_ITM_NO, D.SRT_SO, D.OPTN_DTL_ITM_NO
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 상품연결정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <select id="selectDispOptnDtlMapp" parameterType="HashMap" resultType="HashMap">
+        SELECT
+            D.CO_CD,
+            D.PRD_CLCD,
+            D.OPTN_DTL_MAPP_ITM_NO,
+            D.OPTN_DTL_ITM_MAPP_CTS,
+            TO_NUMBER(MAPP_PRD_ID) MAPP_PRD_ID,
+            S.PRD_NM,
+            S.PRD_USE_YN,
+            SSP_APP.FN_PR_ATTR_VAL_LIST(D.CO_CD, LPAD(D.MAPP_PRD_ID, 18, '0')) ATTR_VAL,
+            D.REGPSN_ID,
+            D.REG_DTM,
+            D.UPDPSN_ID,
+            D.UPD_DTM
+        FROM
+            SSP_APP.TB_PR_DISP_OPTN_DTL_MAPP D
+        LEFT OUTER JOIN SSP_APP.TB_PR_PRD_INFO S 
+            ON D.CO_CD = S.CO_CD AND LPAD(D.MAPP_PRD_ID, 18, '0') = S.PRD_ID 
+        WHERE D.CO_CD = #{CO_CD} AND D.PRD_CLCD = #{PRD_CLCD}
+        ORDER BY OPTN_DTL_MAPP_ITM_NO
+    </select>
+    
+    <select id="selectOptnNmByDtlItmno" parameterType="HashMap" resultType="HashMap">
+        SELECT B.OPTN_ITM_NO, B.OPTN_NM, D.OPTN_DTL_ITM_NO, D.OPTN_DTL_NM  
+        FROM TB_PR_DISP_OPTN_BASIS B, TB_PR_DISP_OPTN_DTL D 
+        WHERE B.CO_CD = D.CO_CD  
+        AND B.PRD_CLCD = D.PRD_CLCD 
+        AND B.OPTN_ITM_NO = D.OPTN_ITM_NO 
+        AND B.CO_CD = #{CO_CD} AND B.PRD_CLCD = #{PRD_CLCD} 
+        AND OPTN_DTL_ITM_NO = #{OPTN_DTL_ITM_NO} 
+        AND ROWNUM = 1
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 추가정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <select id="selectDispAddOptnBasis" parameterType="HashMap" resultType="HashMap">
+        SELECT
+            CO_CD,
+            PRD_CLCD,
+            ADD_OPTN_ITM_NO,
+            ADD_OPTN_NM,
+            IPT_TYPE_CD,
+            MAND_YN,
+            ATFL_YN,
+            SRT_SO,
+            REGPSN_ID,
+            REG_DTM,
+            UPDPSN_ID,
+            UPD_DTM
+        FROM
+            SSP_APP.TB_PR_DISP_ADD_OPTN_BASIS
+        WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD}
+        ORDER BY SRT_SO, ADD_OPTN_ITM_NO
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 추가정보상세
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <select id="selectDispAddOptnDtl" parameterType="HashMap" resultType="HashMap">
+        SELECT
+            D.CO_CD,
+            D.PRD_CLCD,
+            (SELECT ADD_OPTN_NM FROM SSP_APP.TB_PR_DISP_ADD_OPTN_BASIS S WHERE S.CO_CD = D.CO_CD AND S.PRD_CLCD = D.PRD_CLCD AND S.ADD_OPTN_ITM_NO = D.ADD_OPTN_ITM_NO AND ROWNUM = 1) ADD_OPTN_NM,
+            COUNT(D.ADD_OPTN_ITM_NO) OVER(PARTITION BY D.ADD_OPTN_ITM_NO) ADD_OPTN_CNT,
+            D.ADD_OPTN_ITM_NO,
+            D.ADD_OPTN_DTL_ITM_NO,
+            D.ADD_OPTN_DTL_NM,
+            D.SRT_SO,
+            D.OPTN_DTL_CTS,
+            D.DOC_REG_ID,
+            D.REGPSN_ID,
+            D.REG_DTM,
+            D.UPDPSN_ID,
+            D.UPD_DTM,
+            B.IPT_TYPE_CD,
+            B.ATFL_YN
+        FROM
+            SSP_APP.TB_PR_DISP_ADD_OPTN_BASIS B 
+        INNER JOIN SSP_APP.TB_PR_DISP_ADD_OPTN_DTL D
+            ON B.CO_CD = D.CO_CD AND B.PRD_CLCD = D.PRD_CLCD AND B.ADD_OPTN_ITM_NO = D.ADD_OPTN_ITM_NO 
+        WHERE D.CO_CD = #{CO_CD} AND D.PRD_CLCD = #{PRD_CLCD}
+        ORDER BY B.SRT_SO, B.ADD_OPTN_ITM_NO, D.SRT_SO, D.ADD_OPTN_DTL_ITM_NO
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 기본정보 등록
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <insert id="insertDispBasis" parameterType="HashMap">
+        MERGE INTO SSP_APP.TB_PR_DISP_BASIS USING DUAL
+        ON (CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD})
+        WHEN MATCHED THEN
+            UPDATE SET
+                REPR_PRD_ID = LPAD(#{REPR_PRD_ID}, 18, '0'),
+                DISP_PRD_NM = #{DISP_PRD_NM},
+                USE_YN = #{USE_YN},
+                DISP_PRD_SPR_CD = #{DISP_PRD_SPR_CD},
+                ADD_INFO_SET_YN = #{ADD_INFO_SET_YN},
+                PRFRT = #{PRFRT},
+                UPD_RSN = #{UPD_RSN},
+                SRT_SO = #{SRT_SO},
+                UPDPSN_ID = #{SESSION_OPRTR_ID},
+                UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+                (CO_CD,
+                PRD_CLCD,
+                REPR_PRD_ID,
+                DISP_PRD_NM,
+                USE_YN,
+                DISP_PRD_SPR_CD,
+                ADD_INFO_SET_YN,
+                PRFRT,
+                UPD_RSN,
+                SRT_SO,
+                REGPSN_ID,
+                REG_DTM)
+            VALUES(#{CO_CD},
+                #{PRD_CLCD},
+                LPAD(#{REPR_PRD_ID}, 18, '0'), 
+                #{DISP_PRD_NM},
+                #{USE_YN},
+                #{DISP_PRD_SPR_CD},
+                #{ADD_INFO_SET_YN},
+                #{PRFRT},
+                #{UPD_RSN},
+                #{SRT_SO},
+                #{SESSION_OPRTR_ID},
+                SYSDATE)
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 옵션정보 등록
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <insert id="insertDispOptnBasis" parameterType="HashMap">
+        MERGE INTO SSP_APP.TB_PR_DISP_OPTN_BASIS USING DUAL
+        ON (CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND OPTN_ITM_NO = #{OPTN_ITM_NO})
+        WHEN MATCHED THEN
+            UPDATE SET
+                OPTN_NM = #{OPTN_NM},
+                MAND_YN = #{MAND_YN},
+                IPT_TYPE_CD =  #{IPT_TYPE_CD},
+                SRT_SO =  #{SRT_SO},
+                UPDPSN_ID =  #{SESSION_OPRTR_ID},
+                UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+                (CO_CD,
+                PRD_CLCD,
+                OPTN_ITM_NO,
+                OPTN_NM,
+                MAND_YN,
+                IPT_TYPE_CD,
+                SRT_SO,
+                REGPSN_ID,
+                REG_DTM)
+            VALUES(#{CO_CD},
+                #{PRD_CLCD},
+                #{OPTN_ITM_NO},
+                #{OPTN_NM},
+                #{MAND_YN},
+                #{IPT_TYPE_CD},
+                #{SRT_SO},
+                #{SESSION_OPRTR_ID},
+                SYSDATE)
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 옵션상세 등록
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <insert id="insertDispOptnDtl" parameterType="HashMap">
+        MERGE INTO SSP_APP.TB_PR_DISP_OPTN_DTL USING DUAL
+        ON (CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND OPTN_ITM_NO = #{OPTN_ITM_NO} AND OPTN_DTL_ITM_NO = #{OPTN_DTL_ITM_NO})
+        WHEN MATCHED THEN
+        UPDATE SET
+            OPTN_DTL_NM = #{OPTN_DTL_NM},
+            SRT_SO = #{SRT_SO},
+            OPTN_DTL_CTS = #{OPTN_DTL_CTS},
+            DOC_REG_ID = #{DOC_REG_ID},
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+                (CO_CD,
+                PRD_CLCD,
+                OPTN_ITM_NO,
+                OPTN_DTL_ITM_NO,
+                OPTN_DTL_NM,
+                SRT_SO,
+                OPTN_DTL_CTS,
+                DOC_REG_ID,
+                REGPSN_ID,
+                REG_DTM)
+            VALUES(#{CO_CD},
+                #{PRD_CLCD},
+                #{OPTN_ITM_NO},
+                #{OPTN_DTL_ITM_NO},
+                #{OPTN_DTL_NM},
+                #{SRT_SO},
+                #{OPTN_DTL_CTS},
+                #{DOC_REG_ID},
+                #{SESSION_OPRTR_ID},
+                SYSDATE)
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 상품연결 등록
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <insert id="insertDispOptnDtlMapp" parameterType="HashMap">
+        INSERT INTO SSP_APP.TB_PR_DISP_OPTN_DTL_MAPP
+        (CO_CD,
+            PRD_CLCD,
+            OPTN_DTL_MAPP_ITM_NO,
+            OPTN_DTL_ITM_MAPP_CTS,
+            MAPP_PRD_ID,
+            REGPSN_ID,
+            REG_DTM,
+            UPDPSN_ID,
+            UPD_DTM)
+        VALUES(#{CO_CD},
+            #{PRD_CLCD},
+            #{OPTN_DTL_MAPP_ITM_NO},
+            #{OPTN_DTL_ITM_MAPP_CTS},
+            LPAD(#{MAPP_PRD_ID}, 18, '0'),
+            #{SESSION_OPRTR_ID},
+            SYSDATE,
+            #{SESSION_OPRTR_ID},
+            SYSDATE)
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 추가정보 등록
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <insert id="insertDispAddOptnBasis" parameterType="HashMap">
+        MERGE INTO SSP_APP.TB_PR_DISP_ADD_OPTN_BASIS USING DUAL
+        ON (CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND ADD_OPTN_ITM_NO = #{ADD_OPTN_ITM_NO})
+        WHEN MATCHED THEN
+        UPDATE SET
+            ADD_OPTN_NM = #{ADD_OPTN_NM},
+            IPT_TYPE_CD = #{IPT_TYPE_CD},
+            MAND_YN = #{MAND_YN},
+            ATFL_YN = #{ATFL_YN},
+            SRT_SO = #{SRT_SO},
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+        INSERT
+            (CO_CD,
+            PRD_CLCD,
+            ADD_OPTN_ITM_NO,
+            ADD_OPTN_NM,
+            IPT_TYPE_CD,
+            MAND_YN,
+            ATFL_YN,
+            SRT_SO,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES(#{CO_CD},
+            #{PRD_CLCD},
+            #{ADD_OPTN_ITM_NO},
+            #{ADD_OPTN_NM},
+            #{IPT_TYPE_CD},
+            #{MAND_YN},
+            #{ATFL_YN},
+            #{SRT_SO},
+            #{SESSION_OPRTR_ID},
+            SYSDATE)
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 추가정보상세 등록
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <insert id="insertDispAddOptnDtl" parameterType="HashMap">
+        MERGE INTO SSP_APP.TB_PR_DISP_ADD_OPTN_DTL USING DUAL
+        ON (CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND ADD_OPTN_ITM_NO = #{ADD_OPTN_ITM_NO} AND ADD_OPTN_DTL_ITM_NO = #{ADD_OPTN_DTL_ITM_NO})
+        WHEN MATCHED THEN
+        UPDATE SET
+            ADD_OPTN_DTL_NM = #{ADD_OPTN_DTL_NM},
+            SRT_SO = #{SRT_SO},
+            OPTN_DTL_CTS = #{OPTN_DTL_CTS},
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+        INSERT
+            (CO_CD,
+            PRD_CLCD,
+            ADD_OPTN_ITM_NO,
+            ADD_OPTN_DTL_ITM_NO,
+            ADD_OPTN_DTL_NM,
+            SRT_SO,
+            OPTN_DTL_CTS,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES(#{CO_CD},
+            #{PRD_CLCD},
+            #{ADD_OPTN_ITM_NO},
+            #{ADD_OPTN_DTL_ITM_NO},
+            #{ADD_OPTN_DTL_NM},
+            #{SRT_SO},
+            #{OPTN_DTL_CTS},
+            #{SESSION_OPRTR_ID},
+            SYSDATE)
+                    
+    </insert>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 존재여부 체크
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <select id="selectProductDispExists" parameterType="HashMap" resultType="String">
+        SELECT COUNT(*) FROM SSP_APP.TB_PR_DISP_BASIS WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD}
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 담당자 정보
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <select id="selectProductDispOprtr" parameterType="HashMap" resultType="HashMap">
+        SELECT OP.CO_CD, OP.OPRTR_ID, OP.OPRTR_NM, CLSF.PRD_CLCD, CLSF.PRD_CLSF_NM 
+        FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP, SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO PS, TB_PR_PRD_CLSF_INFO CLSF
+        WHERE OP.CO_CD = PS.CO_CD AND OP.OPRTR_ID = PS.PRD_CLSF_CHRPSN_ID  AND PS.PRD_CLSF_CHRPSN_SPR_CD = '10'
+        AND PS.PRD_CLSF_CHRPSN_TP_CD = '20'  AND PS.PRD_CLSF_CHRPSN_USEYN = 'Y' AND PS.MNFR_NO = '*'
+        AND PS.CO_CD = CLSF.CO_CD AND PS.PRD_CLCD = CLSF.PRD_CLCD AND PS.CO_CD = #{CO_CD} AND PS.PRD_CLCD = #{PRD_CLCD}
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 옵션정보 삭제
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <delete id="deleteDispOptnBasis" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_DISP_OPTN_BASIS WHERE CO_CD=#{CO_CD} AND PRD_CLCD=#{PRD_CLCD} AND OPTN_ITM_NO=#{OPTN_ITM_NO}
+    </delete>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 옵션상세 삭제(옵션기준)
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <delete id="deleteDispOptnDtlByBasis" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_DISP_OPTN_DTL WHERE CO_CD=#{CO_CD} AND PRD_CLCD=#{PRD_CLCD} AND OPTN_ITM_NO=#{OPTN_ITM_NO}
+    </delete>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 옵션상세 삭제
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <delete id="deleteDispOptnDtl" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_DISP_OPTN_DTL WHERE CO_CD=#{CO_CD} AND PRD_CLCD=#{PRD_CLCD} AND OPTN_ITM_NO=#{OPTN_ITM_NO} AND OPTN_DTL_ITM_NO=#{OPTN_DTL_ITM_NO}
+    </delete>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 상품연결 삭제
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <delete id="deleteDispOptnDtlMappAll" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_DISP_OPTN_DTL_MAPP WHERE CO_CD=#{CO_CD} AND PRD_CLCD=#{PRD_CLCD}
+    </delete>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 추가정보 삭제
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <delete id="deleteDispAddOptnBasis" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_DISP_ADD_OPTN_BASIS WHERE CO_CD=#{CO_CD} AND PRD_CLCD=#{PRD_CLCD} AND ADD_OPTN_ITM_NO=#{OPTN_ITM_NO}
+    </delete>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 추가정보상세 삭제(추가정보 기준)
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <delete id="deleteDispAddOptnDtlByBasis" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_DISP_ADD_OPTN_DTL WHERE CO_CD=#{CO_CD} AND PRD_CLCD=#{PRD_CLCD} AND ADD_OPTN_ITM_NO=#{OPTN_ITM_NO} 
+    </delete>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 전시상품 추가정보상세 삭제
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.06.17
+    ******************************************************************************
+    -->
+    <delete id="deleteDispAddOptnDtl" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_DISP_ADD_OPTN_DTL WHERE CO_CD=#{CO_CD} AND PRD_CLCD=#{PRD_CLCD} AND ADD_OPTN_ITM_NO=#{OPTN_ITM_NO} AND ADD_OPTN_DTL_ITM_NO=#{OPTN_DTL_ITM_NO}
+    </delete>
+    
+
+</mapper>

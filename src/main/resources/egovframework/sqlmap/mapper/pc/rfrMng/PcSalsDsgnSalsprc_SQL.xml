@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcSalsDsgnSalsprc">
+
+	<sql id="SalsDsgnSalsprcHstWhere">
+		<choose>
+			<when test="inqSpr == 1">
+				<if test="strDtm != null and strDtm != ''.toString()">
+					<![CDATA[
+				    AND Z.UPD_DTM_VIEW >= TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS')
+				    ]]>
+				</if>
+				<if test="endDtm != null and endDtm != ''.toString()">
+				    <![CDATA[
+				    AND Z.UPD_DTM_VIEW < TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')
+				    ]]>
+				</if>
+			</when>
+			<otherwise>
+				<if test="strDtm != null and strDtm != ''.toString()">
+					<![CDATA[
+				    AND TO_DATE(Z.SALS_DSGN_SALSPRC_STR_DTM,'YYYYMMDDHH24MISS') >= TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS')
+				    ]]>
+				</if>
+				<if test="endDtm != null and endDtm != ''.toString()">
+				    <![CDATA[
+				    AND TO_DATE(Z.SALS_DSGN_SALSPRC_STR_DTM,'YYYYMMDDHH24MISS') < TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')
+				    ]]>
+				</if>
+			</otherwise>
+		</choose>
+
+		
+	</sql>
+
+    <select id="selectSalsDsgnSalsprcHstList" parameterType="HashMap" resultType="HashMap">
+        /* PcSalsDsgnSalsprc.selectSalsDsgnSalsprcHstList */
+        SELECT A.* FROM (
+        	SELECT Z.*
+       		FROM(
+				SELECT
+					TO_NUMBER(A.PRD_ID) AS PRD_ID_VIEW,
+					A.BZPLC_ID,
+				  	TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM,
+				  	A.UPD_DTM AS UPD_DTM_VIEW,
+					A.SALS_DSGN_SALSPRC, -- 변경가격
+					A.SALS_DSGN_SALSPRC_STR_DTM, --영업지정판매가시작일시
+					A.SALS_DSGN_SALSPRC_END_DTM, --영업지정판매가종료일시
+					BSS_SALSPRC_USEYN,
+					'KRW' AS CURR_UNIT_CD,
+					A.PRC_TASK_SPR_DESC,
+					A.SALSPRC_DSGN_RSN, -- 변경사유
+					B.OPRTR_ID, --사번
+					B.OPRTR_NM, --변경담당자
+					A.SEQ,
+					A.SALS_SALSPRC_ATFL_ID,
+					C.ATFL_STOR_PATH,
+	         		C.ORI_ATFL_NM,
+	         		C.ATFL_NM,
+	         		#{contextRealPath} AS CONTEXT_REAL_PATH,
+	         		CASE WHEN BSS_SALSPRC_USEYN = 'N' THEN '예외처리' ELSE '기준판매가' END AS TYPE
+				  FROM TB_PC_SALS_DSGN_SALSPRC_HST A
+				  LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+					ON B.CO_CD = A.CO_CD
+					AND B.OPRTR_ID = A.UPDPSN_ID
+				  LEFT OUTER JOIN TB_CO_ATFL_DTLS C
+				  	ON C.DOC_REG_ID = A.SALS_SALSPRC_ATFL_ID
+				  WHERE 1=1
+				  	<if test="coCd != null and coCd != ''.toString()">
+						AND A.CO_CD = #{coCd}
+					</if>
+					<if test="bzplcId != null and bzplcId != ''.toString()">
+						AND A.BZPLC_ID = #{bzplcId}
+					</if>
+					AND A.PRD_ID = LPAD(#{prdId},18,0)
+					AND A.BSS_SALSPRC_USEYN = 'N'
+			)Z
+			WHERE 1=1
+			 	<include refid="SalsDsgnSalsprcHstWhere" />
+		)A
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.UPD_DTM DESC</otherwise>
+		</choose>
+		OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>
+
+    <select id="selectSalsDsgnSalsprcHstCount" parameterType="hashMap" resultType="integer">
+    	/* PcSalsDsgnSalsprc.selectSalsDsgnSalsprcHstCount */
+		SELECT COUNT(*)
+       		FROM(
+				SELECT
+				  	TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM,
+				  	A.UPD_DTM AS UPD_DTM_VIEW,
+					A.SALS_DSGN_SALSPRC, -- 변경가격
+					A.SALS_DSGN_SALSPRC_STR_DTM, --영업지정판매가시작일시
+					A.SALS_DSGN_SALSPRC_END_DTM, --영업지정판매가종료일시
+					BSS_SALSPRC_USEYN,
+					'KRW' AS CURR_UNIT_CD,
+					A.PRC_TASK_SPR_DESC,
+					A.SALSPRC_DSGN_RSN, -- 변경사유
+					B.OPRTR_ID, --사번
+					B.OPRTR_NM, --변경담당자
+					A.SEQ,
+					C.ATFL_STOR_PATH,
+	         		C.ORI_ATFL_NM,
+	         		C.ATFL_NM,
+	         		#{contextRealPath} AS CONTEXT_REAL_PATH,
+	         		CASE WHEN BSS_SALSPRC_USEYN = 'N' THEN '예외처리' ELSE '기준판매가' END AS TYPE
+				  FROM TB_PC_SALS_DSGN_SALSPRC_HST A
+				  LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+					ON B.CO_CD = A.CO_CD
+					AND B.OPRTR_ID = A.UPDPSN_ID
+				  LEFT OUTER JOIN TB_CO_ATFL_DTLS C
+				  	ON C.DOC_REG_ID = A.SALS_SALSPRC_ATFL_ID
+				  WHERE 1=1
+				  	<if test="coCd != null and coCd != ''.toString()">
+						AND A.CO_CD = #{coCd}
+					</if>
+					<if test="bzplcId != null and bzplcId != ''.toString()">
+						AND A.BZPLC_ID = #{bzplcId}
+					</if>
+					AND A.PRD_ID = LPAD(#{prdId},18,0)
+					AND A.BSS_SALSPRC_USEYN = 'N'
+			)Z
+			WHERE 1=1
+			<include refid="SalsDsgnSalsprcHstWhere" />
+    </select>
+
+	<insert id="insertToSalsprcHst" parameterType="hashMap">
+    /* PcSalsDsgnSalsprc.insertToSalsprcHst */
+    INSERT INTO TB_PC_SALS_DSGN_SALSPRC_HST(CO_CD,BZPLC_ID,PRD_ID,SEQ,SALS_DSGN_SALSPRC
+                , SALS_DSGN_SALSPRC_STR_DTM, SALS_DSGN_SALSPRC_END_DTM, SALSPRC_DSGN_RSN
+                , SALS_SALSPRC_ATFL_ID, BSS_SALSPRC_USEYN, PRC_TASK_SPR_DESC,FST_HST_YN
+                , REGPSN_ID,REG_DTM,UPDPSN_ID,UPD_DTM)
+    VALUES(#{coCd},#{bzplcId},LPAD(#{prdId},18,0),FN_PC_HIST_SEQ_CRT('SALS_DSGN_SALSPRC_HST'), #{salsDsgnSalsprc},
+            #{salsDsgnSalsprcStrDtm},#{salsDsgnSalsprcEndDtm}, #{salsprcDsgnRsn}, #{salsSalsprcAtflId}, #{bssSalsprcUseyn}, #{prcTaskSprDesc}, #{fstHstYn}
+            , #{regpsnId},SYSDATE,#{updpsnId},SYSDATE)
+    </insert>
+
+    <update id="updateToSalsprcHst" parameterType="hashMap">
+    /* PcSalsDsgnSalsprc.updateToSalsprcHst */
+    UPDATE TB_PC_SALS_DSGN_SALSPRC_HST T
+        SET   UPDPSN_ID = #{updpsnId}
+            , UPD_DTM = SYSDATE
+            , SALS_DSGN_SALSPRC = #{salsDsgnSalsprc}
+            , SALS_DSGN_SALSPRC_STR_DTM = #{salsDsgnSalsprcStrDtm}
+            , SALS_DSGN_SALSPRC_END_DTM = #{salsDsgnSalsprcEndDtm}
+            , SALSPRC_DSGN_RSN = #{salsprcDsgnRsn}
+            , SALS_SALSPRC_ATFL_ID = #{salsSalsprcAtflId}
+            , BSS_SALSPRC_USEYN = #{bssSalsprcUseyn}
+            , PRC_TASK_SPR_DESC = #{prcTaskSprDesc}
+    WHERE  T.CO_CD = #{coCd}
+      and  T.BZPLC_ID = #{bzplcId}
+      and  T.PRD_ID = LPAD(#{prdId},18,0)
+      and  T.SEQ = #{seq}
+    </update>
+
+    <delete id="deleteToSalsprcHst" parameterType="hashMap">
+    /* PcSalsDsgnSalsprc.deleteToSalsprcHst */
+    DELETE TB_PC_SALS_DSGN_SALSPRC_HST T
+    WHERE  T.CO_CD = #{coCd}
+      and  T.BZPLC_ID = #{bzplcId}
+      and  T.PRD_ID = LPAD(#{prdId},18,0)
+      and  T.SEQ = #{seq}
+    </delete>
+
+     <insert id="insertPcSalsprcHistLast" statementType="CALLABLE">
+    { Call SP_PC_SALS_DSGN_SALSPRC_HST(
+                 #{rtnCd,         mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴코드 */
+               , #{rtnMsg,        mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴메시지 */
+               , #{iudGb,        mode=IN, jdbcType=VARCHAR}
+               , #{coCd,          mode=IN, jdbcType=VARCHAR}
+               , #{bzplcId,       mode=IN, jdbcType=VARCHAR}
+               , #{prdId,         mode=IN, jdbcType=VARCHAR}
+               , #{salsDsgnSalsprcStrDtm,     mode=IN, jdbcType=VARCHAR}
+               , #{regpsnId,      mode=IN, jdbcType=VARCHAR}
+    )}
+    </insert>
+
+</mapper>

@@ -1,0 +1,1025 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+******************************************************************************
+* DESC : 상품 변경이력 쿼리모음
+* 작성자 : 
+* 작성 일자 : 2022.03.10
+******************************************************************************
+-->
+<mapper namespace="PrProductHistory">
+    <select id="selectProductHistoryCount" parameterType="HashMap" resultType="Integer">
+        /* PrProductHistory.selectPersonHistoryCount */
+        SELECT COUNT(*) FROM (
+            <choose>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'person'"> <include refid="selectPersonHistory"/> </when>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'category'"> <include refid="selectCategoryHst"/> </when>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'series'"> <include refid="selectSeriesHst"/> </when>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'productDetail'"> <include refid="selectProductDetailHistory"/> </when>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'disp'"> <include refid="selectDispHistory"/> </when>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'rndDisp'"> <include refid="selectRndDispHistory"/> </when>
+            </choose>
+        ) TB
+    </select>
+    
+    <select id="selectProductHistoryList" parameterType="HashMap" resultType="HashMap">
+        /* PrProductHistory.selectPersonHistoryList */
+        SELECT 
+            HST_SEQ,   --seq
+            ID,    --id
+            COL,   --변경컬럼
+            ASIS,  --변경전값
+            TOBE,  --변경후값
+            UPD_RSN,   --변경사유
+            UPD_ID,    --변경자
+            UPD_NAME,  --변경자명
+            UPD_DTM    --변경일
+        FROM (
+           <choose>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'person'"> <include refid="selectPersonHistory"/> </when>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'category'"> <include refid="selectCategoryHst"/> </when>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'series'"> <include refid="selectSeriesHst"/> </when>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'productDetail'"> <include refid="selectProductDetailHistory"/> </when>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'disp'"> <include refid="selectDispHistory"/> </when>
+                <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'rndDisp'"> <include refid="selectRndDispHistory"/> </when>
+            </choose>
+           ) TB
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+    
+    <!-- 담당자 변경이력  -->
+    <sql id="selectPersonHistory">
+        WITH TEMP AS(
+            SELECT ROWNUM RN, TB.* FROM 
+              (SELECT
+                    HST_SEQ ,
+                    CO_CD,
+                    PRD_CLCD,
+                    DATA_CHG_TP_CD,
+                    DECODE(DATA_CHG_TP_CD, 'C', REG_DTM, 'I', REG_DTM, UPD_DTM) UPD_DTM,
+                    DECODE(DATA_CHG_TP_CD, 'C', REGPSN_ID, 'I', REGPSN_ID, UPDPSN_ID) UPDPSN_ID,
+                    UPD_RSN,
+                    PRD_CLSF_CHRPSN_ID,
+                    PRD_CLSF_CHRPSN_USEYN
+                FROM
+                    SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO_HST MST
+                WHERE MST.CO_CD = #{CO_CD}
+                    AND PRD_CLCD = #{KEY1}
+                    AND PRD_CLSF_CHRPSN_SPR_CD = #{KEY2}
+                    AND PRD_CLSF_CHRPSN_SEQ = #{KEY3}
+                    AND MNFR_NO = '*'
+                ORDER BY MST.HST_SEQ) TB)
+        SELECT * 
+          FROM (        
+               SELECT  
+                   HST_SEQ,
+                   PRD_CLCD ID,
+                   '담당자' COL,
+                   (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP 
+                      WHERE OP.OPRTR_ID = DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT PRD_CLSF_CHRPSN_ID FROM TEMP WHERE RN = A.RN -1))) ASIS,
+                   (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP 
+                      WHERE OP.OPRTR_ID = DECODE(DATA_CHG_TP_CD, 'D', NULL, PRD_CLSF_CHRPSN_ID)) TOBE,
+                   UPD_RSN UPD_RSN,
+                   A.UPDPSN_ID UPD_ID ,
+                   (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                   A.UPD_DTM UPD_DTM,
+                   A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+               FROM TEMP A
+               WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y',DECODE(PRD_CLSF_CHRPSN_ID, (SELECT PRD_CLSF_CHRPSN_ID FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+               UNION ALL 
+               SELECT  
+                   HST_SEQ,
+                   PRD_CLCD ID,
+                   '상태' COL,
+                   DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT DECODE(PRD_CLSF_CHRPSN_USEYN, 'Y', '사용', '삭제') FROM TEMP WHERE RN = A.RN -1)) ASIS,
+                   DECODE(DATA_CHG_TP_CD, 'D', NULL, DECODE(PRD_CLSF_CHRPSN_USEYN, 'Y', '사용', '삭제')) TOBE,
+                   UPD_RSN UPD_RSN,
+                   A.UPDPSN_ID UPD_ID ,
+                   (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                   A.UPD_DTM UPD_DTM,
+                   A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+               FROM TEMP A
+               WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y', DECODE(PRD_CLSF_CHRPSN_USEYN, (SELECT PRD_CLSF_CHRPSN_USEYN FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+              )
+        ORDER BY HST_SEQ DESC
+    </sql>
+
+    <sql id="selectCategoryHst">
+        WITH TEMP AS (
+           SELECT A.CO_CD
+                , A.PRD_CLCD
+                , A.HST_SEQ
+                , A.UPD_RSN
+                , A.DATA_CHG_TP_CD
+                , A.PRD_CLSF_NM
+                , A.DISP_PRD_FILE_ATTC_ID
+                , A.LWST_CD_YN
+                , A.USE_YN
+                , A.FRT_EXPS_YN
+                , A.MRO_PRD_CLCD
+                , A.NOTI_ITM_ID
+                , A.MCND_PRD_YN
+                , A.SRT_SO
+                , A.DEL_YN
+                , A.SEL_MTHD_CD
+                , DECODE(A.DATA_CHG_TP_CD,'C',A.REGPSN_ID, A.UPDPSN_ID) AS UPD_ID
+                , DECODE(A.DATA_CHG_TP_CD,'C',A.REG_DTM, A.UPD_DTM) AS UPD_DTM 
+                , DECODE(A.DATA_CHG_TP_CD,'C',C.OPRTR_NM, B.OPRTR_NM) AS UPD_NAME
+             FROM TB_PR_PRD_CLSF_INFO_HST A
+                , TB_CO_MBR_OPRTR_INFO B
+                , TB_CO_MBR_OPRTR_INFO C
+            WHERE 1=1
+              AND A.UPDPSN_ID = B.OPRTR_ID(+)
+              AND A.REGPSN_ID = C.OPRTR_ID(+)
+              AND A.CO_CD = #{CO_CD}
+              AND A.PRD_CLCD = #{KEY1}
+              AND A.MALL_SPR_CD = #{KEY2}
+         )
+          , TEMP02 AS (
+            SELECT A.CO_CD
+                 , A.PRD_CLCD
+                 , A.PRD_ATTR_CD
+                 , A.HST_SEQ
+                 , A.DATA_CHG_TP_CD
+                 , A.SRT_SO
+                 , A.MAND_YN
+                 , A.UPD_RSN
+                 , DECODE(A.DATA_CHG_TP_CD,'C',A.REGPSN_ID, A.UPDPSN_ID) AS UPD_ID
+                 , DECODE(A.DATA_CHG_TP_CD,'C',A.REG_DTM, A.UPD_DTM) AS UPD_DTM 
+                 , DECODE(A.DATA_CHG_TP_CD,'C',C.OPRTR_NM, B.OPRTR_NM) AS UPD_NAME
+            FROM TB_PR_PRD_CLSF_ATTR_MAPP_HST A
+               , TB_CO_MBR_OPRTR_INFO B 
+               , TB_CO_MBR_OPRTR_INFO C 
+           WHERE 1=1
+             AND A.UPDPSN_ID = B.OPRTR_ID(+)
+             AND A.REGPSN_ID = C.OPRTR_ID(+)
+             AND A.CO_CD = #{CO_CD}
+             AND A.PRD_CLCD = #{KEY1}
+            )
+        SELECT *
+         FROM (
+               SELECT HST_SEQ
+                    , PRD_CLCD AS ID
+                    , '카테고리명' AS COL
+                    , LAG(PRD_CLSF_NM) OVER(ORDER BY  HST_SEQ) AS ASIS
+                    , PRD_CLSF_NM AS TOBE
+                    , UPD_RSN
+                    , UPD_ID
+                    , UPD_NAME
+                    , UPD_DTM
+                    , DATA_CHG_TP_CD
+                 FROM TEMP
+                UNION ALL
+               SELECT HST_SEQ
+                    , PRD_CLCD AS ID
+                    , '카테고리 사용여부' AS COL
+                    , DECODE(LAG(USE_YN, 1) OVER(ORDER BY  HST_SEQ),'Y','사용','미사용') AS ASIS
+                    , DECODE(USE_YN,'Y','사용','미사용') AS TOBE
+                    , UPD_RSN
+                    , UPD_ID
+                     , UPD_NAME
+                    , UPD_DTM
+                    , DATA_CHG_TP_CD
+                 FROM TEMP
+                UNION ALL
+               SELECT HST_SEQ
+                    , PRD_CLCD AS ID
+                    , '프론트 노출여부' AS COL
+                    , DECODE(LAG(FRT_EXPS_YN, 1) OVER(ORDER BY HST_SEQ),'Y','사용','미사용') AS ASIS
+                    , DECODE(FRT_EXPS_YN,'Y','사용','미사용') AS TOBE
+                    , UPD_RSN
+                    , UPD_ID
+                     , UPD_NAME
+                    , UPD_DTM
+                    , DATA_CHG_TP_CD
+                 FROM TEMP
+                UNION ALL
+               SELECT A.HST_SEQ
+                    , A.PRD_CLCD AS ID
+                    , 'S-MRO카테고리 매핑' AS COL
+                    , LAG(MRO_PRD_CLSF_NM, 1) OVER(ORDER BY HST_SEQ) AS ASIS
+                    , MRO_PRD_CLSF_NM AS TOBE
+                    , A.UPD_RSN
+                    , A.UPD_ID
+                     , A.UPD_NAME
+                    , A.UPD_DTM
+                    , A.DATA_CHG_TP_CD
+                 FROM TEMP A
+                    , (SELECT MRO_PRD_CLCD
+                            , SUBSTR(SYS_CONNECT_BY_PATH(MRO_PRD_CLSF_NM, '>'),2) AS MRO_PRD_CLSF_NM
+                         FROM SSP_APP.TB_PR_MRO_PRD_CLSF_INFO
+                        WHERE USE_YN = 'Y'
+                          AND PRD_CLSF_LVL = 4           
+                        START WITH HRNK_MRO_PRD_CLCD IS NULL
+                      CONNECT BY PRIOR MRO_PRD_CLCD = HRNK_MRO_PRD_CLCD) B
+                 WHERE A.MRO_PRD_CLCD = B.MRO_PRD_CLCD    
+                UNION ALL
+               SELECT A.HST_SEQ
+                    , A.PRD_CLCD AS ID
+                    , '고시품목 매핑' AS COL
+                    , LAG(B.NOTI_ITM_NM, 1) OVER(ORDER BY A.HST_SEQ) AS ASIS
+                    , B.NOTI_ITM_NM AS TOBE
+                    , A.UPD_RSN
+                    , A.UPD_ID
+                     , A.UPD_NAME
+                    , A.UPD_DTM
+                    , A.DATA_CHG_TP_CD
+                 FROM TEMP A
+                    , TB_PR_NOTI_ITM_BASIS B
+                WHERE A.NOTI_ITM_ID = B.NOTI_ITM_ID    
+                UNION ALL
+               SELECT HST_SEQ
+                    , PRD_CLCD AS ID
+                    , '시황상품 여부' AS COL
+                    , NVL(LAG(MCND_PRD_YN, 1) OVER(ORDER BY HST_SEQ),'N') AS ASIS
+                    , NVL(MCND_PRD_YN,'N') AS TOBE
+                    , UPD_RSN
+                    , UPD_ID
+                     , UPD_NAME
+                    , UPD_DTM
+                    , DATA_CHG_TP_CD
+                 FROM TEMP
+                UNION ALL
+               SELECT HST_SEQ
+                    , PRD_CLCD AS ID
+                    , '선정방식' AS COL
+                    , LAG(SSP_APP.FN_COM_DTL_CDNM('KO','SEL_MTHD_CD',SEL_MTHD_CD)) OVER(ORDER BY HST_SEQ) AS ASIS
+                     , SSP_APP.FN_COM_DTL_CDNM('KO','SEL_MTHD_CD',SEL_MTHD_CD) AS TOBE
+                    , UPD_RSN
+                    , UPD_ID
+                     , UPD_NAME
+                    , UPD_DTM
+                    , DATA_CHG_TP_CD
+                 FROM TEMP
+                UNION ALL
+               SELECT HST_SEQ
+                    , PRD_CLCD AS ID
+                    , '전시상품군 이미지' AS COL
+                    , LAG(DISP_PRD_FILE_ATTC_ID, 1) OVER(ORDER BY HST_SEQ) AS ASIS
+                    , DISP_PRD_FILE_ATTC_ID AS TOBE
+                    , UPD_RSN
+                    , UPD_ID
+                     , UPD_NAME
+                    , UPD_DTM
+                    , DATA_CHG_TP_CD
+                 FROM TEMP
+                UNION ALL
+                   SELECT A.HST_SEQ
+                     , A.PRD_CLCD AS ID
+                     , 'SSP속성' AS COL
+                     , LAG(B.PRNM) OVER(PARTITION BY A.PRD_ATTR_CD ORDER BY A.HST_SEQ) AS ASIS
+                     , DECODE(A.DATA_CHG_TP_CD,'C',B.PRNM||' IN','D',B.PRNM||' OUT') AS TOBE
+                     , A.UPD_RSN
+                     , A.UPD_ID
+                     , A.UPD_NAME
+                     , A.UPD_DTM
+                     , A.DATA_CHG_TP_CD
+                 FROM TEMP02 A     
+                    , TB_PR_PRD_ATTR_INFO B
+                WHERE A.DATA_CHG_TP_CD NOT IN ('U')
+                  AND A.PRD_ATTR_CD = B.PRD_ATTR_CD
+               UNION ALL
+               SELECT
+                   A.HST_SEQ
+                    ,A.HRNK_PRD_CLCD AS ID
+                    , '하위 카테고리 삭제여부' AS COL
+                    , NVL(LAG(A.DEL_YN) OVER (ORDER BY A.HST_SEQ),'N') AS ASIS
+                    , A.DEL_YN AS TOBE
+                    , A.UPD_RSN
+                    , A.UPDPSN_ID
+                    , B.OPRTR_NM
+                    , A.UPD_DTM
+                    , A.DATA_CHG_TP_CD
+               FROM TB_PR_PRD_CLSF_INFO_HST A
+                  , TB_CO_MBR_OPRTR_INFO B
+                  , TB_CO_MBR_OPRTR_INFO C
+               WHERE 1=1
+                 AND A.UPDPSN_ID = B.OPRTR_ID(+)
+                 AND A.REGPSN_ID = C.OPRTR_ID(+)
+                 AND A.CO_CD = #{CO_CD}
+                 AND A.HRNK_PRD_CLCD = #{KEY1}
+                 AND A.MALL_SPR_CD = #{KEY2}
+               UNION ALL
+               SELECT
+                   A.HST_SEQ
+                    ,A.PRD_CLCD AS ID
+                    , '산업군' AS COL
+                    , LAG(B. IDDT_NM) OVER(PARTITION BY A.IDDT_ID ORDER BY A.HST_SEQ) AS ASIS
+                     , DECODE(A.DATA_TP_CHG_CD,'C',B.IDDT_NM||' IN','D',B.IDDT_NM||' OUT') AS TOBE
+                    , ''
+                    , A.UPDPSN_ID
+                    , C.OPRTR_NM
+                    , A.UPD_DTM
+                    , A.DATA_TP_CHG_CD
+               FROM TB_PR_PRD_CLSF_IDDT_MAPP_HST A
+                  , TB_CC_IDDT_BASIS B
+                  , TB_CO_MBR_OPRTR_INFO C
+                  , TB_CO_MBR_OPRTR_INFO D
+               WHERE 1=1
+                 AND A.IDDT_ID = B.IDDT_ID
+                 AND A.UPDPSN_ID = C.OPRTR_ID(+)
+                 AND A.REGPSN_ID = D.OPRTR_ID(+)
+                 AND A.CO_CD = #{CO_CD}
+                 AND A.PRD_CLCD = #{KEY1}
+        )
+        WHERE 1=1
+         AND NVL(ASIS,' ') != NVL(TOBE,' ')
+        ORDER BY UPD_DTM DESC, COL   
+    </sql>
+    
+    <sql id="selectSeriesHst">
+        WITH TEMP01 AS (
+               SELECT CO_CD
+                    , PRD_GRP_ID
+                    , HST_SEQ
+                    , UPD_RSN
+                    , DATA_CHG_TP_CD
+                    , PRD_GRP_SPR_CD
+                    , PRD_GRP_NM
+                    , MALL_SPR_CD
+                    , USE_YN
+                    , REGPSN_ID
+                    , REG_DTM
+                    , DECODE(DATA_CHG_TP_CD,'C',REGPSN_ID, UPDPSN_ID) AS UPD_ID
+                    , DECODE(DATA_CHG_TP_CD,'C',REG_DTM, UPD_DTM) AS UPD_DTM 
+                 FROM TB_PR_PRD_GRP_BASIS_HST 
+                WHERE CO_CD = #{CO_CD}
+                   AND PRD_GRP_ID = #{KEY1}
+                   AND MALL_SPR_CD = #{KEY2}
+        )
+        , TEMP02 AS
+               ( SELECT CO_CD
+                      , PRD_GRP_ID
+                      , PRD_ID
+                      , HST_SEQ
+                      , DATA_CHG_TP_CD
+                      , BSS_PRD_YN
+                      , PRD_SEQ
+                      , BSS_PRD_ATTR_INFO
+                      , UPD_RSN
+                      , DECODE(DATA_CHG_TP_CD,'C',REGPSN_ID, UPDPSN_ID) AS UPD_ID
+                      , DECODE(DATA_CHG_TP_CD,'C',REG_DTM, UPD_DTM) AS UPD_DTM 
+                  FROM TB_PR_PRD_GRP_DTL_HST
+                 WHERE CO_CD = #{CO_CD}
+                   AND PRD_GRP_ID = #{KEY1}
+               )
+          SELECT * 
+            FROM (        
+                   SELECT HST_SEQ
+                        , PRD_GRP_ID AS ID
+                        , '그룹명' AS COL
+                        , LAG(PRD_GRP_NM) OVER(ORDER BY UPD_DTM) AS ASIS
+                        , PRD_GRP_NM AS TOBE
+                        , UPD_RSN
+                        , UPD_ID
+                        , (SELECT T.OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO T WHERE T.OPRTR_ID = UPD_ID ) AS UPD_NAME
+                        , UPD_DTM
+                        , DATA_CHG_TP_CD
+                     FROM TEMP01
+                    UNION ALL
+                   SELECT HST_SEQ
+                        , PRD_GRP_ID AS ID
+                        , '사용여부' AS COL
+                        , LAG(DECODE(USE_YN,'Y','사용','미사용')) OVER(ORDER BY UPD_DTM) AS ASIS
+                        , DECODE(USE_YN,'Y','사용','미사용') AS TOBE
+                        , UPD_RSN
+                        , UPD_ID
+                        , (SELECT T.OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO T WHERE T.OPRTR_ID = UPD_ID ) AS UPD_NAME
+                        , UPD_DTM
+                        , DATA_CHG_TP_CD
+                     FROM TEMP01
+                   UNION ALL
+                   SELECT A.HST_SEQ
+                         , A.PRD_GRP_ID AS ID
+                         , '상품ID' AS COL
+                         , LAG(B.PRD_NM) OVER(PARTITION BY A.PRD_ID ORDER BY A.HST_SEQ ) AS ASIS
+                         , DECODE(A.DATA_CHG_TP_CD,'C',B.PRD_NM||' IN','D',B.PRD_NM||' OUT') AS TOBE
+                         , A.UPD_RSN
+                         , A.UPD_ID
+                         , (SELECT T.OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO T WHERE T.OPRTR_ID = A.UPD_ID ) AS UPD_NAME
+                         , A.UPD_DTM
+                         , A.DATA_CHG_TP_CD
+                      FROM TEMP02 A
+                         , TB_PR_PRD_INFO B
+                     WHERE DATA_CHG_TP_CD NOT IN ('U')
+                       AND A.PRD_ID = B.PRD_ID
+                   UNION ALL
+                   SELECT A.HST_SEQ
+                         , A.PRD_GRP_ID AS ID
+                         , '기준상품' AS COL
+                         , LAG(DECODE(A.BSS_PRD_YN,'Y',B.PRD_NM))OVER(ORDER BY A.BSS_PRD_YN ) AS ASIS
+                         , DECODE(A.BSS_PRD_YN,'Y',B.PRD_NM) AS TOBE
+                         , A.UPD_RSN
+                         , A.UPD_ID
+                         , (SELECT T.OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO T WHERE T.OPRTR_ID = A.UPD_ID ) AS UPD_NAME
+                         , A.UPD_DTM
+                         , A.DATA_CHG_TP_CD
+                      FROM TEMP02 A
+                         , TB_PR_PRD_INFO B   
+                     WHERE A.BSS_PRD_YN = 'Y'  
+                       AND A.PRD_ID = B.PRD_ID
+                       AND A.DATA_CHG_TP_CD != 'U'
+                   UNION ALL
+                   SELECT A.HST_SEQ
+                        , A.PRD_GRP_ID AS ID
+                        , '단독속성' AS COL
+                        , LAG(LISTAGG( B.PRNM,','))OVER(PARTITION BY A.PRD_ID ORDER BY A.BSS_PRD_ATTR_INFO ) AS ASIS
+                        , LISTAGG( B.PRNM,',') AS TOBE
+                        , A.UPD_RSN
+                        , A.UPD_ID
+                        , (SELECT T.OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO T WHERE T.OPRTR_ID = A.UPD_ID ) AS UPD_NAME
+                        , A.UPD_DTM
+                        , A.DATA_CHG_TP_CD
+                     FROM TEMP02 A
+                        , TB_PR_PRD_ATTR_INFO B
+                    WHERE REGEXP_LIKE( B.PRD_ATTR_CD , REPLACE(A.BSS_PRD_ATTR_INFO, ',', '|'))   
+                    GROUP BY A.HST_SEQ
+                         , A.PRD_GRP_ID
+                         , A.PRD_ID
+                         , A.BSS_PRD_ATTR_INFO
+                         , A.UPD_RSN
+                         , A.UPD_ID
+                         , A.UPD_DTM
+                         , A.DATA_CHG_TP_CD
+                    UNION ALL
+                    SELECT A.HST_SEQ
+                         , A.PRD_GRP_ID AS ID
+                         , '속성순서' AS COL
+                         , TO_CHAR(LAG(A.PRD_SEQ)OVER(PARTITION BY A.PRD_ID ORDER BY A.HST_SEQ)) AS ASIS
+                         , TO_CHAR(A.PRD_SEQ) AS TOBE
+                         , A.UPD_RSN
+                         , A.UPD_ID
+                         , (SELECT T.OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO T WHERE T.OPRTR_ID = A.UPD_ID ) AS UPD_NAME
+                         , A.UPD_DTM
+                         , A.DATA_CHG_TP_CD
+                      FROM TEMP02 A        
+               )
+           WHERE 1=1
+             AND NVL(ASIS,' ') != NVL(TOBE,' ')
+           ORDER BY UPD_DTM DESC, COL    
+    </sql>
+    
+    <sql id="selectProductDetailHistory">
+        WITH TEMP AS(
+            SELECT ROWNUM RN, TB.* FROM 
+              (
+                SELECT  /*+ USE_NL(HST) INDEX(HST TB_PR_PRD_INFO_HST_PK)*/
+                    CO_CD,
+                    TO_NUMBER(PRD_ID) PRD_ID,
+                    HST_SEQ,
+                    PRC_APLY_SPR_CD,
+                    BRND_NM,
+                    PRD_CLCD,
+                    PRD_USE_YN,
+                    PRD_DTL_DESC,
+                    HASH_TAG,
+                    BG_SEQ,
+                    BG_APLY_STR_DTM,
+                    BG_APLY_END_DTM,
+                    DATA_CHG_TP_CD,
+                    NOTI_ITM_ID,
+                    UPD_RSN,
+                    DECODE(DATA_CHG_TP_CD, 'C', REG_DTM, UPD_DTM) UPD_DTM,
+                    DECODE(DATA_CHG_TP_CD, 'C', REGPSN_ID, UPDPSN_ID) UPDPSN_ID,
+                    SSP_PRD_NM,
+                    SSP_PRD_NM_CHG_YN,
+                    MTNL_ORGPLC_YN
+                FROM
+                    SSP_APP.TB_PR_PRD_INFO_HST HST
+                WHERE CO_CD = #{CO_CD}
+                    AND PRD_ID = #{KEY1}
+                ) TB)
+        SELECT * 
+            FROM (
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       '가격대상' COL, 
+                       (SELECT SSP_APP.FN_COM_DTL_CDNM('KO','PRC_APLY_SPR_CD',PRC_APLY_SPR_CD) FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, SSP_APP.FN_COM_DTL_CDNM('KO','PRC_APLY_SPR_CD',PRC_APLY_SPR_CD)) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(PRC_APLY_SPR_CD, NULL, 'N', 'Y'), 'D', DECODE(PRC_APLY_SPR_CD, NULL, 'N', 'Y'), DECODE(PRC_APLY_SPR_CD, (SELECT PRC_APLY_SPR_CD FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       'SSP상품상태' COL,
+                       DECODE((SELECT PRD_USE_YN FROM TEMP WHERE RN = A.RN -1), 'Y', '사용', '미사용') ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, DECODE(PRD_USE_YN, 'Y', '사용', '미사용')) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(PRD_USE_YN, NULL, 'N', 'Y'), 'D', DECODE(PRD_USE_YN, NULL, 'N', 'Y'),DECODE(PRD_USE_YN, (SELECT PRD_USE_YN FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       '브랜드명' COL,
+                       (SELECT BRND_NM FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, BRND_NM) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(BRND_NM, NULL, 'N', 'Y'), 'D', DECODE(BRND_NM, NULL, 'N', 'Y'), DECODE(BRND_NM, (SELECT BRND_NM FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL 
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID, 
+                       'SSP카테고리' COL, 
+                       (SELECT SSP_APP.FN_PR_FULL_CLSF_NM(A.CO_CD, PRD_CLCD) FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, SSP_APP.FN_PR_FULL_CLSF_NM(A.CO_CD, PRD_CLCD)) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y',DECODE(PRD_CLCD, (SELECT PRD_CLCD FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       '해시태그' COL,
+                       (SELECT HASH_TAG FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, HASH_TAG) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(HASH_TAG, NULL, 'N', 'Y'), 'D', DECODE(HASH_TAG, NULL, 'N', 'Y'),DECODE(HASH_TAG, (SELECT HASH_TAG FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL 
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       '배지' COL,
+                       (SELECT TO_CHAR(BG_SEQ) FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, BG_SEQ) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(BG_SEQ, NULL, 'N', 'Y'), 'D', DECODE(BG_SEQ, NULL, 'N', 'Y'),DECODE(BG_SEQ, (SELECT BG_SEQ FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL 
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       '배지시작일' COL,
+                       (SELECT TO_CHAR(BG_APLY_STR_DTM, 'YYYY.MM.DD') FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, TO_CHAR(BG_APLY_STR_DTM, 'YYYY.MM.DD')) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(BG_APLY_STR_DTM, NULL, 'N', 'Y'), 'D', DECODE(BG_APLY_STR_DTM, NULL, 'N', 'Y'),DECODE(BG_APLY_STR_DTM, (SELECT BG_APLY_STR_DTM FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL 
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       '배지종료일' COL,
+                       (SELECT TO_CHAR(BG_APLY_END_DTM, 'YYYY.MM.DD') FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, TO_CHAR(BG_APLY_END_DTM, 'YYYY.MM.DD')) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(BG_APLY_END_DTM, NULL, 'N', 'Y'), 'D', DECODE(BG_APLY_END_DTM, NULL, 'N', 'Y'),DECODE(BG_APLY_END_DTM, (SELECT BG_APLY_END_DTM FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL 
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       '상품상세설명' COL,
+                       (SELECT TO_CHAR(HST_SEQ) FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       TO_CHAR(HST_SEQ) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', DECODE(TO_CHAR(DBMS_LOB.GETLENGTH(PRD_DTL_DESC)), '', 'N', 'Y'),DECODE(DBMS_LOB.GETLENGTH(PRD_DTL_DESC), (SELECT DBMS_LOB.GETLENGTH(PRD_DTL_DESC) FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL 
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       '상품고시정보' COL,
+                       (SELECT (SELECT NOTI_ITM_NM FROM TB_PR_NOTI_ITM_BASIS NOTI WHERE NOTI.CO_CD = A.CO_CD AND NOTI.NOTI_ITM_ID = A.NOTI_ITM_ID) FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, (SELECT NOTI_ITM_NM FROM TB_PR_NOTI_ITM_BASIS NOTI WHERE NOTI.CO_CD = A.CO_CD AND NOTI.NOTI_ITM_ID = A.NOTI_ITM_ID)) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(NOTI_ITM_ID, NULL, 'N', 'Y'), 'D', DECODE(NOTI_ITM_ID, NULL, 'N', 'Y'), DECODE(NOTI_ITM_ID, (SELECT NOTI_ITM_ID FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL 
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       'SSP상품명 변경여부' COL,
+                       (SELECT SSP_PRD_NM_CHG_YN FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, SSP_PRD_NM_CHG_YN) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(SSP_PRD_NM_CHG_YN, NULL, 'N', 'Y'), 'D', DECODE(SSP_PRD_NM_CHG_YN, NULL, 'N', 'Y'), DECODE(SSP_PRD_NM_CHG_YN, (SELECT SSP_PRD_NM_CHG_YN FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL
+                   SELECT  
+                       HST_SEQ,
+                       PRD_ID ID,
+                       'SSP상품명' COL,
+                       (SELECT SSP_PRD_NM FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, SSP_PRD_NM) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(SSP_PRD_NM, NULL, 'N', 'Y'), 'D', DECODE(SSP_PRD_NM, NULL, 'N', 'Y'), DECODE(SSP_PRD_NM, (SELECT SSP_PRD_NM FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL
+                   SELECT
+                       HST_SEQ,
+                       PRD_ID ID,
+                       '다국적 원산지 여부' COL,
+                       (SELECT MTNL_ORGPLC_YN FROM TEMP WHERE RN = A.RN -1) ASIS,
+                       DECODE(DATA_CHG_TP_CD, 'D', NULL, MTNL_ORGPLC_YN) TOBE,
+                       UPD_RSN UPD_RSN,
+                       A.UPDPSN_ID UPD_ID ,
+                       (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                       A.UPD_DTM UPD_DTM,
+                       A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+                   FROM TEMP A
+                   WHERE DECODE(DATA_CHG_TP_CD, 'C', DECODE(MTNL_ORGPLC_YN, NULL, 'N', 'Y'), 'D', DECODE(MTNL_ORGPLC_YN, NULL, 'N', 'Y'), DECODE(MTNL_ORGPLC_YN, (SELECT MTNL_ORGPLC_YN FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+                   UNION ALL
+                   SELECT * FROM (
+                       SELECT  
+                           HST_SEQ,
+                           TO_NUMBER(PRD_ID) ID,
+                           (SELECT PRNM FROM TB_PR_PRD_ATTR_INFO ATTR WHERE ATTR.CO_CD = HST.CO_CD AND ATTR.PRD_ATTR_CD = HST.PRD_ATTR_CD AND ATTR.MALL_SPR_CD = '10') COL,
+                           LAG(PRVL) OVER(PARTITION BY HST.CO_CD, HST.PRD_ID, HST.PRD_ATTR_CD ORDER BY UPD_DTM) ASIS,
+                           DECODE(DATA_CHG_TP_CD, 'D', NULL, PRVL) TOBE,
+                           UPD_RSN UPD_RSN ,
+                           UPDPSN_ID UPD_ID ,
+                           (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = HST.UPDPSN_ID) UPD_NAME,
+                           UPD_DTM,
+                           DATA_CHG_TP_CD
+                       FROM
+                           SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP_HST HST
+                       WHERE CO_CD = #{CO_CD}
+                           AND PRD_ID = #{KEY1}
+                       ORDER BY UPD_DTM DESC, HST_SEQ DESC
+                   )TB WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y',DECODE(ASIS, TOBE, 'N', 'Y')) = 'Y'
+                   UNION ALL 
+                    SELECT * FROM (
+                        SELECT
+                            HST_SEQ,
+                            TO_NUMBER(PRD_ID) ID,
+                            (SELECT NOTI_ITM_DTL_NM FROM TB_PR_NOTI_ITM_DTL NOTI WHERE NOTI.CO_CD = HST.CO_CD AND NOTI.NOTI_ITM_ID = HST.NOTI_ITM_ID AND NOTI.NOTI_ITM_DTL_NO = HST.NOTI_ITM_DTL_NO)||'(고시)' COL,
+                            LAG(HST.PRD_NOTI_ITM_MAPP_CTS) OVER(PARTITION BY HST.CO_CD, HST.PRD_ID, HST.NOTI_ITM_ID, HST.NOTI_ITM_DTL_NO  ORDER BY UPD_DTM) ASIS,
+                            DECODE(DATA_CHG_TP_CD, 'D', NULL, HST.PRD_NOTI_ITM_MAPP_CTS) TOBE,
+                            UPD_RSN UPD_RSN ,
+                            UPDPSN_ID UPD_ID ,
+                            (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = HST.UPDPSN_ID) UPD_NAME,
+                            UPD_DTM,
+                            DATA_CHG_TP_CD
+                        FROM
+                            SSP_APP.TB_PR_PRD_NOTI_ITM_MAPP_HST HST
+                        WHERE CO_CD = #{CO_CD}
+                           AND PRD_ID = #{KEY1}
+                        ORDER BY UPD_DTM DESC, HST_SEQ DESC
+                    )TB WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y',DECODE(ASIS, TOBE, 'N', 'Y')) = 'Y'
+                )
+        ORDER BY UPD_DTM DESC, HST_SEQ DESC
+    </sql>
+    
+    <!-- 전시상품 변경이력  -->
+    <sql id="selectDispHistory">
+        WITH TEMP AS(
+            SELECT ROWNUM RN, TB.* FROM 
+              (SELECT
+                HST_SEQ
+                , CO_CD
+                , PRD_CLCD
+                , DISP_PRD_NM
+                , USE_YN
+                , DISP_PRD_SPR_CD
+                , ADD_INFO_SET_YN
+                , PRFRT
+                , LTRIM(REPR_PRD_ID, '0') PRD_ID
+                , DATA_CHG_TP_CD
+                , UPD_RSN
+                , DECODE(DATA_CHG_TP_CD, 'C', REG_DTM, UPD_DTM) UPD_DTM
+                , DECODE(DATA_CHG_TP_CD, 'C', REGPSN_ID, UPDPSN_ID) UPDPSN_ID
+                , (SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD = MST.CO_CD AND OPRTR_ID = MST.UPDPSN_ID) UPD_NM
+               FROM TB_PR_DISP_BASIS_HST MST
+                WHERE CO_CD = #{CO_CD}
+                    AND PRD_CLCD = #{KEY1}
+               ORDER BY HST_SEQ) TB)
+        SELECT * 
+          FROM (SELECT  
+                   HST_SEQ,
+                   PRD_CLCD ID,
+                   '전시상품명' COL,
+                   DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT DISP_PRD_NM FROM TEMP WHERE RN = A.RN -1)) ASIS,
+                   DECODE(DATA_CHG_TP_CD, 'D', NULL, DISP_PRD_NM) TOBE,
+                   UPD_RSN UPD_RSN,
+                   A.UPDPSN_ID UPD_ID ,
+                   (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                   A.UPD_DTM UPD_DTM,
+                   A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+               FROM TEMP A
+               WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y',DECODE(DISP_PRD_NM, (SELECT DISP_PRD_NM FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+               UNION ALL 
+               SELECT  
+                   HST_SEQ,
+                   PRD_CLCD ID,
+                   '사용여부' COL,
+                   DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT DECODE(USE_YN, 'Y', '사용', '삭제') FROM TEMP WHERE RN = A.RN -1)) ASIS,
+                   DECODE(DATA_CHG_TP_CD, 'D', NULL, DECODE(USE_YN, 'Y', '사용', '삭제')) TOBE,
+                   UPD_RSN UPD_RSN,
+                   A.UPDPSN_ID UPD_ID ,
+                   (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                   A.UPD_DTM UPD_DTM,
+                   A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+               FROM TEMP A
+               WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y', DECODE(USE_YN, (SELECT USE_YN FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+               UNION ALL
+               SELECT  
+                   HST_SEQ,
+                   PRD_CLCD ID,
+                   '전시상품구분' COL,
+                   DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT DISP_PRD_SPR_CD FROM TEMP WHERE RN = A.RN -1)) ASIS,
+                   DECODE(DATA_CHG_TP_CD, 'D', NULL, DISP_PRD_SPR_CD) TOBE,
+                   UPD_RSN UPD_RSN,
+                   A.UPDPSN_ID UPD_ID ,
+                   (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                   A.UPD_DTM UPD_DTM,
+                   A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+               FROM TEMP A
+               WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y',DECODE(DISP_PRD_SPR_CD, (SELECT DISP_PRD_SPR_CD FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+               UNION ALL
+               SELECT  
+                   HST_SEQ,
+                   PRD_CLCD ID,
+                   '추가정보수취' COL,
+                   DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT ADD_INFO_SET_YN FROM TEMP WHERE RN = A.RN -1)) ASIS,
+                   DECODE(DATA_CHG_TP_CD, 'D', NULL, ADD_INFO_SET_YN) TOBE,
+                   UPD_RSN UPD_RSN,
+                   A.UPDPSN_ID UPD_ID ,
+                   (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                   A.UPD_DTM UPD_DTM,
+                   A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+               FROM TEMP A
+               WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y',DECODE(ADD_INFO_SET_YN, (SELECT ADD_INFO_SET_YN FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+               UNION ALL
+               SELECT  
+                   HST_SEQ,
+                   PRD_CLCD ID,
+                   '견적제출가 매익율' COL,
+                   DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT PRFRT FROM TEMP WHERE RN = A.RN -1)) ASIS,
+                   DECODE(DATA_CHG_TP_CD, 'D', NULL, PRFRT) TOBE,
+                   UPD_RSN UPD_RSN,
+                   A.UPDPSN_ID UPD_ID ,
+                   (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                   A.UPD_DTM UPD_DTM,
+                   A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+               FROM TEMP A
+               WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y',DECODE(PRFRT, (SELECT PRFRT FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+               UNION ALL
+               SELECT  
+                   HST_SEQ,
+                   PRD_CLCD ID,
+                   '대표상품ID' COL,
+                   DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT PRD_ID FROM TEMP WHERE RN = A.RN -1)) ASIS,
+                   DECODE(DATA_CHG_TP_CD, 'D', NULL, PRD_ID) TOBE,
+                   UPD_RSN UPD_RSN,
+                   A.UPDPSN_ID UPD_ID ,
+                   (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+                   A.UPD_DTM UPD_DTM,
+                   A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+               FROM TEMP A
+               WHERE DECODE(DATA_CHG_TP_CD, 'C', 'Y', 'D', 'Y',DECODE(PRD_ID, (SELECT PRD_ID FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+              )
+        ORDER BY HST_SEQ DESC
+    </sql>
+
+    <sql id="selectRndDispHistory">
+        WITH TEMP AS (
+            SELECT  ROWNUM RN
+                    , TB.*
+            FROM    (
+                    SELECT  HST_SEQ
+                            , CO_CD
+                            , PRD_CLCD
+                            , DISP_PRD_NM
+                            , USE_YN
+                            , DISP_PRD_SPR_CD
+                            , ADD_INFO_SET_YN
+                            , PRFRT
+                            , LTRIM(REPR_PRD_ID, '0') AS PRD_ID
+                            , DATA_CHG_TP_CD
+                            , UPD_RSN
+                            , DECODE(DATA_CHG_TP_CD, 'C', REG_DTM, UPD_DTM) AS UPD_DTM
+                            , DECODE(DATA_CHG_TP_CD, 'C', REGPSN_ID, UPDPSN_ID) AS UPDPSN_ID
+                            , (
+                                SELECT  OPRTR_NM
+                                FROM    TB_CO_MBR_OPRTR_INFO
+                                WHERE   CO_CD = MST.CO_CD
+                                AND     OPRTR_ID = MST.UPDPSN_ID
+                            ) AS UPD_NM
+                    FROM    TB_RD_RND_DISP_BASIS_HST MST
+                    WHERE   CO_CD = #{CO_CD}
+                    AND     DISP_GRP_ID = #{KEY2}
+                    AND     PRD_CLCD = #{KEY1}
+                    ORDER BY
+                            HST_SEQ
+                    ) TB
+        )
+        SELECT  *
+        FROM    (
+                SELECT  HST_SEQ
+                        , PRD_CLCD AS ID
+                        , '전시상품명' AS COL
+                        , DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT DISP_PRD_NM FROM TEMP WHERE RN = A.RN - 1)) AS ASIS
+                        , DECODE(DATA_CHG_TP_CD, 'D', NULL, DISP_PRD_NM) AS TOBE
+                        , UPD_RSN AS UPD_RSN
+                        , A.UPDPSN_ID AS UPD_ID
+                        , (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) AS UPD_NAME
+                        , A.UPD_DTM AS UPD_DTM
+                        , A.DATA_CHG_TP_CD AS DATA_CHG_TP_CD
+                FROM    TEMP A
+                WHERE   DECODE(
+                            DATA_CHG_TP_CD
+                            , 'C', 'Y'
+                            , 'D', 'Y'
+                            , DECODE(
+                                DISP_PRD_NM
+                                , (SELECT DISP_PRD_NM FROM TEMP WHERE RN = A.RN - 1), 'N'
+                                , 'Y'
+                            )
+                        ) = 'Y'
+                UNION ALL
+                SELECT  HST_SEQ
+                        , PRD_CLCD AS ID
+                        , '사용여부' AS COL
+                        , DECODE(
+                            DATA_CHG_TP_CD
+                            , 'C', NULL
+                            , (SELECT DECODE(USE_YN, 'Y', '사용', '삭제') FROM TEMP WHERE RN = A.RN - 1)
+                        ) AS ASIS
+                        , DECODE(
+                            DATA_CHG_TP_CD
+                            , 'D', NULL
+                            , DECODE(USE_YN, 'Y', '사용', '삭제')
+                        ) AS TOBE
+                        , UPD_RSN AS UPD_RSN
+                        , A.UPDPSN_ID AS UPD_ID
+                        , (
+                            SELECT  OPRTR_NM
+                            FROM    SSP_APP.TB_CO_MBR_OPRTR_INFO OP
+                            WHERE   OP.OPRTR_ID = A.UPDPSN_ID
+                        ) AS UPD_NAME
+                        , A.UPD_DTM AS UPD_DTM
+                        , A.DATA_CHG_TP_CD AS DATA_CHG_TP_CD
+                FROM    TEMP A
+                WHERE   DECODE(
+                            DATA_CHG_TP_CD
+                            , 'C', 'Y'
+                            , 'D', 'Y'
+                            , DECODE(
+                                USE_YN
+                                , (SELECT USE_YN FROM TEMP WHERE RN = A.RN - 1), 'N'
+                                , 'Y'
+                            )
+                        ) = 'Y'
+                UNION ALL
+                SELECT  HST_SEQ
+                        , PRD_CLCD AS ID
+                        , '전시상품구분' AS COL
+                        , DECODE(
+                            DATA_CHG_TP_CD
+                            , 'C', NULL
+                            , (SELECT DISP_PRD_SPR_CD FROM TEMP WHERE RN = A.RN - 1)
+                        ) AS ASIS
+                        , DECODE(DATA_CHG_TP_CD, 'D', NULL, DISP_PRD_SPR_CD) AS TOBE
+                        , UPD_RSN AS UPD_RSN
+                        , A.UPDPSN_ID AS UPD_ID
+                        , (
+                            SELECT  OPRTR_NM
+                            FROM    SSP_APP.TB_CO_MBR_OPRTR_INFO OP
+                            WHERE   OP.OPRTR_ID = A.UPDPSN_ID
+                        ) AS UPD_NAME
+                        , A.UPD_DTM AS UPD_DTM
+                        , A.DATA_CHG_TP_CD AS DATA_CHG_TP_CD
+                FROM    TEMP A
+                WHERE   DECODE(
+                            DATA_CHG_TP_CD
+                            , 'C', 'Y'
+                            , 'D', 'Y'
+                            , DECODE(
+                                DISP_PRD_SPR_CD
+                                , (SELECT DISP_PRD_SPR_CD FROM TEMP WHERE RN = A.RN - 1), 'N'
+                                , 'Y'
+                            )
+                        ) = 'Y'
+                UNION ALL
+                SELECT  HST_SEQ
+                        , PRD_CLCD AS ID
+                        , '추가정보수취' AS COL
+                        , DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT ADD_INFO_SET_YN FROM TEMP WHERE RN = A.RN - 1)) AS ASIS
+                        , DECODE(DATA_CHG_TP_CD, 'D', NULL, ADD_INFO_SET_YN) AS TOBE
+                        , UPD_RSN AS UPD_RSN
+                        , A.UPDPSN_ID AS UPD_ID
+                        , (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) AS UPD_NAME
+                        , A.UPD_DTM AS UPD_DTM
+                        , A.DATA_CHG_TP_CD AS DATA_CHG_TP_CD
+                FROM    TEMP A
+                WHERE   DECODE(
+                            DATA_CHG_TP_CD
+                            , 'C', 'Y'
+                            , 'D', 'Y'
+                            , DECODE(
+                                ADD_INFO_SET_YN
+                                , (SELECT ADD_INFO_SET_YN FROM TEMP WHERE RN = A.RN - 1), 'N'
+                                , 'Y'
+                            )
+                        ) = 'Y'
+                UNION ALL
+                SELECT  HST_SEQ
+                        , PRD_CLCD AS ID
+                        , '견적제출가 매익율' AS COL
+                        , DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT PRFRT FROM TEMP WHERE RN = A.RN - 1)) AS ASIS
+                        , DECODE(DATA_CHG_TP_CD, 'D', NULL, PRFRT) AS TOBE
+                        , UPD_RSN AS UPD_RSN
+                        , A.UPDPSN_ID AS UPD_ID
+                        , (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) AS UPD_NAME
+                        , A.UPD_DTM AS UPD_DTM
+                        , A.DATA_CHG_TP_CD AS DATA_CHG_TP_CD
+                FROM    TEMP A
+                WHERE   DECODE(
+                            DATA_CHG_TP_CD
+                            , 'C', 'Y'
+                            , 'D', 'Y',
+                            DECODE(
+                                PRFRT
+                                , (SELECT PRFRT FROM TEMP WHERE RN = A.RN - 1), 'N'
+                                , 'Y'
+                            )
+                        ) = 'Y'
+                UNION ALL
+                SELECT  HST_SEQ
+                        , PRD_CLCD AS ID
+                        , '대표상품ID' AS COL
+                        , DECODE(DATA_CHG_TP_CD, 'C', NULL, (SELECT PRD_ID FROM TEMP WHERE RN = A.RN - 1)) AS ASIS
+                        , DECODE(DATA_CHG_TP_CD, 'D', NULL, PRD_ID) AS TOBE
+                        , UPD_RSN AS UPD_RSN
+                        , A.UPDPSN_ID AS UPD_ID
+                        , (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) AS UPD_NAME
+                        , A.UPD_DTM AS UPD_DTM
+                        , A.DATA_CHG_TP_CD AS DATA_CHG_TP_CD
+                FROM    TEMP A
+                WHERE   DECODE(
+                            DATA_CHG_TP_CD
+                            , 'C', 'Y'
+                            , 'D', 'Y'
+                           , DECODE(
+                               PRD_ID
+                               , (SELECT PRD_ID FROM TEMP WHERE RN = A.RN - 1), 'N'
+                               , 'Y'
+                            )
+                        ) = 'Y'
+                )
+        ORDER BY
+                HST_SEQ DESC
+    </sql>
+    
+    
+    
+    <select id="selectPrdHstDtlHtmlInfo" parameterType="HashMap" resultType="HashMap">
+        SELECT PRD_DTL_DESC FROM TB_PR_PRD_INFO_HST tppih WHERE CO_CD = #{CO_CD} AND PRD_ID = LPAD(#{PRD_ID}, 18, '0') AND HST_SEQ = #{HST_SEQ}
+    </select>
+    
+</mapper>

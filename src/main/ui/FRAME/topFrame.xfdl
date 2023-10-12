@@ -1,0 +1,218 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="topFrame" width="1280" height="50" onload="fn_onLoad" cursor="pointer">
+    <Layouts>
+      <Layout height="50" width="1280">
+        <Static id="sta_bg" taborder="0" left="0" top="0" right="0" bottom="0" cssclass="sta_TF_bg"/>
+        <Button id="btnMenualDown" taborder="3" text="메뉴얼 다운로드" top="10" width="130" height="30" cssclass="btn_TF_menual" right="270" onclick="btnMenualDown_onclick"/>
+        <Static id="staOrgNm" taborder="4" text="SSP 기획팀" top="10" width="100" height="30" cssclass="sta_TF_team" usedecorate="true" right="165" textAlign="right"/>
+        <Static id="staName" taborder="1" text="&lt;b v='true'&gt;운영자&lt;/b&gt;님 반갑습니다." top="10" width="145" height="30" cssclass="sta_TF_Welcome" usedecorate="true" right="15" textAlign="left"/>
+        <ImageViewer id="img_logo" taborder="2" left="60" top="0" width="200" height="50" cssclass="sta_TF_logo" onclick="img_logo_onclick"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[
+/*******************************************************
+  PROJECT NAME : 
+  CREATION DATES : 
+*******************************************************/
+
+
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+	this.fv_oApp = nexacro.getApplication();	//application object 
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+	this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+	{
+		this.fn_search();
+		this.fn_hostSearch();
+		 
+	};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+	//조회  
+	this.fn_search = function()	{
+        // 세션 정보, 시스템 날짜 조회
+        var sSvcId = "userInfoSelect";
+        var sUrl = "/am/manager/login-info.do";
+        var inDs = "";
+        var outDs = "gds_userInfo=ds_output gds_systemdate=ds_output1";
+        var arg = "";
+        this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+    };
+	
+	//ssp hosts 경로 조회   
+	this.fn_hostSearch = function()	{
+        var sSvcId = "sspHostsSelect";
+        var sUrl = "/co/ssp-hosts.do";
+        var inDs = "";
+        var outDs = "gds_sspHosts=ds_output1";
+        var arg = "";
+        this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+    };
+	
+	this.fn_fileInfo = function()	{
+ 
+        var sSvcId = "fileInfo";
+        var sUrl = "/co/fileInfo.do";
+        var inDs = "ds_search=ds_search";
+        var outDs = "ds_info=ds_output";
+        var arg = "";
+        this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+    };
+ 
+ this.fn_fileDown = function(obj:nexacro.Tab,e:nexacro.TabIndexChangeEventInfo) { 
+	  var oFramesInfo = this.fv_oApp.agv_WorkFrameSet.frames;
+	  for ( var i = 0 ; i < oFramesInfo.length ; i++ ) {
+		  //console.log(oFramesInfo);
+		   }
+		   var oOpenMenuDs = this.fv_oApp.gds_openMenu;
+		 
+		   var sWinId = oOpenMenuDs.getColumn(oOpenMenuDs.rowposition, "WIN_ID");
+	 
+		   this.cfn_isActiveFrame(sWinId);
+			 
+    };
+	//업무 화면 활성화 함수
+	this.cfn_isActiveFrame = function (sWinId,  oArgs) { 
+	
+		//frame visibe 처리내역 추가(2019.9.5)
+		var oFramesInfo = this.fv_oApp.agv_WorkFrameSet.frames;
+        var menuId='';
+		for ( var i = 0 ; i < oFramesInfo.length ; i++ ) {
+			if(oFramesInfo[i].name == sWinId){
+				 menuId = oFramesInfo[i].arguments.menuId; 			 
+			}	
+			
+			this.ds_search.setColumn( 0, "MNU_LVL_SPR_CD", menuId);
+		 
+			this.fn_fileInfo();
+			 
+		}
+
+	};
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+	this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+		if(svcID == "userInfoSelect"){    
+		    //alert(this.fv_oApp.gds_userInfo.saveXML());
+			
+			var oGdsUserInfo = this.fv_oApp.gds_userInfo;	
+			
+			var sOrgNm         = this.gfn_trim(oGdsUserInfo.getColumn(0, "ORG_NM"));
+			var sOprtrNm       = this.gfn_trim(oGdsUserInfo.getColumn(0, "OPRTR_NM"));
+			var sOrgNmLength   = sOrgNm.length;
+			var sOprtrNmLength = sOprtrNm.length;
+
+			console.log("jeon.hj    sOprtrNm : " + sOprtrNm + ", sOprtrNmLength :" + sOprtrNmLength + ",   sOrgNm : " + sOrgNm + ", sOrgNmLength :" + sOrgNmLength);	
+			
+			if(sOprtrNmLength > 3){
+				sOprtrNmLength = sOprtrNmLength - 3;
+				
+				this.btnMenualDown.set_right(290 + (sOprtrNmLength * 10));
+				this.staOrgNm.set_right(175 + (sOprtrNmLength * 10));
+				
+				this.staName.set_width(155 + (sOprtrNmLength * 10));
+				this.staName.set_right(15);
+				
+				console.log("btnMenualDown   left : " + this.btnMenualDown.right + ", staName width :" + this.staName.width);	
+			} else {
+			    sOprtrNmLength = 0;
+			}
+			
+			if(sOrgNmLength > 9){
+				sOrgNmLength = sOrgNmLength - 9;
+				
+				this.btnMenualDown.set_right(290 + (sOrgNmLength * 10) + (sOprtrNmLength * 10));
+				
+				//this.staOrgNm.set_right(175 + (sOrgNmLength * 10) + (sOprtrNmLength * 10));				
+				this.staOrgNm.set_width(155 + (sOrgNmLength * 10) + (sOprtrNmLength * 10));
+			}
+			
+			this.staOrgNm.set_text(sOrgNm);
+			this.staName.set_text("<b v='true'>&nbsp;&nbsp;&nbsp;" + sOprtrNm + "</b>님 반갑습니다.");
+		}if(svcID == "fileInfo"){    
+		 
+			this.FileDownTransfer.setPostData("docRegId",this.ds_info.getColumn( 0,"DOC_REG_ID"));
+			//this.FileDownTransfer.setPostData("docRegSeq",this.ds_files.getColumn(i, "DOC_REG_SEQ"));
+			
+			this.FileDownTransfer.download('/co/file-download.do');
+		}else{
+			//console.log("sspHostsSelect : " + this.fv_oApp.gds_sspHosts.saveXML());
+		}
+	}
+	
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.img_logo_onclick = function(obj:nexacro.ImageViewer,e:nexacro.ClickEventInfo)
+{
+	window.location.href = "/ui/index.html";
+};
+
+this.btnMenualDown_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_fileDown();
+};
+]]></Script>
+    <Objects>
+      <FileDownTransfer id="FileDownTransfer"/>
+      <Dataset id="ds_files">
+        <ColumnInfo>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="DOC_REG_SEQ" type="STRING" size="256"/>
+          <Column id="ATFL_NM" type="STRING" size="256"/>
+          <Column id="ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="ATFL_LEN" type="STRING" size="256"/>
+          <Column id="ATFL_LEN_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="MNU_LVL_SPR_CD" type="STRING" size="256"/>
+          <Column id="menuId" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_info">
+        <ColumnInfo>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="menuId" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_userInfo">
+        <ColumnInfo>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="WPTAL_ID" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="CHR_TASK_NM" type="STRING" size="256"/>
+          <Column id="JBPOS_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

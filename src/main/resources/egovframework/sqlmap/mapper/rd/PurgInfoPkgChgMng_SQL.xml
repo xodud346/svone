@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PurgInfoPkgChgMng">
+
+    <select id="selectPurgInfoPkgChgMng" parameterType="HashMap" resultType="HashMap">
+        /* PurgInfoPkgChgMngDao.selectPurgInfoPkgChgMng 업체공통클래스(샘풀) 조회 */
+        <![CDATA[
+            SELECT '0' AS CHK                    /*CHK*/
+                 , A.CLASS_ID                    /*회사아이디*/
+                 , A.CLASS_NM                    /*회사명*/
+                 , A.REMK                        /*설명*/
+                 , A.SN                          /*자동증가*/
+                 , A.USE_CHK                     /*사용여부*/
+                 , A.REG_ID                      /*등록자ID*/
+                 , A.REG_DT                      /*등록일자*/
+                 , A.MOD_ID                      /*수정자ID*/
+                 , A.MOD_DT                      /*수정일자*/
+              FROM SSP_APP.BT_COM_CLASS A
+             WHERE 1=1
+        ]]>
+        <if test="CLASS_ID != null and CLASS_ID != ''">
+            <![CDATA[
+               AND A.CLASS_ID        = #{CLASS_ID}
+            ]]>
+        </if>
+        <choose>
+            <when test='(SORT_COLUMN != null and SORT_COLUMN != "") and (SORT_TYPE != null and SORT_TYPE != "")'>
+             ORDER BY A.${SORT_COLUMN} ${SORT_TYPE}
+            </when>
+            <otherwise>
+             ORDER BY A.CLASS_ID
+            </otherwise>
+        </choose>
+            OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+
+    <select id="selectPurgInfoPkgChgMngPKey" parameterType="HashMap" resultType="HashMap">
+        /* PurgInfoPkgChgMngDao.selectPurgInfoPkgChgMngPKey 업체공통클래스(샘풀) PK 조회 */
+        <![CDATA[
+            SELECT LPAD(NVL(MAX(TO_NUMBER(CODE))+1,'1'),5,'0') AS KEY_CODE
+              FROM SSP_APP.BT_COM_CLASS
+             WHERE 1=1
+               AND CLASS_ID        = #{CLASS_ID}
+        ]]>
+    </select>
+
+    <select id="selectPurgInfoPkgChgMngCount" parameterType="HashMap" resultType="Integer">
+        /* PurgInfoPkgChgMngDao.selectPurgInfoPkgChgMngCount 업체공통클래스(샘풀) 카운트 조회 */
+        <![CDATA[
+            SELECT COUNT(1) AS CNT
+              FROM SSP_APP.BT_COM_CLASS
+             WHERE 1=1
+        ]]>
+        <if test="CLASS_ID != null and CLASS_ID != ''">
+            <![CDATA[
+               AND CLASS_ID        = #{CLASS_ID}
+            ]]>
+        </if>
+    </select>
+
+    <insert id="insertPurgInfoPkgChgMng" parameterType="HashMap">
+        /* PurgInfoPkgChgMngDao.insertPurgInfoPkgChgMng 업체공통클래스(샘풀) 저장 */	
+        <![CDATA[
+            INSERT INTO SSP_APP.BT_COM_CLASS
+            (
+                   CLASS_ID                    /*회사아이디*/
+                 , CLASS_NM                    /*회사명*/
+                 , REMK                        /*설명*/
+                 , SN                          /*자동증가*/
+                 , USE_CHK                     /*사용여부*/
+                 , REG_ID                      /*등록자ID*/
+                 , REG_DT                      /*등록일자*/
+                 , MOD_ID                      /*수정자ID*/
+                 , MOD_DT                      /*수정일자*/
+            )VALUES
+            (
+                   #{CLASS_ID}
+                 , #{CLASS_NM}
+                 , #{REMK}
+                 , #{SN}
+                 , #{USE_CHK}
+                 , #{REG_ID}
+                 , SYSDATE
+                 , #{MOD_ID}
+                 , SYSDATE
+            )
+        ]]>
+    </insert>
+
+    <update id="updatePurgInfoPkgChgMng" parameterType="HashMap">
+        /* PurgInfoPkgChgMngDao.updatePurgInfoPkgChgMng 업체공통클래스(샘풀) 수정 */
+        <![CDATA[
+            UPDATE SSP_APP.BT_COM_CLASS
+               SET
+                   CLASS_ID                  = #{CLASS_ID}                    /*회사아이디*/
+                 , CLASS_NM                  = #{CLASS_NM}                    /*회사명*/
+                 , REMK                      = #{REMK}                        /*설명*/
+                 , SN                        = #{SN}                          /*자동증가*/
+                 , USE_CHK                   = #{USE_CHK}                     /*사용여부*/
+                 , REG_ID                    = #{REG_ID}                      /*등록자ID*/
+                 , REG_DT                    = SYSDATE                        /*등록일자*/
+                 , MOD_ID                    = #{MOD_ID}                      /*수정자ID*/
+                 , MOD_DT                    = SYSDATE                        /*수정일자*/
+             WHERE 1=1
+               AND CLASS_ID        = #{CLASS_ID}
+        ]]>
+    </update>
+
+    <update id="mergePurgInfoPkgChgMng" parameterType="HashMap">
+        /* PurgInfoPkgChgMngDao.mergePurgInfoPkgChgMng 업체공통클래스(샘풀) 저장/수정 */
+        <![CDATA[
+            MERGE INTO SSP_APP.BT_COM_CLASS A
+                 USING DUAL
+                    ON (
+                               A.CLASS_ID      = #{CLASS_ID}
+                       )
+                  WHEN MATCHED THEN
+                        UPDATE SET
+                               A.CLASS_ID                  = #{CLASS_ID}                    /*회사아이디*/
+                             , A.CLASS_NM                  = #{CLASS_NM}                    /*회사명*/
+                             , A.REMK                      = #{REMK}                        /*설명*/
+                             , A.SN                        = #{SN}                          /*자동증가*/
+                             , A.USE_CHK                   = #{USE_CHK}                     /*사용여부*/
+                             , A.REG_ID                    = #{REG_ID}                      /*등록자ID*/
+                             , A.REG_DT                    = SYSDATE                        /*등록일자*/
+                             , A.MOD_ID                    = #{MOD_ID}                      /*수정자ID*/
+                             , A.MOD_DT                    = SYSDATE                        /*수정일자*/
+                  WHEN NOT MATCHED THEN
+                            INSERT
+                            (
+                                   A.CLASS_ID
+                                 , A.CLASS_NM
+                                 , A.REMK
+                                 , A.SN
+                                 , A.USE_CHK
+                                 , A.REG_ID
+                                 , A.REG_DT
+                                 , A.MOD_ID
+                                 , A.MOD_DT
+                             )VALUES
+                             (
+                                   #{CLASS_ID}
+                                 , #{CLASS_NM}
+                                 , #{REMK}
+                                 , #{SN}
+                                 , #{USE_CHK}
+                                 , #{REG_ID}
+                                 , SYSDATE
+                                 , #{MOD_ID}
+                                 , SYSDATE
+                             )
+        ]]>
+    </update>
+
+    <delete id="deletePurgInfoPkgChgMng" parameterType="HashMap">
+        /* PurgInfoPkgChgMngDao.deletePurgInfoPkgChgMng 업체공통클래스(샘풀) 삭제 */
+        <![CDATA[
+            DELETE FROM SSP_APP.BT_COM_CLASS
+             WHERE 1=1
+               AND CLASS_ID        = #{CLASS_ID}
+        ]]>
+    </delete>
+</mapper>

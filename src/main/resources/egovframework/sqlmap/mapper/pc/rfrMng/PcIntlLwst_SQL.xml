@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcIntlLwst">
+
+	<sql id="PcIntlLwstWhere">
+		<if test="coCd != null and coCd!= ''.toString()">
+		    AND	A.CO_CD = #{coCd}
+		</if>
+		<if test="sPrdId != null and sPrdId!= ''.toString()">
+		    AND	A.PRD_ID = LPAD(#{sPrdId}, 18, '0')
+		</if>
+		<if test="adjYm != null and adjYm!= ''.toString()">
+		    AND	A.ADJ_YM = SUBSTR(#{adjYm},0,6)
+		</if>
+		<if test="strDtm != null and strDtm != ''.toString()">
+			<![CDATA[
+		    AND A.REG_DTM >= TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS')
+		    ]]>
+		</if>
+		<if test="endDtm != null and endDtm != ''.toString()">
+		    <![CDATA[
+		    AND A.REG_DTM < TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')
+		    ]]>
+		</if>
+	</sql>
+
+	<!-- 내부최저판매가 목록 -->
+    <select id="selectIntlLwstList" parameterType="HashMap" resultType="HashMap">
+        /* PcPlnPrfrt.selectIntlLwstList */
+        SELECT * FROM (
+			SELECT
+	        	TO_CHAR(TO_DATE(A.ADJ_YM,'YYYYMM'),'YYYY-MM') AS ADJ_YM,
+	        	A.PRD_ID,
+	        	TO_NUMBER(A.PRD_ID) AS PRD_ID_NUM,
+	        	B.PRD_NM,
+	        	A.INTL_LWST_SALSPRC,	
+				A.BZPLC_ID,
+				C.BZPLC_NM AS BZPLC_NM,
+				A.REG_RSN,
+				A.UPDPSN_ID,
+				D.OPRTR_NM AS UPDPSN_NM,
+				A.UPD_DTM,
+				'KRW' AS CURR_UNIT_CD
+			FROM TB_PC_INTL_LWST_SALSPRC_INFO A
+			<if test="prdId > 0 ">
+                 JOIN TB_OD_ODR_INQ_TGT_DTLS D
+	            ON  D.SES_ID = #{sesId}
+	            AND D.INQ_COND_DTLS = #{inqCondDtls}
+	            AND D.COL_ITM = 'PRD_ID'
+	            AND LPAD(D.COND_DATA_VAL, 18, '0') = A.PRD_ID
+            </if>
+			LEFT OUTER JOIN TB_PR_PRD_INFO B
+				ON A.CO_CD = B.CO_CD
+				AND A.PRD_ID = B.PRD_ID
+			LEFT OUTER JOIN TB_CC_BZPLC_BASIS C
+				ON C.CO_CD = A.CO_CD
+				AND A.BZPLC_ID = C.BZPLC_ID
+			LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO D
+				ON D.CO_CD = A.CO_CD
+				AND D.OPRTR_ID = A.UPDPSN_ID
+			<where>
+			 	<include refid="PcIntlLwstWhere" />
+			</where>
+		)A
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.ADJ_YM DESC</otherwise>
+		</choose>
+		OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <select id="selectIntlLwstCount" parameterType="hashMap" resultType="integer">
+    	/* PcPlnPrfrt.selectIntlLwstCount */
+		SELECT
+			COUNT(0)
+		 FROM TB_PC_INTL_LWST_SALSPRC_INFO A
+		 <if test="prdId > 0 ">
+            JOIN TB_OD_ODR_INQ_TGT_DTLS D
+            ON  D.SES_ID = #{sesId}
+            AND D.INQ_COND_DTLS = #{inqCondDtls}
+            AND D.COL_ITM = 'PRD_ID'
+            AND LPAD(D.COND_DATA_VAL, 18, '0') = A.PRD_ID
+        </if>
+		 LEFT JOIN TB_PR_PRD_INFO B
+			ON A.PRD_ID = B.PRD_ID
+		 <where>
+		 	<include refid="PcIntlLwstWhere" />
+		</where>
+    </select>
+    
+    <insert id="insertIntlLwst" parameterType="HashMap">
+    	/* 내부최저판매가 등록 - insertIntlLwst */
+    	INSERT INTO TB_PC_INTL_LWST_SALSPRC_INFO
+    		(CO_CD
+			, BZPLC_ID
+			, PRD_ID
+			, ADJ_YM
+			, INTL_LWST_SALSPRC
+			, REG_RSN
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+			) 
+			VALUES(
+			#{coCd}
+			, #{bzplcId}
+			, #{prdId}
+			, #{adjYm}
+			, #{intlLwstSalsprc}
+			, #{regRsn}
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE
+			)
+    </insert>
+    
+    <!-- 내부최저판매가 계획 매익률 목록 -->
+    <select id="selectIntlLwstDetail" parameterType="HashMap" resultType="HashMap">
+        /* PcPlnPrfrt.selectIntlLwstDetail */
+        SELECT * FROM (
+	        SELECT
+	        	TO_CHAR(TO_DATE(A.ADJ_YM,'YYYYMM'),'YYYY-MM') AS ADJ_YM,
+	        	A.PRD_ID,
+	        	B.PRD_NM,
+	        	A.INTL_LWST_SALSPRC,	
+				A.BZPLC_ID,
+				C.BZPLC_NM,
+				A.REG_RSN,
+				A.UPDPSN_ID,
+				A.UPD_DTM,
+				'KRW' AS CURR_UNIT_CD,
+				TO_CHAR(SYSDATE,'YYYY-MM-DD') AS BSS_DTM
+			FROM TB_PC_INTL_LWST_SALSPRC_INFO A
+			LEFT OUTER JOIN TB_PR_PRD_INFO B
+				ON A.CO_CD = B.CO_CD
+				AND A.PRD_ID = B.PRD_ID
+			LEFT OUTER JOIN TB_CC_BZPLC_BASIS C
+				ON C.CO_CD = A.CO_CD
+				AND A.BZPLC_ID = C.BZPLC_ID
+			WHERE A.PRD_ID = LPAD(#{sPrdId},18,'0')
+			AND ADJ_YM BETWEEN TO_CHAR(ADD_MONTHS(SYSDATE,-12),'yyyymm') AND TO_CHAR(SYSDATE,'yyyymm')
+			ORDER BY INTL_LWST_SALSPRC, ADJ_YM DESC
+		)Z
+		WHERE ROWNUM = 1
+    </select>
+    
+    
+</mapper>

@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="ProductSinglePopup" width="570" height="580" titletext="상품정보 조회" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="580" width="570">
+        <Static id="Static00" taborder="0" text="상품ID" left="22" top="57" width="70" height="29"/>
+        <Edit id="edt_prdId" taborder="1" left="117" top="57" width="429" height="30"/>
+        <Static id="Static00_00" taborder="8" text="상품명" left="22" top="89" width="70" height="29"/>
+        <Edit id="edt_prdNm" taborder="2" left="117" top="89" width="429" height="30"/>
+        <Static id="Static00_01" taborder="9" text="규격" left="22" top="121" width="70" height="29"/>
+        <Edit id="edt_attrVal" taborder="3" left="117" top="121" width="429" height="30"/>
+        <Static id="Static00_02" taborder="10" text="제조사명" left="22" top="153" width="70" height="29"/>
+        <Edit id="edt_mnfr" taborder="4" left="117" top="153" width="429" height="30"/>
+        <Grid id="grd_list" taborder="7" left="20" top="238" width="526" height="270" binddataset="ds_prd" autofittype="col" cellsizebandtype="allband" oncelldblclick="grd_list_oncelldblclick">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="120"/>
+                <Column size="138"/>
+                <Column size="132"/>
+                <Column size="130"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="상품 ID"/>
+                <Cell col="1" text="상품 명"/>
+                <Cell col="2" text="규격"/>
+                <Cell col="3" text="제조사 명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:PRD_ID"/>
+                <Cell col="1" text="bind:PRD_NM"/>
+                <Cell col="2" text="bind:ATTR_VAL"/>
+                <Cell col="3" text="bind:MNFR"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_clear" taborder="5" text="초기화" left="413" top="193" width="65" height="32" onclick="btn_clear_onclick"/>
+        <Button id="btn_search" taborder="6" text="검색" left="483" top="193" width="65" height="32" onclick="btn_search_onclick"/>
+        <Static id="Static01" taborder="11" text="상품정보 조회" left="18" top="16" width="155" height="37" font="bold 14pt &quot;Arial&quot;" onclick="Static01_onclick"/>
+        <Static id="sta_totcnt" taborder="12" text="총 0건" left="22" top="213" width="84" height="18"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="prdId" type="STRING" size="256"/>
+          <Column id="prdNm" type="STRING" size="256"/>
+          <Column id="attrVal" type="STRING" size="256"/>
+          <Column id="mnfr" type="STRING" size="256"/>
+          <Column id="cPage" type="INT" size="256"/>
+          <Column id="pagingSize" type="INT" size="256"/>
+          <Column id="pageSize" type="INT" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_prd">
+        <ColumnInfo>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="PRD_NM" type="STRING" size="256"/>
+          <Column id="ATTR_VAL" type="STRING" size="256"/>
+          <Column id="MNFR" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : MarketA
+CREATION DATES : 
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totRowCnt = 0;
+this.pagingSize = 10;
+this.pageSize = 20;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.edt_prdId.set_value(this.parent.prdId);
+	this.edt_prdNm.set_value(this.parent.prdNm);
+	
+	//조회
+	this.fn_search(1);
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	var objType = obj.getFocus();
+	if( e.keycode == 13 && objType == "[object Edit]" ) {
+		//조회
+		this.fn_search(1);
+	}
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (cPage)
+{
+	var sSvcId = "productSelect";    
+	var sUrl = "/co/popUp/productPopupList.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_prd=ds_output1";
+	var arg = "";
+	
+	if( undefined == cPage ) {
+		cPage = 1;
+	}
+	
+	// 페이징 정보 세팅.
+	this.ds_search.setColumn(0, "cPage", cPage);
+	this.ds_search.setColumn(0, "pagingSize", this.pagingSize);
+	this.ds_search.setColumn(0, "pageSize", this.pageSize);
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "productSelect"){    
+		this.sta_totcnt.set_text("총 "+this.totRowCnt+"건");
+	}
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.edt_prdId.set_value("");
+	this.edt_prdNm.set_value("");
+	this.edt_attrVal.set_value("");
+	this.edt_mnfr.set_value("");
+};
+
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search(1);
+};
+
+this.grd_list_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var resData = {};
+	var resString = "";
+
+	resData.PRD_ID = this.ds_prd.getColumn(this.ds_prd.rowposition, "PRD_ID");
+	resData.PRD_NM = this.ds_prd.getColumn(this.ds_prd.rowposition, "PRD_NM");
+	resString = JSON.stringify(resData);	
+	this.close(resString);
+};
+
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="edt_prdId" propid="value" datasetid="ds_search" columnid="prdId"/>
+      <BindItem id="item1" compid="edt_prdNm" propid="value" datasetid="ds_search" columnid="prdNm"/>
+      <BindItem id="item2" compid="edt_attrVal" propid="value" datasetid="ds_search" columnid="attrVal"/>
+      <BindItem id="item3" compid="edt_mnfr" propid="value" datasetid="ds_search" columnid="mnfr"/>
+    </Bind>
+  </Form>
+</FDL>

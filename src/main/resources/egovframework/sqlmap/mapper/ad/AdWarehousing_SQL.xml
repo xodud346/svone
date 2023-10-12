@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+******************************************************************************
+* SELECT : 정산관리 - 고객사 입고 처리
+* 작성자 : 윤민우
+* 작성 일자 : 2022.03.21
+******************************************************************************
+-->
+<mapper namespace="com.ssp.bo.ad.adWarehousing">
+
+    <!-- 고객사 입고 처리 목록 카운트 -->
+    <select id="selectWarehousingListCount" parameterType="HashMap" resultType="Integer">
+        /* com.ssp.bo.ad.adWarehousing.selectWarehousingListCount */
+        With BASE_T AS
+        (
+        SELECT  /*+ materialize */
+                 c.GI_STATS_CD
+                ,C.GI_DCN_DT
+                ,b.GDOC_NO                                                                                      /* 거래명세서번호 */
+                ,b.CATG_KILR_CD                                                                                 /* 카테고리킬러코드 */
+                ,b.BZPLC_ID                                                                                     /* 사업장ID */
+                ,b.ODR_NO
+                ,b.ODR_ITM_NO
+                ,k.ODR_REQ_DTM
+                ,k.DLV_CMPL_DTM
+                ,b.PRD_ID
+                ,b.REPR_SPEC
+                ,b.ODR_QTY                                                                                      /* 주문수량 */
+                ,b.SELL_UNIT_CD                                                                                 /* 주문단위 판매단위코드 */
+                ,a.OPR_UNIT_ID                                                                                  /* 운영단위ID */
+                ,a.DEPT_ID                                                                                      /* 부서ID */
+                ,a.ODRPSN_ID                                                                                    /* 주문자ID */
+                ,b.RCVR_NM                                                                                      /* 수령인명 */
+                ,c.GDPSN_ID
+                ,a.CO_CD
+        From    TB_OD_ODR_MST a
+                Join
+                TB_OD_ODR_DTL b
+                    On (b.CO_CD = a.CO_CD
+                    And b.BZPLC_ID = a.BZPLC_ID
+                    And b.ODR_NO = a.ODR_NO)
+                Join
+                TB_AD_GI_DCN_PROC c
+                    On (c.CO_CD = b.CO_CD
+                    And c.BZPLC_ID = b.BZPLC_ID
+                    And c.ODR_NO = b.ODR_NO
+                    And c.ODR_ITM_NO = b.ODR_ITM_NO)
+                Join
+                TB_DL_ODR_ACP_DLV_PROC k
+                    On (k.CO_CD = b.CO_CD
+                    And k.BZPLC_ID = b.BZPLC_ID
+                    And k.ODR_NO = b.ODR_NO
+                    And k.ODR_ITM_NO = b.ODR_ITM_NO)
+                <if test=" OPR_UNIT_ID > 0 ">
+                Join
+                TB_OD_ODR_INQ_TGT_DTLS T1
+                    On  T1.SES_ID = #{SES_ID}
+                    And T1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                    And T1.COL_ITM = 'OPR_UNIT_ID'
+                    And T1.COND_DATA_VAL = a.OPR_UNIT_ID
+                </if>
+                <if test=" ODR_NO > 0 ">
+                Join
+                TB_OD_ODR_INQ_TGT_DTLS   T2
+               ON  T2.SES_ID = #{SES_ID}
+               AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+               AND T2.COL_ITM = 'ODR_NO'
+               AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,1) = b.ODR_NO
+               AND (CASE WHEN TRIM(REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR
+                             TRIM(REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN
+                             b.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2))) END) = b.ODR_ITM_NO
+                </if>
+        WHERE   c.GI_STATS_CD In ('01','10')    /* 입고대기, 입고 */
+        <if test="GI_STATS_SEL_CD == '01'">
+           And     c.GI_STATS_CD = '01'         /* 입고 완료 */
+        </if>
+        <if test="GI_STATS_SEL_CD == '02'">
+           And     c.GI_STATS_CD != '01'        /* 입고 미완료 */
+        </if>
+        <if test="INQ_DTM_SEL_CD == '01'">
+           And     b.ODR_DCN_DTM Between To_Date( #{INQ_DTM_FROM} ||'000000','YYYYMMDDHH24MISS') And To_Date( #{INQ_DTM_TO} ||'235959','YYYYMMDDHH24MISS')     /* 주문생성일 */
+        </if>
+        <if test="INQ_DTM_SEL_CD == '02'">
+           And     k.DLV_CMPL_DTM Between To_Date( #{INQ_DTM_FROM} ||'000000','YYYYMMDDHH24MISS') And To_Date( #{INQ_DTM_TO} ||'235959','YYYYMMDDHH24MISS')    /* 배송완료일 */
+        </if>
+        <if test="INQ_DTM_SEL_CD == '03'">
+           And     c.GI_DTM  Between To_Date( #{INQ_DTM_FROM} ||'000000','YYYYMMDDHH24MISS') And To_Date( #{INQ_DTM_TO} ||'235959','YYYYMMDDHH24MISS')               /* 입고처리일 */
+        </if>
+        <if test="GDOC_NO != null and GDOC_NO != ''">
+           And     b.GDOC_NO = #{GDOC_NO}       /* 거래명세서번호 */
+        </if>
+        )
+        Select  /*+PARALLEL(4)*/
+            COUNT(*)
+        From    BASE_T a
+    </select>
+
+    <!-- 고객사 입고 처리 목록 -->
+    <select id="selectWarehousingList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.ad.adWarehousing.selectWarehousingList */
+        With BASE_T AS
+        (
+        SELECT  /*+ materialize */
+                 c.GI_STATS_CD
+                ,C.GI_DCN_DT
+                ,b.GDOC_NO                                                                                      /* 거래명세서번호 */
+                ,b.CATG_KILR_CD                                                                                 /* 카테고리킬러코드 */
+                ,b.BZPLC_ID                                                                                     /* 사업장ID */
+                ,b.ODR_NO
+                ,b.ODR_ITM_NO
+                ,k.ODR_REQ_DTM
+                ,k.DLV_CMPL_DTM
+                ,b.PRD_ID
+                ,b.REPR_SPEC
+                ,b.ODR_QTY                                                                                      /* 주문수량 */
+                ,b.SELL_UNIT_CD                                                                                 /* 주문단위 판매단위코드 */
+                ,a.OPR_UNIT_ID                                                                                  /* 운영단위ID */
+                ,a.DEPT_ID                                                                                      /* 부서ID */
+                ,a.ODRPSN_ID                                                                                    /* 주문자ID */
+                ,b.RCVR_NM                                                                                      /* 수령인명 */
+                ,c.GDPSN_ID
+                ,a.CO_CD
+                ,b.ODR_DCN_DTM
+        From    TB_OD_ODR_MST a
+                Join
+                TB_OD_ODR_DTL b
+                    On (b.CO_CD = a.CO_CD
+                    And b.BZPLC_ID = a.BZPLC_ID
+                    And b.ODR_NO = a.ODR_NO)
+                Join
+                TB_AD_GI_DCN_PROC c
+                    On (c.CO_CD = b.CO_CD
+                    And c.BZPLC_ID = b.BZPLC_ID
+                    And c.ODR_NO = b.ODR_NO
+                    And c.ODR_ITM_NO = b.ODR_ITM_NO)
+                Join
+                TB_DL_ODR_ACP_DLV_PROC k
+                    On (k.CO_CD = b.CO_CD
+                    And k.BZPLC_ID = b.BZPLC_ID
+                    And k.ODR_NO = b.ODR_NO
+                    And k.ODR_ITM_NO = b.ODR_ITM_NO)
+                <if test=" OPR_UNIT_ID > 0 ">
+                Join
+                TB_OD_ODR_INQ_TGT_DTLS T1
+                    On  T1.SES_ID = #{SES_ID}
+                    And T1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                    And T1.COL_ITM = 'OPR_UNIT_ID'
+                    And T1.COND_DATA_VAL = a.OPR_UNIT_ID
+                </if>
+                <if test=" ODR_NO > 0 ">
+                Join
+               TB_OD_ODR_INQ_TGT_DTLS   T2
+               ON  T2.SES_ID = #{SES_ID}
+               AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+               AND T2.COL_ITM = 'ODR_NO'
+               AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,1) = b.ODR_NO
+               AND (CASE WHEN TRIM(REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR
+                             TRIM(REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN
+                             b.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2))) END) = b.ODR_ITM_NO
+                </if>
+        WHERE   c.GI_STATS_CD In ('01','10')    /* 입고대기, 입고 */
+        <if test="GI_STATS_SEL_CD == '01'">
+           And     c.GI_STATS_CD = '01'         /* 입고 완료 */
+        </if>
+        <if test="GI_STATS_SEL_CD == '02'">
+           And     c.GI_STATS_CD != '01'        /* 입고 미완료 */
+        </if>
+        <if test="INQ_DTM_SEL_CD == '01'">
+           And     b.ODR_DCN_DTM Between To_Date( #{INQ_DTM_FROM} ||'000000','YYYYMMDDHH24MISS') And To_Date( #{INQ_DTM_TO} ||'235959','YYYYMMDDHH24MISS')     /* 주문확정일k.ODR_REQ_DTM */
+        </if>
+        <if test="INQ_DTM_SEL_CD == '02'">
+           And     k.DLV_CMPL_DTM Between To_Date( #{INQ_DTM_FROM} ||'000000','YYYYMMDDHH24MISS') And To_Date( #{INQ_DTM_TO} ||'235959','YYYYMMDDHH24MISS')   /* 배송완료일 */
+        </if>
+        <if test="INQ_DTM_SEL_CD == '03'">
+           And     c.GI_DTM  Between To_Date( #{INQ_DTM_FROM} ||'000000','YYYYMMDDHH24MISS') And To_Date( #{INQ_DTM_TO} ||'235959','YYYYMMDDHH24MISS')              /* 입고처리일 */
+        </if>
+        <if test="GDOC_NO != null and GDOC_NO != ''">
+           And     b.GDOC_NO = #{GDOC_NO}       /* 거래명세서번호 */
+        </if>
+        Order BY
+          c.GI_STATS_CD DESC                                                /* 입고상태코드 */
+        , c.GI_DTM DESC                                                     /* 입고처리일 */
+        , b.GDOC_NO                                                         /* 거래명세서번호 */
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+        )
+        Select  /*+PARALLEL(4)*/
+             a.GI_STATS_CD                                                                                   /* 입고상태코드 01:입고,02:입고거부,03:입고보류,04:입고취소,10:입고대기 */
+            ,d.GI_STATS_NM                                                                                  /* 입고상태명 */
+            ,Case
+                When a.GI_STATS_CD = '01' Then '완료'
+                When a.GI_STATS_CD = '10' Then '미 완료'
+            End                                                         As GI_CMPL_NM                       /* 완료 또는 미완료*/
+            ,a.GI_DCN_DT                                              As GI_DTM                           /* 입고처리일 */
+            ,Nvl2(e.MBR_ID,e.MBR_NM,f.OPRTR_NM)                         As GI_PRCS_PRSN_NM                  /* 입고처리자 */
+            ,Case
+                When a.GI_DCN_DT Is Not Null Then 'Y'
+                Else 'N'
+            End                                                         As GI_CONFIRM_YN                    /* 검수여부 */
+            ,Nvl(h.ADJ_YM,FN_OD_GET_ADJ_YYYYMM(g.ADJ_DD,a.ODR_DCN_DTM)) As ADJ_YM                           /* 정산대상년월 */
+            ,a.GDOC_NO                                                                                      /* 거래명세서번호 */
+            ,a.CATG_KILR_CD                                                                                 /* 카테고리킬러코드 */
+            ,i.CATG_KILR_NM                                                                                 /* 카테고리킬러명 */
+            ,a.BZPLC_ID                                                                                     /* 사업장ID */
+            ,j.BZPLC_NM                                                                                     /* 사업장명 */
+            ,a.ODR_NO
+            ,a.ODR_ITM_NO
+            ,a.ODR_NO || '-'|| To_Char(a.ODR_ITM_NO)                    As ODR_NO_N_ITM_NO                  /* 주문항목번호 */
+            ,To_Char(a.ODR_REQ_DTM,'YYYYMMDD')                          As ODR_REQ_DTM                      /* 주문생성일 (주문신청일시) */
+            ,To_Char(a.DLV_CMPL_DTM,'YYYYMMDD')                         As DLV_CMPL_DTM                     /* 배송완료일 */
+            ,LTRIM(a.PRD_ID, '0')                                       As PRD_ID                           /* 상품ID */
+            ,l.PRD_NM                                                                                       /* 상품명 */
+            ,FN_PR_ATTR_VAL_LIST(A.CO_CD,A.PRD_ID)
+                                                                        As REPR_SPEC                        /* 규격 */
+            ,a.ODR_QTY                                                                                      /* 주문수량 */
+            ,a.SELL_UNIT_CD                                                                                 /* 주문단위 판매단위코드 */
+            ,a.OPR_UNIT_ID                                                                                  /* 운영단위ID */
+            ,g.OPR_UNIT_NM                                                                                  /* 운영단위명 */
+            ,a.DEPT_ID                                                                                      /* 부서ID */
+            ,n.DEPT_NM                                                                                      /* 부서명 */
+            ,a.ODRPSN_ID                                                                                    /* 주문자ID */
+            ,o.MBR_NM                                                   As ODRPSN_NM                        /* 주문자명 */
+            ,a.RCVR_NM                                                                                      /* 수령인명 */
+        From    BASE_T      a
+                Left Join
+                (
+                    Select  d.COM_DTL_CD                                    As GI_STATS_CD                     /* 입고상태코드 */
+                            , d.COM_DTL_CD_NM                               As GI_STATS_NM                     /* 입고상태명 */
+                    From    TB_CO_COM_CD_DTL d
+                    Where   d.LANG_CD = #{LANG_CD}
+                    And     d.COM_CLSF_CD = 'GI_STATS_CD'
+                ) d
+                    On (d.GI_STATS_CD = a.GI_STATS_CD)
+                Left Join
+                TB_CC_MBR_BASIS e
+                    On (e.CO_CD = a.CO_CD
+                    And e.MBR_ID = a.GDPSN_ID)
+                Left Join
+                TB_CO_MBR_OPRTR_INFO f
+                    On (f.CO_CD = a.CO_CD
+                    And f.OPRTR_ID = a.GDPSN_ID)
+                Left Join
+                TB_CC_OPR_UNIT_BASIS g
+                    On (g.CO_CD = a.CO_CD
+                    And g.BZPLC_ID = a.BZPLC_ID
+                    And g.OPR_UNIT_ID = a.OPR_UNIT_ID)
+                Left Join
+                TB_AD_SSP_ADJ_DTLS h
+                    On (h.CO_CD = a.CO_CD
+                    And h.BZPLC_ID = a.BZPLC_ID
+                    And h.ODR_NO = a.ODR_NO
+                    And h.ODR_ITM_NO = a.ODR_ITM_NO)
+                Left Join
+                (
+                    Select  i.COM_DTL_CD                                    As CATG_KILR_CD                     /* 카테고리킬러코드 */
+                            , i.COM_DTL_CD_NM                               As CATG_KILR_NM                     /* 카테고리킬러명 */
+                    From    TB_CO_COM_CD_DTL i
+                    Where   i.LANG_CD = #{LANG_CD}
+                    And     i.COM_CLSF_CD = 'CATG_KILR_CD'
+                ) i
+                    On (i.CATG_KILR_CD = a.CATG_KILR_CD)
+                Join
+                TB_CC_BZPLC_BASIS j
+                    On (j.CO_CD = a.CO_CD
+                    And j.BZPLC_ID = a.BZPLC_ID)
+
+                Left Join
+                TB_PR_PRD_INFO l
+                    On (l.CO_CD = a.CO_CD
+                    And l.PRD_ID = a.PRD_ID)
+                Left Join
+                TB_PR_MRO_PRD_INFO m
+                    On (m.CO_CD = a.CO_CD
+                    And m.PRD_ID = a.PRD_ID)
+                Left Join
+                TB_CC_DEPT_BASIS n
+                    On (n.CO_CD = a.CO_CD
+                    And n.DEPT_ID = a.DEPT_ID)
+                Left Join
+                TB_CC_MBR_BASIS o
+                    On (o.CO_CD = a.CO_CD
+                    And o.MBR_ID = a.ODRPSN_ID)
+    </select>
+
+    <select id="selectWarehousingList_xlsx01" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.ad.adWarehousing.selectWarehousingList_xlsx01 */
+        With BASE_T AS
+        (
+        SELECT  /*+ materialize */
+                 c.GI_STATS_CD
+                ,C.GI_DCN_DT
+                ,b.GDOC_NO                                                                                      /* 거래명세서번호 */
+                ,b.CATG_KILR_CD                                                                                 /* 카테고리킬러코드 */
+                ,b.BZPLC_ID                                                                                     /* 사업장ID */
+                ,b.ODR_NO
+                ,b.ODR_ITM_NO
+                ,k.ODR_REQ_DTM
+                ,k.DLV_CMPL_DTM
+                ,b.PRD_ID
+                ,b.REPR_SPEC
+                ,b.ODR_QTY                                                                                      /* 주문수량 */
+                ,b.SELL_UNIT_CD                                                                                 /* 주문단위 판매단위코드 */
+                ,a.OPR_UNIT_ID                                                                                  /* 운영단위ID */
+                ,a.DEPT_ID                                                                                      /* 부서ID */
+                ,a.ODRPSN_ID                                                                                    /* 주문자ID */
+                ,b.RCVR_NM                                                                                      /* 수령인명 */
+                ,c.GDPSN_ID
+                ,a.CO_CD
+                ,b.ODR_DCN_DTM
+        From    TB_OD_ODR_MST a
+                Join
+                TB_OD_ODR_DTL b
+                    On (b.CO_CD = a.CO_CD
+                    And b.BZPLC_ID = a.BZPLC_ID
+                    And b.ODR_NO = a.ODR_NO)
+                Join
+                TB_AD_GI_DCN_PROC c
+                    On (c.CO_CD = b.CO_CD
+                    And c.BZPLC_ID = b.BZPLC_ID
+                    And c.ODR_NO = b.ODR_NO
+                    And c.ODR_ITM_NO = b.ODR_ITM_NO)
+                Join
+                TB_DL_ODR_ACP_DLV_PROC k
+                    On (k.CO_CD = b.CO_CD
+                    And k.BZPLC_ID = b.BZPLC_ID
+                    And k.ODR_NO = b.ODR_NO
+                    And k.ODR_ITM_NO = b.ODR_ITM_NO)
+                <if test=" OPR_UNIT_ID > 0 ">
+                Join
+                TB_OD_ODR_INQ_TGT_DTLS T1
+                    On  T1.SES_ID = #{SES_ID}
+                    And T1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                    And T1.COL_ITM = 'OPR_UNIT_ID'
+                    And T1.COND_DATA_VAL = a.OPR_UNIT_ID
+                </if>
+                <if test=" ODR_NO > 0 ">
+                Join
+               TB_OD_ODR_INQ_TGT_DTLS   T2
+               ON  T2.SES_ID = #{SES_ID}
+               AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+               AND T2.COL_ITM = 'ODR_NO'
+               AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,1) = b.ODR_NO
+               AND (CASE WHEN TRIM(REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2)) IS NULL OR
+                             TRIM(REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2)) = '' THEN
+                             b.ODR_ITM_NO ELSE TO_NUMBER(TRIM(REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2))) END) = b.ODR_ITM_NO
+                </if>
+        WHERE   c.GI_STATS_CD In ('01','10')    /* 입고대기, 입고 */
+        <if test="GI_STATS_SEL_CD == '01'">
+           And     c.GI_STATS_CD = '01'         /* 입고 완료 */
+        </if>
+        <if test="GI_STATS_SEL_CD == '02'">
+           And     c.GI_STATS_CD != '01'        /* 입고 미완료 */
+        </if>
+        <if test="INQ_DTM_SEL_CD == '01'">
+           And     b.ODR_DCN_DTM Between To_Date( #{INQ_DTM_FROM} ||'000000','YYYYMMDDHH24MISS') And To_Date( #{INQ_DTM_TO} ||'235959','YYYYMMDDHH24MISS')     /* 주문생성일 */
+        </if>
+        <if test="INQ_DTM_SEL_CD == '02'">
+           And     k.DLV_CMPL_DTM Between To_Date( #{INQ_DTM_FROM} ||'000000','YYYYMMDDHH24MISS') And To_Date( #{INQ_DTM_TO} ||'235959','YYYYMMDDHH24MISS')   /* 배송완료일 */
+        </if>
+        <if test="INQ_DTM_SEL_CD == '03'">
+           And     c.GI_DTM  Between To_Date( #{INQ_DTM_FROM} ||'000000','YYYYMMDDHH24MISS') And To_Date( #{INQ_DTM_TO} ||'235959','YYYYMMDDHH24MISS')              /* 입고처리일 */
+        </if>
+        <if test="GDOC_NO != null and GDOC_NO != ''">
+           And     b.GDOC_NO = #{GDOC_NO}       /* 거래명세서번호 */
+        </if>
+        Order BY
+          c.GI_STATS_CD DESC                                                /* 입고상태코드 */
+        , c.GI_DTM DESC                                                     /* 입고처리일 */
+        , b.GDOC_NO                                                         /* 거래명세서번호 */
+        )
+        Select  /*+PARALLEL(4)*/
+             b.BZPLC_ID                                                                                     /* 사업장ID */
+            ,j.BZPLC_NM                                                                                     /* 사업장명 */
+            ,b.ODR_NO || '-'|| To_Char(b.ODR_ITM_NO)                    As ODR_NO_N_ITM_NO                  /* 주문항목번호 */
+            ,d.GI_STATS_NM                                                                                  /* 입고상태명 */
+            ,C.GI_DCN_DT                                              As GI_DTM                           /* 입고처리일 */
+            ,Nvl2(e.MBR_ID,e.MBR_NM,f.OPRTR_NM)                         As GI_PRCS_PRSN_NM                  /* 입고처리자 */
+            ,Nvl(h.ADJ_YM,FN_OD_GET_ADJ_YYYYMM(g.ADJ_DD,a.ODR_DCN_DTM)) As ADJ_YM                           /* 정산대상년월 */
+            ,b.GDOC_NO                                                                                      /* 거래명세서번호 */
+            ,a.OPR_UNIT_ID                                                                                  /* 운영단위ID */
+            ,g.OPR_UNIT_NM                                                                                  /* 운영단위명 */
+            ,a.DEPT_ID                                                                                      /* 부서ID */
+            ,n.DEPT_NM                                                                                      /* 부서명 */
+            ,a.ODRPSN_ID                                                                                    /* 주문자ID */
+            ,o.MBR_NM                                                   As ODRPSN_NM                        /* 주문자명 */
+            ,b.RCVR_NM                                                                                      /* 수령인명 */
+            ,i.CATG_KILR_NM                                                                                 /* 카테고리킬러명 */
+            ,LTRIM(b.PRD_ID, '0')                                       As PRD_ID                           /* 상품ID */
+            ,l.PRD_NM                                                                                       /* 상품명 */
+            ,FN_PR_ATTR_VAL_LIST(A.CO_CD,A.PRD_ID)
+                                                                        As REPR_SPEC                        /* 규격 */
+            ,b.SELL_UNIT_CD                                                                                 /* 주문단위 판매단위코드 */
+            ,b.ODR_QTY                                                                                      /* 주문수량 */
+            ,To_Char(k.ODR_REQ_DTM,'YYYYMMDD')                          As ODR_REQ_DTM                      /* 주문생성일 (주문신청일시) */
+            ,To_Char(k.DLV_CMPL_DTM,'YYYYMMDD')                         As DLV_CMPL_DTM                     /* 배송완료일 */
+    From    BASE_T      a
+            Left Join
+            (
+                Select  d.COM_DTL_CD                                    As GI_STATS_CD                     /* 입고상태코드 */
+                        , d.COM_DTL_CD_NM                               As GI_STATS_NM                     /* 입고상태명 */
+                From    TB_CO_COM_CD_DTL d
+                Where   d.LANG_CD = #{LANG_CD}
+                And     d.COM_CLSF_CD = 'GI_STATS_CD'
+            ) d
+                On (d.GI_STATS_CD = a.GI_STATS_CD)
+            Left Join
+            TB_CC_MBR_BASIS e
+                On (e.CO_CD = a.CO_CD
+                And e.MBR_ID = a.GDPSN_ID)
+            Left Join
+            TB_CO_MBR_OPRTR_INFO f
+                On (f.CO_CD = a.CO_CD
+                And f.OPRTR_ID = a.GDPSN_ID)
+            Left Join
+            TB_CC_OPR_UNIT_BASIS g
+                On (g.CO_CD = a.CO_CD
+                And g.BZPLC_ID = a.BZPLC_ID
+                And g.OPR_UNIT_ID = a.OPR_UNIT_ID)
+            Left Join
+            TB_AD_SSP_ADJ_DTLS h
+                On (h.CO_CD = a.CO_CD
+                And h.BZPLC_ID = a.BZPLC_ID
+                And h.ODR_NO = a.ODR_NO
+                And h.ODR_ITM_NO = a.ODR_ITM_NO)
+            Left Join
+            (
+                Select  i.COM_DTL_CD                                    As CATG_KILR_CD                     /* 카테고리킬러코드 */
+                        , i.COM_DTL_CD_NM                               As CATG_KILR_NM                     /* 카테고리킬러명 */
+                From    TB_CO_COM_CD_DTL i
+                Where   i.LANG_CD = #{LANG_CD}
+                And     i.COM_CLSF_CD = 'CATG_KILR_CD'
+            ) i
+                On (i.CATG_KILR_CD = a.CATG_KILR_CD)
+            Join
+            TB_CC_BZPLC_BASIS j
+                On (j.CO_CD = a.CO_CD
+                And j.BZPLC_ID = a.BZPLC_ID)
+
+            Left Join
+            TB_PR_PRD_INFO l
+                On (l.CO_CD = a.CO_CD
+                And l.PRD_ID = a.PRD_ID)
+            Left Join
+            TB_PR_MRO_PRD_INFO m
+                On (m.CO_CD = a.CO_CD
+                And m.PRD_ID = a.PRD_ID)
+            Left Join
+            TB_CC_DEPT_BASIS n
+                On (n.CO_CD = a.CO_CD
+                And n.DEPT_ID = a.DEPT_ID)
+            Left Join
+            TB_CC_MBR_BASIS o
+                On (o.CO_CD = a.CO_CD
+                And o.MBR_ID = a.ODRPSN_ID)
+    </select>
+
+    <!-- 입고처리 완료 프로시저 업데이트 -->
+    <insert id="callWarehousingFinish" statementType="CALLABLE" parameterType="HashMap">
+        /* com.ssp.bo.ad.adWarehousing.callWarehousingFinish */
+       	{CALL SSP_APP.SP_AD_PROCESS_GI_DCN_PROC (
+            #{RTN_CD,          mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴코드 */
+           , #{RTN_MSG,        mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴메시지 */
+           , #{ GDPSN_ID, mode=IN, jdbcType=VARCHAR } 		/* 등록자 또는 수정자 */
+       	  , #{ GDPSN_ID, mode=IN, jdbcType=VARCHAR }		/* 회원ID */
+       	  , #{ CO_CD, mode=IN, jdbcType=VARCHAR }		/* 회사코드         VARCHAR2(4) */
+       	  , #{ BZPLC_ID, mode=IN, jdbcType=VARCHAR }		/* 사업장ID        VARCHAR2(10) */
+       	  , #{ ODR_NO, mode=IN, jdbcType=VARCHAR }		/* 주문번호         VARCHAR2(10) */
+       	  , #{ ODR_ITM_NO, mode=IN, jdbcType=VARCHAR }	/* 주문항목번호       NUMBER(10) */
+       	) }
+    </insert>
+
+</mapper>

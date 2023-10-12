@@ -1,0 +1,401 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form" width="1244" height="398" titletext="일반고객할인율 변경이력" onclose="form_onclose" onload="form_onload" background="black">
+    <Layouts>
+      <Layout description="일반고객할인율 변경이력" height="398" mobileorientation="landscape" width="1244">
+        <Static id="sta_bg" taborder="3" left="0" top="22" right="0" bottom="0" background="white"/>
+        <Div id="div_paging" taborder="8" left="0" height="30" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="294" right="0" text=""/>
+        <Static id="Static01_00_01_01_00" taborder="9" left="0" top="div_paging:0" color="#000000" background="aqua" visible="false" text="20" textAlign="center" right="0" height="20"/>
+        <Button id="btn_cancel" taborder="0" text="닫기" left="591" top="Static01_00_01_01_00:0" height="24" right="585" onclick="btn_cancel_onclick"/>
+        <Static id="Static01_00_01" taborder="1" left="0" top="50" height="20" color="#000000" background="aqua" visible="false" text="20" textAlign="center" right="0"/>
+        <Button id="btn_close" taborder="2" top="0" text="X" visible="true" onclick="btn_close_onclick" background="black" cursor="pointer" height="20" width="20" right="0"/>
+        <Static id="Static60_00" taborder="4" text="일반고객할인율 변경이력" left="20" top="20" height="36" cssclass="sta_WF_title04" width="300" onclick="Static60_00_onclick"/>
+        <Static id="Static01_00_01_00_01_00_00_00" taborder="5" left="0" top="btn_cancel:0" width="100.00%" height="30" color="#000000" background="aqua" visible="false" text="30" textAlign="center"/>
+        <Grid id="grd_list" taborder="6" left="20" top="72" height="202" right="20" binddataset="ds_master" selecttype="cell" autoenter="select" autofittype="col" uCellSizeType="true" uServerSortFlag="true" uSortCallback="fn_sortCallback" uSortFlag="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="120"/>
+                <Column size="80"/>
+                <Column size="150"/>
+                <Column size="150"/>
+                <Column size="330"/>
+                <Column size="100"/>
+                <Column size="120"/>
+                <Column size="120"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="변경일시"/>
+                <Cell col="1" text="상태"/>
+                <Cell col="2" text="제조원"/>
+                <Cell col="3" text="R&amp;D카테고리ID"/>
+                <Cell col="4" text="R&amp;D카테고리"/>
+                <Cell col="5" text="일반고객할인율"/>
+                <Cell col="6" text="변경담당자ID"/>
+                <Cell col="7" text="변경 담당자"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:REG_UPD_DTM" displaytype="normal"/>
+                <Cell col="1" text="bind:USE_YN" displaytype="normal" expr="USE_YN=='Y'?'사용':'미사용'"/>
+                <Cell col="2" text="bind:MNFR_NO" displaytype="normal" expr="MNFR_NM==null?'':'('+MNFR_NO+')'+MNFR_NM"/>
+                <Cell col="3" text="bind:PRD_CLCD" expr="PRD_CLCD=='*'?'':PRD_CLCD"/>
+                <Cell col="4" text="bind:PRD_CLCD_NM" displaytype="normal" expr="PRD_CLCD=='*'?'':PRD_CLCD_NM"/>
+                <Cell col="5" text="bind:GEN_CUST_DCRT" displaytype="mask" expr="GEN_CUST_DCRT==null?'':GEN_CUST_DCRT+'%'" textAlign="right"/>
+                <Cell col="6" text="bind:REG_UPD_ID"/>
+                <Cell col="7" text="bind:OPRTR_NM" displaytype="normal"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="Static01_00_01_01" taborder="7" left="0" top="grd_list:0" color="#000000" background="aqua" visible="false" text="20" textAlign="center" right="0" height="20"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset enableevent="true" id="ds_master" preload="true" updatecontrol="true" useclientlayout="false">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="32"/>
+          <Column id="PRD_CLCD" type="STRING" size="32"/>
+          <Column id="MNFR_NO" type="STRING" size="32"/>
+          <Column id="PRD_CLCD_NM" type="STRING" size="32"/>
+          <Column id="GEN_CUST_DCRT" type="BIGDECIMAL" size="16"/>
+          <Column id="MNFR_NM" type="STRING" size="32"/>
+          <Column id="REG_UPD_DTM" type="STRING" size="32"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="32"/>
+          <Column id="REG_UPD_ID" type="STRING" size="32"/>
+          <Column id="VLD_STR_DTM" type="STRING" size="32"/>
+          <Column id="VLD_END_DTM" type="STRING" size="32"/>
+          <Column id="BZPLC_ID" type="STRING" size="32"/>
+          <Column id="SEQ" type="BIGDECIMAL" size="16"/>
+          <Column id="BZPLC_NM" type="STRING" size="32"/>
+          <Column id="RND_PRFRT_SPR_CD" type="STRING" size="32"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="MNFR_NO" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="TOTAL_COUNT" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_pageRowCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="32"/>
+          <Column id="COM_USR_DEFN_NM_2" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="32"/>
+          <Column id="COM_USR_DEFN_NM_1" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="COM_CLSF_CD" type="STRING" size="256"/>
+          <Column id="SRT_SO" type="BIGDECIMAL" size="16"/>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_4" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_3" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_5" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COM_DTL_CD">1000</Col>
+            <Col id="COM_DTL_CD_NM">1000개씩</Col>
+          </Row>
+          <Row>
+            <Col id="COM_DTL_CD">5000</Col>
+            <Col id="COM_DTL_CD_NM">5000개씩</Col>
+          </Row>
+          <Row>
+            <Col id="COM_DTL_CD">10000</Col>
+            <Col id="COM_DTL_CD_NM">10000개씩</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_searchTemp" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="MNFR_NO" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="TOTAL_COUNT" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/**********************************************************************
+* FormID(화면   ID명): SSP_BO_LA_14.xfdl(일반고객할인율 변경이력)
+* 작 성			일 명: 손나라
+* 작 성	    	일 자: 2022/06/22
+* 변 경     	일 자:
+* 변 경			자 명:
+* 변경 및 수정 로그 : 일자별로 변경자 및 변경사항을 간략히 기술
+*/
+/**********************************************************************
+	01. 전처리 공통 함수 선언 
+***********************************************************************/
+include "RD::rdMain.xjs";
+/**********************************************************************
+	02. 폼 변수 정의 
+***********************************************************************/
+this.fv_oApp                = nexacro.getApplication();	//application object
+this.lv_pageViewCnt 		= 10;
+this.div_paging.uPage       = 1;
+this.div_paging.uPageNum    = 0;
+this.div_paging.uPageRowCnt = 10;
+this.div_paging.uPageCnt    = 0;
+this.div_paging.uTotCount   = 0; 
+this.totalCount             = 0;
+this.sOptinoArg1;
+this.sOptinoArg2;
+this.sParamArg1;
+this.sParamArg2;
+this.sParamArg3;
+this.sParamArg4;
+this.mallSprCd 		= "20";
+this.totalCount 	= 0;
+this.strKeyValue 	= "";
+this.lv_coCd        = this.gfn_nvl(this.fv_oApp.gds_userInfo.getColumn(0,"CO_CD"),"") == "" ? "1000" : this.gfn_nvl(this.fv_oApp.gds_userInfo.getColumn(0,"CO_CD"),"");
+/**********************************************************************
+	03. 폼 로드 및 닫을때(폼이 포커스 갈때)
+***********************************************************************/
+/**
+ * 기능 : 폼 로드 완료후 초기값 Setting
+ */
+this.form_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//폼에 공통으로 로드시 사용하는 함수.
+	this.gfn_formOnLoad(this);
+	// 로컬 로그인 사용 않할시 false
+	this.fn_setLocalUserCreate(true);
+	//사용자 초기화  함수
+	this.fn_formInit();
+}; 
+/**
+ * 기능 : 폼언 로드(닫기전 셋팅)  Setting
+ */
+this.form_onclose = function(obj:nexacro.Form,e:nexacro.CloseEventInfo)
+{
+	
+};
+/**********************************************************************
+	04. 공통 코드 및 콤보 데이타 조회 
+***********************************************************************/
+this.fn_formInit = function()
+{
+	/******************* 기본셋팅 *********************/
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sOp01))
+	{
+		 this.sOptinoArg1 = this.getOwnerFrame().pv_sOp01;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sOp02))
+	{
+		 this.sOptinoArg2 = this.getOwnerFrame().pv_sOp02;        
+	}
+	
+	/******************* 넘어온 인자값 *********************/
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal01))
+	{
+		 this.sParamArg1 = this.getOwnerFrame().pv_sVal01;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal02))
+	{
+		 this.sParamArg2 = this.getOwnerFrame().pv_sVal02;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal03))
+	{
+		 this.sParamArg3 = this.getOwnerFrame().pv_sVal03;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal04))
+	{
+		 this.sParamArg4 = this.getOwnerFrame().pv_sVal04;        
+	}
+	
+	var nRow = this.ds_search.addRow();
+	this.ds_search.setColumn(nRow,"CO_CD",this.sParamArg1);
+	this.ds_search.setColumn(nRow,"MNFR_NO",this.sParamArg2);
+	this.ds_search.setColumn(nRow,"PRD_CLCD",this.sParamArg3);
+	this.ds_search.setColumn(nRow,"ROW_COUNT",this.lv_pageViewCnt); //현재 레코드 초기화셋팅
+	
+	this.fn_PostformInit();
+
+};
+
+this.fn_PostformInit = function()                                                                                                                                                                                   
+{   
+	this.fn_Ret(true);
+};  
+
+/**
+ * 기능 : 콜백함수(후처리) 
+ */
+this.fn_callBack = function(sSvcId,nErrorCode, sErrorMsg) 
+{
+	if(nErrorCode != 0)
+	{
+		this.fn_alert(sErrorMsg,"에러정보","","error");
+		if(nErrorCode == -100)
+		{
+			//this.div.form.PRNM.setFocus();
+		}
+		return false;
+	}else
+	{
+		/*sSvcId (Transaction Id)*/
+		switch(sSvcId)
+		{
+			case "Init":
+				this.fn_PostformInit();
+				break;
+			case "Ret":
+			    this.fn_PostRet();
+				break;
+			
+			default:
+				break;
+		}
+	}
+};
+
+/**********************************************************************
+	05. 조회 함수 선언  
+***********************************************************************/
+this.fn_PreRet = function(page)
+{
+    if(page)
+	{
+        var oPaging = this.div_paging;
+        oPaging.uPage    = 1;
+        oPaging.uPageNum = 0;
+        this.ds_search.setColumn(0,"START_NUM",    0);
+        this.ds_search.setColumn(0,"SORT_COLUMN",  "");
+        this.ds_search.setColumn(0,"SORT_TYPE",    "");
+        //this.ds_search.setColumn(0,"INQ_COND_DTLS",this.formId);
+        this.ds_search.setColumn(0,"CO_CD",        this.lv_coCd);
+        this.ds_search.setColumn(0,"TOTAL_COUNT",  this.totalCount);
+
+		// page 처리시 기존 조회조건 검색을 위한 데이터 카피
+		this.ds_searchTemp.copyData(this.ds_search);
+     } 
+	
+    return true;
+};
+
+/**
+ * 기능 : 마스터 조회 실행
+ */
+this.fn_Ret = function(page)
+{
+    if(!this.fn_PreRet(page))
+    {
+        return false;
+    }
+    var strSvc      = "Ret";
+    var strUrl      = "/rd/gen-cust-dcrt-mng/select-gen-cust-dcrt-mng-hst.do";
+    var strInDs     = "ds_search=ds_searchTemp";
+    var strOutDs    = "ds_master=ds_master";
+    var strArg      = "";
+    var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack
+    var strASync    = true;             //생략이나 공백일시에는 ASync=true,싱크시는 false로
+    this.gfn_transaction(strSvc
+                       , strUrl
+                       , strInDs
+                       , strOutDs
+                       , strArg
+                       , strCallBack
+                       , strASync);
+};
+
+/**
+ * 기능 : 조회 후 실행
+ */
+this.fn_PostRet = function()
+{
+	//trace(this.ds_master.saveXML());
+    this.div_paging.form.cfn_createPage(this.div_paging,this.totalCount,this.lv_pageViewCnt,"fn_pageCallback");
+};
+/**********************************************************************
+        06. 추가 함수 선언
+***********************************************************************/
+/**********************************************************************
+        07. 삭제 함수 선언
+***********************************************************************/
+/**********************************************************************
+        08. 저장 함수 선언
+***********************************************************************/
+/**********************************************************************
+	09. 닫기버튼
+***********************************************************************/
+this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var result = this.fn_confirm( "ERRN000053", "취소","", "question" ); // 취소 하시겠습니까?
+    if(result == 1)
+    {
+		this.close("CLOSE");
+	}
+};
+
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var result = this.fn_confirm( "ERRN000053", "취소","", "question" ); // 취소 하시겠습니까?
+    if(result == 1)
+    {
+		this.close("EXIT");
+	}
+};
+
+/**********************************************************************
+	08.Get, Set Method 
+***********************************************************************/
+ /**********************************************************************
+	09.기타 Control Event  
+***********************************************************************/
+
+/**
+ * 그리드 상단 Sort 처리
+ */
+this.fn_sortCallback = function(sGridId)
+{
+    var oGrid = null;
+
+    if(sGridId == "grd_list")
+    {
+        var oSortInfo = this.grd_list.uaSortInfo;
+        this.ds_searchTemp.setColumn(0,"SORT_COLUMN",oSortInfo.bindCol);
+        this.ds_searchTemp.setColumn(0,"SORT_TYPE",  oSortInfo.status);
+        this.fn_Ret(false);
+    }
+};
+
+/**
+ * 그리드 하단 페이지 처리
+ */
+this.fn_pageCallback = function(sFlag)
+{
+    var oPaging = this.div_paging;
+
+    if(sFlag)
+    {
+        this.ds_searchTemp.setColumn(0,"START_NUM",oPaging.uPageNum);
+        this.ds_searchTemp.setColumn(0,"ROW_COUNT",this.lv_pageViewCnt);
+        this.fn_Ret(false);
+    }
+
+    var sTotText = "(<b v='true'>총 "+ oPaging.uTotCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+    //this.sta_totcnt.set_text(sTotText);
+};
+]]></Script>
+  </Form>
+</FDL>

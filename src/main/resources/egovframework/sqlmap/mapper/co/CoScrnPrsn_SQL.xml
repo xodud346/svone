@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CoScrnPrsn">
+   <!--
+    ******************************************************************************
+    * SELECT : 개인화 조회
+    * 작성자 : ksy
+    * 작성 일자 : 2022-02-17
+    ******************************************************************************
+    -->
+    <resultMap id="ScrnPrsnListResultMap" type="HashMap">
+    	<result property="CO_CD"          column="CO_CD" />
+    	<result property="OPRTR_ID"       column="OPRTR_ID" />
+    	<result property="MNU_SEQ"        column="MNU_SEQ" />
+    	<result property="GRID_NM"        column="GRID_NM" />
+        <result property="FMT_TP"         column="FMT_TP"   />
+        <result property="GRID_FMT"       column="GRID_FMT" jdbcType="CLOB"   javaType="String" />
+        <result property="MNU_NM"         column="MNU_NM"   />
+        <result property="PGM_PATH"       column="PGM_PATH"   />
+    </resultMap>
+    <select id="selectScrnPrsnList" parameterType="HashMap" resultMap="ScrnPrsnListResultMap">
+        SELECT
+                A.CO_CD
+                ,A.OPRTR_ID
+                ,A.MNU_SEQ
+                ,A.GRID_NM
+                ,A.FMT_TP
+                ,A.GRID_FMT
+                ,B.MNU_NM
+                ,C.THME_DOMN_CD || '::' || C.UI_ID AS PGM_PATH
+        FROM TB_CO_UI_PSNL_DTLS A
+        LEFT OUTER JOIN TB_CO_MNU_INFO B ON A.CO_CD = #{CO_CD} AND A.MNU_SEQ = B.MNU_SEQ
+        LEFT OUTER JOIN TB_CO_SYS_PGM_INFO C ON A.CO_CD = #{CO_CD} AND B.PGM_ID = C.PGM_ID AND C.USE_YN = 'Y'
+        WHERE CO_CD = #{CO_CD}
+        AND OPRTR_ID = #{OPRTR_ID}
+    </select>
+
+    <!--
+    ******************************************************************************
+    * INSERT : 개인화 등록
+    * 작성자 : ksy
+    * 작성 일자 : 2022-02-17
+    ******************************************************************************
+    -->
+    <insert id="insertScrnPrsn" parameterType="HashMap">
+        /* CoMnuMng.insertScrnPrsn */
+        INSERT INTO SSP_APP.TB_CO_UI_PSNL_DTLS
+        (
+           CO_CD
+          ,OPRTR_ID
+          ,MNU_SEQ
+          ,GRID_NM
+          ,FMT_TP
+          ,GRID_FMT
+          ,REG_DTM
+          ,REGPSN_ID
+          ,UPD_DTM
+          ,UPDPSN_ID
+        ) VALUES (
+           #{coCd}
+          ,#{oprtrId}
+          ,#{mnuSeq}
+          ,#{gridNm}
+          ,#{fmtTp}
+          ,#{gridFmt}
+          ,SYSDATE
+          ,'SYSTEM' <!-- #{regpsnId} -->
+          ,SYSDATE
+          ,'SYSTEM' <!--#{updpsnId}-->
+        )
+    </insert>
+
+
+    <!--
+    ******************************************************************************
+    * UPDATE : 개인화 수정
+    * 작성자 : ksy
+    * 작성 일자 : 2022-02-17
+    ******************************************************************************
+    -->
+    <update id="updateScrnPrsn" parameterType="HashMap">
+        UPDATE SSP_APP.TB_CO_UI_PSNL_DTLS
+           SET FMT_TP    = #{fmtTp}
+              ,GRID_FMT  = #{gridFmt}
+              ,UPD_DTM   = SYSDATE
+              ,UPDPSN_ID = 'SYSTEM' <!--#{updpsnId}-->
+		 WHERE 1=1 
+		   AND CO_CD    = #{coCd}
+		   AND OPRTR_ID = #{oprtrId}
+		   AND MNU_SEQ  = #{mnuSeq}
+		   AND GRID_NM  = #{gridNm}
+    </update>
+    
+    <!--
+    ******************************************************************************
+    * UPDATE : 개인화 삭제
+    * 작성자 : ksy
+    * 작성 일자 : 2022-02-17
+    ******************************************************************************
+    -->
+    <update id="deleteScrnPrsn" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_CO_UI_PSNL_DTLS
+         WHERE CO_CD    = #{coCd}
+		   AND OPRTR_ID = #{oprtrId}
+		   AND MNU_SEQ  = #{mnuSeq}
+		   AND GRID_NM  = #{gridNm}
+    </update>
+
+</mapper>

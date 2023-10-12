@@ -1,0 +1,376 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form" width="630" height="310" titletext="R&amp;D상품 등록불가 처리" onclose="form_onclose" onload="form_onload" background="black">
+    <Layouts>
+      <Layout height="310" mobileorientation="landscape" width="630">
+        <Static id="sta_bg" taborder="7" left="0" top="22" right="0" background="white" height="288"/>
+        <Static id="Static03" taborder="0" text="20" left="-20" height="20" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" right="0" bottom="0"/>
+        <Static id="Static04" taborder="1" text="20" left="0" top="20" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" width="20" bottom="0"/>
+        <Static id="Static05" taborder="2" text="20" top="0" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" width="20" bottom="0" right="0"/>
+        <Static id="Static60_00" taborder="3" text="등록불가처리" left="20" top="23" height="36" cssclass="sta_WF_title04" width="94"/>
+        <Static id="Static01_00" taborder="4" left="0" top="98" width="99.38%" height="10" color="#000000" background="aqua" visible="false" text="10" textAlign="center"/>
+        <Static id="Static01_01" taborder="5" text="20" left="0" top="60" height="10" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" right="0"/>
+        <Static id="Static01_00_00" taborder="6" left="0" top="253" height="10" color="#000000" background="aqua" visible="false" text="10" textAlign="center" right="0"/>
+        <Button id="btn_close" taborder="8" top="0" width="20" height="20" text="X" visible="true" onclick="btn_close_onclick" background="black" cursor="pointer" right="0"/>
+        <Static id="Static21_00_01" taborder="10" left="21" top="71" height="32" cssclass="sta_cm_box02L_tdt" right="20"/>
+        <Static id="Static21_00" taborder="9" left="21" top="71" width="170" height="32" cssclass="sta_cm_box01L_tdt" text="등록불가유형 &lt;fc v=&quot;red&quot;&gt;&lt;b v=&quot;true&quot;&gt;* &lt;/b&gt;&lt;/fc&gt;" usedecorate="true"/>
+        <Static id="Static21_00_01_00_00" taborder="11" left="21" top="100" height="152" cssclass="sta_cm_box02L" right="20"/>
+        <Static id="Static21_00_00_00" taborder="12" left="21" top="100" width="170" height="152" cssclass="sta_cm_box01L" text="상세사유"/>
+        <Combo id="cmb_prdRegDisTpCd" taborder="13" left="201" top="74" width="339" height="24" text="선택" value="" index="-1" innerdataset="ds_prdRegDisTpCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" autoselect="true" onitemchanged="cmb_prdRegDisTpCd_onitemchanged"/>
+        <TextArea id="txt_regDisTip" taborder="14" left="201" top="103" width="340" height="145" oninput="txa_regDisTip_oninput" autoselect="true" wordWrap="char"/>
+        <Static id="sta_batySize" taborder="15" text="0/300" left="551" usedecorate="true" width="60" bottom="58" height="29" textAlign="right"/>
+        <Div id="Div00" taborder="16" text="등록불가유형 및 상세사유는 고객에게 노출 되오니 신중하게 작성하시기 바랍니다." left="124" top="23" width="452" height="36"/>
+        <Div id="div_btn1" taborder="18" text="Div00" left="0" top="256" right="0" bottom="9">
+          <Layouts>
+            <Layout>
+              <Button id="btn_save" taborder="0" text="저장" left="317" top="7" width="70" height="30" cssclass="btn_WF_select" onclick="btn_save_onclick"/>
+              <Button id="btn_exit" taborder="1" text="닫기" left="243" top="7" width="70" height="30" onclick="btn_exit_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="div_btn2" taborder="17" text="Div00" left="0" top="256" right="0" bottom="9">
+          <Layouts>
+            <Layout>
+              <Button id="btn_exit" taborder="1" text="닫기" left="280" top="7" width="70" height="30" onclick="btn_exit_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/**********************************************************************
+* FormID(화면   ID명): SSP_BO_RD_21.xfdl(R&D상품 등록불가 처리)
+* 작 성			일 명: 나용철
+* 작 성	    	일 자: 2022/04/28
+* 변 경     	일 자:
+* 변 경			자 명:
+* 변경 및 수정 로그 : 일자별로 변경자 및 변경사항을 간략히 기술
+*/
+/**********************************************************************
+	01. 전처리 공통 함수 선언 
+***********************************************************************/
+include "RD::rdMain.xjs";
+/**********************************************************************
+	02. 폼 변수 정의 
+***********************************************************************/
+this.sOptinoArg1;
+this.sOptinoArg2;
+this.sParamArg1;
+this.sParamArg2;
+this.sParamArg3;
+this.sParamArg4;
+this.sParamArg5;
+this.sParamArg6;
+/**********************************************************************
+	03. 폼 로드 및 닫을때(폼이 포커스 갈때)
+***********************************************************************/
+/**
+ * 기능 : 폼 로드 완료후 초기값 Setting
+ */
+this.form_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//폼에 공통으로 로드시 사용하는 함수.
+	this.gfn_formOnLoad(this);
+	//사용자 초기화 함수
+	this.fn_formInit();
+}; 
+/**
+ * 기능 : 폼언 로드(닫기전 셋팅)  Setting
+ */
+this.form_onclose = function(obj:nexacro.Form,e:nexacro.CloseEventInfo)
+{
+	
+};
+/**********************************************************************
+	04. 공통 코드 및 콤보 데이타 조회 
+***********************************************************************/
+this.fn_formInit = function()
+{
+	/******************* 기본셋팅 *********************/
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sOp01))
+	{
+		 this.sOptinoArg1 = this.getOwnerFrame().pv_sOp01;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sOp02))
+	{
+		 this.sOptinoArg2 = this.getOwnerFrame().pv_sOp02;        
+	}
+	
+	/******************* 넘어온 인자값 *********************/
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal01))
+	{
+		 this.sParamArg1 = this.getOwnerFrame().pv_sVal01;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal02))
+	{
+		 this.sParamArg2 = this.getOwnerFrame().pv_sVal02;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal03))
+	{
+		 this.sParamArg3 = this.getOwnerFrame().pv_sVal03;        
+	}
+
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal04))
+	{
+		 this.sParamArg4 = this.getOwnerFrame().pv_sVal04;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal05)) {
+		 this.sParamArg5 = this.getOwnerFrame().pv_sVal05;
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal06)) {
+		 this.sParamArg6 = this.getOwnerFrame().pv_sVal06;
+	}
+	
+	var strDs   = "ds_prdRegDisTpCd";		        // 데이터를 받을 데이터셋리스트     예) "DS_CODE01|DS_CODE02|DS_CODE03"
+	var strLgcd = "PRD_REG_DIS_TP_CD";           		// 공통코드 중분류 코드, 데이터셋 개수와 같아야 한다. 예) "Z01|Z02|Z03"
+	var strComb = "S";   					// 콤보옵션 (T:전체, S:선택, N:공백, X:해당사항없음)
+	var strOptn = "";						// 조건문 " AND COMM_IT02 = '" + vip + "'|||";
+	var svcId 	= "Init"; 
+ 
+   // gfn_CmmnMultiComboLoad(데이터셋 리스트, 대분류코드 , 콤보 옵션);
+   // 서비스 ID : 코드 조회 실행 후 CALLBACK 함수 지정.
+    this.fn_CmmnMultiComboLoad(strDs
+							  , strLgcd
+							  , strComb
+							  , strOptn
+							  , svcId); 
+};
+
+this.postformInit = function()
+{
+	this.ds_list.clearData();
+	this.ds_list.addRow();
+
+	this.ds_list.setColumn(0,"PRD_REG_DIS_TP_CD",		null);
+	this.ds_list.setColumn(0,"CO_CD",					this.sParamArg2);
+	this.ds_list.setColumn(0,"NEW_PRD_REQ_GRP_NO",		this.sParamArg1);
+	this.ds_list.setColumn(0,"MALL_SPR_CD",				this.sParamArg3);
+	this.ds_list.setColumn(0,"REQ_SBJ_CD",				this.sParamArg4);
+	
+	if(this.sParamArg5=="N"){
+		this.div_btn1.set_visible(true);
+		this.div_btn2.set_visible(false);
+		this.txt_regDisTip.set_readonly(false);
+		this.cmb_prdRegDisTpCd.set_readonly(false);
+	}else{
+		this.div_btn1.set_visible(false);
+		this.div_btn2.set_visible(true);
+		this.txt_regDisTip.set_value(this.sParamArg4);
+		this.txt_regDisTip.set_readonly(true);
+		var nByte = this.fn_getLengthB(this.sParamArg4,3);
+		this.sta_batySize.set_text(nByte + "/300");
+		this.ds_list.setColumn(0, "PRD_REG_DIS_TP_CD", this.sParamArg6);
+		this.cmb_prdRegDisTpCd.set_readonly(true);
+	}
+};
+
+/**
+ * 기능 : 콜백함수(후처리) 
+ */
+this.fn_callBack = function(sSvcId,nErrorCode, sErrorMsg) 
+{
+	if(nErrorCode != 0)
+	{
+		this.fn_alert(sErrorMsg,"에러정보","","error");
+		return false;
+	}else
+	{
+		/*sSvcId (Transaction Id)*/
+		switch(sSvcId)
+		{
+			case "Init":
+				this.postformInit();
+				break;
+			case "Search":
+			    this.postSearch();
+				break;
+			case "Save":
+			    this.postSave();
+				break;
+			
+			default:
+				break;
+		}
+	}
+};
+/**********************************************************************
+	05. 조회 함수 선언  
+***********************************************************************/
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_save();
+};
+/**
+ * 기능 : 저장 전 실행
+ */
+this.preSave = function()
+{ 
+	var sPrdRegDisTpCd = this.cmb_prdRegDisTpCd.value;
+	if(this.gfn_isNull(sPrdRegDisTpCd))
+	{
+		this.fn_alert("ERRN000001","반려정보","등록불가유형은","warning");                    // 등록불가화면은 필수항목입니다.
+		this.cmb_prdRegDisTpCd.setFocus();
+		return false;
+	}
+	var nByte = this.fn_getLengthB(this.txt_regDisTip.value,3);
+	if(nByte > 300)
+	{
+		this.fn_alert("ERRR000167","반려정보","상세사유,300Byte","warning");                    // 입력한 상세사유가 200Byte를 넘길수 없습니다.
+		this.txt_regDisTip.setFocus();
+		return false;
+	}
+	
+	return true;
+};
+/**
+ * 기능 : 화면조회 전 실행
+ */
+this.fn_save = function()
+{
+	if(!this.preSave())
+	{
+		return false;
+	}
+
+	var strSvc 		= "Save";
+	var strUrl 		= "/rd/new-prd-mlt-req-lst/save-prd-mlt-req-rjct-proc-stor.do";
+	var strInDs  	= "ds_master=ds_list";
+	var strOutDs    = "ds_res=ds_output";
+	var strArg 		= "";                                                                                                                                                     
+	var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack                                                                                                                    
+	var strASync    = true;			   //샏략이나 공백일시에는 ASync=true,싱크시는 false로                                                                                                          
+	this.gfn_transaction(strSvc                                                                                                                                                                                  
+				   		, strUrl                                                                                                                                                                     
+				   		, strInDs                                                                                                                                                                    
+				   		, strOutDs                                                                                                                                                                   
+				   		, strArg                                                                                                                                                                     
+				   		, strCallBack                                                                                                                                                                
+				   		, strASync);
+}
+
+/**
+ * 기능 : 조회 후 실행
+ */
+this.postSave = function()
+{
+	if (this.ds_res.getColumn(0, "SUCCESS") == "Y") {		
+		//this.fn_alert("ERRR000007","저장","","question"); // 정상적으로 저장되었습니다
+		alert("정상적으로 저장되었습니다");	// 중복처리 안내
+		this.close("SAVE");
+	} else {
+		alert(this.ds_res.getColumn(0, "MESSAGE"));	// 중복처리 안내
+		this.close("SAVE");
+	}
+};
+
+/**********************************************************************
+	06. 닫기버튼
+***********************************************************************/
+this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close("CLOSE");
+};
+
+this.btn_exit_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close("EXIT");
+};
+/**********************************************************************
+	07.Get, Set Method 
+***********************************************************************/
+ 
+this.txa_regDisTip_oninput = function(obj:nexacro.TextArea,e:nexacro.InputEventInfo)
+{
+	var nByte = this.fn_getLengthB(obj.value,3);
+	this.sta_batySize.set_text(nByte + "/300");
+	if(nByte > 300)
+	{
+		this.fn_alert("ERRR000167","반려정보","상세사유,300Byte","warning");                    // 입력한 상세사유가 200Byte를 넘길수 없습니다.
+		
+		return false;
+	}
+};
+
+
+this.cmb_prdRegDisTpCd_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.ds_list.setColumn(0, "PRD_REG_DIS_TP_NM", this.cmb_prdRegDisTpCd.text);
+};
+]]></Script>
+    <Objects>
+      <Dataset enableevent="true" id="dsDummy" preload="true" updatecontrol="true" useclientlayout="false"/>
+      <Dataset id="ds_prdRegDisTpCd" useclientlayout="false" updatecontrol="true" enableevent="true" loadkeymode="keep" loadfiltermode="keep" reversesubsum="false">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="32"/>
+          <Column id="COM_USR_DEFN_NM_2" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="32"/>
+          <Column id="COM_USR_DEFN_NM_1" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="COM_CLSF_CD" type="STRING" size="256"/>
+          <Column id="SRT_SO" type="BIGDECIMAL" size="16"/>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_4" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_3" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_5" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset enableevent="true" id="ds_list" preload="true" updatecontrol="true" useclientlayout="true" cancolumnchange="ds_list_cancolumnchange">
+        <ColumnInfo>
+          <Column id="PRD_REG_DIS_TP_CD" type="STRING" size="32"/>
+          <Column id="REG_DIS_RSN" type="STRING" size="32"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="NEW_PRD_REQ_GRP_NO" type="STRING" size="256"/>
+          <Column id="MALL_SPR_CD" type="STRING" size="256"/>
+          <Column id="REQ_SBJ_CD" type="STRING" size="256"/>
+          <Column id="NEW_PRD_REQ_STATS_CD" type="STRING" size="256"/>
+          <Column id="PRD_REG_DIS_TP_NM" type="STRING" size="256"/>
+          <Column id="EMAIL_ADDR" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="PRD_REG_DIS_TP_CD"/>
+            <Col id="REG_DIS_RSN"/>
+            <Col id="CO_CD"/>
+            <Col id="NEW_PRD_REQ_GRP_NO"/>
+            <Col id="MALL_SPR_CD"/>
+            <Col id="REQ_SBJ_CD"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_search" useclientlayout="false" updatecontrol="true" enableevent="true" loadkeymode="keep" loadfiltermode="keep" reversesubsum="false">
+        <ColumnInfo>
+          <Column id="FORM_ID" type="STRING" size="32"/>
+          <Column id="FORM_PATH" type="STRING" size="256"/>
+          <Column id="FORM_NM" type="STRING" size="256"/>
+          <Column id="USER_YN" type="STRING" size="256"/>
+          <Column id="PROG_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="FORM_ID"/>
+            <Col id="FORM_PATH"/>
+            <Col id="FORM_NM"/>
+            <Col id="USER_YN"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_res">
+        <ColumnInfo>
+          <Column id="SUCCESS" type="STRING" size="256"/>
+          <Column id="MESSAGE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="cmb_prdRegDisTpCd" propid="value" datasetid="ds_list" columnid="PRD_REG_DIS_TP_CD"/>
+      <BindItem id="item1" compid="txt_regDisTip" propid="value" datasetid="ds_list" columnid="REG_DIS_RSN"/>
+    </Bind>
+  </Form>
+</FDL>

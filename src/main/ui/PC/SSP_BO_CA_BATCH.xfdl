@@ -1,0 +1,157 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_CA_BATCH" width="990" height="720" titletext="New Form" onload="SSP_BO_CA_BATCH_onload">
+    <Layouts>
+      <Layout height="720" width="990">
+        <Grid id="Grid00" taborder="0" left="80" top="225" width="375" height="270" binddataset="ds_prcBatch" autofittype="col" visible="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row band="head" size="24"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="ENAME"/>
+                <Cell col="1" text="EMPNO"/>
+                <Cell col="2" text="JOB"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:ENAME"/>
+                <Cell col="1" text="bind:EMPNO"/>
+                <Cell col="2" text="bind:JOB"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Grid id="Grid00_00" taborder="1" left="535" top="225" width="375" height="270" binddataset="ds_dpBatch" autofittype="col" visible="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row band="head" size="24"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="ENAME"/>
+                <Cell col="1" text="EMPNO"/>
+                <Cell col="2" text="JOB"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:ENAME"/>
+                <Cell col="1" text="bind:EMPNO"/>
+                <Cell col="2" text="bind:JOB"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="Button00" taborder="2" text="가격 배치" left="80" top="120" width="120" height="50" onclick="Button00_onclick"/>
+        <Button id="Button00_00" taborder="3" text="진열 배치" left="540" top="120" width="120" height="50" onclick="Button00_00_onclick"/>
+        <Button id="Button00_00_00" taborder="4" text="일 배치" left="320" top="120" width="120" height="50" onclick="Button00_00_00_onclick"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_prcBatch">
+        <ColumnInfo>
+          <Column id="ENAME" type="STRING" size="256"/>
+          <Column id="EMPNO" type="STRING" size="256"/>
+          <Column id="JOB" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_dpBatch">
+        <ColumnInfo>
+          <Column id="ENAME" type="STRING" size="256"/>
+          <Column id="EMPNO" type="STRING" size="256"/>
+          <Column id="JOB" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="Column0" type="STRING" size="256"/>
+          <Column id="Column1" type="STRING" size="256"/>
+          <Column id="Column2" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="Column0">123</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[
+
+this.SSP_BO_CA_BATCH_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+};
+this.fn_prcBatch = function()	{
+		
+		var sSvcId = "PrcBatch";    
+		var sUrl = "/pc/pc-batch/prc.do";
+		var inDs = "ds_search=ds_search";
+		var outDs = "ds_prcBatch=ds_prcBatch";
+		var arg = "";
+		var callback = "fn_callBack";
+
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+};
+
+this.fn_dpBatch = function()	{
+		var sSvcId = "DpBatch";    
+		var sUrl = "/pc/pc-batch/dp.do";
+		var inDs = "ds_search=ds_search";
+		var outDs = "ds_dpBatch=ds_dpBatch";
+		var arg = "";
+		var callback = "fn_callBack";
+
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+};
+
+this.fn_dayBatch = function()	{
+		var sSvcId = "DayBatch";    
+		var sUrl = "/pc/pc-batch/day.do";
+		var inDs = "ds_search=ds_search";
+		var outDs = "ds_dpBatch=ds_dpBatch";
+		var arg = "";
+		var callback = "fn_callBack";
+
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+};
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+		
+		if(svcID == "PrcBatch"){
+		}
+		else if(svcID == "DpBatch"){
+		}
+		else if(svcID == "DayBatch"){
+		}
+}
+
+this.Button00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	
+	this.fn_prcBatch();
+};
+
+this.Button00_00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_dpBatch();
+};
+
+this.Button00_00_00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_dayBatch();
+};
+]]></Script>
+  </Form>
+</FDL>

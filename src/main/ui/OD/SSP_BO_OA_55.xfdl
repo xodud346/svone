@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_OA_55" width="880" height="658" titletext="결재자 조회 팝업" onload="SSP_BO_OA_55_onload" onkeyup="SSP_BO_OA_55_onkeyup">
+    <Layouts>
+      <Layout height="658" width="880">
+        <Button id="btn_search" taborder="2" text="조회" top="60" height="28" onclick="btn_search_onclick" cssclass="btn_WF_require" width="60" right="20"/>
+        <Static id="sta_totcnt" taborder="4" text="총 124건이 검색되었습니다." left="20" usedecorate="true" width="300" bottom="38" height="29" visible="false" font="12px/normal &quot;맑은 고딕&quot;"/>
+        <Grid id="grid_list01" taborder="3" left="20" top="98" right="20" autofittype="col" nodatatext="선택된 결과가 없습니다." autoenter="select" height="492" binddataset="ds_list01" oncelldblclick="btn_select_onclick" onenterdown="grid_list01_onenterdown" selecttype="row" font="12px/normal &quot;맑은 고딕&quot;">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="85"/>
+                <Column size="120"/>
+                <Column size="85"/>
+                <Column size="140"/>
+                <Column size="85"/>
+                <Column size="140"/>
+                <Column size="85"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="30"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="사업장ID"/>
+                <Cell col="1" text="사업장명"/>
+                <Cell col="2" text="운영단위ID"/>
+                <Cell col="3" text="운영단위명"/>
+                <Cell col="4" text="부서ID"/>
+                <Cell col="5" text="부서명"/>
+                <Cell col="6" text="회원ID"/>
+                <Cell col="7" text="회원명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:BZPLC_ID" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="none"/>
+                <Cell col="1" text="bind:BZPLC_NM" displaytype="expr:currow == 0 ? &quot;combocontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;combo&quot; : &quot;none&quot;" combodataset="ds_list02" combocodecol="BZPLC_ID" combodatacol="BZPLC_NM" combodisplaynulltext="전체" combotype="dropdown"/>
+                <Cell col="2" text="bind:OPR_UNIT_ID" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+                <Cell col="3" text="bind:OPR_UNIT_NM" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+                <Cell col="4" text="bind:DEPT_ID" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+                <Cell col="5" text="bind:DEPT_NM" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+                <Cell col="6" text="bind:MBR_ID" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+                <Cell col="7" text="bind:MBR_NM" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_select" taborder="5" text="확인" width="81" right="400" textPadding="0px" onclick="btn_select_onclick" bottom="22" height="28"/>
+        <Static id="sta_totcnt00" taborder="6" text="최대조회수" top="60" height="28" usedecorate="true" cssclass="sta_WF_txtR" right="252" width="60" onclick="Div00_sta_totcnt00_onclick" font="12px/normal &quot;맑은 고딕&quot;"/>
+        <MaskEdit id="msk_searchCount" taborder="0" top="60" width="100" height="27" right="148" value="1000"/>
+        <Button id="btn_clear" taborder="1" text="초기화" top="60" height="28" onclick="btn_clear_onclick" cssclass="btn_WF_default" width="60" right="85"/>
+        <Static id="staticTitle" taborder="7" text="결재자 조회" left="20" top="20" height="21" cssclass="sta_WF_title04" width="300"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="TOTAL_COUNT" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="GB" type="STRING" size="256"/>
+          <Column id="ORI_BZPLC_ID" type="STRING" size="256"/>
+          <Column id="MBR_BZPLC_ID" type="STRING" size="256"/>
+          <Column id="MBR_BZPLC_NM" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_NM" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_NM" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="MBR_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+            <Col id="TOTAL_COUNT">2000</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list01" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="MBR_BZPLC_ID" type="STRING" size="256"/>
+          <Column id="MBR_BZPLC_NM" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_NM" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_NM" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="MBR_NM" type="STRING" size="256"/>
+          <Column id="JBPOS_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list02" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_NM" type="STRING" size="256"/>
+          <Column id="RN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_searchCB" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="GB" type="STRING" size="256"/>
+          <Column id="ORI_BZPLC_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[// 플랜트 조회
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+include "OD::odUtils.xjs";
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;
+this.insertCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역
+************************************************************************************************/
+
+this.fv_GB ="";
+this.fv_oriBzplcId ="";
+
+this.SSP_BO_OA_55_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	 this.fv_GB = this.parent.pv1;
+	this.fv_oriBzplcId = this.parent.pv2;
+	
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	//검색 영역 최소size 적용
+	this.resetScroll();
+	
+	this.fn_initGrid();
+	if(this.fv_GB == undefined )   this.fv_GB = "1";
+	if(this.fv_GB == "2")	this.staticTitle.set_text("발주자 조회");
+	
+	this.fn_regShortCutMethod();
+};
+
+this.SSP_BO_OA_55_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function() {
+	this.fn_searchMapSetting();
+	
+	var sSvcId = "selectMbrPopupMbrList";
+	var sUrl = "/od/orderChange/selectMbrPopupMbrList.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_list01=ds_output1";
+	var arg = "";	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+this.fn_searchCombo = function() {
+	this.fn_searchBzplcMapSetting();
+	var sSvcId = "selectMbrPopup";
+	var sUrl = "/od/orderChange/selectMbrPopup.do";
+	var inDs = "ds_search=ds_searchCB";
+	var outDs = "ds_list02=ds_output1";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "selectMbrPopupMbrList"){
+		this.sta_totcnt.set_text("(총 "+ this.gfn_appendComma(this.totalCount, 0) +"건)");
+		this.sta_totcnt.set_visible(true);
+		this.fn_initGrid();
+		this.fn_setSearchCondition();
+		this.ds_list01.setColumn(0,"BZPLC_NM","");
+		//this.fn_setDsList01();
+	}
+	else if(svcID == "selectMbrPopup"){
+		this.sta_totcnt.set_visible(false);
+		this.ds_searchCB.set_rowposition(0);
+		
+		//var bSucc = this.Grid00.setCellProperty( "head", 0, "color", "black");
+		this.grid_list01.selectCell(0,1,true);
+		this.fn_odCommLoading("fn_delayedSearch");
+	}
+};
+
+this.fn_delayedSearch = function()
+{
+	this.fn_search();
+}
+
+/***********************************************************************************************
+* 사용자 함수 영역
+************************************************************************************************/
+this.fn_initGrid = function() {
+	this.ds_list01.insertRow(0);
+	this.ds_list01.setColumn(0, "BZPLC_ID","");
+	this.ds_list01.setColumn(0, "BZPLC_NM", "");
+	this.ds_list01.setColumn(0, "OPR_UNIT_ID", "");
+	this.ds_list01.setColumn(0, "OPR_UNIT_NM", "");
+	this.ds_list01.setColumn(0, "DEPT_ID", "");
+	this.ds_list01.setColumn(0, "DEPT_NM", "");
+	this.ds_list01.setColumn(0, "MBR_ID", "");
+	this.ds_list01.setColumn(0, "MBR_NM", "");
+	this.ds_list01.set_rowposition(-1);
+	this.grid_list01.setFixedRow(0);
+};
+
+this.fn_searchMapSetting = function() {
+	this.ds_search.setColumn(0, "CO_CD", this.fv_coCd);
+	this.ds_search.setColumn(0, "GB", this.fv_GB);	
+	this.ds_search.setColumn(0, "TOTAL_COUNT",1000);
+	this.ds_search.setColumn(0, "ORI_BZPLC_ID", this.fv_oriBzplcId);	
+	this.ds_search.setColumn(0, "BZPLC_ID", this.ds_list01.getColumn(0, "BZPLC_NM"));
+	this.ds_search.setColumn(0, "OPR_UNIT_ID", this.ds_list01.getColumn(0, "OPR_UNIT_ID"));
+	this.ds_search.setColumn(0, "OPR_UNIT_NM", this.ds_list01.getColumn(0, "OPR_UNIT_NM"));
+	this.ds_search.setColumn(0, "DEPT_ID", this.ds_list01.getColumn(0, "DEPT_ID"));
+	this.ds_search.setColumn(0, "DEPT_NM", this.ds_list01.getColumn(0, "DEPT_NM"));
+	this.ds_search.setColumn(0, "MBR_ID", this.ds_list01.getColumn(0, "MBR_ID"));
+	this.ds_search.setColumn(0, "MBR_NM", this.ds_list01.getColumn(0, "MBR_NM"));
+	this.ds_search.setColumn(0, "START_NUM", "0");
+	this.ds_search.setColumn(0, "ROW_COUNT", this.msk_searchCount.value);	
+	
+	//trace(this.fn_getStrFromDataset(this.ds_search,0));
+};
+
+
+this.fn_searchBzplcMapSetting = function() {
+	this.ds_searchCB.setColumn(0, "CO_CD", this.fv_coCd);
+	this.ds_searchCB.setColumn(0, "GB", this.fv_GB);	
+	this.ds_searchCB.setColumn(0, "ORI_BZPLC_ID", this.fv_oriBzplcId);	
+	//trace(this.fn_getStrFromDataset(this.ds_searchCB,0));
+};
+
+this.fn_setSearchCondition = function() {
+	this.ds_list01.setColumn(0, "BZPLC_NM", this.ds_search.getColumn(0, "BZPLC_ID"));
+	this.ds_list01.setColumn(0, "OPR_UNIT_ID", this.ds_search.getColumn(0, "OPR_UNIT_ID"));
+	this.ds_list01.setColumn(0, "OPR_UNIT_NM", this.ds_search.getColumn(0, "OPR_UNIT_NM"));
+	this.ds_list01.setColumn(0, "DEPT_ID", this.ds_search.getColumn(0, "DEPT_ID"));
+	this.ds_list01.setColumn(0, "DEPT_NM", this.ds_search.getColumn(0, "DEPT_NM"));
+	this.ds_list01.setColumn(0, "MBR_ID", this.ds_search.getColumn(0, "MBR_ID"));
+	this.ds_list01.setColumn(0, "MBR_NM", this.ds_search.getColumn(0, "MBR_NM"));
+};
+
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	this.fn_regMethodENTER("btn_search_onclick");
+	this.fn_regMethodESC("fn_esc");
+	this.fn_regMethodShiftENTER("btn_select_onclick");
+};
+
+this.fn_esc = function() {
+	this.close(0);
+};
+
+/***********************************************************************************************
+* BUTTON EVENT 영역
+************************************************************************************************/
+// 조회
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search();
+};
+
+this.btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var resData = {};
+	var selectedRow = this.ds_list01.rowposition;
+	if( selectedRow == -1 )
+	{
+		if(this.fv_GB == "2")	alert(this.fn_getMessage("ERRS000134","발주자"));
+		else	alert(this.fn_getMessage("ERRS000134","결재자"));
+		return;
+	}
+	
+	resData.MBR_ID = this.ds_list01.getColumn(selectedRow, "MBR_ID");
+	resData.MBR_NM = this.ds_list01.getColumn(selectedRow, "MBR_NM");
+	resData.JBPOS_NM = this.ds_list01.getColumn(selectedRow, "JBPOS_NM");
+	this.close(JSON.stringify(resData));
+};
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_list01.clearData();
+	this.ds_list01.set_rowposition(-1);	
+	this.fn_initGrid();
+};
+
+this.grid_list01_onenterdown = function(obj:nexacro.Grid,e:nexacro.GridEditEventInfo)
+{
+	this.fn_search();
+};
+]]></Script>
+  </Form>
+</FDL>

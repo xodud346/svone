@@ -1,0 +1,593 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.co.operatorTransfer">
+	<!--
+	******************************************************************************
+	* SELECT : 회원운영자조직정보
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-04
+	******************************************************************************
+	-->
+	<select id="selectCoMbrOprtrOrgInfoList" parameterType="HashMap" resultType="HashMap">
+		/* com.ssp.bo.co.operatorTransfer.selectCoMbrOprtrOrgInfoList */
+		SELECT CO_CD
+			 , ORG_CD
+			 , ORG_NM
+			 , '' PRD_DISP_MNG_SBJ_CD
+			 , USE_YN
+		  FROM SSP_APP.TB_CO_MBR_OPRTR_ORG_INFO A
+		  <include refid="mbrOprteInfoWhere" />
+	</select>
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 회원운영자정보
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-04
+	******************************************************************************
+	-->
+	<select id="selectCoMbrOprtrInfoList" parameterType="HashMap" resultType="HashMap">
+		/* com.ssp.bo.co.operatorTransfer.selectCoMbrOprtrInfoList */
+		SELECT 0 AS COL_CHK
+		     , A.CO_CD
+			 , A.OPRTR_ID
+			 , A.OPRTR_NM
+			 , A.EMP_NO
+			 , A.CHR_TASK_NM
+			 , A.MSSGR_ADDR
+			 , A.EMAIL_ADDR
+			 , A.USR_SPR_CD
+			 , A.USE_YN
+			 , A.PSTN_NM
+			 , A.SEX_SPR_CD
+			 , A.ORG_CD
+			 , A.ORG_NM
+			 , A.DIV_CD
+			 , A.ENCRP_USR_INFO_DTLS
+			 , A.DTY_NM
+			 , A.JBPOS_NM
+			 , A.TEL_NO
+			 , A.HP_NO
+			 , A.USR_STATS_CD
+			 , A.SALS_TEAM_CD
+			 , A.SALS_CHR_CD
+			 , A.PLNT_ID
+			 , A.ACNT_CERT_AUTH_YN
+			 , A.JB_CD
+			 , A.JB_NM
+			 , A.ENT_DT
+		  FROM SSP_APP.TB_CO_MBR_OPRTR_INFO A
+		  	<include refid="mbrOprteInfoWhere"/>
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 회원운영자정보 인터페이스
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-04
+	******************************************************************************
+	-->
+	<select id="selectCoMbrOprtrInfoInfList" parameterType="HashMap" resultType="HashMap">
+		/* com.ssp.bo.co.operatorTransfer.selectCoMbrOprtrInfoInfList */
+		SELECT 0 AS COL_CHK
+		     , A.CO_CD
+			 , A.OPRTR_ID
+			 , A.OPRTR_NM
+			 , A.EMP_NO
+			 , A.CHR_TASK_NM
+			 , A.MSSGR_ADDR
+			 , A.EMAIL_ADDR
+			 , A.USR_SPR_CD
+			 , A.USE_YN
+			 , A.PSTN_NM
+			 , A.SEX_SPR_CD
+			 , A.ORG_CD
+			 , A.ORG_NM
+			 , A.DIV_CD
+			 , A.ENCRP_USR_INFO_DTLS
+			 , A.DTY_NM
+			 , A.JBPOS_NM
+			 , A.TEL_NO
+			 , A.HP_NO
+			 , A.USR_STATS_CD
+			 , A.SALS_TEAM_CD
+			 , A.SALS_CHR_CD
+			 , A.PLNT_ID
+			 , A.ACNT_CERT_AUTH_YN
+			 , A.JB_CD
+			 , A.JB_NM
+			 , A.ENT_DT
+		  FROM SSP_INF.TB_CO_MBR_OPRTR_INFO_IF A
+			<include refid="mbrOprteInfoWhere"/>
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 회원운영자정보 및 인터페이스 조건절
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-04
+	******************************************************************************
+	-->
+	<sql id="mbrOprteInfoWhere">
+		<where>
+			<if test=" orgCd != '' and orgCd != null ">
+				AND A.ORG_CD LIKE '%' || #{orgCd} || '%'
+			</if>
+			<if test=" orgNm != '' and orgNm != null ">
+				AND A.ORG_NM LIKE '%' || #{orgNm} || '%'
+			</if>
+			<if test=" useYn != '' and useYn != null ">
+				AND A.USE_YN = #{useYn}
+			</if>
+			<if test=" teamAttrClcd != '' and teamAttrClcd != null ">
+				AND A.TEAM_ATTR_CLCD = #{teamAttrClcd} 
+			</if>
+		</where>
+	</sql>
+
+
+	<!--
+	******************************************************************************
+	* INSERT : 회원이관정보 INF 테이블 등록
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-07
+	******************************************************************************
+	-->
+	<insert id="insertOperatorInfTransfer" parameterType="HashMap">
+		/* com.ssp.bo.co.operatorTransfer.insertOperatorTransfer */
+		INSERT INTO SSP_INF.TB_CO_MBR_OPRTR_INFO_IF
+		(
+			CO_CD
+		  , OPRTR_ID
+		  , OPRTR_NM
+		  , EMP_NO
+		  , CHR_TASK_NM
+		  , MSSGR_ADDR
+		  , EMAIL_ADDR
+		  , USR_SPR_CD
+		  , USE_YN
+		  , PSTN_NM
+		  , SEX_SPR_CD
+		  , ORG_CD
+		  , ORG_NM
+		  , DIV_CD
+		  , ENCRP_USR_INFO_DTLS
+		  , DTY_NM
+		  , JBPOS_NM
+		  , TEL_NO
+		  , HP_NO
+		  , USR_STATS_CD
+		  , SALS_TEAM_CD
+		  , SALS_CHR_CD
+		  , PLNT_ID
+		  , ACNT_CERT_AUTH_YN
+		  , JB_CD
+		  , JB_NM
+		  , ENT_DT
+		  , RTCO_DT
+		  , REG_DTM
+		  , REGPSN_ID
+		  , UPD_DTM
+		  , UPDPSN_ID
+		) VALUES (
+		   #{coCd}
+		 , #{oprtrId}
+		 , #{oprtrNm}
+		 , #{empNo}
+		 , #{chrTaskNm}
+		 , #{mssgrAddr}
+		 , #{emailAddr}
+		 , #{usrSprCd}
+		 , #{useYn}
+		 , #{pstnNm}
+		 , #{sexSprCd}
+		 , #{orgCd}
+		 , #{orgNm}
+		 , #{divCd}
+		 , #{encrpUsrInfoDtls}
+		 , #{dtyNm}
+		 , #{jbposNm}
+		 , #{telNo}
+		 , #{hpNo}
+		 , #{usrStatsCd}
+		 , #{salsTeamCd}
+		 , #{salsChrCd}
+		 , #{plntId}
+		 , #{acntCertAuthYn}
+		 , #{jbCd}
+		 , #{jbNm}
+		 , #{entDt}
+		 , #{rtcoDt}
+		 , SYSDATE
+		 , #{regpsnId}
+		 , SYSDATE
+		 , #{updpsnId}
+		)
+	</insert>
+
+	<!--
+	******************************************************************************
+	* DELETE : 회원이관정보 INF 테이블 삭제
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-07
+	******************************************************************************
+	-->
+	<update id="deleteOperatorInfTransfer" parameterType="HashMap">
+		/* com.ssp.bo.co.operatorTransfer.insertOperatorTransfer */
+		DELETE FROM SSP_INF.TB_CO_MBR_OPRTR_INFO_IF
+		 WHERE CO_CD = #{coCd}
+		   AND OPRTR_ID = #{oprtrId}
+		   AND ORG_CD = #{orgCd}
+	</update>
+
+	<!--
+	******************************************************************************
+	* SELECT/INSERT/DELETE/UPDATE : 설명
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-07
+	******************************************************************************
+	-->
+	<insert id="insertOperatorTransfer" parameterType="HashMap">
+		/* com.ssp.bo.co.operatorTransfer.insertOperatorTransfer */
+		INSERT INTO SSP_APP.TB_CO_MBR_OPRTR_INFO
+		(
+			CO_CD
+		  , OPRTR_ID
+		  , OPRTR_NM
+		  , EMP_NO
+		  , CHR_TASK_NM
+		  , MSSGR_ADDR
+		  , EMAIL_ADDR
+		  , USR_SPR_CD
+		  , USE_YN
+		  , PSTN_NM
+		  , SEX_SPR_CD
+		  , ORG_CD
+		  , ORG_NM
+		  , DIV_CD
+		  , ENCRP_USR_INFO_DTLS
+		  , DTY_NM
+		  , JBPOS_NM
+		  , TEL_NO
+		  , HP_NO
+		  , USR_STATS_CD
+		  , SALS_TEAM_CD
+		  , SALS_CHR_CD
+		  , PLNT_ID
+		  , ACNT_CERT_AUTH_YN
+		  , JB_CD
+		  , JB_NM
+		  , ENT_DT
+		  , RTCO_DT
+		  , REG_DTM
+		  , REGPSN_ID
+		  , UPD_DTM
+		  , UPDPSN_ID
+		) VALUES (
+		    #{coCd}
+	      , #{oprtrId}
+	      , #{oprtrNm}
+	      , #{empNo}
+	      , #{chrTaskNm}
+	      , #{mssgrAddr}
+	      , #{emailAddr}
+	      , #{usrSprCd}
+	      , #{useYn}
+	      , #{pstnNm}
+	      , #{sexSprCd}
+	      , #{orgCd}
+	      , #{orgNm}
+	      , #{divCd}
+	      , #{encrpUsrInfoDtls}
+	      , #{dtyNm}
+	      , #{jbposNm}
+	      , #{telNo}
+	      , #{hpNo}
+	      , #{usrStatsCd}
+	      , #{salsTeamCd}
+	      , #{salsChrCd}
+	      , #{plntId}
+	      , #{acntCertAuthYn}
+	      , #{jbCd}
+	      , #{jbNm}
+	      , #{entDt}
+	      , #{rtcoDt}
+	      , SYSDATE
+	      , #{regpsnId}
+	      , SYSDATE
+	      , #{updpsnId}
+		)
+	</insert>
+
+	<!--
+	******************************************************************************
+	* DELETE : 회원이관정보 테이블 삭제
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-07
+	******************************************************************************
+	-->
+	<update id="deleteOperatorTransfer" parameterType="HashMap">
+		/* com.ssp.bo.co.operatorTransfer.deleteOperatorTransfer */
+		DELETE FROM SSP_APP.TB_CO_MBR_OPRTR_INFO
+		WHERE CO_CD = #{coCd}
+		  AND OPRTR_ID = #{oprtrId}
+		  AND ORG_CD = #{orgCd}
+	</update>
+
+
+	<!--
+	******************************************************************************
+	* SELECT : 회원이관정보 INF 카운트 조회
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-07
+	******************************************************************************
+	-->
+	<select id="selectCoMbrOprtrInfoInfCount" parameterType="HashMap" resultType="int">
+		SELECT COUNT(1)
+		  FROM SSP_INF.TB_CO_MBR_OPRTR_INFO_IF
+	     WHERE CO_CD = #{coCd}
+		   AND ORG_CD = #{orgCd}
+		   AND OPRTR_ID = #{oprtrId}
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 회원이관정보 카운트 조회
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-07
+	******************************************************************************
+	-->
+	<select id="selectCoMbrOprtrInfoCount" parameterType="HashMap" resultType="int">
+		SELECT COUNT(1)
+		FROM SSP_app.TB_CO_MBR_OPRTR_INFO
+		WHERE CO_CD = #{coCd}
+		  AND ORG_CD = #{orgCd}
+		  AND OPRTR_ID = #{oprtrId}
+	</select>
+	
+	<!--
+	******************************************************************************
+	* SELECT : 운영자조직 목록 조회
+	* 작성자 : 
+	* 작성 일자 : 2022-03-08
+	******************************************************************************
+	-->
+	<select id="selectOprtrOrgInfoList" parameterType="HashMap" resultType="HashMap">
+		/* com.ssp.bo.co.operatorTransfer.selectOprtrOrgInfoList */
+		SELECT  ROWNUM AS NO,
+		       S1.* 
+		  FROM( 
+				SELECT A.CO_CD
+					 , A.ORG_CD
+					 , A.ORG_NM
+					 , A.TEAM_ATTR_CLCD
+					 , B.COM_DTL_CD_NM AS TEAM_ATTR_CLCD_NM
+					 , A.USE_YN
+				  FROM SSP_APP.TB_CO_MBR_OPRTR_ORG_INFO A
+				  LEFT JOIN TB_CO_COM_CD_DTL B
+             		ON B.COM_CLSF_CD = 'DEPT_ATTR_CD' 
+             	   AND B.COM_DTL_CD = A.TEAM_ATTR_CLCD
+				  <include refid="mbrOprteInfoWhere" />
+				  <choose>
+					<when test="sortColumn != null and sortColumn != '' and sortColumn != 'NO'">
+					 	ORDER BY ${sortColumn} ${sortType}
+					</when>
+					<otherwise>
+						ORDER BY A.ORG_CD
+					</otherwise>
+				</choose>
+			) S1
+		<if test="sortColumn != null and sortColumn != '' and sortColumn == 'NO'">
+			ORDER BY ROWNUM ${sortType}
+		</if>
+
+		<if test="startNum != null and startNum > -1">
+			OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+		</if>
+	</select>
+	
+	<!--
+	******************************************************************************
+	* SELECT : 운영자 조직조회 카운트 
+	* 작성자 : 
+	* 작성 일자 : 2022-03-07
+	******************************************************************************
+	-->
+	<select id="selectOprtrOrgInfoListCount" parameterType="hashMap" resultType="integer">
+		/* com.ssp.bo.co.operatorTransfer.selectOprtrOrgInfoListCount */
+		SELECT
+			COUNT(0)
+		 FROM SSP_APP.TB_CO_MBR_OPRTR_ORG_INFO A
+		<include refid="mbrOprteInfoWhere" />
+		  
+	</select>
+	
+	<!--
+	******************************************************************************
+	* SELECT : 운영자조회 목록
+	* 작성자 : 
+	* 작성 일자 : 2022-03-08
+	******************************************************************************
+	-->
+	<select id="selectOprtrInfoList" parameterType="HashMap" resultType="HashMap">
+		/* com.ssp.bo.co.operatorTransfer.selectOprtrInfoList */	
+		SELECT  ROWNUM AS NO,
+		       S1.* 
+		  FROM(  
+				SELECT A.ORG_CD
+					, A.ORG_NM
+					, A.CO_CD
+					, A.EMP_NO
+					, A.OPRTR_ID
+					, A.OPRTR_NM
+					, A.CHR_TASK_NM
+					, A.PSTN_NM
+					, A.JBPOS_NM
+					, A.USE_YN
+					, A.TEL_NO
+					, A.HP_NO
+					, A.USR_STATS_CD
+					, A.SALS_TEAM_CD
+					, B.SALS_TEAM_NM
+					, A.SALS_CHR_CD
+					, C.SALS_CHR_NM
+					, A.ACNT_CERT_AUTH_YN
+					, A.ENT_DT
+					, A.RTCO_DT
+				FROM SSP_APP.TB_CO_MBR_OPRTR_INFO A
+				LEFT OUTER JOIN SSP_APP.TB_CC_SALS_TEAM_BASIS B
+		 		  ON A.SALS_TEAM_CD = B.SALS_TEAM_CD
+		  		LEFT OUTER JOIN SSP_APP.TB_CC_SALS_CHR_BASIS C
+		  		  ON A.SALS_CHR_CD  = C.SALS_CHR_CD 
+			   WHERE A.CO_CD = #{coCd}
+				  <include refid="oprtrInfoWhere" />
+				  <choose>
+					<when test="sortColumn != null and sortColumn != '' and sortColumn != 'NO'">
+					 	ORDER BY ${sortColumn} ${sortType}
+					</when>
+					<otherwise>
+						ORDER BY A.ORG_CD 
+					</otherwise>
+				</choose>
+			) S1 
+		<if test="sortColumn != null and sortColumn != '' and sortColumn == 'NO'">
+				ORDER BY ROWNUM ${sortType}
+		</if>
+
+		<if test="startNum != null and startNum > -1">
+			OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+		</if>
+
+	</select>
+	
+	<!--
+	******************************************************************************
+	* SELECT : 운영자 조회 목록 카운트 
+	* 작성자 : 
+	* 작성 일자 : 2022-03-07
+	******************************************************************************
+	-->
+	<select id="selectOprtrInfoListCount" parameterType="hashMap" resultType="integer">
+		/* com.ssp.bo.co.operatorTransfer.selectOprtrInfoListCount */
+		SELECT
+			COUNT(0)
+		 FROM SSP_APP.TB_CO_MBR_OPRTR_INFO A
+		 LEFT OUTER JOIN SSP_APP.TB_CC_SALS_TEAM_BASIS B
+		   ON A.SALS_TEAM_CD = B.SALS_TEAM_CD
+		 LEFT OUTER JOIN SSP_APP.TB_CC_SALS_CHR_BASIS C
+		   ON A.SALS_CHR_CD  = C.SALS_CHR_CD 
+		WHERE A.CO_CD = #{coCd}
+		<include refid="oprtrInfoWhere" />
+		  
+	</select>
+	
+	<!--
+	******************************************************************************
+	* SELECT : 운영자 조회 목록 조건절
+	* 작성자 : 
+	* 작성 일자 : 2022-03-07
+	******************************************************************************
+	-->
+	<sql id="oprtrInfoWhere">
+		<if test=" orgCd != '' and orgCd != null ">
+			AND A.ORG_CD LIKE '%' || #{orgCd} || '%'
+		</if>
+		<if test=" orgNm != '' and orgNm != null ">
+			AND A.ORG_NM LIKE '%' || #{orgNm} || '%'
+		</if>
+		<if test=" useYn != '' and useYn != null ">
+			AND A.USE_YN = #{useYn}
+		</if>
+		<if test=" oprtrNm != '' and oprtrNm != null ">
+			AND A.OPRTR_NM LIKE '%' || #{oprtrNm} || '%'
+		</if>
+		<if test=" oprtrId != '' and oprtrId != null ">
+			AND A.OPRTR_ID = #{oprtrId}
+		</if>
+	</sql>
+	
+	 <!-- 운영자 상세 팝업 -->
+    <select id="selectMbrOprtrInfo" parameterType="hashMap" resultType="hashMap">
+		/* com.ssp.bo.co.operatorTransfer.selectMbrOprtrInfo */
+		SELECT A.OPRTR_NM -- 운영자명​
+			, A.OPRTR_ID  -- 운영자ID
+			, A.EMP_NO --사원번호
+			, A.MSSGR_ADDR --메신저주소
+			, A.EMAIL_ADDR --이메일주소
+			, A.CO_CD-- 회사코드
+			, A.CHR_TASK_NM-- 담당업무명
+			, A.USR_SPR_CD-- 사용자구분
+			, (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'USR_SPR_CD'   , A.USR_SPR_CD   ,  '') FROM DUAL)  USR_SPR_CD_NM --- 사용자구분명
+			, A.USE_YN-- 사용여부
+			, A.PSTN_NM-- 직위명
+			, A.SEX_SPR_CD-- 성별구분
+			, (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'SEX_SPR_CD'   , A.SEX_SPR_CD   ,  '') FROM DUAL)  SEX_SPR_CD_NM -- 성별구분명
+			, A.DIV_CD-- 사업부
+			, E.ORG_NM AS DIV_NM-- 사업부명
+			, A.ORG_CD-- 조직
+			, B.ORG_NM -- 조직명
+			, A.DTY_NM-- 직책
+			, A.JBPOS_NM-- 직급
+			, A.TEL_NO-- 전화번호
+			, A.HP_NO-- 휴대폰
+			, A.USR_STATS_CD-- 사용자상태
+			, (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'USR_STATS_CD'   , A.USR_STATS_CD   ,  '') FROM DUAL)  USR_STATS_CD_NM --- 사용자상태명
+			, A.SALS_TEAM_CD-- 영업팀
+			, C.SALS_TEAM_NM -- 영업팀명
+			, A.SALS_CHR_CD-- 영업담당
+			, D.SALS_CHR_NM -- 영업담당명
+			, A.PLNT_ID-- 플랜트
+			, (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'PLNT_ID'   , A.PLNT_ID   ,  '') FROM DUAL)  PLNT_NM --- 플랜트명
+			, A.ACNT_CERT_AUTH_YN-- 계좌인증권한여부
+			, A.JB_CD-- 직무
+			, A.JB_NM -- 직무명
+			, TO_CHAR(TO_DATE(A.ENT_DT,'YYYYMMDD'), 'YYYY-MM-DD') AS ENT_DT-- 입사일자
+			, TO_CHAR(TO_DATE(A.RTCO_DT,'YYYYMMDD'), 'YYYY-MM-DD') AS RTCO_DT -- 퇴사일자
+		FROM SSP_APP.TB_CO_MBR_OPRTR_INFO A
+		LEFT OUTER JOIN SSP_APP.TB_CO_MBR_OPRTR_ORG_INFO B 
+		  ON A.CO_CD = B.CO_CD 
+		 AND A.ORG_CD  = B.ORG_CD 
+		LEFT OUTER JOIN SSP_APP.TB_CC_SALS_TEAM_BASIS C
+		  ON A.SALS_TEAM_CD = C.SALS_TEAM_CD
+		LEFT OUTER JOIN SSP_APP.TB_CC_SALS_CHR_BASIS D 
+		  ON A.SALS_CHR_CD  = D.SALS_CHR_CD 
+		LEFT OUTER JOIN SSP_APP.TB_CO_MBR_OPRTR_ORG_INFO E
+		  ON A.CO_CD = E.CO_CD 
+		 AND A.DIV_CD  = E.ORG_CD 
+	   WHERE A.CO_CD = #{coCd}
+		 AND A.OPRTR_ID = #{oprtrId}
+	</select>
+
+
+	<select id="selectCoMbrOprtrInfoExcelList" parameterType="HashMap" resultType="HashMap">
+		/* com.ssp.bo.co.operatorTransfer.selectCoMbrOprtrInfoExcelList */
+		SELECT A.ORG_NM
+			 , B.EMP_NO
+			 , B.OPRTR_NM
+			 , B.OPRTR_ID
+			 , B.CHR_TASK_NM
+			 , B.PSTN_NM
+			 , B.JBPOS_NM
+			 , CASE WHEN B.USE_YN = 'Y' THEN '사용' ELSE '미사용' END AS USE_YN
+			 , '이관' AS INF_YN
+		  FROM SSP_APP.TB_CO_MBR_OPRTR_ORG_INFO A
+		       INNER JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO B
+			      ON A.CO_CD = B.CO_CD
+				     AND A.ORG_CD = B.ORG_CD
+		UNION ALL
+		SELECT A.ORG_NM
+			 , B.EMP_NO
+			 , B.OPRTR_NM
+			 , B.OPRTR_ID
+			 , B.CHR_TASK_NM
+			 , B.PSTN_NM
+			 , B.JBPOS_NM
+			 , CASE WHEN B.USE_YN = 'Y' THEN '사용' ELSE '미사용' END AS USE_YN
+			 , '미이관' AS INF_YN
+		  FROM SSP_APP.TB_CO_MBR_OPRTR_ORG_INFO A
+			   INNER JOIN SSP_INF.TB_CO_MBR_OPRTR_INFO_IF B
+			      ON A.CO_CD = B.CO_CD
+				     AND A.ORG_CD = B.ORG_CD
+	</select>
+</mapper>

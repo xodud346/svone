@@ -1,0 +1,433 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_MF_21" width="1100" height="266" titletext="Stock No 관리 등록/상세" onload="fn_onLoad" onkeyup="SSP_BO_MF_21_onkeyup">
+    <Layouts>
+      <Layout height="266" mobileorientation="landscape" width="1100">
+        <Div id="Div00" taborder="0" text="Div00" left="20" top="20" right="20" height="156">
+          <Layouts>
+            <Layout>
+              <Static id="Static05" taborder="0" top="0" height="32" cssclass="sta_cm_box02L_tdt" left="0" right="0" text=""/>
+              <Static id="Static01" taborder="1" text="사업장 ID" left="0" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static04_00" taborder="2" text="사업자명" left="529" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Edit id="edt_bzplcId" taborder="3" left="135" top="4" width="348" height="24" enable="true" readonly="true"/>
+              <Edit id="edt_bzplcNm" taborder="4" left="664" top="4" width="379" height="24" enable="true" readonly="true"/>
+              <Button id="btn_popDept" taborder="5" left="488" top="4" height="24" cssclass="btn_WF_search02" width="24" onclick="btn_popBzplc_onclick"/>
+              <Static id="Static05_00" taborder="6" top="31" height="32" cssclass="sta_cm_box02L" left="0" right="0" text=""/>
+              <Static id="Static04_00_00" taborder="7" text="상품명" left="529" top="31" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_bzplcNm00" taborder="8" left="664" top="35" width="379" height="24" enable="true" readonly="true"/>
+              <Edit id="edt_bzplcId00" taborder="9" left="136" top="35" width="348" height="24" enable="true" readonly="true"/>
+              <Static id="Static02" taborder="10" text="상품 ID" left="0" top="31" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static05_00_00" taborder="11" top="62" height="32" cssclass="sta_cm_box02L" left="0" right="0" text=""/>
+              <Static id="Static04_00_00_00" taborder="12" text="상품분류" left="529" top="62" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_bzplcNm00_00" taborder="13" left="664" top="66" width="379" height="24" enable="true" readonly="true"/>
+              <Edit id="edt_bzplcId00_00" taborder="14" left="136" top="66" width="376" height="24" enable="true" readonly="true"/>
+              <Static id="Static01_00_00" taborder="15" text="대표규격" left="0" top="62" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static05_00_01" taborder="16" top="93" height="32" cssclass="sta_cm_box02L" left="0" right="0" text=""/>
+              <Static id="Static04_00_00_01" taborder="17" text="원산지" left="529" top="93" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_bzplcNm00_01" taborder="18" left="664" top="97" width="379" height="24" enable="true" readonly="true"/>
+              <Edit id="edt_bzplcId00_01" taborder="19" left="136" top="97" width="376" height="24" enable="true" readonly="true"/>
+              <Static id="Static01_00_01" taborder="20" text="제조원" left="0" top="93" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Button id="btn_popPrd" taborder="21" left="488" top="35" height="24" cssclass="btn_WF_search02" width="24" onclick="btn_popPrd_onclick"/>
+              <Static id="Static05_00_01_00" taborder="22" top="124" height="32" cssclass="sta_cm_box02L" left="0" right="0" text=""/>
+              <Static id="Static03" taborder="23" text="Stock #" left="0" top="124" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static04" taborder="24" text="사용여부" left="529" top="124" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Edit id="edt_stockNo" taborder="25" left="136" top="128" width="376" height="24" enable="true" onchanged="Div00_edt_stockNo_onchanged"/>
+              <Combo id="Combo00" taborder="26" text="" left="664" top="128" width="156" height="24" innerdataset="ds_useYn2" datacolumn="COM_DTL_CD_NM" codecolumn="COM_DTL_CD" value="Y" index="-1"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btn_delete" taborder="1" text="목록" left="480" top="Div00:30" height="30" onclick="btn_list_onclick" width="70"/>
+        <Button id="btn_save" taborder="2" text="저장" left="btn_delete:4" top="Div00:30" height="30" onclick="btn_save_onclick" width="70" cssclass="btn_WF_select"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : 
+  CREATION DATES : 
+*******************************************************/
+include "CC::CcUtils.xjs";
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+var editMode = false;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//공통코드 조회
+	this.fn_commonCodeSearch();
+	
+	//검색 영역 최소size 적용
+	this.resetScroll();
+	
+	//팝업 변수체크
+	this.fn_popupCheck();
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+	//공통코드 조회
+	this.fn_commonCodeSearch = function(){
+		this.ds_comCodeSearch.setColumn(0, "codeList", "USE_YN");
+		this.ds_comCodeSearch.setColumn(0, "langCd", "KO");
+		var sSvcId = "commonCodeSearch";    
+		var sUrl = "/co/select-common-code-list.do";  
+		var inDs = "ds_search=ds_comCodeSearch";
+		var outDs = "ds_useYn2=ds_output1";
+		var arg = "";
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "");
+	}
+	
+	// 상품정보 조회
+	this.fn_prdInfoSearch = function(flag){
+		var sSvcId = ""; 
+		if(flag != 1) sSvcId = "prdSearch";
+		var sUrl = "/cust/stock/mng/select-prdinfo-by-prdid.do";  
+		var inDs = "ds_search=ds_list";
+		var outDs = "ds_list=ds_output1";
+		var arg = "";
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	}
+	
+	// stock no 중복체크
+	this.fn_chkStock = function(){
+		var sSvcId = "check";    
+		var sUrl = "/cust/stock/mng/select-check-stock-no.do";  
+		var inDs = "ds_search=ds_list";
+		var outDs = "ds_check=ds_output1";
+		var arg = "";
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	}
+	
+	//저장
+	this.fn_save = function(type)	{
+		var sSvcId = "save";    
+		var sUrl = "/cust/stock/mng/save-cust-stock-list.do";
+		var inDs = "ds_save=ds_list";
+		var outDs = "";
+		var arg = "";
+		var callBack = "fn_callBack";
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callBack);
+	}
+	
+	// 수정
+	this.fn_update = function(type)	{
+		var sSvcId = "update";    
+		var sUrl = "/cust/stock/mng/update-cust-stock-list.do";
+		var inDs = "ds_save=ds_list";
+		var outDs = "ds_result=ds_output1";
+		var arg = "";
+		var callBack = "fn_callBack";
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callBack);
+	}
+	
+	
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+	this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+		if(svcID == "check"){
+			// stock no 중복 체크
+			var chk = this.ds_check.getColumn(0, "CHK");
+			
+            // 자기자신은 제외
+			var chKCnt = 0;
+			if(this.ds_list.getColumn(0, "B_USE_YN") === 'N' &&  this.ds_list.getColumn(0, "USE_YN") === 'Y') 
+				chKCnt=0;
+            else if(this.ds_list.getColumn(0, "STOCK_NO") === this.ds_list.getColumn(0, "B_STOCK_NO")) 
+				chKCnt=1;
+			
+			if(chk > chKCnt && this.ds_list.getColumn(0, "USE_YN")=="Y"){
+				if(!this.confirm(this.fn_getMessage("ERRC000107"))) {
+					// 해당 S/N는 다른 상품ID에 등록되어 있습니다. 등록하시겠습니까?
+					return;
+				}
+			}
+			if(this.parent.popMode == "insert" && this.editMode == false){
+				this.fn_save();
+			}
+			if(this.parent.popMode == "update" || this.editMode == true){
+				this.fn_update();
+			}
+		}
+	
+		if(svcID == "save"){
+			// 저장 트랜잭션 콜백
+			if(errorCode == -1 || errorCode == -100){
+				//alert(this.fn_getMessageOnServer(errorMsg));
+			}else{
+				alert(this.fn_getMessage("ERRC000081")); // 저장되었습니다.
+				this.close();
+			}
+		}
+		
+		if(svcID == "update"){
+			// 수정 트랜잭션 콜백
+			if(errorCode == -1 || errorCode == -100){
+				//alert(this.fn_getMessageOnServer(errorMsg));
+			}else{
+				alert(this.fn_getMessage("ERRC000081")); // 저장되었습니다.
+				// 상품정보 조회
+				this.fn_prdInfoSearch(1);
+			}
+		}
+		
+		if(svcID == "prdSearch"){
+			// 상품조회 트랜잭션 콜백
+			if(this.parent.popMode == "insert"){
+				if(this.ds_list.getColumn(0, "STOCK_NO") != "" && this.ds_list.getColumn(0, "STOCK_NO") != null){
+					alert(this.fn_getMessage("ERRC000108")); // 해당 상품의 Stock No가 이미 존재합니다.
+					this.editMode = true;
+				}else{
+					this.editMode = false;
+				}
+			}
+		}
+	};
+
+	// 팝업버튼 클릭 콜백
+	this.fn_popupCallback = function(sPopupId, sRetValue){
+		switch(sPopupId){
+			case "btn_popBzplc":
+				const bzplcObj = JSON.parse(sRetValue);
+				this.ds_list.setColumn(0, "BZPLC_ID", bzplcObj.BZPLC_ID);
+				this.ds_list.setColumn(0, "BZPLC_NM", bzplcObj.BZPLC_NM);
+				
+				this.bzplcFlag = true;
+				
+				break;
+				
+			case "btn_popPrd":
+				const prdObj = JSON.parse(sRetValue);
+				
+				this.ds_list.setColumn(0, "PRD_ID_VIEW", prdObj.PRD_ID_VIEW);
+				this.ds_list.setColumn(0, "PRD_ID", prdObj.PRD_ID);
+				this.ds_list.setColumn(0, "PRD_NM", prdObj.PRD_NM);
+			
+				// 상품정보 조회
+				this.fn_prdInfoSearch();
+			
+				break;
+		}
+	}
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+	//화면 설정 함수
+	this.cfn_formInit = function(){
+		//search static 초기 설정
+		this.Div00.form.Static01.uEssentiel = "true";
+		this.Div00.form.Static02.uEssentiel = "true";
+		this.Div00.form.Static03.uEssentiel = "true";
+		this.Div00.form.Static04.uEssentiel = "true";
+		
+	};
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+	//  팝업 변수 체크
+	this.fn_popupCheck = function(){
+		if(this.parent.popMode == null || this.parent.popMode == ""){
+			alert(this.fn_getMessage("ERRC000076")); // 잘못된 접근입니다.
+			this.close();
+		}
+		
+		if(this.parent.popMode == "insert"){
+			this.btn_delete.set_text("취소");
+		}
+		
+		if(this.parent.popMode == "update"){
+			this.ds_list.setColumn(0, "CO_CD", this.parent.coCd);
+			this.ds_list.setColumn(0, "BZPLC_ID", this.parent.bzplcId);
+			this.ds_list.setColumn(0, "BZPLC_NM", this.parent.bzplcNm);
+			this.ds_list.setColumn(0, "PRD_ID", this.parent.prdId);
+			this.ds_list.setColumn(0, "PRD_NM", this.parent.prdNm);
+			this.ds_list.setColumn(0, "STOCK_NO", this.parent.stockNo);
+			this.ds_list.setColumn(0, "USE_YN", this.parent.useYn);
+			this.ds_list.setColumn(0, "B_USE_YN", this.parent.useYn);
+			
+			this.Div00.form.btn_popDept.set_visible(false);
+			this.Div00.form.btn_popPrd.set_visible(false);
+			
+			this.fn_prdInfoSearch();
+		}
+		
+	}
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+	// 사업장팝업버튼
+	this.btn_popBzplc_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+	{
+		var oArg = { 
+			coCd : '1000' 
+			, bzplcId : this.ds_list.getColumn(0, "BZPLC_ID")
+		};
+		var opts = { title : '사업장 조회', titlebar: 'true' }
+		this.gfn_openPopup("btn_popBzplc", "CO_POP::SSP_BO_PP_22.xfdl", oArg, "fn_popupCallback", opts);
+	};
+	
+	// 상품팝업버튼
+	this.btn_popPrd_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+	{
+		var oArg = { 
+			coCd : '1000'
+			, bzplcId : this.ds_list.getColumn(0, "BZPLC_ID")
+			, mallSprCd : "N"
+		};
+		var opts = { title : '상품 조회', titlebar: 'true' }
+		this.gfn_openPopup("btn_popPrd", "PR_POP::SSP_BO_PP_38.xfdl", oArg, "fn_popupCallback", opts);
+	};
+	
+	// 저장버튼
+	this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+	{
+		if(this.ds_list.getColumn(0, "BZPLC_ID") == "" || this.ds_list.getColumn(0, "BZPLC_ID") == null){
+			alert(this.fn_getMessage("ERRC000004", "사업장ID")); // 사업장ID는 필수입력값 입니다.
+			return;
+		}
+		if(this.ds_list.getColumn(0, "PRD_ID") == "" || this.ds_list.getColumn(0, "PRD_ID") == null){
+			alert(this.fn_getMessage("ERRC000004", "상품ID")); // 상품ID는 필수입력값 입니다.
+			return;
+		}
+		if(this.ds_list.getColumn(0, "STOCK_NO") == "" || this.ds_list.getColumn(0, "STOCK_NO") == null){
+			alert(this.fn_getMessage("ERRC000004", "Stock No")); // Stock No는 필수입력값 입니다.
+			return;
+		}
+		if(this.ds_list.getColumn(0, "USE_YN") == "" || this.ds_list.getColumn(0, "USE_YN") == null){
+			alert(this.fn_getMessage("ERRC000004", "사용여부")); // 사용여부는 필수입력값 입니다.
+			return;
+		}
+		
+		/*
+		if(!this.gfn_dsIsUpdated(this.ds_list)) {		
+			alert(this.fn_getMessage("ERRC000035")); // 변경된 내용이 없습니다.
+			return;
+		}
+		*/
+		
+		this.fn_chkStock(); 
+	};
+
+	// 목록버튼 클릭
+	this.btn_list_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+	{
+		this.close();
+	};
+
+	// StockNo 수정시 중복체크
+	this.Div00_edt_stockNo_onchanged = function(obj:nexacro.Edit,e:nexacro.ChangeEventInfo)
+	{
+		if(this.ds_list.getColumn(0, "BZPLC_ID")=="" || this.ds_list.getColumn(0, "BZPLC_ID")==null){
+			alert(this.fn_getMessage("ERRC000007", "사업장")); // 사업장을 먼저 조회해주세요.
+			this.ds_list.setColumn(0, "STOCK_NO", "");
+			return;
+		}
+		if(this.ds_list.getColumn(0, "PRD_ID")=="" || this.ds_list.getColumn(0, "PRD_ID")==null){
+			alert(this.fn_getMessage("ERRC000007", "상품")); // 상품을 먼저 조회해주세요.
+			this.ds_list.setColumn(0, "STOCK_NO", "");
+			return;
+		}
+	};
+
+	// 사용/미사용 변경 시 저장
+	this.Div00_Combo00_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+	{
+		if(this.parent.popMode == "update") this.fn_update();
+	};
+
+	this.SSP_BO_MF_21_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+	{
+		//ESC : 닫기기능
+		if(e.keycode == 27){
+			this.close();
+		}
+	};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_NM" type="STRING" size="256"/>
+          <Column id="PRD_ID_VIEW" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="PRD_NM" type="STRING" size="256"/>
+          <Column id="PRVL" type="STRING" size="256"/>
+          <Column id="MNFR_NM" type="STRING" size="256"/>
+          <Column id="CATG" type="STRING" size="256"/>
+          <Column id="ORGPLC_CTRY_CD" type="STRING" size="256"/>
+          <Column id="STOCK_NO" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="B_USE_YN" type="STRING" size="256"/>
+          <Column id="B_STOCK_NO" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="USE_YN">Y</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="APRVL_SPR_CD" type="STRING" size="256"/>
+          <Column id="APRVL_SET_SEQ" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_useYn2">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_comCodeSearch">
+        <ColumnInfo>
+          <Column id="codeList" type="STRING" size="32"/>
+          <Column id="langCd" type="STRING" size="32"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_check">
+        <ColumnInfo>
+          <Column id="CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CHK">777</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_result">
+        <ColumnInfo>
+          <Column id="msg" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="Div00.form.edt_bzplcId" propid="value" datasetid="ds_list" columnid="BZPLC_ID"/>
+      <BindItem id="item1" compid="Div00.form.edt_bzplcNm" propid="value" datasetid="ds_list" columnid="BZPLC_NM"/>
+      <BindItem id="item3" compid="Div00.form.edt_bzplcNm00" propid="value" datasetid="ds_list" columnid="PRD_NM"/>
+      <BindItem id="item2" compid="Div00.form.edt_bzplcId00" propid="value" datasetid="ds_list" columnid="PRD_ID_VIEW"/>
+      <BindItem id="item4" compid="Div00.form.edt_bzplcNm00_00" propid="value" datasetid="ds_list" columnid="CATG"/>
+      <BindItem id="item5" compid="Div00.form.edt_bzplcId00_00" propid="value" datasetid="ds_list" columnid="PRVL"/>
+      <BindItem id="item6" compid="Div00.form.edt_bzplcNm00_01" propid="value" datasetid="ds_list" columnid="ORGPLC_CTRY_CD"/>
+      <BindItem id="item7" compid="Div00.form.edt_bzplcId00_01" propid="value" datasetid="ds_list" columnid="MNFR_NM"/>
+      <BindItem id="item8" compid="Div00.form.edt_stockNo" propid="value" datasetid="ds_list" columnid="STOCK_NO"/>
+      <BindItem id="item9" compid="Div00.form.Combo00" propid="value" datasetid="ds_list" columnid="USE_YN"/>
+    </Bind>
+  </Form>
+</FDL>

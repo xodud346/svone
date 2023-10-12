@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcPrcCond">
+
+	<sql id="PcPrcCondWhere">
+		
+		<if test="coCd != null and coCd != ''.toString()">
+		    AND	A.CO_CD = #{coCd}
+		</if>
+		<if test="cprtcpId != null and cprtcpId != ''.toString()">
+		    AND	A.CPRTCP_ID = LPAD(#{cprtcpId}, 10, '0')
+		</if>
+		<if test="prdId != null and prdId != ''.toString()">
+		    AND	A.PRD_ID = LPAD(#{prdId},18,'0')
+		</if>
+		
+	</sql>
+
+	<!-- 내부최저판매가 목록 -->
+    <select id="selectPrcCondList" parameterType="HashMap" resultType="HashMap">
+        /* PcPrcCond.selectPrcCondList */
+        SELECT * FROM (
+			SELECT  
+				PRC_COND_SPR_CD,
+				TO_CHAR(TO_DATE(A.PERD_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PERD_STR_DT,
+				TO_CHAR(TO_DATE(A.PERD_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PERD_END_DT, 
+				STR_QTY_CNT, 
+				END_QTY_CNT,
+				DC_AMT,
+				CURR_UNIT_CD,
+				AREA_CD,
+				TRNS_AREA_NM AS AREA_NM,
+				A.MNFR_NO,
+				C.MRO_MNFR_NM AS MNFR_NM,
+				A.BZPLC_ID,
+				D.CPRTCP_KOR_NM,
+				A.APLY_BSS_CD,
+				E.COM_DTL_CD_NM	APLY_BSS_NM,
+				A.DCRT,
+				A.REG_DTM,
+				F.BZPLC_NM
+			FROM TB_PC_PRC_COND_DTLS A
+			LEFT OUTER JOIN TB_CP_TRNSRE_DTL B
+				ON A.CO_CD = B.CO_CD
+				AND A.AREA_CD = B.TRNS_AREA_CD
+			LEFT OUTER JOIN TB_PR_MNFR_INFO C
+				ON C.CO_CD = A.CO_CD
+				AND C.MNFR_NO = A.MNFR_NO
+			LEFT OUTER JOIN TB_CP_CPRTCP_BASIS D
+				ON A.CO_CD = D.CO_CD
+				AND A.CPRTCP_ID = D.CPRTCP_ID
+			LEFT OUTER JOIN TB_CO_COM_CD_DTL E
+				ON COM_DTL_CD = A.APLY_BSS_CD
+				AND E.COM_CLSF_CD = 'APLY_BSS_CD'
+			LEFT OUTER JOIN TB_CC_BZPLC_BASIS F
+				ON F.CO_CD = A.CO_CD
+				AND F.BZPLC_ID = A.BZPLC_ID
+			<where>
+			 	<include refid="PcPrcCondWhere" />
+			</where>
+		)A
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.REG_DTM DESC</otherwise>
+		</choose>
+    </select>
+    
+</mapper>

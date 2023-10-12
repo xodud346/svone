@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="CLIENT_SINGLE_POPUP" width="580" height="590" titletext="회원 단일조회" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="590" width="580">
+        <Static id="Static00" taborder="0" text="회원ID" left="22" top="65" width="70" height="29"/>
+        <Edit id="MBR_ID" taborder="1" left="117" top="65" width="443" height="30"/>
+        <Static id="Static00_00" taborder="6" text="회원명" left="22" top="97" width="70" height="29"/>
+        <Edit id="MBR_NM" taborder="2" left="117" top="97" width="443" height="30"/>
+        <Grid id="grd_list" taborder="5" left="20" top="216" width="540" height="270" binddataset="ds_bzplc" autofittype="none" cellsizebandtype="allband" oncelldblclick="grd_list_oncelldblclick">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="100"/>
+                <Column size="100"/>
+                <Column size="130"/>
+                <Column size="150"/>
+                <Column size="130"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="회원ID"/>
+                <Cell col="1" text="회원명"/>
+                <Cell col="2" text="사업장"/>
+                <Cell col="3" text="운영단위"/>
+                <Cell col="4" text="부서"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:MBR_ID" textAlign="center"/>
+                <Cell col="1" text="bind:MBR_NM" textAlign="center"/>
+                <Cell col="2" text="bind:BZPLC_NM"/>
+                <Cell col="3" text="bind:OPR_UNIT_NM"/>
+                <Cell col="4" text="bind:DEPT_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_clear" taborder="3" text="초기화" left="427" top="164" width="65" height="32" onclick="btn_clear_onclick"/>
+        <Button id="btn_search" taborder="4" text="검색" left="495" top="164" width="65" height="32" onclick="btn_search_onclick" cssclass="btn_WF_select"/>
+        <Static id="Static01" taborder="7" text="회원 조회" left="18" top="16" width="155" height="37" font="bold 14pt &quot;Arial&quot;"/>
+        <Combo id="cbo_page" taborder="8" width="100" height="30" displayrowcount="5" innerdataset="ds_page" codecolumn="COUNT" datacolumn="COUNT" index="0" text="10" value="10" left="459" top="33"/>
+        <Div id="div_paging" taborder="9" left="20" height="38" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="500" width="526" text=""/>
+        <Static id="sta_totcnt" taborder="10" text="(총 0건 1/1)" left="20" top="190" width="370" height="25" usedecorate="true"/>
+        <Static id="Static00_00_00" taborder="11" text="로그인ID" left="22" top="129" width="70" height="29"/>
+        <Edit id="LOGIN_ID" taborder="12" left="117" top="129" width="443" height="30"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_bzplc">
+        <ColumnInfo>
+          <Column id="RNUM" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="MBR_NM" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_NM" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="MBR_NM" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_page">
+        <ColumnInfo>
+          <Column id="COUNT" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COUNT">10</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">20</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">30</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">40</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">50</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	/*
+	this.edt_bzplcId.set_value(this.parent.bzplcId);
+	this.edt_bzplcNm.set_value(this.parent.bzplcNm);
+	*/
+	
+	//조회
+	this.fn_search(true);
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo){
+	var objType = obj.getFocus();
+	if( e.keycode == 13 && objType == "[object Edit]" ) {
+		//조회
+		this.fn_search(true);
+	}
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (bInit){
+	
+	var sSvcId = "search";    
+	var sUrl = "/cc/dvlplc/selectMbrBasicInfoList.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_bzplc=ds_output1";
+	var arg = "";
+	
+	if(bInit) {
+		var oPaging = this.div_paging;
+		oPaging.uPage = 1;
+		oPaging.uPageNum = 0;
+		this.ds_search.setColumn(0,"START_NUM",0);
+		this.ds_search.setColumn(0,"ROW_COUNT",this.cbo_page.value);
+	}
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "search"){    	
+		//paging 처리 
+		this.div_paging.form.cfn_createPage(this.div_paging, this.totalCount, this.cbo_page.value, "fn_pageCallback");
+	}
+};
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;	
+	
+	if(sFlag){
+		this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.ds_search.setColumn(0,"ROW_COUNT", this.cbo_page.value);
+		this.fn_search();
+	}
+
+	var sTotText = "(<b v='true'>총 "+ oPaging.uTotCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+	this.sta_totcnt.set_text(sTotText);
+};
+
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_list"){
+		oSortInfo = this.grd_list.uaSortInfo;
+		this.ds_search.setColumn(0,"SORT_COLUMN",oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE",oSortInfo.status);
+		this.fn_search();
+	}
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+	//grid 초기 설정
+	/*
+	this.grd_list.uSortFlag = "false";
+	this.grd_list.uServerSortFlag = "true";
+	this.grd_list.uSortCallback = "fn_sortCallback";
+	this.grd_list.uCellSizeType = "true";
+	*/
+	
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 10;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;
+};
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//초기화
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo){	
+	this.MBR_ID.set_value("");
+	this.MBR_NM.set_value("");
+	this.LOGIN_ID.set_value("");
+};
+//조회버튼
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo){	
+	this.fn_search(true);
+};
+//그리드 셀 온클릭이벤트
+this.grd_list_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo){
+	var resData = {};
+	var resString = "";
+	
+	resData.MBR_ID 			= this.ds_bzplc.getColumn(this.ds_bzplc.rowposition, "MBR_ID");
+	resData.MBR_NM 			= this.ds_bzplc.getColumn(this.ds_bzplc.rowposition, "MBR_NM");
+	resData.BZPLC_ID 		= this.ds_bzplc.getColumn(this.ds_bzplc.rowposition, "BZPLC_ID");
+	resData.BZPLC_NM 		= this.ds_bzplc.getColumn(this.ds_bzplc.rowposition, "BZPLC_NM");
+	resData.OPR_UNIT_ID 	= this.ds_bzplc.getColumn(this.ds_bzplc.rowposition, "OPR_UNIT_ID");
+	resData.OPR_UNIT_NM 	= this.ds_bzplc.getColumn(this.ds_bzplc.rowposition, "OPR_UNIT_NM");
+	resData.DEPT_ID 		= this.ds_bzplc.getColumn(this.ds_bzplc.rowposition, "DEPT_ID");
+	resData.DEPT_NM 		= this.ds_bzplc.getColumn(this.ds_bzplc.rowposition, "DEPT_NM");
+	
+	resString = JSON.stringify(resData);
+	
+	this.close(resString);
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item1" compid="MBR_NM" propid="value" datasetid="ds_search" columnid="BZPLC_NM"/>
+      <BindItem id="item0" compid="MBR_ID" propid="value" datasetid="ds_search" columnid="BZPLC_ID"/>
+      <BindItem id="item2" compid="cbo_page" propid="value" datasetid="ds_search" columnid="ROW_COUNT"/>
+      <BindItem id="item3" compid="LOGIN_ID" propid="value" datasetid="ds_search" columnid="BZPLC_NM"/>
+    </Bind>
+  </Form>
+</FDL>

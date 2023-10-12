@@ -1,0 +1,289 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PP_21" width="800" height="530" titletext="젠데스크 조회" onload="fn_onLoad" onkeyup="SSP_BO_PP_21_onkeyup">
+    <Layouts>
+      <Layout height="530" width="800">
+        <Div id="Div00" taborder="0" text="Div00" left="20" top="20" bottom="20" right="20">
+          <Layouts>
+            <Layout>
+              <Grid id="grd_list" taborder="1" left="0" top="78" height="373" binddataset="ds_list" autofittype="col" cellsizebandtype="body" right="0" autoenter="select" oncellclick="Div00_grd_list_oncellclick" oncelldblclick="Div00_grd_list_oncelldblclick" onenterdown="Div00_grd_list_onenterdown">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="133"/>
+                      <Column size="167"/>
+                      <Column size="134"/>
+                      <Column size="326"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="31" band="head"/>
+                      <Row size="31"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell text="젠데스크 그룹ID"/>
+                      <Cell col="1" text="젠데스크 그룹명"/>
+                      <Cell col="2" text="URL"/>
+                      <Cell col="3" text="그룹인원"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="bind:ZENDESK_GRP_ID" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : none&quot;"/>
+                      <Cell col="1" text="bind:ZENDESK_GRP_NM" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : none&quot;"/>
+                      <Cell col="2" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : none&quot;" text="bind:CHAT_URL"/>
+                      <Cell col="3" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : none&quot;" text="bind:ZENDESK_CHRPSN_NMS" textAlign="left"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Button id="Button57_00" taborder="0" text="조회" top="40" cssclass="btn_WF_require" width="60" right="0" bottom="grd_list:10" onclick="Div00_Button57_00_onclick"/>
+              <Static id="Static01" taborder="3" text="|젠데스크 조회" left="0" top="0" width="155" height="30" cssclass="sta_WF_title03"/>
+              <Button id="btn_close" taborder="2" text="닫기" width="60" right="350" height="30" cssclass="btn_WF_select" onclick="Div00_btn_close_onclick" top="grd_list:9"/>
+              <Static id="sta_noData" taborder="4" text="조회된 결과가 없습니다." left="20" top="180" width="720" height="230" textAlign="center" visible="true" onclick="sta_noData_onclick"/>
+              <Static id="totalPageCount" taborder="5" text="(총 0건)" left="0" width="300" usedecorate="true" bottom="grd_list:10" height="14"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Static id="sta_totcnt00" taborder="1" text="최대 조회수 : 1,000건" left="410" top="20" height="25" usedecorate="true" textAlign="right" right="20"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="ZENDESK_GRP_ID" type="STRING" size="256"/>
+          <Column id="ZENDESK_GRP_NM" type="STRING" size="256"/>
+          <Column id="CHAT_URL" type="STRING" size="256"/>
+          <Column id="ZENDESK_CHRPSN_NMS" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ZENDESK_GRP_NM"/>
+            <Col id="ROW_COUNT">1000</Col>
+            <Col id="ZENDESK_GRP_ID"> </Col>
+            <Col id="CHAT_URL"> </Col>
+            <Col id="ZENDESK_CHRPSN_NMS"> </Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="TOT_CUNT" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="ZENDESK_GRP_ID" type="STRING" size="256"/>
+          <Column id="ZENDESK_GRP_NM" type="STRING" size="256"/>
+          <Column id="CHAT_URL" type="STRING" size="512"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="ZENDESK_CHRPSN_IDS" type="STRING" size="256"/>
+          <Column id="ZENDESK_CHRPSN_NMS" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_PP_44
+/* 작 성 일 자 : 2022/03/16
+/* 작  성   자 : ???
+/* 설       명 : 젠데스크 조회 팝업
+/* 수정 : 박재광 2022.05.31
+/***********************************************************/
+include "OD::odUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;	//전체 카운트
+
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//초기화
+	this.fn_initGrid();
+	
+	// 단축키 등록
+	this.fn_regShortCutMethod();
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회
+this.fn_search = function(page) {
+	 var sSvcId = "search";  
+     var sUrl   = '/vo/voc/zendesk/list.do';
+	 var inDs   = "ds_search=ds_search";
+     var outDs  = 'ds_list=ds_list';
+     var arg;
+     var callback = "fn_callBack";
+
+	 this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+//콜백이벤트
+this.fn_callBack = function(svcID, errorCode, errorMsg){
+	if(svcID == "search"){
+		//trace(this.ds_sampleList.saveXML());
+		this.fn_initGrid();
+		
+		var sTotText = "(<b v='true'>총 "+ this.totalCount +"건</b>)";
+		this.Div00.form.totalPageCount.set_text(sTotText);
+		
+		console.log(this.ds_list);
+	} 
+}
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+
+	//grid 초기 설정
+	this.Div00.form.grd_list.uCellSizeType = "true";
+	
+}
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.gridFlds = [ 'ZENDESK_GRP_ID', 'ZENDESK_GRP_NM', 'CHAT_URL', 'ZENDESK_CHRPSN_NMS' ];
+
+//그리드 검색조건 셋팅
+this.fn_initGrid = function(){
+	// 조회 카운트가 없으면 데이터셋이 날라감으로 강제 설정
+	if( this.ds_list.getRowCount() == 0 ) {	
+		this.ds_list.addRow();
+		this.Div00.form.sta_noData.bringToFront();
+	} else {
+		this.ds_list.insertRow(0);
+		this.Div00.form.sta_noData.sendToBack();
+	}
+		
+	for (var i in this.gridFlds) {
+		this.ds_list.setColumn(0, this.gridFlds[i],  this.ds_search.getColumn(0, this.gridFlds[i]));
+	}
+	
+	this.ds_list.set_rowposition(-1);
+	
+	this.Div00.form.grd_list.setFixedRow(0);
+};
+
+//리턴
+this.fn_resData = function() {
+
+	var resData = {};
+	var resString = "";
+	for (var i in this.gridFlds) {
+		resData[this.gridFlds[i]] = this.ds_list.getColumn(this.ds_list.rowposition, this.gridFlds[i]);
+	}
+	var othrFlds = [ 'CO_CD', 'ZENDESK_CHRPSN_IDS' ];
+	for (var i in othrFlds) {
+		resData[othrFlds[i]] = this.ds_list.getColumn(this.ds_list.rowposition, othrFlds[i]);
+	}
+	
+	//json string 변경
+	resString = JSON.stringify(resData);
+	//trace('resString: '+ resString);
+	
+	//return
+	this.close(resString);
+}
+
+this.fn_searchMapSetting = function(){
+	for (var i in this.gridFlds) {
+		this.ds_search.setColumn(0, this.gridFlds[i], this.ds_list.getColumn(0, this.gridFlds[i]));
+	}
+};
+
+// 창닫기
+this.fn_closeForm = function() {
+	this.close();
+};
+
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	this.fn_regMethodENTER("Div00_Button57_00_onclick");
+	this.fn_regMethodESC("fn_closeForm");
+	this.fn_regMethodShiftENTER("btn_select_onclick");
+};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//확인(닫기)버튼
+this.Div00_btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+//조회버튼
+this.Div00_Button57_00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+//그리드 셀 클릭
+this.Div00_grd_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row == 0){
+		var cellText = obj.getCellText(e.row, e.cell);
+		if(cellText != undefined){
+			obj.setEditSelect(cellText.length, cellText.length);
+		}
+	}
+};
+
+//그리드 더블클릭
+this.Div00_grd_list_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row != 0) {
+		this.fn_resData();
+	}	
+};
+
+//그리드 엔터 입력
+this.Div00_grd_list_onenterdown = function(obj:nexacro.Grid,e:nexacro.GridEditEventInfo)
+{
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+this.SSP_BO_PP_21_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+
+//선택 클릭 이벤트
+this.btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_list.rowposition < 1){
+		alert(this.fn_getMessage("ERRC000050", "데이터")); // 선택된 데이터가 없습니다.
+		return;
+	}
+	
+	var resData = {};
+	var resString = "";
+	for (var i in this.gridFlds) {
+		resData[this.gridFlds[i]] = this.ds_list.getColumn(this.ds_list.rowposition, this.gridFlds[i]);
+	}
+	var othrFlds = [ 'CO_CD', 'ZENDESK_CHRPSN_IDS' ];
+	for (var i in othrFlds) {
+		resData[othrFlds[i]] = this.ds_list.getColumn(this.ds_list.rowposition, othrFlds[i]);
+	}
+	
+	//json string 변경
+	resString = JSON.stringify(resData);
+	this.close(resString);
+};
+]]></Script>
+  </Form>
+</FDL>

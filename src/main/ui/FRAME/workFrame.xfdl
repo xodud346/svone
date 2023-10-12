@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="workPage" width="1336" height="846" titletext="New Form" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="846" width="1336">
+        <Div id="div_work" taborder="0" left="0" top="0" bottom="0" right="0" minwidth="1336" maxwidth="" minheight="827" maxheight=""/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : 
+  CREATION DATES : 
+*******************************************************/
+
+
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+	this.fv_oApp = nexacro.getApplication();
+	this.fv_sMenuId = "";
+	this.fv_sBookMarkFlag = false;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+	this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+	{
+		//초기화
+		this.fv_sMenuId = this.getOwnerFrame().arguments["menuId"];
+		var sPageUrl = this.getOwnerFrame().arguments["pageUrl"];
+		
+		//페이지 오픈
+		if(!this.gfn_isNull(sPageUrl)){
+			this.div_work.set_url(sPageUrl);
+		}
+		
+		//즐겨찾기
+		//this.fn_bookMarkInfo();
+
+		
+		//네비게이션 처리
+		//this.sta_title.set_text(this.gfn_getNavigation(this.fv_sMenuId));
+	};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+	//조회  
+	/*
+	this.fn_search = function()	{
+		var sSvcId = "sampleSelect";    
+		var sUrl = "sampleSelectMap.do";  
+		var inDs = "ds_search=ds_search";
+		var outDs = "ds_sampleList=ds_output1";
+		var arg = "";
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	};
+	*/
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+	this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	/*
+		if(svcID == "sampleSelect"){    
+			trace(this.ds_sampleList.saveXML());
+		}
+	*/
+	};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+	this.fn_bookMarkInfo = function(){
+		var oGdsBookMark = this.fv_oApp.gds_bookMark;
+		var nFindRow = oGdsBookMark.findRow("MNU_LVL_SPR_CD",this.fv_sMenuId);
+		
+		if(nFindRow > -1){
+			this.fv_sBookMarkFlag = true;
+		} else {
+			this.fv_sBookMarkFlag = false;
+		}
+		
+		if( this.fv_sBookMarkFlag ){
+			this.btn_bookMark.set_text("★");
+		}else{
+			this.btn_bookMark.set_text("☆"); 
+		}
+	};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+	//즐겨찾기 추가/삭제 버튼 click 이벤트
+	this.btnMyMenu_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+	{
+		this.fv_oApp.agv_LeftFrame.form.cfn_setBookMark(this.fv_sMenuId, this.fv_sBookMarkFlag);
+		
+		this.fn_bookMarkInfo();
+	};
+]]></Script>
+  </Form>
+</FDL>

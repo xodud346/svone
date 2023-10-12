@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_OA_52" width="880" height="650" titletext="참조코드 변경 팝업" onload="SSP_BO_OA_51_onload" onkeyup="SSP_BO_OA_52_onkeyup">
+    <Layouts>
+      <Layout height="650" width="880">
+        <Grid id="grid_list01" taborder="0" left="20" top="95" right="20" autofittype="col" nodatatext="조회된 결과가 없습니다." autoenter="select" oncelldblclick="grid_list01_oncelldblclick" height="95" onenterdown="grid_list01_onenterdown" binddataset="ds_list01" selecttype="row" font="12px/normal &quot;맑은 고딕&quot;">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell col="0" text="사업장 ID"/>
+                <Cell col="1" text="부서운영단위"/>
+                <Cell col="2" text="부서 ID"/>
+                <Cell col="3" text="부서명"/>
+                <Cell col="4" text="관리코드명"/>
+                <Cell col="5" text="참조코드ID"/>
+                <Cell col="6" text="고객사코드"/>
+                <Cell col="7" text="고객사코드명"/>
+              </Band>
+              <Band id="body">
+                <Cell col="0" text="bind:BZPLC_ID"/>
+                <Cell col="1" text="bind:DEPT_OPR_UNIT_SPR_NM"/>
+                <Cell col="2" text="bind:DEPT_OPR_UNIT_ID"/>
+                <Cell col="3" text="bind:DEPT_OPR_UNIT_NM"/>
+                <Cell col="4" text="bind:REF_CD_GRP_NM"/>
+                <Cell col="5" text="bind:REF_CD_SEQ"/>
+                <Cell col="6" text="bind:REF_CD"/>
+                <Cell col="7" text="bind:REF_CD_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_search" taborder="1" text="조회" top="60" height="28" onclick="btn_search_onclick" cssclass="btn_WF_require" width="60" right="20"/>
+        <Static id="sta_totcnt" taborder="2" text="총 124건이 검색되었습니다." left="20" usedecorate="true" width="300" bottom="555" height="29" visible="false" font="12px/normal &quot;맑은 고딕&quot;"/>
+        <Grid id="grid_list02" taborder="3" left="20" top="230" right="20" autofittype="col" nodatatext="선택된 결과가 없습니다." autoenter="select" height="360" binddataset="ds_list02" oncellclick="grid_list02_oncellclick" oncelldblclick="grid_list02_oncelldblclick" selecttype="area" font="12px/normal &quot;맑은 고딕&quot;">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="40"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="선택"/>
+                <Cell col="1" text="사업장 ID"/>
+                <Cell col="2" text="부서운영단위"/>
+                <Cell col="3" text="부서 ID"/>
+                <Cell col="4" text="부서명"/>
+                <Cell col="5" text="관리코드명"/>
+                <Cell col="6" text="참조코드ID"/>
+                <Cell col="7" text="고객사코드"/>
+                <Cell col="8" text="고객사코드명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:IS_SELECTED" edittype="checkbox" displaytype="checkboxcontrol" checkboxtruevalue="expr:1" checkboxfalsevalue="expr:0" combotype="dropdown"/>
+                <Cell col="1" text="bind:BZPLC_ID"/>
+                <Cell col="2" text="bind:DEPT_OPR_UNIT_SPR_NM"/>
+                <Cell col="3" text="bind:DEPT_OPR_UNIT_ID"/>
+                <Cell col="4" text="bind:DEPT_OPR_UNIT_NM"/>
+                <Cell col="5" text="bind:REF_CD_GRP_NM"/>
+                <Cell col="6" text="bind:REF_CD_SEQ"/>
+                <Cell col="7" text="bind:REF_CD"/>
+                <Cell col="8" text="bind:REF_CD_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_select" taborder="4" text="선택" width="81" right="400" textPadding="0px" onclick="btn_select_onclick" bottom="22" height="28"/>
+        <Static id="staticTitle" taborder="5" text="참조코드 변경" left="20" top="20" height="21" cssclass="sta_WF_title04" width="300"/>
+        <Static id="Static00_03_00_00" taborder="6" text="&lt;fc v='red'&gt;변경전 참조코드&lt;/fc&gt;" left="30" top="46" height="20" cssclass="sta_WF_title01" width="200" usedecorate="true"/>
+        <Static id="Static00_03_00_00_00" taborder="7" text="&lt;fc v='red'&gt;변경후 참조코드&lt;/fc&gt;" left="30" top="200" height="20" cssclass="sta_WF_title01" width="200" usedecorate="true"/>
+        <Button id="btn_excelDownload" taborder="8" text="엑셀다운로드" top="196" height="28" cssclass="btn_WF_excel" textPadding="0px" width="110" right="20" onclick="btn_excelDownload_onclick"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="ODR_NO" type="STRING" size="256"/>
+          <Column id="ODR_ITM_NO" type="STRING" size="256"/>
+          <Column id="REF_CD_GRP_SEQ" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">1000</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list01" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_NM" type="STRING" size="256"/>
+          <Column id="DEPT_OPR_UNIT_SPR_NM" type="STRING" size="256"/>
+          <Column id="DEPT_OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="REF_CD_GRP_SEQ" type="STRING" size="256"/>
+          <Column id="REF_CD_GRP_NM" type="STRING" size="256"/>
+          <Column id="REF_CD_SEQ" type="STRING" size="256"/>
+          <Column id="REF_CD" type="STRING" size="256"/>
+          <Column id="REF_CD_NM" type="STRING" size="256"/>
+          <Column id="IS_SELECTED" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list02" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_NM" type="STRING" size="256"/>
+          <Column id="DEPT_OPR_UNIT_SPR_NM" type="STRING" size="256"/>
+          <Column id="DEPT_OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="REF_CD_GRP_SEQ" type="STRING" size="256"/>
+          <Column id="REF_CD_GRP_NM" type="STRING" size="256"/>
+          <Column id="REF_CD_SEQ" type="STRING" size="256"/>
+          <Column id="REF_CD" type="STRING" size="256"/>
+          <Column id="REF_CD_NM" type="STRING" size="256"/>
+          <Column id="IS_SELECTED" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[// 플랜트 조회
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+include "OD::odUtils.xjs";
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;
+this.insertCount = 0;
+this.parentFormID = "";
+/***********************************************************************************************
+* FORM EVENT 영역
+************************************************************************************************/
+
+this.fv_bzplcId ="";
+this.fv_OdrNo ="";
+this.fv_OdrItmNo ="";
+this.fv_RefCdGrpSeq ="";
+
+this.SSP_BO_OA_51_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	if( this.parent.pv1 != undefined) 	this.fv_bzplcId = this.parent.pv1;
+	else								this.fv_bzplcId = "S000000686";
+    if( this.parent.pv2 != undefined) 	this.fv_OdrNo = this.parent.pv2;
+	else								this.fv_OdrNo = "3000010379";
+	if( this.parent.pv3 != undefined) 	this.fv_OdrItmNo = this.parent.pv3;
+	else								this.fv_OdrItmNo = "10";
+	if( this.parent.pv4 != undefined) 	this.fv_RefCdGrpSeq = this.parent.pv4;
+	else								this.fv_RefCdGrpSeq = "4";
+	
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	//검색 영역 최소size 적용
+	this.resetScroll();
+	this.fn_searchMapSetting();
+	this.fn_search();
+	
+	this.copyPaste.addGrid(this.grid_list02); 
+	
+	this.fn_regShortCutMethod();
+};
+
+this.SSP_BO_OA_52_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+
+this.fn_search = function() {
+	var sSvcId = "selectRefCdPopup";
+	var sUrl = "/od/orderChange/selectRefCdPopup.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_list02=ds_output1";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "selectRefCdPopup"){
+		this.sta_totcnt.set_text("(총 "+ this.gfn_appendComma(this.totalCount, 0) +"건)");
+		this.sta_totcnt.set_visible(true);
+		this.fn_setDsList01();
+	}
+};
+
+/***********************************************************************************************
+* 사용자 함수 영역
+************************************************************************************************/
+this.fn_searchMapSetting = function() {
+
+	this.ds_search.setColumn(0, "CO_CD", this.fv_coCd);
+	this.ds_search.setColumn(0, "BZPLC_ID", this.fv_bzplcId);
+	this.ds_search.setColumn(0, "ODR_NO", this.fv_OdrNo);
+	this.ds_search.setColumn(0, "ODR_ITM_NO", this.fv_OdrItmNo);
+	this.ds_search.setColumn(0, "REF_CD_GRP_SEQ", this.fv_RefCdGrpSeq);
+	this.ds_search.setColumn(0, "ROW_COUNT", "1000");
+	this.ds_list01.clearData();
+	this.ds_list02.clearData();
+};
+
+this.fn_setDsList01 = function() {
+	
+	var selectedRow = this.ds_list02.filter("IS_SELECTED=='1'");
+	if( selectedRow == -1 )	return;
+	
+	this.ds_list01.clearData();
+	this.ds_list01.addRow();
+	this.ds_list01.copyRow(0, this.ds_list02, selectedRow);
+	this.ds_list02.filter("");
+};
+
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	this.fn_regMethodENTER("btn_search_onclick");
+	this.fn_regMethodESC("fn_esc");
+	this.fn_regMethodShiftENTER("btn_select_onclick");
+};
+
+this.fn_esc = function() {
+	this.close(0);
+};
+
+/***********************************************************************************************
+* BUTTON EVENT 영역
+************************************************************************************************/
+// 조회
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+this.btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var resData = {};
+	var selectedRow = this.ds_list02.filter("IS_SELECTED=='1'");
+	if( selectedRow == -1 )
+	{
+		alert(this.fn_getMessage("ERRS000137"));
+		return;
+	}
+	
+	resData.REF_CD_GRP_SEQ = this.ds_list02.getColumn(selectedRow, "REF_CD_GRP_SEQ");
+	resData.REF_CD_GRP_NM = this.ds_list02.getColumn(selectedRow, "REF_CD_GRP_NM");
+	resData.REF_CD_SEQ = this.ds_list02.getColumn(selectedRow, "REF_CD_SEQ");
+	resData.REF_CD = this.ds_list02.getColumn(selectedRow, "REF_CD");
+	resData.REF_CD_NM = this.ds_list02.getColumn(selectedRow, "REF_CD_NM");
+	
+	this.ds_list02.filter("");
+	this.close(JSON.stringify(resData));
+};
+
+this.btn_excelDownload_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ofn_exportExcel({form:this, grid:this.grid_list02, fileName:"변경후참조코드"});
+};
+
+this.grid_list02_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.col != 0 ) return;
+	if(e.row != -1) {
+		for(var i=0;i < this.ds_list02.getRowCount(); i++)
+		{
+			this.ds_list02.setColumn(i, "IS_SELECTED", "0");
+		}	
+		this.ds_list02.setColumn(e.row,"IS_SELECTED", "1");
+	}
+};
+
+this.grid_list02_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var resData = {};
+	var selectedRow = e.row;
+	if( selectedRow == -1 )
+		return;
+	
+	resData.REF_CD_GRP_SEQ = this.ds_list02.getColumn(selectedRow, "REF_CD_GRP_SEQ");
+	resData.REF_CD_GRP_NM = this.ds_list02.getColumn(selectedRow, "REF_CD_GRP_NM");
+	resData.REF_CD_SEQ = this.ds_list02.getColumn(selectedRow, "REF_CD_SEQ");
+	resData.REF_CD = this.ds_list02.getColumn(selectedRow, "REF_CD");
+	resData.REF_CD_NM = this.ds_list02.getColumn(selectedRow, "REF_CD_NM");
+	
+	this.ds_list02.filter("");
+	this.close(JSON.stringify(resData));
+};
+]]></Script>
+  </Form>
+</FDL>

@@ -1,0 +1,360 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="fileUpload" width="1092" height="293" titletext="New Form">
+    <Layouts>
+      <Layout height="293" mobileorientation="landscape" width="1092">
+        <Static id="Static00_00" taborder="0" text="Drop Files Here" left="2" top="28" visible="true" background="aliceblue" color="dodgerblue" font="normal 30pt/normal &quot;Arial&quot;" textAlign="center" verticalAlign="middle" onclick="div_top_info_Static00_00_onclick" right="0" bottom="0"/>
+        <Grid id="grd_file" taborder="1" left="1" top="28" binddataset="ds_files" ondrop="grd_file_ondrop" autofittype="col" ondragleave="grd_file_ondragleave" ondragenter="grd_file_ondragenter" oncellclick="grd_file_oncellclick" right="0" bottom="0">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="459"/>
+                <Column size="125"/>
+                <Column size="28"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="파일명"/>
+                <Cell col="1" text="크기"/>
+                <Cell col="2" autosizecol="none" text="삭제"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:ATFL_NM"/>
+                <Cell col="1" text="bind:ATFL_LEN_NM" textAlign="right"/>
+                <Cell col="2" displaytype="imagecontrol" edittype="none" text="삭제" background="url('theme://images/btn_WF_close_small.png') no-repeat center center #B61539" autosizecol="limitmin" cursor="pointer"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="Button00" taborder="2" text="파일 첨부" left="0" top="1" width="109" onclick="Button00_onclick" bottom="grd_file:3"/>
+        <Static id="Static01_00" taborder="3" text="10MB" left="119" top="0" width="51" height="23" onclick="div_top_info_Static01_00_onclick" color="red" font="normal bold 10pt/normal &quot;Arial&quot;"/>
+        <Static id="Static01" taborder="4" text="미만의 파일최대         까지 등록 할 수 있습니다." left="172" top="0" width="388" height="23" onclick="div_top_info_Static01_onclick"/>
+        <Static id="Static01_00_00" taborder="5" text="5개" left="266" top="0" width="33" height="23" onclick="div_top_info_Static01_00_onclick" color="red" font="normal bold 10pt/normal &quot;Arial&quot;"/>
+        <Button id="Button01_01" taborder="6" text="upload" top="1" onclick="Button01_onclick" visible="false" bottom="grd_file:3" right="204" width="109"/>
+        <ProgressBar id="ProgressBar" taborder="7" max="100" min="0" left="Button01_01:4" height="24" text="" bottom="grd_file:3" right="0" visible="false"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[ 
+/***********************************************************/
+/* 프 로 그 램 : fileUpload
+/* 작 성 일 자 : 2022/02/28
+/* 작  성   자 : 이성민
+/* 설       명 : 파일업로드 공통
+/***********************************************************/
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+//첨부파일 타입
+this.fileType = ".pptx, .ppt, .docx, .doc, .xls, .xlsx, image/*, text/*, .zip"; //첨부파일 종류
+this.maxFileSize = 10; //MB단위
+
+//파일 경로
+this.filePath = "";
+//부모 폼
+this.parentForm = "";
+//전달받은 문서번호
+this.docRegId = "";
+
+this.docRegId = "";
+this.pgmId = "";
+this.mnuSeq = "";
+
+  
+/***********************************************************************************************
+*  파일첨부 관련  이벤트 영역
+************************************************************************************************/
+this.cfn_fileUpload_init = function(docRegId, pgmId, mnuSeq) {	
+	//오픈텍스트 테스트용
+	this.docRegId = docRegId;
+	this.pgmId = pgmId;
+	this.mnuSeq = mnuSeq;		
+}
+
+
+this.fileUpload = function() {
+
+	this.FileUpTransfer.setPostData("docRegId", this.docRegId);
+	this.FileUpTransfer.setPostData("pgmId", this.pgmId);
+	this.FileUpTransfer.setPostData("mnuSeq", this.mnuSeq);
+	
+	this.FileUpTransfer.upload('/co/file-upload.do');
+}
+
+// 파일 전송 성공
+this.FileUpTransfer_onsuccess = function(obj:nexacro.FileUpTransfer,e:nexacro.FileUpTransferEventInfo)
+{
+	var objCallDs = e.datasets[0];
+	
+	if( objCallDs!= undefined ) {		
+		var docRegId = objCallDs.getColumn(0, "docRegId");
+		var result = objCallDs.getColumn(0, "result");
+		var result = {"docRegId" : docRegId, "code" : result};
+
+		//최상위
+		this.parentForm.fn_fileUploadCallback(result);
+	}
+};
+
+// 파일전송 실패
+this.fileUpTrans_onerror = function(obj:nexacro.FileUpTransfer,e:nexacro.FileUpTransferErrorEventInfo)
+{
+	trace(e.errormsg);
+};
+
+//파일 추가 성공
+this.FileList_onsuccess = function(obj:nexacro.VirtualFile, e:nexacro.VirtualFileEventInfo)
+{
+	switch (e.reason)
+	{
+		case 1:
+			obj.getFileSize();
+			break;
+		case 9:	
+			var nRowIdx = this.ds_files.addRow();
+			//this.FileUpTransfer.clearFileList(); 
+			this.ds_files.setColumn(nRowIdx, "ATFL_NM", obj.filename);
+			this.ds_files.setColumn(nRowIdx, "ATFL_LEN_NM", this.cutFileSize(e.filesize));
+			this.ds_files.set_rowposition(nRowIdx);
+			this.FileUpTransfer.addFile(obj.filename, obj);
+			break;
+	}
+}
+
+// 파일추가 실패
+this.FileList_onerror = function(obj:nexacro.VirtualFile, e:nexacro.VirtualFileErrorEventInfo)
+{
+	trace("errortype: "+e.errortype);
+	trace("errormsg: "+e.errormsg);
+	trace("statuscode: "+e.statuscode);
+}
+
+//파일첨부 버튼 이벤트
+this.Button00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.FileDialog.set_accept(this.fileType);
+	this.FileDialog.open('nexacro17', FileDialog.MULTILOAD);
+};
+
+
+this.FileDialog_onclose = function(obj:nexacro.FileDialog,e:nexacro.FileDialogEventInfo)
+{		
+	this.addFileList(e.virtualfiles);
+};
+
+
+this.grd_file_ondragenter = function(obj:nexacro.Grid,e:nexacro.DragEventInfo)
+{
+	if(e.datatype == "file") {
+		this.grd_file.set_opacity(0.5);
+	}
+};
+
+this.grd_file_ondragleave = function(obj:nexacro.Grid,e:nexacro.DragEventInfo)
+{
+	this.grd_file.set_opacity(1);
+};
+
+this.grd_file_ondrop = function(obj:nexacro.Grid,e:nexacro.GridDragEventInfo)
+{
+	this.grd_file.set_opacity(1);
+	if(e.datatype == "file") {
+		this.addFileList(e.filelist);
+	}
+};
+
+this.FileUpTransfer_onprogress = function(obj:nexacro.FileUpTransfer,e:nexacro.FileUpTransferProgressEventInfo)
+{
+	var rtnPercent = this.fnGetPercent(e.loaded, e.total);	
+	this.ProgressBar.set_pos(rtnPercent);
+};
+
+
+this.Button01_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.FileUpTransfer.upload('/co/file-upload.do');
+};
+
+//그리드 클릭
+this.grd_file_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if( this.ds_files.getRowType(e.row) != 1) {		
+		if( obj.getCellPos() == 2 ) {
+			this.FileUpTransfer.clearFileList(e.row);//해당 파일첨부 행 삭제
+			this.ds_files.deleteRow(e.row);
+			this.parentForm.fn_fileDeleteCallback(this.ds_files);			
+		}		
+	} else {
+		if( obj.getCellPos() == 2 ) {
+			if(this.confirm("첨부파일을 삭제 하시겠습니까?")) {				
+				//this.parentForm.fn_fileDeleteCallback(this.ds_files.getDeletedRowset());
+				this.ds_files.deleteRow(e.row);
+				this.parentForm.fn_fileDeleteCallback(this.ds_files);
+			}
+		} else {
+			if(this.confirm(this.ds_files.getColumn(0, "ATFL_NM") + " 파일을 저장 하시겠습니까?")) {
+				this.downloadfile(e.row);
+			}
+		}
+	}	
+	
+}; 
+
+//다운 완료
+this.FileDownTransfer_onsuccess = function(obj:nexacro.FileDownTransfer,e:nexacro.FileDownTransferEventInfo)
+{
+	console.log(e);
+	console.log(obj);
+};
+
+//다운 실패
+this.FileDownTransfer_onerror = function(obj:nexacro.FileDownTransfer,e:nexacro.FileDownTransferErrorEventInfo)
+{
+	console.log(e);
+	console.log(obj);
+};
+
+
+
+//파일 사이즈.
+this.cutFileSize = function(filesize)
+{
+	var sOutput = filesize + " bytes";
+	var fileSizeType = "";
+	var size = 0;
+	for (var aMultiples = ["KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"], nMultiple = 0, nApprox = filesize / 1024; nApprox > 1; nApprox /= 1024, nMultiple++) {
+		sOutput = nApprox.toFixed(3) + " " + aMultiples[nMultiple];
+		fileSizeType = aMultiples[nMultiple];
+		size = nApprox;
+	}
+	
+	return sOutput;
+};
+
+
+//퍼센트 계산
+this.fnGetPercent = function(nload,nTotal)
+{
+	//일부값 ÷ 전체값 X 100
+	var nCurPercent = (nload / nTotal) * 100;
+	return nCurPercent;
+};
+
+//파일 확장자 검증
+this.fn_fileSizeCheck = function(obj, fileSize) {
+	var fileName = obj.filename;
+	var extNm  = fileName.substr(fileName.lastIndexOf(".") + 1); // 맨 뒤 확장자만 자르기
+	var fileGbn = ".pptx, .ppt, .docx, .doc, .xls, .xlsx, .jpg, .png, .txt, .zip";
+
+	extNm = extNm.toLowerCase();
+	
+	if( this.ds_files.rowcount >= 5 ) { 
+		alert("최대 첨부 개수는 5개 입니다.");
+		return false;
+	}
+	
+	//10485760 - 10메가
+	//메가바이트 변환
+	var mbSize = fileSize / 1024 / 1024;
+	
+	if( this.maxFileSize < mbSize ) {
+		alert(extNm + " 파일은 10MB 이상으로 첨부하실 수 없습니다.");
+		return false;
+	}
+	
+	if( fileGbn.indexOf(extNm) == -1 ) {
+		alert(extNm + " 파일은 허용되지 않는 파일 타입입니다.");
+		return false;
+	}
+	
+	return true;
+}
+
+//파일 이벤트 생성
+this.addFileList = function(filelist)
+{
+	for (var i = 0, len = filelist.length, vFile; i < len; i++)
+	{
+		vFile = filelist[i];
+		
+		//파일 개수 및 확장자 검증
+		if(!this.fn_fileSizeCheck(vFile, vFile._handle.size)) {
+			return false;
+		}
+		
+		vFile.addEventHandler("onsuccess", this.FileList_onsuccess, this);
+		vFile.addEventHandler("onerror", this.FileList_onerror , this);
+		
+		vFile.open(null, 1);
+	}
+}
+
+//파일 사이즈 가져오기
+this.cutFileSize = function(filesize)
+{
+	var sOutput = filesize + " bytes";
+	var fileSizeType = "";
+	var size = 0;
+	for (var aMultiples = ["KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"], nMultiple = 0, nApprox = filesize / 1024; nApprox > 1; nApprox /= 1024, nMultiple++) {
+		sOutput = nApprox.toFixed(3) + " " + aMultiples[nMultiple];
+		fileSizeType = aMultiples[nMultiple];
+		size = nApprox;
+	}
+	
+	return sOutput;
+};
+
+
+// 파일 다운로드 
+this.downloadfile = function(i) {
+	this.FileDownTransfer.clearPostDataList();
+
+	this.FileDownTransfer.setPostData("docRegId",this.ds_files.getColumn(i, "DOC_REG_ID"));
+	this.FileDownTransfer.setPostData("docRegSeq",this.ds_files.getColumn(i, "DOC_REG_SEQ"));
+	
+	/*
+	this.FileDownTransfer.set_downloadfilename(this.ds_files.getColumn(i, "ATFL_NM"));
+	this.FileDownTransfer.setPostData("filePath",this.ds_files.getColumn(i, "ATFL_STOR_PATH"));
+	this.FileDownTransfer.setPostData("fileOrgName",this.ds_files.getColumn(i, "ORI_ATFL_NM"));
+	this.FileDownTransfer.setPostData("fileName",this.ds_files.getColumn(i, "ATFL_NM"));	
+	this.FileDownTransfer.setPostData("sapDocId",this.ds_files.getColumn(i, "SAP_DOC_ID"));
+	*/
+	
+	this.FileDownTransfer.download('/co/file-download.do');
+	
+	//this.FileDownTransfer.download(this.saveUrl + "fileDownload_postdatatest.jsp");
+}]]></Script>
+    <Objects>
+      <FileDialog id="FileDialog" onclose="FileDialog_onclose"/>
+      <FileUpTransfer id="FileUpTransfer" onprogress="FileUpTransfer_onprogress" onsuccess="FileUpTransfer_onsuccess" onerror="FileUpTransfer_onerror"/>
+      <FileDownTransfer id="FileDownTransfer" onsuccess="FileDownTransfer_onsuccess" onerror="FileDownTransfer_onerror"/>
+      <Dataset id="ds_files">
+        <ColumnInfo>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="DOC_REG_SEQ" type="STRING" size="256"/>
+          <Column id="ATFL_NM" type="STRING" size="256"/>
+          <Column id="ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="ATFL_LEN" type="STRING" size="256"/>
+          <Column id="ATFL_LEN_NM" type="STRING" size="256"/>
+          <Column id="SAP_DOC_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_files_copy">
+        <ColumnInfo>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="DOC_REG_SEQ" type="STRING" size="256"/>
+          <Column id="ATFL_NM" type="STRING" size="256"/>
+          <Column id="ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="ATFL_LEN" type="STRING" size="256"/>
+          <Column id="ATFL_LEN_NM" type="STRING" size="256"/>
+          <Column id="SAP_DOC_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

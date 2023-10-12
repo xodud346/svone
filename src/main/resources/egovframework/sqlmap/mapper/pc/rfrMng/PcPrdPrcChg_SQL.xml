@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcPrdPrcChg">
+
+	<sql id="ExPrdPrcWhere">
+		<if test="pubOnlySprCd != null and pubOnlySprCd != ''.toString()">
+			AND A.PUB_ONLY_SPR_CD = #{pubOnlySprCd}
+		</if>
+		<if test="prdUseYn != null and prdUseYn != ''.toString()">
+			AND A.PRD_USE_YN = #{prdUseYn}
+		</if>
+	</sql>
+
+	<!-- 예외가격 목록 -->
+    <select id="selectExPrdPrcList" parameterType="HashMap" resultType="HashMap">
+        /* PcPrdPrcChg.selectExPrdPrcList */
+        SELECT * FROM (
+		 	SELECT 
+		 		NVL(A.PRD_ID, D.PRD_ID) PRD_ID,
+		 		LTRIM(NVL(A.PRD_ID, D.PRD_ID),0) PRD_ID_NUM,
+		 		A.PUB_ONLY_SPR_CD,
+		 		A.PRD_NM,
+		 		A.PRD_USE_YN,
+		 		A.PRD_USE_NM,
+		 		A.PUB_ONLY_SPR_NM,
+				D.CHG_PRC_10 AS PURG_DSGN_SALSPRC,
+				D.CHG_PRC_20 AS DSTRB_STD_PRC,
+				D.CHG_PRC_30 AS MRK_LWST_SALSPRC,
+				'KRW' AS CURR_UNIT_CD,
+				TO_CHAR(D.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM
+		        FROM (
+		        	SELECT /*+ USE_NL(A B) index(A TB_PR_PRD_INFO_PK) */
+		        		A.CO_CD,
+						A.PRD_ID,
+						A.PRD_NM,
+						B.PUB_ONLY_SPR_CD,
+						DECODE(A.PRD_USE_YN,'Y','사용','미사용') AS PRD_USE_NM,
+						A.PRD_USE_YN,
+						E.COM_DTL_CD_NM AS PUB_ONLY_SPR_NM
+					FROM
+						TB_PR_PRD_INFO A
+						<if test="prdId > 0 ">
+							JOIN TB_OD_ODR_INQ_TGT_DTLS D
+						            ON  D.SES_ID = #{sesId}
+						            AND D.INQ_COND_DTLS = #{inqCondDtls}
+						            AND D.COL_ITM = 'PRD_ID'
+						            AND LPAD(D.COND_DATA_VAL, 18, '0') = A.PRD_ID
+						</if>
+					INNER JOIN TB_PR_MRO_PRD_INFO B
+					ON A.CO_CD = B.CO_CD
+					AND A.PRD_ID = B.PRD_ID
+					LEFT OUTER JOIN TB_CO_COM_CD_DTL E 
+					ON E.COM_DTL_CD = B.PUB_ONLY_SPR_CD
+					AND E.COM_CLSF_CD = 'PUB_ONLY_SPR_CD'
+					AND E.LANG_CD = 'KO'
+					WHERE 
+						A.CO_CD = #{coCd}
+						AND A.MALL_SPR_CD = '10'
+						<if test="pubOnlySprCd != null and pubOnlySprCd != ''.toString()">
+							AND B.PUB_ONLY_SPR_CD = #{pubOnlySprCd}
+						</if>
+						<if test="prdUseYn != null and prdUseYn != ''.toString()">
+							AND A.PRD_USE_YN = #{prdUseYn}
+						</if>
+				)A
+				FULL OUTER JOIN (
+						SELECT 
+							CO_CD, PRD_ID, BZPLC_ID
+							,MAX(DECODE(PRC_SPR_CD,'10',CHG_PRC)) CHG_PRC_10
+							,MAX(DECODE(PRC_SPR_CD,'20',CHG_PRC)) CHG_PRC_20
+							,MAX(DECODE(PRC_SPR_CD,'30',CHG_PRC)) CHG_PRC_30
+							,MAX(UPD_DTM) AS UPD_DTM
+						FROM
+							(
+							SELECT 
+								TPPPCD.*
+								,ROW_NUMBER() OVER (PARTITION BY CO_CD, PRD_ID, PRC_SPR_CD ORDER BY CHG_SEQ DESC) RN
+							FROM TB_PC_PRD_PRC_CHG_DTLS TPPPCD
+							<if test="prdId > 0 ">
+								JOIN TB_OD_ODR_INQ_TGT_DTLS D
+							            ON  D.SES_ID = #{sesId}
+							            AND D.INQ_COND_DTLS = #{inqCondDtls}
+							            AND D.COL_ITM = 'PRD_ID'
+							            AND LPAD(D.COND_DATA_VAL, 18, '0') = TPPPCD.PRD_ID
+							</if>
+							WHERE TPPPCD.CO_CD = #{coCd}
+							)
+						WHERE 0=0
+							AND RN=1
+						GROUP BY CO_CD, PRD_ID, BZPLC_ID
+					)D
+					ON A.CO_CD = D.CO_CD
+					AND A.PRD_ID = D.PRD_ID 
+				)A
+				<where>
+				 	<include refid="ExPrdPrcWhere" />
+				</where>
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.PRD_ID DESC</otherwise>
+		</choose>
+		OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <select id="selectExPrdPrcCount" parameterType="hashMap" resultType="integer">
+    	/* PcPrdPrcChg.selectExPrdPrcCount */
+		SELECT count(*) FROM (
+		 	SELECT 
+		 		NVL(A.PRD_ID, D.PRD_ID) PRD_ID,
+		 		LTRIM(NVL(A.PRD_ID, D.PRD_ID),0) PRD_ID_NUM,
+		 		A.PUB_ONLY_SPR_CD,
+		 		A.PRD_USE_YN,
+		 		A.PRD_USE_NM,
+		 		A.PUB_ONLY_SPR_NM,
+				D.CHG_PRC_10 AS PURG_DSGN_SALSPRC,
+				D.CHG_PRC_20 AS DSTRB_STD_PRC,
+				D.CHG_PRC_30 AS MRK_LWST_SALSPRC,
+				'KRW' AS CURR_UNIT_CD,
+				TO_CHAR(D.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM
+		        FROM (
+		        	SELECT /*+ USE_NL(A B) index(A TB_PR_PRD_INFO_PK) */
+		        		A.CO_CD,
+						A.PRD_ID,
+						A.PRD_NM,
+						B.PUB_ONLY_SPR_CD,
+						DECODE(A.PRD_USE_YN,'Y','사용','미사용') AS PRD_USE_NM,
+						A.PRD_USE_YN,
+						E.COM_DTL_CD_NM AS PUB_ONLY_SPR_NM
+					FROM
+						TB_PR_PRD_INFO A
+						<if test="prdId > 0 ">
+							JOIN TB_OD_ODR_INQ_TGT_DTLS D
+						            ON  D.SES_ID = #{sesId}
+						            AND D.INQ_COND_DTLS = #{inqCondDtls}
+						            AND D.COL_ITM = 'PRD_ID'
+						            AND LPAD(D.COND_DATA_VAL, 18, '0') = A.PRD_ID
+						</if>
+					INNER JOIN TB_PR_MRO_PRD_INFO B
+					ON A.CO_CD = B.CO_CD
+					AND A.PRD_ID = B.PRD_ID
+					LEFT OUTER JOIN TB_CO_COM_CD_DTL E 
+					ON E.COM_DTL_CD = B.PUB_ONLY_SPR_CD
+					AND E.COM_CLSF_CD = 'PUB_ONLY_SPR_CD'
+					AND E.LANG_CD = 'KO'
+					WHERE 
+						A.CO_CD = #{coCd}
+						AND A.MALL_SPR_CD = '10'
+						<if test="pubOnlySprCd != null and pubOnlySprCd != ''.toString()">
+							AND B.PUB_ONLY_SPR_CD = #{pubOnlySprCd}
+						</if>
+						<if test="prdUseYn != null and prdUseYn != ''.toString()">
+							AND A.PRD_USE_YN = #{prdUseYn}
+						</if>
+				)A
+				FULL OUTER JOIN (
+						SELECT 
+							CO_CD, PRD_ID, BZPLC_ID
+							,MAX(DECODE(PRC_SPR_CD,'10',CHG_PRC)) CHG_PRC_10
+							,MAX(DECODE(PRC_SPR_CD,'20',CHG_PRC)) CHG_PRC_20
+							,MAX(DECODE(PRC_SPR_CD,'30',CHG_PRC)) CHG_PRC_30
+							,MAX(UPD_DTM) AS UPD_DTM
+						FROM
+							(
+							SELECT 
+								TPPPCD.*
+								,ROW_NUMBER() OVER (PARTITION BY CO_CD, PRD_ID, PRC_SPR_CD ORDER BY CHG_SEQ DESC) RN
+							FROM TB_PC_PRD_PRC_CHG_DTLS TPPPCD
+							<if test="prdId > 0 ">
+								JOIN TB_OD_ODR_INQ_TGT_DTLS D
+							            ON  D.SES_ID = #{sesId}
+							            AND D.INQ_COND_DTLS = #{inqCondDtls}
+							            AND D.COL_ITM = 'PRD_ID'
+							            AND LPAD(D.COND_DATA_VAL, 18, '0') = TPPPCD.PRD_ID
+							</if>
+							WHERE TPPPCD.CO_CD = #{coCd}
+							)
+						WHERE 0=0
+							AND RN=1
+						GROUP BY CO_CD, PRD_ID, BZPLC_ID
+					)D
+					ON A.CO_CD = D.CO_CD
+					AND A.PRD_ID = D.PRD_ID 
+				)A
+				<where>
+				 	<include refid="ExPrdPrcWhere" />
+				</where>
+    </select>
+    
+    <!-- 예외가격 상세 -->
+    <select id="selectExPrdPrcDetail" parameterType="HashMap" resultType="HashMap">
+        /* PcPrdPrcChg.selectExPrdPrcDetail */
+        SELECT 
+			0 AS CHK,
+			COM_DTL_CD_NM,
+			NVL(CHG_PRC,0) AS PRE_PRC,
+			COM_DTL_CD AS PRC_SPR_CD,
+			'' AS CHG_PRC,
+			'' AS CHG_RSN,
+			'선택된 파일 없음' AS ATFL_NM,
+			UPD_DTM
+		FROM
+			(
+				SELECT 
+					A.COM_DTL_CD_NM
+					,A.COM_DTL_CD
+		            ,B.*
+					,ROW_NUMBER() OVER (PARTITION BY A.COM_DTL_CD, PRD_ID ORDER BY B.CHG_SEQ DESC) RN
+				FROM TB_CO_COM_CD_DTL A
+				LEFT JOIN TB_PC_PRD_PRC_CHG_DTLS B
+		            ON
+		            (
+		            0=0
+		            AND B.PRC_SPR_CD = A.COM_DTL_CD
+					AND B.PRD_ID = LPAD(#{prdId},18,'0')
+		            )
+				WHERE 0=0
+					AND A.COM_CLSF_CD = 'PRC_SPR_CD'
+					AND A.LANG_CD = 'KO'
+			)
+		WHERE 0=0
+			AND RN=1
+    </select>
+    
+    <update id="insertExPrdPrc" parameterType="HashMap">
+        /* PcPrdPrcChg.insertExPrdPrc */
+        <selectKey keyProperty="chgSeq" resultType="String" order="BEFORE">   
+            SELECT SSP_APP.FN_PC_HIST_SEQ_CRT('PC_PRD_PRC_CHG_DTLS') FROM DUAL
+        </selectKey>
+        INSERT INTO TB_PC_PRD_PRC_CHG_DTLS(
+			CO_CD
+			, PRD_ID
+			, BZPLC_ID
+			, PRD_PRC_HST_SEQ
+			, CHG_SEQ
+			, PRC_SPR_CD
+			, PRE_PRC
+			, CHG_PRC
+			, CHGRQST_CTS
+			, PRD_PRC_ATFL_ID
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+			) 
+			VALUES(
+			#{coCd}
+			, LPAD(#{prdId},18,'0')
+			, #{bzplcId}
+			, #{chgSeq}
+			, #{chgSeq}
+			, #{prcSprCd}
+			, #{prePrc}
+			, #{chgPrc}
+			, #{chgRsn}
+			, #{prdPrcAtflId}
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE
+			)
+    </update>
+    
+    <sql id="ExPrdPrcHstWhere">
+		AND A.CO_CD = #{coCd}
+		<if test="prdId != null and prdId != ''.toString()">
+			AND A.PRD_ID = LPAD(#{prdId},18,'0')
+		</if>
+		<if test="strDtm != null and strDtm != ''.toString()">
+			<![CDATA[
+		    AND A.REG_DTM >= TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS')
+		    ]]>
+		</if>
+		<if test="endDtm != null and endDtm != ''.toString()">
+		    <![CDATA[
+		    AND A.REG_DTM < TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')
+		    ]]>
+		</if>
+	</sql>
+
+	<!-- 예외가격 목록 -->
+    <select id="selectExPrdPrcHstList" parameterType="HashMap" resultType="HashMap">
+        /* PcPrdPrcChg.selectExPrdPrcHstList */
+        SELECT A.*
+        FROM (
+        	SELECT 
+       			A.REG_DTM,
+				B.COM_DTL_CD_NM,
+				A.PRE_PRC,
+				A.CHG_PRC,
+				'KRW' AS CURR_UNIT_CD,
+				A.CHGRQST_CTS,
+				C.ATFL_STOR_PATH,
+				C.ORI_ATFL_NM,
+				C.ATFL_NM,
+				D.OPRTR_ID, --사번
+				D.OPRTR_NM,
+         		#{contextRealPath} AS CONTEXT_REAL_PATH,
+         		B.COM_USR_DEFN_NM_1,
+         		A.PRD_PRC_ATFL_ID DOC_REG_ID,
+         		'1' AS DOC_REG_SEQ,
+         		A.CHG_SEQ
+			FROM TB_PC_PRD_PRC_CHG_DTLS A
+			INNER JOIN TB_CO_COM_CD_DTL B
+				ON B.COM_DTL_CD = A.PRC_SPR_CD
+				AND B.COM_CLSF_CD = 'PRC_SPR_CD'
+			LEFT OUTER JOIN TB_CO_ATFL_DTLS C
+				ON C.DOC_REG_ID = A.PRD_PRC_ATFL_ID
+			LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO D
+				ON D.CO_CD = A.CO_CD
+				AND D.OPRTR_ID = A.REGPSN_ID
+			<where>
+			 	<include refid="ExPrdPrcHstWhere" />
+			</where>
+		)A
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.REG_DTM DESC, A.COM_USR_DEFN_NM_1 ASC ,  CHG_SEQ DESC</otherwise>
+		</choose>
+		OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <select id="selectExPrdPrcHstCount" parameterType="hashMap" resultType="integer">
+    	/* PcPrdPrcChg.selectExPrdPrcHstCount */
+		SELECT 
+      		COUNT(*)
+		FROM TB_PC_PRD_PRC_CHG_DTLS A
+		INNER JOIN TB_CO_COM_CD_DTL B
+			ON B.COM_DTL_CD = A.PRC_SPR_CD
+			AND B.COM_CLSF_CD = 'PRC_SPR_CD'
+		LEFT OUTER JOIN TB_CO_ATFL_DTLS C
+			ON C.DOC_REG_ID = A.PRD_PRC_ATFL_ID
+		LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO D
+			ON D.CO_CD = A.CO_CD
+			AND D.OPRTR_ID = A.REGPSN_ID
+		 <where>
+		 	<include refid="ExPrdPrcHstWhere" />
+		</where>
+    </select>
+    
+</mapper>

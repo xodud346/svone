@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Helper">
+
+	<sql id="helperFrom">
+		TB_FC_OPR_UNT_HELP OUH
+		INNER JOIN TB_FC_OPR_UNT_HELP_TEL OUHT
+			ON OUHT.CO_CD = OUH.CO_CD
+			AND OUHT.TEL_REG_NO = OUH.TEL_REG_NO
+		LEFT JOIN TB_FC_COM_CD_DTL TEL_TYPE
+			ON TEL_TYPE.CLS_CD = 'ZTEL_TYPE'
+			AND TEL_TYPE.LANG_CD = 'KO'
+			AND TEL_TYPE.DTL_CD = OUHT.TEL_TYPE
+		INNER JOIN TB_FC_BZPLC_OPR_UNT OU
+			ON OU.CO_CD = OUH.CO_CD
+			AND OU.OPR_UNT_ID = OUH.OPR_UNT_ID
+			AND OU.USE_YN = 'Y'
+		LEFT JOIN TB_FC_BZPLC_OPR_UNT_FRT_AUTH OUFA
+			ON OUFA.CO_CD = OUH.CO_CD
+			AND OUFA.OPR_UNT_ID = OUH.OPR_UNT_ID
+		INNER JOIN TB_FC_OPR_UNT_ZEN OUZ
+			ON OUZ.CO_CD = OUH.CO_CD
+			AND OUZ.OPR_UNT_ID = OUH.OPR_UNT_ID
+		INNER JOIN TB_FC_ZEN_BASIS ZB
+			ON ZB.CO_CD = OUH.CO_CD
+			AND ZB.ZENDESK = OUZ.ZENDESK
+			AND ZB.USE_YN = 'Y'
+		LEFT JOIN TB_FC_MEM_OPRTR CHR_CS
+			ON CHR_CS.USE_YN = 'Y'
+			AND CHR_CS.EMP_NO = OU.CHR_CS_ID
+		LEFT JOIN TB_FC_MEM_OPRTR PRD_CS
+			ON PRD_CS.USE_YN = 'Y'
+			AND PRD_CS.EMP_NO = OU.MMID
+	</sql>
+
+	<!-- 고객센터관리 > 고객도우미 관리 조건절 -->
+	<sql id="helperWhere">
+		<if test="telType != null and telType !=''">
+			AND OUHT.TEL_TYPE = #{telType}
+		</if>
+		<choose>
+			<when test="useYn == null">
+			AND OUH.USE_YN = 'Y'
+			</when>
+			<when test="useYn != ''">
+			AND OUH.USE_YN = #{useYn}
+			</when>
+			<otherwise></otherwise>
+		</choose>
+		<if test="arrOprUntId != null and arrOprUntId.length > 0">
+			AND OUH.OPR_UNT_ID IN
+			<foreach collection="arrOprUntId" item="oprUntId" open="(" close=")" separator=",">
+				#{oprUntId}
+			</foreach>
+		</if>
+		<if test="arrChrCsId != null and arrChrCsId.length > 0">
+			AND OU.CHR_CS_ID IN
+			<foreach collection="arrChrCsId" item="chrCsId" open="(" close=")" separator=",">
+				#{chrCsId}
+			</foreach>
+		</if>
+		<if test="zendeskNm != null and zendeskNm != ''">
+			AND ZB.ZENDESK_NM LIKE '%' || #{zendeskNm} || '%'
+		</if>
+		<if test="telNm != null and telNm != ''">
+			AND OUHT.TEL_NM LIKE '%' || #{telNm} || '%'
+		</if>
+	</sql>
+
+	<!-- 고객도우미 관리 목록 총 건수 -->
+	<select id="selectHelperCount" parameterType="hashMap" resultType="Integer">
+		/* Helper.selectHelperCount */
+		SELECT  COUNT(OUH.OPR_UNT_ID) AS CNT
+		FROM <include refid="helperFrom" />
+		<where>
+			<include refid="helperWhere"/>
+		</where>
+	</select>
+
+	<!-- 고객도우미 관리 목록 -->
+	<select id="selectHelperList" parameterType="hashMap" resultType="hashMap">
+		/* Helper.selectHelperList */
+		<if test="startNum != null and endNum != null">
+		SELECT
+			S2.*
+		FROM
+		(
+		</if>
+			SELECT
+				ROWNUM AS RNUM,
+				S1.*
+			FROM
+			(
+			SELECT  OUH.CO_CD
+				,   OUH.OPR_UNT_ID
+				,   OU.OPR_UNT_NM
+				,   OUZ.ZENDESK
+				,   ZB.ZENDESK_NM
+				,   OUHT.TEL_NM
+				,   OUHT.TEL_TYPE
+				,   TEL_TYPE.DTL_CD_NM  AS TEL_TYPE_NM
+				,   OUHT.TEL_NO
+				,   NVL((
+						SELECT REPLACE(LISTAGG(NVL(USER_NM, ' '), ',') WITHIN GROUP(ORDER BY USER_NM),'# #','##')
+						FROM TB_FC_ZEN_USER ZU
+						WHERE ZU.USE_YN = 'Y'
+						AND ZU.CO_CD = ZB.CO_CD
+						AND ZU.ZENDESK = ZB.ZENDESK
+						GROUP BY ZU.CO_CD, ZU.ZENDESK
+					), ' ') AS ZEN_USERS
+				,	OUH.USE_YN
+				,   OU.CHR_CS_ID
+				,   CHR_CS.OPRTR_NM AS CHR_CS_NM
+				,   CHR_CS.ORG_NM AS CHR_CS_ORG_NM
+				,   OU.MMID
+				,   PRD_CS.OPRTR_NM AS MMID_NM
+				,   PRD_CS.ORG_NM AS MMID_ORG_NM
+			FROM <include refid="helperFrom" />
+			<where>
+				<include refid="helperWhere"/>
+			</where>
+			ORDER BY
+					OUH.CO_CD
+					, OUH.OPR_UNT_ID
+					, OU.OPR_UNT_NM
+			) S1
+		<if test="startNum != null and endNum != null">
+		) S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+		</if>
+	</select>
+
+	<!-- 고객도우미 관리 상세 -->
+	<select id="selectHelperDetail" parameterType="hashMap" resultType="hashMap">
+		/* Helper.selectHelperDetail */
+		SELECT  OUH.CO_CD       /* 회사코드 */
+			,   OUH.OPR_UNT_ID  /* 운영단위ID */
+			,   OUH.TEL_REG_NO
+			,   OU.OPR_UNT_NM   /* 운영단위명 */
+			,   OUZ.ZENDESK     /* Zendesk ID */
+			,   ZB.ZENDESK_NM   /* Zendesk 명 */
+			,   ZB.CAHT_URL     /* Caht URL */
+			,   OUFA.CHAT_USE_YN    /* 챗봇 사용여부 */
+			,   OUZ.EMAIL_ADDR  /* 발신전용 이메일 */
+			,   OUHT.TEL_NM     /* Front 표시명 */
+			,   OUHT.TEL_TYPE   /* 연락처구분 */
+			,   TEL_TYPE.DTL_CD_NM  AS TEL_TYPE_NM  /* 연락처구분명 */
+			,   OUHT.TEL_NO     /* 담당자연락처 */
+			,   NVL((
+				SELECT REPLACE(LISTAGG(NVL(USER_NM, ' '), ',') WITHIN GROUP(ORDER BY USER_NM),'# #','##')
+				FROM TB_FC_ZEN_USER ZU
+				WHERE ZU.USE_YN = 'Y'
+				AND ZU.CO_CD = ZB.CO_CD
+				AND ZU.ZENDESK = ZB.ZENDESK
+				GROUP BY ZU.CO_CD, ZU.ZENDESK
+				), ' ') AS ZEN_USERS    /* 그룹인원 */
+			,   OUH.USE_YN      /* 운영단위 사용여부 */
+			,   OU.CHR_CS_ID    /* 담당CS ID */
+			,   CHR_CS.OPRTR_NM AS CHR_CS_NM    /* 담당CS 명 */
+			,   CHR_CS.ORG_NM AS CHR_CS_ORG_NM  /* 담당CS 팀 */
+			,   OU.MMID         /* 상품등록CS ID */
+			,   PRD_CS.OPRTR_NM AS MMID_NM      /* 상품등록CS 명 */
+			,   PRD_CS.ORG_NM AS MMID_ORG_NM    /* 상품등록CS 팀 */
+		FROM <include refid="helperFrom" />
+		WHERE OUH.OPR_UNT_ID = #{index}
+	</select>
+
+	<!-- 고객도우미 관리 상세 채널별 이메일 -->
+	<select id="selectHelperDetailCh" parameterType="hashMap" resultType="hashMap">
+		/* Helper.selectHelperDetailCh */
+		SELECT	TEL_REG_NO
+			,	MAX(DECODE(CH_TYPE, '10', EMAIL_ADDR, '')) AS CH_TYPE_10
+			,	MAX(DECODE(CH_TYPE, '20', EMAIL_ADDR, '')) AS CH_TYPE_20
+			,	MAX(DECODE(CH_TYPE, '30', EMAIL_ADDR, '')) AS CH_TYPE_30
+			,	MAX(DECODE(CH_TYPE, '40', EMAIL_ADDR, '')) AS CH_TYPE_40
+			,	MAX(DECODE(CH_TYPE, '50', EMAIL_ADDR, '')) AS CH_TYPE_50
+		FROM	TB_FC_OPR_UNT_HELP_TEL_DTL
+		WHERE TEL_REG_NO = #{TEL_REG_NO}
+		GROUP BY TEL_REG_NO
+	</select>
+</mapper>

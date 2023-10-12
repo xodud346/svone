@@ -1,0 +1,139 @@
+//* class =================================================================== */
+.pushr-visible-no-anim(){
+    position: static;
+    z-index: 1000;
+    visibility: visible;
+    display: block;
+}
+.pushr-hidden-no-anim(){
+    position: relative;
+    z-index: -1;
+    visibility: hidden;
+    display: none;
+}
+
+//* less =================================================================== */
+// default, close
+.pushr-aside,
+.pushr-wrap {
+    box-sizing: border-box;
+    min-width: 320px;
+    width: 100%;
+    width: 100vw;
+}
+
+.pushr-aside {
+    position: absolute; // 기본값으로 보이지 않게
+    z-index: -1; // 기본값으로 보이지 않게
+    visibility: hidden; // 기본값으로 보이지 않게
+    pointer-events: none;
+}
+
+.pushr-wrap {
+    pointer-events: auto;
+}
+
+// default, open
+&.is-active-pushr-nav {
+
+    body {
+        overflow-x: hidden;
+    }
+
+    .pushr-aside {
+        pointer-events: auto;
+        -webkit-backface-visibility: hidden;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .pushr-wrap {
+        pointer-events: none;
+    }
+
+}
+
+// pushr no support animation, 애니메이션 지원하지 않는 환경
+.pushr-no-anim {
+
+    .pushr-aside {
+        .pushr-hidden-no-anim();
+    }
+    .pushr-wrap {
+        .pushr-visible-no-anim();
+    }
+
+    &.is-active-pushr-nav {
+
+        .pushr-aside {
+            .pushr-visible-no-anim();
+        }
+        .pushr-wrap {
+            .pushr-hidden-no-anim();
+        }
+
+    }   
+
+}
+
+// pushr support animation, 애니메이션 지원하는 환경
+.pushr-anim {
+
+    // aside 로써 최초 가려져 있는 영역
+    .pushr-aside {
+
+        visibility: hidden;
+        position: absolute;
+        z-index: -1;
+        left: 0;
+        top: 0;
+        transform: translate(-100%, 0);
+
+        -webkit-transition: -webkit-transform .6s 0s, visibility 0s .6s, z-index 0s .6s;
+        transition: transform .6s 0s, visibility 0s .6s, z-index 0s .6s; // 사라질때
+
+        -webkit-transition-timing-function: cubic-bezier(.42, 0, .58, 1.0);
+        transition-timing-function: cubic-bezier(.42, 0, .58, 1.0);
+
+    }
+
+    // contents 영역
+    .pushr-wrap {
+        display: block;
+        visibility: visible;
+        z-index: 1;
+    }
+    
+    &.is-active-pushr-nav {
+
+        // aside 로써 최초 가려져 있는 영역
+        .pushr-aside {
+
+            display: block;
+
+            visibility: visible;
+            z-index: 1000;
+            transform: translate(0, 0);
+
+            -webkit-transition: -webkit-transform .2s 0s, visibility 0s 0s, z-index 0s 0s;
+            transition: transform .2s 0s, visibility 0s 0s, z-index 0s 0s;
+
+        }
+
+        // contents 영역
+        .pushr-wrap {
+            display: none;
+            visibility: hidden;
+            z-index: -1;
+        }
+
+    } 
+}
+
+
+
+

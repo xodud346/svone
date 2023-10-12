@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.co.coPgmMng">
+   <!--
+    ******************************************************************************
+    * SELECT : 프로그램 목록 관리 조회
+    * 작성자 : 
+    * 작성 일자 : 2022.01.25
+    ******************************************************************************
+    -->
+	    
+    <sql id="pgmMngWhere">
+		<if test="pgmId != null and pgmId != ''">
+		AND A.PGM_ID LIKE '%' || #{pgmId} || '%'
+		</if>
+		<if test="pgmNm != null and pgmNm != ''">
+		AND A.PGM_NM LIKE '%' || #{pgmNm} || '%'
+		</if>
+		<if test="thmeDomnCd != null and thmeDomnCd != ''">
+		AND A.THME_DOMN_CD LIKE '%' || #{thmeDomnCd} || '%'
+		</if>
+		<if test="psnInfoYn != '' and psnInfoYn != null">
+	    AND NVL(A.PSN_INFO_YN, 'N') = #{psnInfoYn}
+		</if>
+		<if test="useYn != '' and useYn != null">
+	    AND A.USE_YN = #{useYn}
+		</if>
+		<if test="uiId != null and uiId != ''">
+		AND A.UI_ID LIKE '%' || #{uiId} || '%'
+		</if>
+	</sql>
+	
+    <select id="selectPgmMngList" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.co.coPgmMng.selectPgmMngList   */
+	    SELECT 0 AS CHK
+	    	 , A.PGM_ID
+			 , A.PGM_NM
+			 , A.PGM_CALL_PATH
+			 , A.PGM_TP_CD
+			 , A.THME_DOMN_CD
+			 , A.UI_ID
+			 , A.MDL_NM
+			 , NVL(A.PSN_INFO_YN, 'N') AS PSN_INFO_YN
+			 , A.USE_YN
+			 , A.RMKS_CTS
+		  FROM SSP_APP.TB_CO_SYS_PGM_INFO A
+		<where>
+		 	<include refid="pgmMngWhere" />
+		</where>
+		 
+		<choose>
+			<when test="sortColumn != null and sortColumn != ''">
+			 	ORDER BY ${sortColumn} ${sortType}
+			</when>
+			<otherwise>
+				ORDER BY A.PGM_ID 
+			</otherwise>
+		</choose>
+		
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <!-- 프로그램관리목록 갯수 -->
+	<select id="selectPgmMngCount" parameterType="hashMap" resultType="integer">
+		/* com.ssp.bo.co.coPgmMng.selectPgmMngCount */
+		SELECT
+			COUNT(0)
+		 FROM SSP_APP.TB_CO_SYS_PGM_INFO A
+		<where>
+			 <include refid="pgmMngWhere" />
+		</where>
+	</select>
+	
+	<!--  프로그램 관리 목록 등록 -->
+    <insert id="insertPgmMng" parameterType="HashMap">
+        /*com.ssp.bo.co.coPgmMng.insertPgmMng  */
+        INSERT INTO
+            SSP_APP.TB_CO_SYS_PGM_INFO
+            ( 
+                 PGM_ID
+                , PGM_NM     
+                , PGM_CALL_PATH       
+                , PGM_TP_CD    
+                , THME_DOMN_CD
+                , UI_ID   
+                , MDL_NM
+                , PSN_INFO_YN
+                , USE_YN
+                , RMKS_CTS
+                , REG_DTM  
+                , REGPSN_ID      
+            )
+        VALUES 
+            (
+                  #{pgmId}    
+                , #{pgmNm}
+                , #{pgmCallPath}
+                , #{pgmTpCd}
+                , #{thmeDomnCd}
+                , #{uiId}
+                , #{mdlNm}
+                , #{psnInfoYn}
+                , #{useYn}
+                , #{rmksCts}
+                , SYSDATE
+                , #{regpsnId}
+            )            
+    </insert>
+    
+    <!-- 프로그램 관리 목록 수정 -->
+	<update id="updatePgmMng" parameterType="hashMap">
+		/* com.ssp.bo.co.coPgmMng.updatePgmMng */
+		UPDATE
+			SSP_APP.TB_CO_SYS_PGM_INFO
+		SET
+			PGM_NM = #{pgmNm}
+			, PGM_CALL_PATH = #{pgmCallPath}
+			, PGM_TP_CD = #{pgmTpCd}
+			, THME_DOMN_CD = #{thmeDomnCd}
+			, UI_ID = #{uiId}
+			, MDL_NM = #{mdlNm}
+			, PSN_INFO_YN = #{psnInfoYn}
+			, USE_YN = #{useYn}
+			, RMKS_CTS = #{rmksCts}
+			, UPD_DTM = SYSDATE
+			, UPDPSN_ID = #{updpsnId}
+		WHERE
+			PGM_ID = #{pgmId}
+	</update>
+    
+    <!--  프로그램 관리 목록 삭제 -->
+    <delete id="deletePgmMng" parameterType="hashMap">
+		/* com.ssp.bo.co.coPgmMng.deletePgmMng */
+		DELETE FROM SSP_APP.TB_CO_SYS_PGM_INFO
+		WHERE PGM_ID = #{pgmId}
+	</delete>
+	
+	<!--  프로그램 관리 목록 삭제 -->
+	<select id="selectPgmIdCheck" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.co.coPgmMng.selectPgmIdCheck   */
+      
+	        SELECT 
+				 A.PGM_ID
+				,A.PGM_NM
+			 FROM SSP_APP.TB_CO_SYS_PGM_INFO A
+			<where>
+				<if test="pgmIdList != null and pgmIdList.size > 0">
+	                      A.PGM_ID IN
+	                    <foreach collection="pgmIdList" item="pgmIdList" open="(" close=")" separator=",">
+	                        #{pgmIdList}
+	                    </foreach>
+	             </if>
+			</where>
+			ORDER BY A.PGM_ID
+			
+    </select>
+    
+    
+	<!--프로그램 관리 목록 팝업 조회  -->
+    <select id="selectPgmMngPopupList" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.co.coPgmMng.selectPgmMngPopupList   */
+         SELECT 
+				 A.PGM_ID
+				,A.PGM_NM
+				,A.PGM_CALL_PATH
+				,A.PGM_TP_CD
+				,A.THME_DOMN_CD
+				,A.UI_ID
+				,A.MDL_NM
+				,NVL(A.PSN_INFO_YN, 'N') AS PSN_INFO_YN
+				,A.USE_YN
+				,A.RMKS_CTS
+			 FROM TB_CO_SYS_PGM_INFO A
+		<where>
+		 	<include refid="pgmMngWhere" />
+		</where>
+		 
+		<choose>
+			<when test="sortColumn != null and sortColumn != ''">
+			 	ORDER BY ${sortColumn} ${sortType}
+			</when>
+			<otherwise>
+				ORDER BY A.PGM_ID 
+			</otherwise>
+		</choose>
+		
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+			 
+    </select>
+    
+</mapper>

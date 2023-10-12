@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_CN_01" width="1338" height="846" titletext="공지사항 탭" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="846" mobileorientation="landscape" width="1338">
+        <Tab id="Tab00" taborder="5" tabindex="0" left="20" top="20" onchanged="Tab00_onchanged" right="18" bottom="20" cssclass="tab_WF_basic">
+          <Tabpages>
+            <Tabpage id="Tabpage1" text="공지사항 " url="CO::SSP_BO_CN_01.xfdl"/>
+            <Tabpage id="Tabpage2" text="메뉴얼 등록" url="CO::SSP_BO_CN_30.xfdl"/>
+          </Tabpages>
+        </Tab>
+        <PopupDiv id="PopupDiv3" left="364" top="905" width="330" height="230" positionstep="0" background="#fffff" visible="false" text="" oncloseup="PopupDiv3_oncloseup">
+          <Layouts>
+            <Layout>
+              <Calendar id="searchStartDate" taborder="1" left="6" top="10" width="149" height="172" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd" type="monthonly" value=""/>
+              <Calendar id="searchEndDate" taborder="0" left="165" top="10" height="172" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd" type="monthonly" width="149"/>
+              <Button id="btn_confirm" taborder="3" text="Confirm" left="99" top="192" width="60" height="24" uWord="popup.ok" onclick="PopupDiv3_btn_confirm_onclick"/>
+              <Button id="btn_cancel" taborder="2" text="Cancel" left="169" top="192" width="60" height="24" uWord="popup.cancel" onclick="PopupDiv3_btn_cancel_onclick"/>
+            </Layout>
+          </Layouts>
+        </PopupDiv>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="DATE_TYPE" type="STRING" size="256"/>
+          <Column id="FROM_DATE" type="STRING" size="256"/>
+          <Column id="TO_DATE" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REGPSN_NM" type="STRING" size="256"/>
+          <Column id="POPUP_YN" type="STRING" size="256"/>
+          <Column id="SEARCH_WORD" type="STRING" size="256"/>
+          <Column id="TGT_SET_YN" type="STRING" size="256"/>
+          <Column id="TARGET_VALUE" type="STRING" size="256"/>
+          <Column id="DATE_TERM" type="STRING" size="256"/>
+          <Column id="TARGET_CODE" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="POPUP_YN">ALL</Col>
+            <Col id="DATE_TYPE">REG</Col>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+            <Col id="DATE_TERM">1</Col>
+            <Col id="USE_YN">Y</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="NOTCC_SEQ" type="STRING" size="256"/>
+          <Column id="NOTCC_TTL" type="STRING" size="256"/>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="NOTIC_STR_DT" type="STRING" size="256"/>
+          <Column id="NOTIC_END_DT" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="NOTCC_INQ_CNT" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="POPUP_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_copy">
+        <ColumnInfo>
+          <Column id="NOTCC_SEQ" type="STRING" size="256"/>
+          <Column id="NOTCC_TTL" type="STRING" size="256"/>
+          <Column id="ATTACH_FILE" type="STRING" size="256"/>
+          <Column id="NOTIC_STR_DT" type="STRING" size="256"/>
+          <Column id="NOTIC_END_DT" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="NOTCC_INQ_CNT" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="POPUP_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_popupYN">
+        <ColumnInfo>
+          <Column id="CODE" type="STRING" size="256"/>
+          <Column id="NAME" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CODE">ALL</Col>
+            <Col id="NAME">전체</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">Y</Col>
+            <Col id="NAME">사용</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">N</Col>
+            <Col id="NAME">미사용</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_trem">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_oprUnit">
+        <ColumnInfo>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search_origin">
+        <ColumnInfo>
+          <Column id="DATE_TYPE" type="STRING" size="256"/>
+          <Column id="FROM_DATE" type="STRING" size="256"/>
+          <Column id="TO_DATE" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REGPSN_NM" type="STRING" size="256"/>
+          <Column id="POPUP_YN" type="STRING" size="256"/>
+          <Column id="SEARCH_WORD" type="STRING" size="256"/>
+          <Column id="TGT_SET_YN" type="STRING" size="256"/>
+          <Column id="TARGET_VALUE" type="STRING" size="256"/>
+          <Column id="DATE_TERM" type="STRING" size="256"/>
+          <Column id="TARGET_CODE" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="POPUP_YN">ALL</Col>
+            <Col id="DATE_TYPE">REG</Col>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+            <Col id="DATE_TERM">1</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

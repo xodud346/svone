@@ -1,0 +1,258 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="samplePage01" width="1280" height="495" titletext="StockNo 변경이력" onload="fn_onLoad" onkeyup="samplePage01_onkeyup">
+    <Layouts>
+      <Layout height="495" mobileorientation="landscape" width="1280">
+        <Static id="sta_totCount" taborder="1" text="(총 0건)" left="20" usedecorate="true" width="180" height="17" top="20"/>
+        <Div id="Div00" taborder="0" text="Div01" left="20" top="sta_totCount:10" right="20" bottom="109">
+          <Layouts>
+            <Layout>
+              <Grid id="grd_mainList" taborder="0" left="0" top="0" right="0" bottom="1" autofittype="col" fillareatype="none" binddataset="ds_list" oncellclick="grd_mainList_oncellclick" oncelldblclick="Div01_grd_mainList_oncelldblclick" nodatatext="변경이력이 없습니다." selecttype="area">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="80"/>
+                      <Column size="110"/>
+                      <Column size="83"/>
+                      <Column size="120"/>
+                      <Column size="113"/>
+                      <Column size="54"/>
+                      <Column size="88"/>
+                      <Column size="88"/>
+                      <Column size="76"/>
+                      <Column size="76"/>
+                      <Column size="80"/>
+                      <Column size="80"/>
+                      <Column size="122"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="38" band="head"/>
+                      <Row size="32"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell text="사업장ID"/>
+                      <Cell col="1" text="사업장명"/>
+                      <Cell col="2" text="상품ID"/>
+                      <Cell col="3" text="상품명"/>
+                      <Cell col="4" text="대표규격"/>
+                      <Cell col="5" text="변경내용"/>
+                      <Cell col="6" text="Stock-no&#13;&#10;변경 전"/>
+                      <Cell col="7" text="Stock-no&#13;&#10;변경 후"/>
+                      <Cell col="8" text="사용-미사용&#13;&#10;변경 전"/>
+                      <Cell col="9" text="사용-미사용&#13;&#10;변경 후"/>
+                      <Cell col="10" text="요청자ID"/>
+                      <Cell col="11" text="요청자 명"/>
+                      <Cell col="12" text="변경일시"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="bind:BZPLC_ID"/>
+                      <Cell col="1" text="bind:BZPLC_NM" textAlign="left"/>
+                      <Cell col="2" text="bind:PRD_ID_VIEW" displaytype="text"/>
+                      <Cell col="3" text="bind:PRD_NM" textAlign="left"/>
+                      <Cell col="4" text="bind:PRVL"/>
+                      <Cell col="5" text="bind:HST_SPR_CD" displaytype="combotext" combodataset="ds_hstSprCd" combodatacol="COM_DTL_CD_NM" combocodecol="COM_DTL_CD"/>
+                      <Cell col="6" text="bind:B_STOCK_NO"/>
+                      <Cell col="7" text="bind:STOCK_NO"/>
+                      <Cell col="8" text="bind:B_USE_YN" displaytype="combotext" combodataset="ds_useYnP" combodatacol="COM_DTL_CD_NM" combocodecol="COM_DTL_CD"/>
+                      <Cell col="9" text="bind:USE_YN" displaytype="combotext" combodataset="ds_useYnP" combodatacol="COM_DTL_CD_NM" combocodecol="COM_DTL_CD"/>
+                      <Cell col="10" text="bind:UPDPSN_ID"/>
+                      <Cell col="11" text="bind:UPDPSN_NM"/>
+                      <Cell col="12" text="bind:UPD_DTM" edittype="none" calendardisplaynulltype="none" maskedittype="string" maskeditformat="yyyy-MM-dd hh:mm:ss" displaytype="date" calendardateformat="yyyy-MM-dd HH:mm:ss" calendareditformat="yyyy-MM-dd HH:mm:ss"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btn_close" taborder="2" text="확인" top="Div00:29" onclick="btn_close_onclick" left="606" height="30" width="70"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : SSP_BO
+  CREATION DATES : 
+*******************************************************/
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//부모창 데이터 처리
+	this.fn_checkData();
+	
+	//공통코드 조회
+	this.fn_commonCodeSearch();
+	
+	this.resetScroll();
+	
+	this.copyPaste.addGrid(this.Div00.form.grd_mainList);
+	
+	// 단축키 등록
+	this.fn_regShortCutMethod();
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+	//공통코드 조회
+	this.fn_commonCodeSearch = function(){
+		this.ds_comCodeSearch.setColumn(0, "codeList", "HST_SPR_CD,USE_YN");
+		this.ds_comCodeSearch.setColumn(0, "langCd", "KO");
+		var sSvcId = "commonCodeSearch";    
+		var sUrl = "/co/select-common-code-list.do";  
+		var inDs = "ds_search=ds_comCodeSearch";
+		var outDs = "ds_hstSprCd=ds_output1 ds_useYnP=ds_output2";
+		var arg = "";
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	}
+	
+	// 조회 
+	this.fn_search = function()	{
+		var sSvcId = "selectStockHist";    
+		var sUrl = "/cust/stock/mng/select-cust-stock-hst.do";  
+		var inDs = "ds_search=ds_search";
+		var outDs = "ds_list=ds_output1";
+		var arg = "";
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_received");
+	}
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+	this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+		if(svcID == "commonCodeSearch"){    
+			this.ds_useYnP.insertRow(0);
+			this.ds_useYnP.setColumn(0,"COM_DTL_CD","-");
+			this.ds_useYnP.setColumn(0,"COM_DTL_CD_NM","-");
+		}
+	}
+		
+	//조회 트랜잭션 콜백함수
+	this.fn_received = function(svcID, errorCode, errorMsg)	{
+		if(this.ds_list.getRowCount() > 0) {		
+			this.totalCount = this.ds_list.getColumn(0,"TOT_CUNT");
+			//this.Div00.form.div_paging.form.cfn_createPage(this.Div00.form.div_paging, this.totalCount, 10, "fn_pageCallback");
+			var sTotText = "(<b v='true'>총 "+ this.gfn_appendComma(this.totalCount) +"건 </b>)";
+			this.sta_totCount.set_text(sTotText);
+		}
+		if( this.ds_list.rowcount == 0 ) {
+			this.Div00.form.grd_mainList.set_nodatatext("변경이력이 없습니다.");
+		}
+	}
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+	//화면 설정 함수
+	this.cfn_formInit = function(){
+		//grid 초기 설정
+		this.Div00.form.grd_mainList.uSortFlag = "false";
+		this.Div00.form.grd_mainList.uServerSortFlag = "false";
+		this.Div00.form.grd_mainList.uSortCallback = "fn_sortCallback";
+		this.Div00.form.grd_mainList.uCellSizeType = "true";
+	};
+	
+	// 창닫기
+	this.fn_closeForm = function() {
+		this.close();
+	};
+
+	// 단축키 등록
+	this.fn_regShortCutMethod = function() {
+		this.fn_regMethodESC("fn_closeForm");
+	};
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+	this.fn_checkData = function(){
+		// 파라미터 값 ds setcolumn
+		this.ds_search.setColumn(0, "CO_CD", this.parent.coCd);
+		this.ds_search.setColumn(0, "BZPLC_ID", this.parent.bzplcId);
+		this.ds_search.setColumn(0, "PRD_ID", this.parent.prdId);
+		
+		// 조회
+		this.fn_search();
+	}
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/	
+	this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+	{
+		this.close();
+	};
+
+	this.samplePage01_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+	{
+		this.fn_processKey(obj, e);
+	};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_NM" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="PRD_ID_VIEW" type="STRING" size="256"/>
+          <Column id="PRD_NM" type="STRING" size="256"/>
+          <Column id="PRVL" type="STRING" size="256"/>
+          <Column id="HST_SPR_CD" type="STRING" size="256"/>
+          <Column id="B_STOCK_NO" type="STRING" size="256"/>
+          <Column id="STOCK_NO" type="STRING" size="256"/>
+          <Column id="B_USE_YN" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="UPDPSN_NM" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="PRD_ID"/>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+            <Col id="BZPLC_ID"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_hstSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_comCodeSearch">
+        <ColumnInfo>
+          <Column id="codeList" type="STRING" size="38"/>
+          <Column id="langCd" type="STRING" size="32"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_useYnP">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

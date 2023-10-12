@@ -1,0 +1,979 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_YA_06" width="1336" height="846" titletext="공통코드 관리" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="846" mobileorientation="landscape" width="1336">
+        <Div id="searchDiv" taborder="0" text="Div00" left="0" top="0" right="20" cssclass="div_WF_SearchArea" height="108">
+          <Layouts>
+            <Layout>
+              <Static id="Static03" taborder="0" left="20" top="20" height="32" cssclass="sta_cm_box02L_tdt" right="0" text=""/>
+              <Static id="Static02" taborder="1" text="분류코드명" left="20" top="20" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Edit id="comClsfCd" taborder="2" left="160" top="24" height="24" width="144"/>
+              <Edit id="comClsfCdNm" taborder="3" top="24" height="24" left="comClsfCd:5" width="281"/>
+              <Static id="Static04" taborder="4" text="사용여부" left="603" top="20" width="132" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Combo id="useYn" taborder="5" text="Combo00" left="745" top="24" innerdataset="UseYnDs" codecolumn="USE_YN" datacolumn="USE_YN_NAME" onitemchanged="searchDiv_useYn_onitemchanged" height="24" width="120"/>
+              <Button id="btn_clear" taborder="6" text="초기화" top="62" width="60" height="26" right="64" onclick="btn_clear_onclick"/>
+              <Button id="btnSearch" taborder="7" text="조회" top="62" width="60" cssclass="btn_WF_require" right="0" onclick="btnSearch_onclick" height="26"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Grid id="grd_comCdClsf" taborder="2" left="18" top="177" height="267" binddataset="ds_comCdList" autofittype="col" right="570" onkeyup="grd_comCdClsf_onchanged" oncellclick="grd_comCdClsf_onchanged" cellmovingtype="col" selecttype="cell">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="48" band="left"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="분류코드"/>
+                <Cell col="2" text="분류코드명"/>
+                <Cell col="3" text="기본분류코드"/>
+              </Band>
+              <Band id="body">
+                <Cell edittype="expr:EXST_CLCD == null ? 'checkbox' : 'none' " displaytype="checkboxcontrol" text="bind:COL_CHK"/>
+                <Cell col="1" text="bind:COM_CLSF_CD"/>
+                <Cell col="2" text="bind:COM_CLSF_CD_NM" edittype="text"/>
+                <Cell col="3" text="bind:EXST_CLCD"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="div_detail" taborder="1" text="Div00" top="139" leftbase="" bottombase="" rightbase="" widthbase="" heightbase="" height="305" left="grd_comCdClsf:10" right="20">
+          <Layouts>
+            <Layout>
+              <Static id="Static08" taborder="9" text="사용자 정의명 제목 1" left="0" top="104" width="140" height="34" padding="0px 18px 0px 0px" cssclass="sta_cm_box01L" textAlign="right"/>
+              <Static id="Static10" taborder="10" text="분류코드" left="0" top="38" width="140" height="34" padding="0px 18px 0px 0px" cssclass="sta_cm_box01L_tdt_necessary" onclick="div_detail_Static10_onclick" textAlign="right"/>
+              <Static id="Static00" taborder="11" text="분류코드 명" left="0" top="71" width="140" height="34" padding="0px 18px 0px 0px" cssclass="sta_cm_box01L_necessary" textAlign="right"/>
+              <Static id="Static02_00" taborder="12" text="" left="Static10:-1" top="38" height="34" padding="" cssclass="sta_cm_box02L_tdt" onclick="div_detail_Static02_00_onclick" right="0"/>
+              <Edit id="COM_CLSF_CD" taborder="0" left="146" top="42" width="144" height="24" enable="false" readonly="false"/>
+              <Static id="Static02_00_00" taborder="13" text="" left="Static00:-1" top="71" height="34" padding="" cssclass="sta_cm_box02L" onclick="div_detail_Static02_00_onclick" right="0"/>
+              <Static id="Static02_00_01" taborder="14" text="" left="Static08:-1" top="104" height="34" padding="" cssclass="sta_cm_box02L" onclick="div_detail_Static02_00_onclick" right="0"/>
+              <Edit id="COM_CLSF_CD_NM" taborder="2" left="146" top="75" height="24" canchange="div_detail_edt_name_canchange" right="4"/>
+              <Edit id="COM_USR_DEFN_NM_TTL_1" taborder="3" left="146" top="109" height="24" canchange="div_detail_edt_name_canchange" right="4"/>
+              <Static id="Static10_00" taborder="15" text="기본분류코드" left="294" top="38" width="98" height="34" padding="0px 5px 0px 0px" cssclass="sta_cm_box01L_tdt" onclick="div_detail_Static10_onclick" textAlign="right"/>
+              <Static id="Static08_00" taborder="16" text="사용자 정의명 제목 2" left="0" top="137" width="140" height="34" padding="0px 18px 0px 0px" cssclass="sta_cm_box01L" textAlign="right"/>
+              <Static id="Static02_00_01_00" taborder="17" text="" left="Static08_00:-1" top="137" height="34" padding="" cssclass="sta_cm_box02L" onclick="div_detail_Static02_00_onclick" right="0"/>
+              <Edit id="COM_USR_DEFN_NM_TTL_2" taborder="4" left="146" top="141" height="24" canchange="div_detail_edt_name_canchange" right="4"/>
+              <Static id="Static08_00_00" taborder="18" text="사용자 정의명 제목 3" left="0" top="170" width="140" height="34" padding="0px 18px 0px 0px" cssclass="sta_cm_box01L" textAlign="right"/>
+              <Static id="Static02_00_01_00_00" taborder="19" text="" left="Static08_00_00:-1" top="170" height="34" padding="" cssclass="sta_cm_box02L" onclick="div_detail_Static02_00_onclick" right="0"/>
+              <Edit id="COM_USR_DEFN_NM_TTL_3" taborder="5" left="146" top="174" height="24" canchange="div_detail_edt_name_canchange" right="4"/>
+              <Static id="Static08_00_00_00" taborder="20" text="사용자 정의명 제목 4" left="0" top="203" width="140" height="34" padding="0px 18px 0px 0px" cssclass="sta_cm_box01L" textAlign="right"/>
+              <Static id="Static02_00_01_00_00_00" taborder="21" text="" left="Static08_00_00_00:-1" top="203" height="34" padding="" cssclass="sta_cm_box02L" onclick="div_detail_Static02_00_onclick" right="0"/>
+              <Edit id="COM_USR_DEFN_NM_TTL_4" taborder="6" left="146" top="207" height="24" canchange="div_detail_edt_name_canchange" right="4"/>
+              <Static id="Static08_00_00_01" taborder="22" text="사용자 정의명 제목 5" left="0" top="236" width="140" height="34" padding="0px 18px 0px 0px" cssclass="sta_cm_box01L" textAlign="right"/>
+              <Static id="Static02_00_01_00_00_01" taborder="23" text="" left="Static08_00_00_01:-1" top="236" height="34" padding="" cssclass="sta_cm_box02L" onclick="div_detail_Static02_00_onclick" right="0"/>
+              <Edit id="COM_USR_DEFN_NM_TTL_5" taborder="7" left="146" top="240" height="24" canchange="div_detail_edt_name_canchange" right="4"/>
+              <Static id="Static08_00_00_01_00" taborder="24" text="사용 여부" left="0" top="269" width="140" height="34" padding="0px 18px 0px 0px" cssclass="sta_cm_box01L_necessary" textAlign="right"/>
+              <Static id="Static02_00_01_00_00_01_00" taborder="25" text="" left="Static08_00_00_01_00:-1" top="269" height="34" padding="" cssclass="sta_cm_box02L" onclick="div_detail_Static02_00_onclick" right="0"/>
+              <Combo id="USE_YN" taborder="8" text="" left="146" top="274" width="154" height="24" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" onitemchanged="div_detail_USE_YN_onitemchanged">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">Y</Col>
+                      <Col id="datacolumn">사용</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">N</Col>
+                      <Col id="datacolumn">미사용</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Combo>
+              <Edit id="EXST_CLCD" taborder="1" left="396" top="42" height="24" right="4"/>
+              <Button id="btnAdd" taborder="26" text="추가" left="260" top="1" width="81" height="28" onclick="btnAdd_onclick"/>
+              <Button id="btnDel" taborder="27" text="삭제" left="163" top="1" width="81" height="28" onclick="btnDel_onclick" cssclass="btn_WF_delete01" visible="false"/>
+              <Button id="btnSave" taborder="28" text="저장" left="349" top="0" width="81" height="28" onclick="btnSave_onclick" cssclass="btn_WF_select"/>
+              <Button id="btnExcel" taborder="29" text="엑셀다운로드" left="433" top="0" height="28" onclick="btnExcel_onclick" cssclass="btn_WF_excel" right="0"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="Div00" taborder="3" text="Div00" left="18" top="456" right="20" bottom="14">
+          <Layouts>
+            <Layout>
+              <Grid id="grd_comCdClsfDtl" taborder="0" left="0" top="68" binddataset="ds_comCdDtlList" autofittype="col" autoenter="select" right="0" bottom="2" cellmovingtype="col" cellsizingtype="both" onkeyup="Div00_grd_comCdClsfDtl_onkeyup" selecttype="cell">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="31"/>
+                      <Column size="112"/>
+                      <Column size="155"/>
+                      <Column size="80"/>
+                      <Column size="80"/>
+                      <Column size="120"/>
+                      <Column size="120"/>
+                      <Column size="120"/>
+                      <Column size="120"/>
+                      <Column size="120"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="31" band="head"/>
+                      <Row size="31"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                      <Cell col="1" text="상세코드" cssclass="grd_WF_bg_image"/>
+                      <Cell col="2" text="상세코드 명" cssclass="grd_WF_bg_image"/>
+                      <Cell col="3" text="정렬순서"/>
+                      <Cell col="4" text="사용여부" cssclass="grd_WF_bg_image"/>
+                      <Cell col="5" text="사용자정의명1"/>
+                      <Cell col="6" text="사용자정의명2"/>
+                      <Cell col="7" text="사용자정의명3"/>
+                      <Cell col="8" text="사용자정의명4" tooltiptext="bind:COM_USR_DEFN_NM_4"/>
+                      <Cell col="9" text="사용자정의명5"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="bind:COL_CHK" displaytype="checkboxcontrol" edittype="checkbox"/>
+                      <Cell col="1" text="bind:COM_DTL_CD" edittype="expr:dataset.getRowType(currow) == 2 ? &quot;text&quot; : &quot;none&quot;"/>
+                      <Cell col="2" text="bind:COM_DTL_CD_NM" edittype="text"/>
+                      <Cell col="3" text="bind:SRT_SO" edittype="text"/>
+                      <Cell col="4" text="bind:USE_YN" displaytype="combotext" edittype="combo" combocodecol="USE_YN" combodataset="UseYnDtlDs" combodatacol="USE_YN_NAME"/>
+                      <Cell col="5" text="bind:COM_USR_DEFN_NM_1" edittype="text" cursor="pointer"/>
+                      <Cell col="6" text="bind:COM_USR_DEFN_NM_2" edittype="text"/>
+                      <Cell col="7" text="bind:COM_USR_DEFN_NM_3" edittype="text"/>
+                      <Cell col="8" text="bind:COM_USR_DEFN_NM_4" edittype="text"/>
+                      <Cell col="9" text="bind:COM_USR_DEFN_NM_5" edittype="text"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Button id="btnDtlAdd" taborder="1" text="행추가" onclick="btnDtlAdd_onclick" bottom="318" height="28" width="80" right="6"/>
+              <Button id="btnDtlDel" taborder="2" text="행삭제" onclick="btnDtlDel_onclick" bottom="318" height="28" width="80" right="96" visible="false"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="div_paging" taborder="4" left="18" height="38" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="grd_comCdClsf:10" right="570"/>
+        <Grid id="grid_excel" taborder="5" left="10" top="1105" width="1730" height="45" binddataset="ds_excel" visible="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="73"/>
+                <Column size="121"/>
+                <Column size="173"/>
+                <Column size="128"/>
+                <Column size="176"/>
+                <Column size="125"/>
+                <Column size="154"/>
+                <Column size="166"/>
+                <Column size="180"/>
+                <Column size="181"/>
+                <Column size="190"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="순번"/>
+                <Cell col="1" text="분류코드"/>
+                <Cell col="2" text="분류코드명"/>
+                <Cell col="3" text="상세코드"/>
+                <Cell col="4" text="상세코드 명"/>
+                <Cell col="5" text="정렬순서"/>
+                <Cell col="6" text="사용자정의명1"/>
+                <Cell col="7" text="사용자정의명2"/>
+                <Cell col="8" text="사용자정의명3"/>
+                <Cell col="9" text="사용자정의명4"/>
+                <Cell col="10" text="사용자정의명5"/>
+              </Band>
+              <Band id="body">
+                <Cell text="expr:currow+1"/>
+                <Cell col="1" text="bind:COM_CLSF_CD"/>
+                <Cell col="2" text="bind:COM_CLSF_CD_NM"/>
+                <Cell col="3" text="bind:COM_DTL_CD"/>
+                <Cell col="4" text="bind:COM_DTL_CD_NM"/>
+                <Cell col="5" text="bind:SRT_SO"/>
+                <Cell col="6" text="bind:COM_USR_DEFN_NM_1"/>
+                <Cell col="7" text="bind:COM_USR_DEFN_NM_2"/>
+                <Cell col="8" text="bind:COM_USR_DEFN_NM_3"/>
+                <Cell col="9" text="bind:COM_USR_DEFN_NM_4"/>
+                <Cell col="10" text="bind:COM_USR_DEFN_NM_5"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="UseYnDs">
+        <ColumnInfo>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="USE_YN_NAME" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="USE_YN"/>
+            <Col id="USE_YN_NAME">전체</Col>
+          </Row>
+          <Row>
+            <Col id="USE_YN">Y</Col>
+            <Col id="USE_YN_NAME">사용</Col>
+          </Row>
+          <Row>
+            <Col id="USE_YN">N</Col>
+            <Col id="USE_YN_NAME">미사용</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_comCdList" oncolumnchanged="ds_comCdList_oncolumnchanged" objDs="">
+        <ColumnInfo>
+          <Column id="LANG_CD" type="STRING" size="2" description="언어코드"/>
+          <Column id="COM_CLSF_CD" type="STRING" size="30" description="공통분류코드"/>
+          <Column id="COM_CLSF_CD_NM" type="STRING" size="100" description="공통분류코드명"/>
+          <Column id="COM_USR_DEFN_NM_TTL_1" type="STRING" size="100" description="공통사용자정의명제목1"/>
+          <Column id="COM_USR_DEFN_NM_TTL_2" type="STRING" size="100" description="공통사용자정의명제목2"/>
+          <Column id="COM_USR_DEFN_NM_TTL_3" type="STRING" size="100" description="공통사용자정의명제목3"/>
+          <Column id="COM_USR_DEFN_NM_TTL_4" type="STRING" size="100" description="공통사용자정의명제목4"/>
+          <Column id="COM_USR_DEFN_NM_TTL_5" type="STRING" size="100" description="공통사용자정의명제목5"/>
+          <Column id="USE_YN" type="STRING" size="1" description="사용여부"/>
+          <Column id="EXST_CLCD" type="STRING" size="30"/>
+          <Column id="COL_CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="search_ds">
+        <ColumnInfo>
+          <Column id="comClsfCd" type="STRING" size="256"/>
+          <Column id="comClsfCdNm" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_comCdDtlList" oncolumnchanged="ds_comCdDtlList_oncolumnchanged">
+        <ColumnInfo>
+          <Column id="LANG_CD" type="STRING" size="2"/>
+          <Column id="COM_CLSF_CD" type="STRING" size="30"/>
+          <Column id="COM_DTL_CD" type="STRING" size="30"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="300"/>
+          <Column id="COM_USR_DEFN_NM_1" type="STRING" size="100"/>
+          <Column id="COM_USR_DEFN_NM_2" type="STRING" size="100"/>
+          <Column id="COM_USR_DEFN_NM_3" type="STRING" size="100"/>
+          <Column id="COM_USR_DEFN_NM_4" type="STRING" size="100"/>
+          <Column id="COM_USR_DEFN_NM_5" type="STRING" size="100"/>
+          <Column id="SRT_SO" type="STRING" size="5"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="COL_CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="UseYnDtlDs">
+        <ColumnInfo>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="USE_YN_NAME" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="USE_YN">Y</Col>
+            <Col id="USE_YN_NAME">사용</Col>
+          </Row>
+          <Row>
+            <Col id="USE_YN">N</Col>
+            <Col id="USE_YN_NAME">미사용</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="search_dtl_ds">
+        <ColumnInfo>
+          <Column id="COM_CLSF_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_comCdDtlListCopy">
+        <ColumnInfo>
+          <Column id="LANG_CD" type="STRING" size="2"/>
+          <Column id="COM_CLSF_CD" type="STRING" size="30"/>
+          <Column id="COM_DTL_CD" type="STRING" size="30"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="300"/>
+          <Column id="COM_USR_DEFN_NM_1" type="STRING" size="100"/>
+          <Column id="COM_USR_DEFN_NM_2" type="STRING" size="100"/>
+          <Column id="COM_USR_DEFN_NM_3" type="STRING" size="100"/>
+          <Column id="COM_USR_DEFN_NM_4" type="STRING" size="100"/>
+          <Column id="COM_USR_DEFN_NM_5" type="STRING" size="100"/>
+          <Column id="SRT_SO" type="STRING" size="5"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_page">
+        <ColumnInfo>
+          <Column id="COUNT" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COUNT">10</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">20</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">30</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">40</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">50</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_comCdListCopy" oncolumnchanged="ds_comCdList_oncolumnchanged" objDs="">
+        <ColumnInfo>
+          <Column id="LANG_CD" type="STRING" size="2" description="언어코드"/>
+          <Column id="COM_CLSF_CD" type="STRING" size="30" description="공통분류코드"/>
+          <Column id="COM_CLSF_CD_NM" type="STRING" size="100" description="공통분류코드명"/>
+          <Column id="COM_USR_DEFN_NM_TTL_1" type="STRING" size="100" description="공통사용자정의명제목1"/>
+          <Column id="COM_USR_DEFN_NM_TTL_2" type="STRING" size="100" description="공통사용자정의명제목2"/>
+          <Column id="COM_USR_DEFN_NM_TTL_3" type="STRING" size="100" description="공통사용자정의명제목3"/>
+          <Column id="COM_USR_DEFN_NM_TTL_4" type="STRING" size="100" description="공통사용자정의명제목4"/>
+          <Column id="COM_USR_DEFN_NM_TTL_5" type="STRING" size="100" description="공통사용자정의명제목5"/>
+          <Column id="USE_YN" type="STRING" size="1" description="사용여부"/>
+          <Column id="EXST_CLCD" type="STRING" size="30"/>
+          <Column id="COL_CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_excel">
+        <ColumnInfo>
+          <Column id="COM_CLSF_CD" type="STRING" size="256"/>
+          <Column id="COM_CLSF_CD_NM" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+          <Column id="SRT_SO" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_1" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_2" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_3" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_4" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_5" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : 공통코드 관리
+  CREATION DATES : 2022.01.25
+*******************************************************/
+
+/* 스크립트 인클루드 */
+include "CO::coUtils.xjs";
+include "OD::odUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+this.preSelectRowPosition = 0;
+this.addRow = 0;
+
+this.fv_oApp = nexacro.getApplication();	//application object 
+
+this.valiFormIds = [
+	  {"name" : "분류코드", "id" : "COM_CLSF_CD"}
+	, {"name" : "분류코드 명", "id" : "COM_CLSF_CD_NM"}
+	, {"name" : "사용여부", "id" : "USE_YN"}
+];
+
+this.valiGridIds = [
+	  {"name" : "상세코드", "id" : "COM_DTL_CD"}
+	, {"name" : "상세코드 명", "id" : "COM_DTL_CD_NM"}
+	, {"name" : "사용여부", "id" : "USE_YN"}
+];
+
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+                     
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//콤보박스 기본값 초기화
+	this.searchDiv.form.useYn.set_index(0);
+	
+	this.fn_doSearch(0);
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "btnSearch_onclick",
+		SHIFT_ENTER : "",
+		SHIFT_S : "btnSave_onclick",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회  
+this.fn_doSearch = function(page)	{
+	 var sSvcId = "comCdClsfSearch";  
+     var sUrl = "/co/com/com-cd-clsf-search-list.do";
+	 var inDs = "ds_search=search_ds"
+     var outDs = "ds_comCdList=ds_output1";
+     var arg;
+     var callback = "fn_received";
+	 
+	 this.div_detail.form.COM_CLSF_CD.set_enable(true);	 
+	 
+	 // 조회버튼 클릭시 페이징 초기화 시킨다.
+	 if( page == 0 ) {
+		this.div_paging.uPage=1;
+		this.div_paging.uPageNum=0;
+		this.search_ds.setColumn(0,"START_NUM", 0);
+		this.search_ds.setColumn(0,"ROW_COUNT",this.fv_oApp.gv_pageViewCnt);
+	 }
+	 
+	 this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+};
+
+// 코드 상세조회
+this.fn_dtlSearch = function() {
+
+	var sSvcId = "comCdClsfDtlSearch";  
+    var sUrl = "/co/com/com-cd-clsf-dtl-search-list.do";
+	var inDs = "ds_search=search_dtl_ds"
+    var outDs = "ds_comCdDtlList=ds_output1";
+    var arg;
+    var callback = "fn_received";
+	 
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+// 저장
+this.fn_save = function() {
+	var sSvcId = "comCdClsfSave";  
+    var sUrl = "/co/com/com-cd-clsf-save.do";
+	var inDs = "ds_save=ds_comCdList:U ds_save2=ds_comCdDtlList:U"
+    var outDs = "";
+    var arg;
+    var callback = "fn_received";
+//	alert("6")
+	if( this.confirm("저장 하시겠습니까?") ){
+		// 이전 선택한 row 위치
+		//this.preSelectRowPosition = this.ds_comCdList.rowposition;
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+	}	
+}
+
+this.fn_search_excel = function() {
+	var sSvcId = "comCodeExcelSearch";
+     var sUrl = "/co/com/com-code-excel-list.do";
+	 var inDs = "ds_search=search_ds"
+     var outDs = "ds_excel=ds_output";
+     var arg;
+     var callback = "fn_received";
+
+	 this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_received = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "comCdClsfSearch"){    
+	
+		this.preSelectRowPosition = 0;		
+		
+		// 조회 카운트가 없으면 데이터셋이 날라감으로 강제 설정
+		if( this.ds_comCdList.rowcount == 0 ) {
+			this.ds_comCdList.copyData(this.ds_comCdListCopy);
+		}
+		
+		// 선택했던 row
+		this.ds_comCdList.set_rowposition(this.preSelectRowPosition);
+		this.fn_setDataSet(this.search_dtl_ds, this.ds_comCdList);
+		
+		//paging 처리 
+		this.div_paging.form.cfn_createPage(this.div_paging, this.totalCount, this.fv_oApp.gv_pageViewCnt, "fn_pageCallback");
+		
+		//상세조회
+		this.fn_dtlSearch();
+		
+	} else if(svcID == "comCdClsfDtlSearch"){
+		//this.ds_comCdDtlList.addColumn("COL_CHK","String");	//체크박스 데이터셋 생성
+				
+		/*
+		상세 데이터가 존재하면 분류코드 수정을 막는다.
+		EXST_CLCD 값이 존재하는 분류코드 수정을 막는다.
+		*/
+		if( this.ds_comCdDtlList.rowcount > 0 ) {
+			this.div_detail.form.COM_CLSF_CD.set_enable(false);			
+		} else {
+			this.ds_comCdDtlList.copyData(this.ds_comCdDtlListCopy);
+			
+			if( !this.gfn_isNull(this.ds_comCdList.getColumn(this.ds_comCdList.rowposition, "EXST_CLCD")) ) {
+				this.div_detail.form.COM_CLSF_CD.set_enable(false);
+			} else {
+				this.div_detail.form.COM_CLSF_CD.set_enable(true);
+			}			
+		}
+
+	} else if(svcID == "comCdClsfSave") {
+		if( errorCode == -1 || errorCode == -100) { //사용자 지정 에러코드 -100
+			alert(errorMsg);
+			this.fn_datasetReset(this.ds_comCdList);
+			this.fn_datasetReset(this.ds_comCdDtlList);
+		} else {
+			alert(this.gfn_getMessage("COMS000014", ["저장"])); //저장 되었습니다.
+			this.fn_doSearch(0);
+		}				
+
+	} else if(svcID == "comCodeExcelSearch") {
+		this.ofn_exportExcel({ form:this, grid:this.grid_excel, fileName:"공통코드" });
+    }
+
+}
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;	
+	
+	if(sFlag){
+		this.search_ds.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.search_ds.setColumn(0,"ROW_COUNT", this.fv_oApp.gv_pageViewCnt);	
+		this.fn_doSearch();
+	}	
+	
+	//var sTotText = "(<b v='true'>총 "+ oPaging.uTotCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+	//this.sta_totCount.set_text(sTotText);
+}
+
+//정렬 콜백
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_comCdClsf"){
+		oSortInfo = this.grd_comCdClsf.uaSortInfo;
+		this.search_ds.setColumn(0,"SORT_COLUMN", oSortInfo.bindCol);
+		this.search_ds.setColumn(0,"SORT_TYPE", oSortInfo.status);
+		
+		this.fn_doSearch();
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+	
+	//grid 초기 설정
+	this.grd_comCdClsf.uSortFlag = "false";
+	this.grd_comCdClsf.uServerSortFlag = "true";
+	this.grd_comCdClsf.uSortCallback = "fn_sortCallback";
+	
+	this.grd_comCdClsf.uCellSizeType = "true";
+	
+	
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 10;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;
+}
+
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+// 데이터셋 리셋
+this.fn_datasetReset = function(dataset) {
+	dataset.reset();
+}
+
+
+// 그리드 클릭시 체크박스 체크되도록
+this.autoGridCheck = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo) {
+
+	var dataSet = obj.getBindDataset();
+	var chkValue = obj.getCellText(e.row, 0);
+		
+	if( e.col != 0 ) {
+		chkValue = (chkValue == "1" ? "0" : "1");
+	}
+	
+	dataSet.setColumn(e.row, "COL_CHK", chkValue);
+}
+
+//빈 데이터셋 에 파라메터 세팅.
+this.fn_setDataSet = function(pData, sData) {
+	pData.setColumn(0, "COM_CLSF_CD", sData.getColumn(sData.rowposition, "COM_CLSF_CD"));
+}
+
+this.clear = function() {
+	this.search_ds.clearData();
+	this.search_ds.addRow();
+	this.searchDiv.form.useYn.set_index(0);
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+// 조회
+this.btnSearch_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_doSearch(0);	
+};
+
+// 상세코드 그리드 클릭 이벤트
+this.grd_comCdClsfDtl_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	//강제 드롭다운 이벤트
+	if(e.cell == 4){
+		//this.div_detail.form.USE_YN.dropdown();
+		obj.dropdownCombo();
+	}
+	
+	//임시 테스트 링크 주소일 경우 처리??
+	/*
+	if( this.ds_comCdDtlList.getRowType(this.ds_comCdDtlList.rowposition) == 1 || this.ds_comCdDtlList.getRowType(this.ds_comCdDtlList.rowposition) == 4 ) {
+		if( this.ds_comCdDtlList.getColumn(this.ds_comCdDtlList.rowposition, "COL_CHK") == 1 ) {
+			this.grd_comCdClsfDtl.setCellProperty( "body", 5, "edittype", "text" );	
+		} else {			
+			this.grd_comCdClsfDtl.setCellProperty( "body", 5, "edittype", "none" );	
+			if(e.cell == 5){
+				system.execBrowser(this.ds_comCdDtlList.getColumn(this.ds_comCdDtlList.rowposition, "COM_USR_DEFN_NM_1"));
+			}
+		}
+	}
+	*/
+
+	
+	
+};
+
+//메인코드 추가버튼
+this.btnAdd_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	//추가시 체크.
+	var chkDsChange = this.fn_dataCheck(this.ds_comCdList);		
+	if( chkDsChange != false ) {
+		return false;
+	} 
+	
+	//행 추가
+	this.addRow = this.ds_comCdList.addRow();
+	
+	//this.ds_comCdList.setColumn(row, "LANG_CD", "KO");	
+	
+	//이전 row 위치 저장
+	this.preSelectRowPosition = this.addRow;
+	
+	// 상세코드 초기화
+	this.ds_comCdDtlList.clearData();
+	
+	//this.ds_comCdList.setColumn(0, "USE_YN", "Y");
+	this.div_detail.form.USE_YN.set_index(0);
+	
+	//입력 활성화
+	this.div_detail.form.COM_CLSF_CD.set_enable(true);
+	this.div_detail.form.COM_CLSF_CD.setFocus();
+	
+};
+
+//메인코드 삭제 버튼
+this.btnDel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var chkCnt = this.ds_comCdList.getCaseCount("COL_CHK==1");
+	
+	if( chkCnt == 0 ) {
+		alert(this.gfn_getMessage("COMS000008", ["선택", "행"])); //선택된 행이 없습니다.
+		return false;
+	}
+	
+	if( this.ds_comCdDtlList.rowcount > 0 ) {
+		alert(this.gfn_getMessage("COMS000016", ["상세코드"])); //상세코드가 존재하여 삭제할 수 없습니다.
+		//this.ds_comCdDtlList.clearData();
+		return false;
+	}
+	
+	var sReturn = this.confirm(this.gfn_getMessage("COMS000001", ["선택한 데이터", "삭제"])); //선택한 데이터를 삭제하시겠습니까?
+	
+	if( !sReturn ) return false;
+	
+	//기본분류코드 존재 시 삭제 불가능
+	var delArr = [];
+	for(var i=0; i<this.ds_comCdList.rowcount; i++){
+		var checkbox = this.ds_comCdList.getColumn(i, "COL_CHK");
+		if( checkbox == 1 ) {
+			if( this.ds_comCdList.getColumn(i, "EXST_CLCD") != null ) {
+				alert(this.gfn_getMessage("COMS000016", ["기본분류코드"])); //기본분류코드가 존재하면 삭제할 수 없습니다.
+				//this.ds_comCdList.reset();
+				return false;
+			} 
+			delArr.push(i);
+			//this.ds_comCdList.deleteRow(i);
+		}
+	}
+	
+	this.ds_comCdList.deleteMultiRows(delArr);
+	
+	//head 체크박스 해제
+	this.grd_comCdClsf.setCellProperty("head",0,"text","0");
+};
+
+//메인코드 저장버튼
+this.btnSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var chkDsChange = this.fn_dataChangeCheck(this.ds_comCdList); //this.fn_dataCheck(this.ds_comCdList);
+	var chkDsChangeDtl = this.fn_dataChangeCheck(this.ds_comCdDtlList); //this.fn_dataCheck(this.ds_comCdDtlList);	
+
+	//this.fn_validationTest(this.div_detail, this.valiFormIds, this.ds_comCdList);	
+	
+	if( !chkDsChange && !chkDsChangeDtl ) {
+		alert(this.gfn_getMessage("COMS000008", ["수정", "내용"])); //변경된 내용이 없습니다.
+//		alert("22222")
+		return false;
+	} else {
+//		alert("33333")
+		//메인코드 필수값 체크
+//		var validation = this.fn_validationForm(this.div_detail, this.valiFormIds, this.ds_comCdList);
+		
+		//그리드 필수값 체크
+//		if( validation ) validation = this.fn_validationGrid(this.Div00.form.grd_comCdClsfDtl, this.valiGridIds, this.ds_comCdDtlList);
+		
+		var validation =  this.fn_validationGrid(this.Div00.form.grd_comCdClsfDtl, this.valiGridIds, this.ds_comCdDtlList);
+		
+		var COM_CLSF_CD = this.div_detail.form.COM_CLSF_CD.value
+		var COM_CLSF_CD_NM = this.div_detail.form.COM_CLSF_CD_NM.value
+		var USE_YN = this.div_detail.form.USE_YN.value
+		
+		//obj.setCellPos(0, this.preSelectRowPosition);
+		if (COM_CLSF_CD == null || COM_CLSF_CD =="")
+		{
+			alert("분류코드를 입력해주세요");
+			return;
+		}
+		if (COM_CLSF_CD_NM == null || COM_CLSF_CD_NM =="")
+		{
+			alert("분류명을 입력해주세요");
+			return;
+		}
+		if (USE_YN == null || USE_YN == "")
+		{
+			alert("사용 여부를 입력해주세요");
+		}		
+		
+		if( validation ) this.fn_save();
+	}	
+		
+};
+
+//메인코드 엑셀 다운로드 버튼
+this.btnExcel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.search_ds.getRowType(0) == Dataset.ROWTYPE_UPDATE) {
+		alert(this.gfn_getMessage("COMS000007")); //조회 조건이 변경 되었습니다.\n다시 조회하시기 바랍니다.
+		return false;
+	}
+	this.fn_search_excel();
+};
+
+//상세코드 행추가 버튼
+this.btnDtlAdd_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	var code = this.ds_comCdList.getColumn(this.ds_comCdList.rowposition, "COM_CLSF_CD");
+	
+	if( this.gfn_isNull(code) || code == undefined ) {
+		alert(this.gfn_getMessage("COMS000011", ["분류코드"])); //조회 조건이 변경 되었습니다.\n다시 조회하시기 바랍니다.
+		this.div_detail.form.COM_CLSF_CD.setFocus();
+		return false;
+		//this.gfn_alert("MSG0000000001", "C", "확인하세요");	
+	}
+	
+	var idx = this.ds_comCdDtlList.addRow();
+	this.ds_comCdDtlList.setColumn(this.ds_comCdDtlList.rowposition, "LANG_CD", "KO");
+	this.ds_comCdDtlList.setColumn(this.ds_comCdDtlList.rowposition, "COM_CLSF_CD", this.ds_comCdList.getColumn(this.ds_comCdList.rowposition, "COM_CLSF_CD"));
+	this.ds_comCdDtlList.setColumn(this.ds_comCdDtlList.rowposition, "USE_YN", "Y");
+	
+	// 임시
+	//this.grd_comCdClsfDtl.setCellProperty("body", 5, "edittype", "text");
+};
+
+//상세코드 행 삭제 버튼
+this.btnDtlDel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var chkCnt = this.ds_comCdDtlList.getCaseCount("COL_CHK==1");
+	
+	if( chkCnt == 0 ) {
+		alert(this.gfn_getMessage("COMS000008", ["선택", "행"])); //선택된 행이 없습니다.
+		return false; 
+	}
+	
+	var sReturn = this.confirm(this.gfn_getMessage("COMS000001", ["선택한 데이터", "삭제"])); //선택한 데이터를 삭제하시겠습니까?
+	if( !sReturn ) return false;
+
+	var delArr = [];
+	for(var i=0; i < this.ds_comCdDtlList.rowcount; i++){
+		var checkbox = this.ds_comCdDtlList.getColumn(i, "COL_CHK");
+		if( checkbox == 1 ) {
+			delArr.push(i);
+			//this.ds_comCdList.deleteRow(i);
+		}
+	}	
+	this.ds_comCdDtlList.deleteMultiRows(delArr);	
+	
+	//head 체크박스 해제
+	this.Div00.form.grd_comCdClsfDtl.setCellProperty("head",0,"text","0");
+};
+
+// 데이터셋 변경 시
+this.ds_comCdList_oncolumnchanged = function(obj:nexacro.NormalDataset,e:nexacro.DSColChangeEventInfo)
+{
+	/* 이벤트 값.
+	col: 8
+	colidx: -1
+	columnid: "COM_CLSF_CD"
+	eventid: "onvaluechanged"
+	fromobject: nexacro.NormalDataset {name: 'ds_comCdList', id: 'ds_comCdList', parent: n…o.Form, colinfos: n…o.DSColumnInfoList, _constVars: n…o.VariableList, …}
+	fromreferenceobject: nexacro.NormalDataset {name: 'ds_comCdList', id: 'ds_comCdList', parent: n…o.Form, colinfos: n…o.DSColumnInfoList, _constVars: n…o.VariableList, …}
+	id: "cancolumnchange"
+	newvalue: "THME_DOMN_CD345"
+	oldvalue: "THME_DOMN_CD"
+	row: 0
+	*/
+// 	
+// 	if( e.columnid == "COM_CLSF_CD" ) {
+// 		if( this.ds_comCdDtlList.rowcount > 0 ) {
+// 			for( var i = 0; i < this.ds_comCdDtlList.rowcount; i++ ) {
+// 				this.ds_comCdDtlList.setColumn(i, "COM_CLSF_CD", e.newvalue);
+// 			}
+// 		}
+// 	}
+// 	
+};
+
+// 그리드 변경시 이벤트
+this.grd_comCdClsf_onchanged = function(obj:nexacro.Grid,e:nexacro.GridSelectEventInfo)
+{
+	//if( e.col == 0 ) return false;				
+				
+	var chkDsChange = this.fn_dataCheck(this.ds_comCdList);	
+	var chkValue = obj.getCellText(e.row, 0);
+	var varProperty = obj.getCellProperty( "head", e.col, "displaytype" );
+	
+	if (chkDsChange != false)
+	{
+		//수정중인 ROW선택 후 저장
+		obj.setCellPos(0, this.preSelectRowPosition);
+		alert("저장하지 않은 내역이 있습니다.")
+//		var rtn = this.confirm(this.gfn_getMessage("ERRS000162"));// "수정된 내용이 있습니다. 저장 하시겠습니까?"
+//		alert("11111")
+//		this.btnSave_onclick();
+	return;
+	}
+	//이전 로우
+	this.preSelectRowPosition = e.row;
+	
+	// 상세조회
+	if( this.ds_comCdList.rowcount > 0 ) {
+		//데이터셋 param set
+		this.fn_setDataSet(this.search_dtl_ds, this.ds_comCdList);
+		this.fn_dtlSearch();
+	}
+	
+/*	22.07.20 주석처리함 (그리드 모두 체크 후 모두 저장)
+	if( chkDsChange != false ) {
+		if( varProperty != "checkboxcontrol") {		
+			var rtn = this.confirm(this.gfn_getMessage("ERRS000162")); // "수정된 내용이 있습니다. 저장 하시겠습니까?"
+			if( rtn ) {
+				//this.btnSave_onclick();
+				//this.btnSave.click();
+				
+				this.btnSave_onclick();
+				return false;
+			} else {
+				if( typeof chkDsChange == "number" ) {
+					obj.setCellPos(0, chkDsChange);
+				} else {
+					obj.setCellPos(0, this.preSelectRowPosition);
+				}
+				//this.fn_datasetReset(this.ds_comCdList);
+				return false;
+			}		
+		}
+	} 
+	
+	//이전 로우
+	this.preSelectRowPosition = e.row;
+	
+	// 상세조회
+	if( this.ds_comCdList.rowcount > 0 ) {
+		//데이터셋 param set
+		this.fn_setDataSet(this.search_dtl_ds, this.ds_comCdList);
+		this.fn_dtlSearch();
+	}	*/
+};
+
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.clear();
+};
+
+//엔터키 검색.
+/*this.comCdMng_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	if( e.keycode == 13 ) {
+		if( e.fromobject.valueOf() == "[object Edit]" ) {
+			this.fn_doSearch(0);
+		}
+	}
+};*/
+
+//데이터셋 변경 이벤트
+this.ds_comCdDtlList_oncolumnchanged = function(obj:nexacro.NormalDataset,e:nexacro.DSColChangeEventInfo)
+{	
+	var chkCol = ["COM_DTL_CD", "SRT_SO"];
+	var chkColName = ["상세코드", "정렬순서"];
+	
+	for( var idx in chkCol ) {		
+		if( e.columnid ==  chkCol[idx] ) {
+			var findRow = this.ds_comCdDtlList.findRowExpr(chkCol[idx] + "=='" + e.newvalue + "' && currow != " + e.row);
+			if( findRow != -1 ) {
+				
+				alert(this.gfn_getMessage("ERRR000169", [""+chkColName[idx]+""])); //중복됩니다.
+				this.ds_comCdDtlList.setColumn(e.row, e.col, "");						
+				return false;
+			}
+		}
+	}
+	 
+};
+//재커밋을 위한 주석]]></Script>
+    <Bind>
+      <BindItem id="item3" compid="div_detail.form.COM_CLSF_CD" propid="value" datasetid="ds_comCdList" columnid="COM_CLSF_CD"/>
+      <BindItem id="item4" compid="div_detail.form.COM_CLSF_CD_NM" propid="value" datasetid="ds_comCdList" columnid="COM_CLSF_CD_NM"/>
+      <BindItem id="item5" compid="div_detail.form.COM_USR_DEFN_NM_TTL_1" propid="value" datasetid="ds_comCdList" columnid="COM_USR_DEFN_NM_TTL_1"/>
+      <BindItem id="item6" compid="div_detail.form.COM_USR_DEFN_NM_TTL_2" propid="value" datasetid="ds_comCdList" columnid="COM_USR_DEFN_NM_TTL_2"/>
+      <BindItem id="item7" compid="div_detail.form.COM_USR_DEFN_NM_TTL_3" propid="value" datasetid="ds_comCdList" columnid="COM_USR_DEFN_NM_TTL_3"/>
+      <BindItem id="item8" compid="div_detail.form.COM_USR_DEFN_NM_TTL_4" propid="value" datasetid="ds_comCdList" columnid="COM_USR_DEFN_NM_TTL_4"/>
+      <BindItem id="item9" compid="div_detail.form.COM_USR_DEFN_NM_TTL_5" propid="value" datasetid="ds_comCdList" columnid="COM_USR_DEFN_NM_TTL_5"/>
+      <BindItem id="item10" compid="div_detail.form.USE_YN" propid="value" datasetid="ds_comCdList" columnid="USE_YN"/>
+      <BindItem id="item11" compid="div_detail.form.EXST_CLCD" propid="value" datasetid="ds_comCdList" columnid="EXST_CLCD"/>
+      <BindItem id="item0" compid="searchDiv.form.comClsfCd" propid="value" datasetid="search_ds" columnid="comClsfCd"/>
+      <BindItem id="item1" compid="searchDiv.form.comClsfCdNm" propid="value" datasetid="search_ds" columnid="comClsfCdNm"/>
+      <BindItem id="item2" compid="searchDiv.form.useYn" propid="value" datasetid="search_ds" columnid="USE_YN"/>
+    </Bind>
+  </Form>
+</FDL>

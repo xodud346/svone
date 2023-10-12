@@ -1,0 +1,594 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Event">
+
+	<!-- 이벤트관리 목록 조건절 -->
+	<sql id="eventWhere">
+			AND EVT.EVT_MST_USE_YN = 'Y'
+		<if test="searchText != null and searchText != ''">
+			AND EVT.EVT_MST_TITLE LIKE '%'||#{searchText}||'%'
+		</if>
+		<if test="searchStrDt != null and searchStrDt != '' and searchEndDt != null and searchEndDt != ''">
+			AND EVT.EVT_MST_REG_DT BETWEEN REPLACE(#{searchStrDt},'-', '')||'000000' AND REPLACE(#{searchEndDt},'-', '')||'235959'
+		</if>
+		<!-- 이벤트 구분(진행/종료) -->
+		<if test="evtMstGubun != null and evtMstGubun !=''">
+			<choose>
+				<when test='evtMstGubun == "P"'>
+					AND TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') BETWEEN EVT.EVT_MST_ST_DT||EVT.EVT_MST_ST_HH||EVT.EVT_MST_ST_MM||'00' AND EVT.EVT_MST_ED_DT||EVT.EVT_MST_ED_HH||EVT.EVT_MST_ED_MM||'00'
+				</when>
+				<when test='evtMstGubun == "E"'>
+					<![CDATA[
+					AND TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') > EVT.EVT_MST_ED_DT||EVT.EVT_MST_ED_HH||EVT.EVT_MST_ED_MM||'00'
+					]]>
+				</when>
+				<otherwise></otherwise>
+			</choose>
+		</if>
+		<!-- 이벤트 유형(일반/응모/스템프) -->
+		<if test="evtMstType != null and evtMstType != ''">
+			AND EVT.EVT_MST_TYPE = #{evtMstType}
+		</if>
+		<!-- 전시 여부 -->
+		<if test="evtMstDplYn != null and evtMstDplYn != ''">
+			AND EVT.EVT_MST_DPL_YN = #{evtMstDplYn}
+		</if>
+	</sql>
+
+	<!-- 이벤트관리 목록 갯수 -->
+	<select id="selectEventCount" parameterType="hashMap" resultType="integer">
+		/* Event.selectEventCount */
+		SELECT
+			COUNT(0)
+		FROM T_EVT_MST EVT
+		<where>
+			<include refid="eventWhere" />
+		</where>
+	</select>
+
+	<!-- 이벤트관리 목록 페이징 -->
+	<select id="selectEventList" parameterType="hashMap" resultType="SspMap">
+		/* Event.selectEventList */
+		<if test="startNum != null and endNum != null">
+		SELECT
+			S2.*
+		FROM
+		(
+		</if>
+			SELECT
+				  ROWNUM AS RNUM
+				, S1.*
+			FROM (
+						SELECT
+							  EVT.EVT_MST_IDX                                     /* 이벤트관리_IDX */
+							, EVT.EVT_MST_TITLE                                   /* 이벤트_제목 */
+							, EVT.EVT_MST_ST_DT                                   /* 이벤트기간_시작일 */
+							, EVT.EVT_MST_ST_HH                                   /* 이벤트기간_시작시간 */
+							, EVT.EVT_MST_ST_MM                                   /* 이벤트기간_시작분 */
+							, EVT.EVT_MST_ED_DT                                   /* 이벤트기간_종료일 */
+							, EVT.EVT_MST_ED_HH                                   /* 이벤트기간_종료시간 */
+							, EVT.EVT_MST_ED_MM                                   /* 이벤트기간_종료분 */
+							, EVT.EVT_MST_TYPE                                    /* 이벤트형태(707) */
+							, TCC.CMN_COM_NM				AS EVT_MST_TYPE_NM    /* 이벤트형태 명 */
+							, EVT.EVT_MST_DPL_YN                                  /* 전시상태 */
+							, NVL(ENT.ENT_CNT,0)			AS EVT_MST_ENT_CNT    /* 응모자 수 */
+							, EVT.EVT_MST_WIN_DT                                  /* 당첨자_발표_예정일 */
+							, EVT.EVT_MST_WIN_HH                                  /* 당첨자발표일_시작시간 */
+							, EVT.EVT_MST_WIN_MM                                  /* 당첨자발표일_시작분 */
+							, EVT.EVT_MST_MEMO                                    /* 메모 */
+							, EVT.ATFL_ID                                         /* 첨부파일ID */
+							, EVT.CPN_MST_IDX                                     /* 쿠폰번호 */
+							, EVT.EVT_MST_WIN_USE_YN                              /* 당첨자발표여부 */
+							, EVT.EVT_MST_USE_YN                                  /* 이벤트 사용여부 */
+							, EVT.EVT_MST_REG_DT                                  /* 최초_등록일 */
+							, EVT.EVT_MST_REG_ID                                  /* 최초_등록자_아이디 */
+							, ADM_R.ADM_MST_NM				AS EVT_MST_REG_NM     /* 최초 등록자 명 */
+							, EVT.EVT_MST_UPD_DT                                  /* 최종_수정일 */
+							, EVT.EVT_MST_UPD_ID                                  /* 최종_수정자_아이디 */
+							, ADM_U.ADM_MST_NM				AS EVT_MST_UPD_NM     /* 최종 수정자 명 */
+							<if test="startNum == null or endNum == null">
+							/* EXCEL */
+							, CASE
+									WHEN TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') <![CDATA[<]]> EVT.EVT_MST_ST_DT||EVT.EVT_MST_ST_HH||EVT.EVT_MST_ST_MM||'00'
+										THEN '준비'
+									WHEN TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') <![CDATA[>]]> EVT.EVT_MST_ED_DT||EVT.EVT_MST_ED_HH||EVT.EVT_MST_ED_MM||'00'
+										THEN '종료'
+									ELSE '진행'
+							  END                           AS EX_EVT_MST_GUBUN         /* 이벤트구분 (엑셀) */
+							, CASE
+									WHEN EVT.EVT_MST_DPL_YN = 'Y'
+										THEN '전시'
+									ELSE '미 전시'
+								END                         AS EX_EVT_MST_DPL_YN        /* 이벤트 전시여부 (엑셀) */
+							, SUBSTR(EVT.EVT_MST_REG_DT, 1,8)       AS EX_EVT_MST_REG_DT    /* 이벤트 등록일 (엑셀) */
+							, ADM_R.ADM_MST_NM||' ('||EVT.EVT_MST_REG_ID||')'      AS EX_EVT_MST_REG_NM    /* 이벤트 등록자 (엑셀) */
+							</if>
+						FROM T_EVT_MST EVT
+						/* 이벤트 형태 공통코드 */
+						LEFT OUTER JOIN T_CMM_COM TCC
+						ON EVT.EVT_MST_TYPE = TCC.CMN_COM_IDX
+						/* 회원정보 */
+						LEFT OUTER JOIN T_ADM_MST ADM_R
+						ON EVT.EVT_MST_REG_ID = ADM_R.ADM_MST_ID
+						LEFT OUTER JOIN T_ADM_MST ADM_U
+						ON EVT.EVT_MST_UPD_ID = ADM_U.ADM_MST_ID
+						/* 응모자 수 */
+						LEFT OUTER JOIN (
+									SELECT
+										    S.EVT_MST_IDX				AS EVT_MST_IDX
+										  , COUNT(DISTINCT EVT_REG_ID)	AS ENT_CNT
+										  , S.EVT_TYP					AS EVT_TYP
+									FROM (
+												SELECT
+													    EVT_MST_IDX			AS EVT_MST_IDX
+													  , EVT_RPL_IDX			AS EVT_SUB_IDX
+													  , EVT_RPL_REG_ID		AS EVT_REG_ID
+													  , '710'				AS EVT_TYP		/* 응모형 */
+												FROM T_EVT_RPL
+
+												UNION ALL
+
+												SELECT
+													    EVT_MST_IDX			AS EVT_MST_IDX
+													  , EVT_ETR_IDX			AS EVT_SUB_IDX
+													  , EVT_ETR_REG_ID 		AS EVT_REG_ID
+													  , '708'				AS EVT_TYP		/* 스템프형 */
+												FROM T_EVT_ETR
+									) S
+									INNER JOIN T_EVT_MST S_EVT
+									ON S_EVT.EVT_MST_IDX = S.EVT_MST_IDX AND S_EVT.EVT_MST_TYPE = S.EVT_TYP
+									GROUP BY S.EVT_MST_IDX, S.EVT_TYP
+						) ENT
+						ON EVT.EVT_MST_IDX = ENT.EVT_MST_IDX AND EVT.EVT_MST_TYPE = ENT.EVT_TYP
+						<where>
+							<include refid="eventWhere" />
+						</where>
+						ORDER BY EVT.EVT_MST_IDX DESC
+			) S1
+		<if test="startNum != null and endNum != null">
+		) S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+		</if>
+	</select>
+
+	<!-- 이벤트 등록(MASTER) -->
+	<insert id="insertEvent" parameterType="hashMap">
+		<selectKey keyProperty="evtMstIdx" resultType="Integer" order="BEFORE">
+			SELECT SEQ_EVT_MST_IDX.NEXTVAL AS EVT_MST_IDX FROM DUAL
+		</selectKey>
+		/* Event.insertEvent */
+		INSERT INTO T_EVT_MST
+		(
+			  EVT_MST_IDX
+			, EVT_MST_TITLE
+			, EVT_MST_ST_DT
+			, EVT_MST_ST_HH
+			, EVT_MST_ST_MM
+			, EVT_MST_ED_DT
+			, EVT_MST_ED_HH
+			, EVT_MST_ED_MM
+			, EVT_MST_TYPE
+			, EVT_MST_DPL_YN
+			, EVT_MST_WIN_DT
+			, EVT_MST_WIN_HH
+			, EVT_MST_WIN_MM
+			, EVT_MST_MEMO
+			, ATFL_ID
+			, CPN_MST_IDX
+			, EVT_MST_WIN_USE_YN
+			, EVT_MST_WIN_CONTENTS
+			, EVT_MST_USE_YN
+			, EVT_MST_REG_DT
+			, EVT_MST_REG_IP
+			, EVT_MST_REG_ID
+		)
+		VALUES
+		(
+			  #{evtMstIdx}
+			, #{evtMstTitle}
+			, #{evtMstStDt}
+			, '00'
+			, '00'
+			, #{evtMstEdDt}
+			, '23'
+			, '59'
+			, #{evtMstType}
+			, #{evtMstDplYn}
+			, #{evtMstWinDt}
+			, '00'
+			, '00'
+			, #{evtMstMemo}
+			, #{atflId}
+			, #{cpnMstIdx}
+			, #{evtMstWinUseYn}
+			, EMPTY_CLOB()
+			, 'Y'
+			, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, #{evtMstRegIp}
+			, #{evtMstRegId}
+		)
+	</insert>
+
+	<resultMap id="resultEventDetail" type="HashMap">
+		<result property="evtMstIdx" 	column="EVT_MST_IDX" />
+		<result property="evtMstTitle" 	column="EVT_MST_TITLE" />
+		<result property="evtMstStDt" 	column="EVT_MST_ST_DT" />
+		<result property="evtMstStHh" 	column="EVT_MST_ST_HH" />
+		<result property="evtMstStMm" 	column="EVT_MST_ST_MM" />
+		<result property="evtMstEdDt" 	column="EVT_MST_ED_DT" />
+		<result property="evtMstEdHh" 	column="EVT_MST_ED_HH" />
+		<result property="evtMstEdMm" 	column="EVT_MST_ED_MM" />
+		<result property="evtMstType" 	column="EVT_MST_TYPE" />
+		<result property="evtMstTypeNm" column="EVT_MST_TYPE_NM" />
+		<result property="evtMstDplYn" 	column="EVT_MST_DPL_YN" />
+		<result property="evtMstWinDt" 	column="EVT_MST_WIN_DT" />
+		<result property="evtMstWinHh" 	column="EVT_MST_WIN_HH" />
+		<result property="evtMstWinMm" 	column="EVT_MST_WIN_MM" />
+		<result property="evtMstMemo" 	column="EVT_MST_MEMO" />
+		<result property="atflId" 		column="ATFL_ID" />
+		<result property="cpnMstIdx" 	column="CPN_MST_IDX" />
+		<result property="cpnMstTitle" 	column="CPN_MST_TITLE" />
+		<result property="evtMstWinUseYn" 		column="EVT_MST_WIN_USE_YN" />
+		<result property="evtMstWinContents" 	column="EVT_MST_WIN_CONTENTS" jdbcType="CLOB" javaType="java.lang.String" />
+		<result property="evtMstUseYn" 	column="EVT_MST_USE_YN" />
+		<result property="evtMstRegDt" 	column="EVT_MST_REG_DT" />
+		<result property="evtMstRegId" 	column="EVT_MST_REG_ID" />
+		<result property="evtMstRegNm" 	column="EVT_MST_REG_NM" />
+		<result property="evtMstUpdDt" 	column="EVT_MST_UPD_DT" />
+		<result property="evtMstUpdId" 	column="EVT_MST_UPD_ID" />
+		<result property="evtMstUpdNm" 	column="EVT_MST_UPD_NM" />
+	</resultMap>
+
+	<!-- 이벤트 상세 -->
+	<select id="selectEventDetail" parameterType="hashMap" resultMap="resultEventDetail">
+		/* Event.selectEventDetail */
+		SELECT
+			  EVT.EVT_MST_IDX                                     /* 이벤트관리_IDX */
+			, EVT.EVT_MST_TITLE                                   /* 이벤트_제목 */
+			, EVT.EVT_MST_ST_DT                                   /* 이벤트기간_시작일 */
+			, EVT.EVT_MST_ST_HH                                   /* 이벤트기간_시작시간 */
+			, EVT.EVT_MST_ST_MM                                   /* 이벤트기간_시작분 */
+			, EVT.EVT_MST_ED_DT                                   /* 이벤트기간_종료일 */
+			, EVT.EVT_MST_ED_HH                                   /* 이벤트기간_종료시간 */
+			, EVT.EVT_MST_ED_MM                                   /* 이벤트기간_종료분 */
+			, EVT.EVT_MST_TYPE                                    /* 이벤트형태(707) */
+			, TCC.CMN_COM_NM                AS EVT_MST_TYPE_NM    /* 이벤트형태 명 */
+			, EVT.EVT_MST_DPL_YN                                  /* 전시상태 */
+			, EVT.EVT_MST_WIN_DT                                  /* 당첨자_발표_예정일 */
+			, EVT.EVT_MST_WIN_HH                                  /* 당첨자발표일_시작시간 */
+			, EVT.EVT_MST_WIN_MM                                  /* 당첨자발표일_시작분 */
+			, EVT.EVT_MST_MEMO                                    /* 메모 */
+			, EVT.ATFL_ID                                         /* 첨부파일ID */
+			, EVT.CPN_MST_IDX                                     /* 쿠폰번호 */
+			, CPN.CPN_MST_TITLE             AS CPN_MST_TITLE      /* 쿠폰명 */
+			, EVT.EVT_MST_WIN_USE_YN                              /* 당첨자발표여부 */
+			, EVT.EVT_MST_WIN_CONTENTS                            /* 당첨자발표내용 */
+			, EVT.EVT_MST_USE_YN                                  /* 이벤트 사용여부 */
+			, EVT.EVT_MST_REG_DT                                  /* 최초_등록일 */
+			, EVT.EVT_MST_REG_ID                                  /* 최초_등록자_아이디 */
+			, ADM_R.ADM_MST_NM              AS EVT_MST_REG_NM     /* 최초 등록자 명 */
+			, EVT.EVT_MST_UPD_DT                                  /* 최종_수정일 */
+			, EVT.EVT_MST_UPD_ID                                  /* 최종_수정자_아이디 */
+			, ADM_U.ADM_MST_NM              AS EVT_MST_UPD_NM     /* 최종 수정자 명 */
+		FROM T_EVT_MST EVT
+		/* 이벤트 형태 공통코드 */
+		LEFT OUTER JOIN T_CMM_COM TCC
+			ON EVT.EVT_MST_TYPE = TCC.CMN_COM_IDX
+		/* 회원정보 */
+		LEFT OUTER JOIN T_ADM_MST ADM_R
+			ON EVT.EVT_MST_REG_ID = ADM_R.ADM_MST_ID
+		LEFT OUTER JOIN T_ADM_MST ADM_U
+			ON EVT.EVT_MST_UPD_ID = ADM_U.ADM_MST_ID
+		/* 쿠폰정보 */
+		LEFT OUTER JOIN T_CPN_MST CPN
+			ON EVT.CPN_MST_IDX = CPN.CPN_MST_IDX
+		WHERE
+			EVT.EVT_MST_IDX = #{evtMstIdx}
+	</select>
+
+	<!-- 이벤트 수정 -->
+	<update id="updateEvent" parameterType="hashMap">
+		/* Event.updateEvent */
+		UPDATE T_EVT_MST
+		SET
+			  EVT_MST_TITLE = #{evtMstTitle}
+			, EVT_MST_ST_DT = #{evtMstStDt}
+			, EVT_MST_ED_DT = #{evtMstEdDt}
+			, EVT_MST_TYPE = #{evtMstType}
+			, EVT_MST_DPL_YN = #{evtMstDplYn}
+			, EVT_MST_WIN_DT = #{evtMstWinDt}
+			, EVT_MST_MEMO = #{evtMstMemo}
+			, ATFL_ID = #{atflId}
+			, CPN_MST_IDX = #{cpnMstIdx}
+			, EVT_MST_WIN_USE_YN = #{evtMstWinUseYn}
+			, EVT_MST_WIN_CONTENTS = #{evtMstWinContents}
+			, EVT_MST_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, EVT_MST_UPD_IP = #{evtMstUpdIp}
+			, EVT_MST_UPD_ID = #{evtMstUpdId}
+		WHERE
+			EVT_MST_IDX = #{evtMstIdx}
+	</update>
+
+	<!-- 이벤트 삭제 -->
+	<update id="deleteEvent" parameterType="hashMap">
+		/* Event.deleteEvent */
+		UPDATE T_EVT_MST
+		SET
+			  EVT_MST_USE_YN = 'N'
+			, EVT_MST_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, EVT_MST_UPD_IP = #{evtMstUpdIp}
+			, EVT_MST_UPD_ID = #{evtMstUpdId}
+		WHERE
+			EVT_MST_IDX = #{evtMstIdx}
+	</update>
+
+
+
+	<!-- 참여내역조회(응모형) 검색 조건 -->
+	<sql id="rplEvtHistWhere">
+		<!-- evtMstIdx 필수값 -->
+			AND RPL.EVT_MST_IDX = #{evtMstIdx}
+		<!-- 회원ID -->
+		<if test="arrMemId != null and arrMemId != ''">
+			AND RPL.EVT_RPL_REG_ID IN
+			<foreach collection="arrMemId" item="memId" open="(" close=")" separator=",">
+				#{memId}
+			</foreach>
+		</if>
+		<!-- 댓글 공개 여부(전시여부) -->
+		<if test="evtRplDplYn != null and evtRplDplYn != ''">
+			AND RPL.EVT_RPL_DPL_YN = #{evtRplDplYn}
+		</if>
+		<!-- 조회기간 -->
+		<choose>
+			<when test="searchStrDt != null and searchStrDt != '' and searchEndDt != null and searchEndDt != ''">
+				AND RPL.EVT_RPL_REG_DT BETWEEN REPLACE(#{searchStrDt},'-', '')||'000000' AND REPLACE(#{searchEndDt},'-', '')||'235959'
+			</when>
+			<when test="searchStrDt != null and searchStrDt != ''">
+			<![CDATA[
+				AND RPL.EVT_RPL_REG_DT >= REPLACE(#{searchStrDt},'-', '')||'000000'
+			]]>
+			</when>
+			<when test="searchEndDt != null and searchEndDt != ''">
+			<![CDATA[
+				AND RPL.EVT_RPL_REG_DT <= REPLACE(#{searchEndDt},'-', '')||'235959'
+			]]>
+			</when>
+			<otherwise></otherwise>
+		</choose>
+	</sql>
+
+	<!-- 참여내역조회(응모형) 목록 갯수 -->
+	<select id="selectRplEvtHistCount" parameterType="hashMap" resultType="integer">
+		/* Event.selectRplEvtHistCount */
+		SELECT
+			  COUNT(0)
+		FROM T_EVT_RPL RPL
+		<where>
+			<include refid="rplEvtHistWhere" />
+		</where>
+	</select>
+
+	<!-- 참여내역조회(응모형) 목록 -->
+	<select id="selectRplEvtHistList" parameterType="hashMap" resultType="SspMap">
+		/* Event.selectRplEvtHistList */
+		<if test="startNum != null and endNum != null">
+		SELECT
+			S2.*
+		FROM
+		(
+		</if>
+			SELECT
+				  ROWNUM AS RNUM
+				, S1.*
+			FROM (
+				SELECT
+					  RPL.EVT_RPL_IDX                                /* 이벤트응모_IDX */
+					, RPL.EVT_MST_IDX                                /* 이벤트관리_IDX */
+					, RPL.EVT_RPL_CTS                                /* 응모내용 */
+					, RPL.EVT_RPL_AGT                                /* 응모자AGENT */
+					, RPL.EVT_RPL_WIN_YN                             /* 당첨여부 */
+					, RPL.EVT_RPL_DPL_YN                             /* 전시여부 */
+					, RPL.EVT_RPL_REG_DT                             /* 최초_등록일(응모참여일) */
+					, RPL.EVT_RPL_REG_IP                             /* 최초_등록_IP(참여자IP) */
+					, RPL.EVT_RPL_REG_ID                             /* 최초_등록자_아이디(참여자 회원ID O, 로그인ID X) */
+					, TMB.MEM_NM             AS EVT_RPL_REG_NM       /* 회원명(참여자명) */
+					, TML.LOGIN_ID                                   /* 로그인ID */
+					, RPL.EVT_RPL_CHN_TYPE		                     /* 이벤트 참여 경로 (P/M) */
+					, TO_CHAR(TO_DATE(RPL.EVT_RPL_REG_DT,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm-dd hh24:mi:ss') AS EX_EVT_RPL_REG_DT    /* 응모참여일 엑셀다운로드 */
+					, CASE RPL.EVT_RPL_DPL_YN
+						WHEN 'Y' THEN '공개'
+						ELSE '비공개'
+					  END                   AS EX_EVT_RPL_DPL_YN     /* 전시여부 엑셀다운로드 */
+				FROM T_EVT_RPL RPL
+				LEFT JOIN TB_FC_MEM_BASIS TMB
+					ON RPL.EVT_RPL_REG_ID = TMB.MEM_ID
+				LEFT JOIN TB_FC_MEM_LOGIN_INFO TML
+					ON RPL.EVT_RPL_REG_ID = TML.MEM_ID
+				<where>
+					<include refid="rplEvtHistWhere" />
+				</where>
+				ORDER BY RPL.EVT_RPL_REG_DT DESC
+			) S1
+		<if test="startNum != null and endNum != null">
+		) S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+		</if>
+	</select>
+
+
+
+	<!-- 참여내역조회(스템프형) 검색 조건 -->
+	<sql id="etrEvtHistWhere">
+		<!-- evtMstIdx 필수값 -->
+			AND ETR.EVT_MST_IDX = #{evtMstIdx}
+		<!-- 회원ID -->
+		<if test="arrMemId != null and arrMemId != ''">
+			AND ETR.EVT_ETR_REG_ID IN
+			<foreach collection="arrMemId" item="memId" open="(" close=")" separator=",">
+				#{memId}
+			</foreach>
+		</if>
+		<!-- 이벤트 완료 여부 -->
+		<if test="evtEtrEdYn != null and evtEtrEdYn != ''">
+			AND LST.EVT_ETR_ED_YN = #{evtEtrEdYn}
+		</if>
+		<!-- 완료기간 -->
+		<choose>
+			<when test="searchStrDt != null and searchStrDt != '' and searchEndDt != null and searchEndDt != ''">
+				AND LST.EVT_ETR_ED_DT BETWEEN REPLACE(#{searchStrDt},'-', '')||'000000' AND REPLACE(#{searchEndDt},'-', '')||'235959'
+			</when>
+			<when test="searchStrDt != null and searchStrDt != ''">
+			<![CDATA[
+				AND LST.EVT_ETR_ED_DT >= REPLACE(#{searchStrDt},'-', '')||'000000'
+			]]>
+			</when>
+			<when test="searchEndDt != null and searchEndDt != ''">
+			<![CDATA[
+				AND LST.EVT_ETR_ED_DT <= REPLACE(#{searchEndDt},'-', '')||'235959'
+			]]>
+			</when>
+			<otherwise></otherwise>
+		</choose>
+	</sql>
+
+	<!-- 참여내역조회(스템프형) 목록 갯수 -->
+	<select id="selectEtrEvtHistCount" parameterType="hashMap" resultType="integer">
+		/* Event.selectEtrEvtHistCount */
+		SELECT
+			  COUNT(0)
+		FROM T_EVT_ETR ETR
+		INNER JOIN (
+			/* 참여자 정보(참여횟수, 최종참여일) */
+			SELECT
+				  COUNT(S.EVT_ETR_IDX)		AS EVT_ETR_REG_CNT  /* 참여 횟수 */
+				, S.EVT_MST_IDX
+				, MAX(S.EVT_ETR_REG_DT)     AS EVT_ETR_REG_DT   /* 최종 참여 일자 */
+				, S.EVT_ETR_REG_ID
+				, CASE
+						WHEN COUNT(S.EVT_ETR_IDX) >= 7 THEN MAX(S.EVT_ETR_REG_DT)
+						ELSE NULL
+				  END                       AS EVT_ETR_ED_DT    /* 이벤트 완료일자 */
+				, CASE
+						WHEN COUNT(S.EVT_ETR_IDX) >= 7 THEN 'Y'
+						ELSE 'N'
+				  END                       AS EVT_ETR_ED_YN    /* 이벤트 완료여부 */
+			FROM T_EVT_ETR S
+			GROUP BY
+			  		S.EVT_MST_IDX, S.EVT_ETR_REG_ID
+		) LST
+			ON ETR.EVT_MST_IDX = LST.EVT_MST_IDX
+			AND ETR.EVT_ETR_REG_ID = LST.EVT_ETR_REG_ID
+			AND ETR.EVT_ETR_REG_DT = LST.EVT_ETR_REG_DT
+		<where>
+			<include refid="etrEvtHistWhere" />
+		</where>
+	</select>
+
+	<!-- 참여내역조회(스템프형) 목록 -->
+	<select id="selectEtrEvtHistList" parameterType="hashMap" resultType="SspMap">
+		/* Event.selectEtrEvtHistList */
+		<if test="startNum != null and endNum != null">
+		SELECT
+			S2.*
+		FROM
+		(
+		</if>
+			SELECT
+				  ROWNUM AS RNUM
+				, S1.*
+			FROM (
+				SELECT
+					  ETR.EVT_MST_IDX                                   /* 이벤트관리_IDX */
+					, ETR.EVT_ETR_AGT                                   /* 응모자AGENT */
+					, ETR.EVT_ETR_REG_ID                                /* 스템프_등록자_아이디(회원ID O, 로그인ID X) */
+					, TMB.MEM_NM                 AS EVT_ETR_REG_NM      /* 회원명(참여자명) */
+					, TML.LOGIN_ID               AS LOGIN_ID            /* 로그인ID */
+					, ETR.EVT_ETR_REG_DT                                /* 스탬프_최종_참여일자 */
+					, LST.EVT_ETR_ED_DT          AS EVT_ETR_ED_DT       /* 이벤트 완료일자 */
+					, LST.EVT_ETR_ED_YN          AS EVT_ETR_ED_YN       /* 이벤트 완료여부 */
+					, LST.EVT_ETR_REG_CNT        AS EVT_ETR_REG_CNT     /* 참여횟수 */
+					, EVT.CPN_MST_IDX
+					, CASE
+							WHEN EXISTS (
+									SELECT 1
+									FROM T_CPN_MEM
+									WHERE CPN_MST_IDX = EVT.CPN_MST_IDX
+									AND   CPN_MEM_ID = ETR.EVT_ETR_REG_ID
+							) THEN 'Y'
+							ELSE 'N'
+					  END                        AS CPN_ISU_YN          /* 쿠폰발급여부(다운로드여부) */
+					, CASE LST.EVT_ETR_ED_YN
+						WHEN 'Y' THEN '완료'
+						ELSE '미 완료'
+					  END                   AS EX_EVT_ETR_ED_YN     /* 이벤트완료여부 엑셀다운로드 */
+				FROM T_EVT_ETR ETR
+				INNER JOIN (
+					/* 참여자 정보(참여횟수, 최종참여일) */
+					SELECT
+						  COUNT(S.EVT_ETR_IDX)		AS EVT_ETR_REG_CNT  /* 참여 횟수 */
+						, S.EVT_MST_IDX
+						, MAX(S.EVT_ETR_REG_DT)     AS EVT_ETR_REG_DT   /* 최종 참여 일자 */
+						, S.EVT_ETR_REG_ID
+						, CASE
+								WHEN COUNT(S.EVT_ETR_IDX) >= 7 THEN MAX(S.EVT_ETR_REG_DT)
+								ELSE NULL
+						  END                       AS EVT_ETR_ED_DT    /* 이벤트 완료일자 */
+						, CASE
+								WHEN COUNT(S.EVT_ETR_IDX) >= 7 THEN 'Y'
+								ELSE 'N'
+						  END                       AS EVT_ETR_ED_YN    /* 이벤트 완료여부 */
+					FROM T_EVT_ETR S
+					GROUP BY
+					  		S.EVT_MST_IDX, S.EVT_ETR_REG_ID
+				) LST
+					ON ETR.EVT_MST_IDX = LST.EVT_MST_IDX
+					AND ETR.EVT_ETR_REG_ID = LST.EVT_ETR_REG_ID
+					AND ETR.EVT_ETR_REG_DT = LST.EVT_ETR_REG_DT
+				/* 이벤트 마스터(쿠폰아이디) */
+				LEFT JOIN T_EVT_MST EVT
+					ON ETR.EVT_MST_IDX = EVT.EVT_MST_IDX
+				/* 회원정보 */
+				LEFT JOIN TB_FC_MEM_BASIS TMB
+					ON LST.EVT_ETR_REG_ID = TMB.MEM_ID
+				LEFT JOIN TB_FC_MEM_LOGIN_INFO TML
+					ON LST.EVT_ETR_REG_ID = TML.MEM_ID
+				<where>
+					<include refid="etrEvtHistWhere" />
+				</where>
+				ORDER BY
+					ETR.EVT_ETR_REG_DT DESC
+			) S1
+		<if test="startNum != null and endNum != null">
+		) S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+		</if>
+	</select>
+
+	<!-- 참여내역 상세조회(스템프형) // 이벤트 내 회원별 전체참여내역 -->
+	<select id="selectEtrEvtMemHistList" parameterType="hashMap" resultType="SspMap">
+		/* Event.selectEtrEvtMemHistList */
+		SELECT
+			  ROWNUM AS RNUM
+			, S1.*
+		FROM (
+			SELECT
+				  ETR.EVT_ETR_IDX                  /* 스탬프형_IDX */
+				, ETR.EVT_MST_IDX                  /* 이벤트관리_IDX */
+				, ETR.EVT_ETR_AGT                  /* 응모자AGENT */
+				, ETR.EVT_ETR_REG_DT               /* 스탬프_등록일 */
+				, ETR.EVT_ETR_REG_IP               /* 스템프_등록_IP */
+				, ETR.EVT_ETR_REG_ID               /* 스템프_등록자_아이디 */
+				, ETR.EVT_ETR_CHN_TYPE             /* 참여자_경로타입(P:PC,M:MOBILE) */
+			FROM T_EVT_ETR ETR
+			WHERE ETR.EVT_MST_IDX = #{evtMstIdx}
+			AND ETR.EVT_ETR_REG_ID = #{evtEtrRegId}
+			ORDER BY ETR.EVT_ETR_REG_DT ASC
+		) S1
+	</select>
+
+</mapper>

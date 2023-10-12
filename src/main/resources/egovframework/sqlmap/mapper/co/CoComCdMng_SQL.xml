@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="coComCdMng">
+
+   <!--
+   ******************************************************************************
+   * SELECT : 공통코드 목록 카운트
+   * 작성자 : lee
+   * 작성 일자 : 2022-01-25
+   ******************************************************************************
+   -->
+   <select id="selectComCdClsfSearchCount" parameterType="HashMap" resultType="int">
+   /* Com.selectComCdClsfSearchCount */
+   SELECT COUNT(1)
+     FROM SSP_APP.TB_CO_COM_CD_MST A
+         <where>
+            <if test="comClsfCd != null and !comClsfCd.equals('') ">
+                AND COM_CLSF_CD LIKE '%' || #{comClsfCd} || '%'
+            </if>
+            <if test="comClsfCdNm != null and !comClsfCdNm.equals('') ">
+                AND COM_CLSF_CD_NM LIKE '%' || #{comClsfCdNm} || '%'
+            </if>
+            <if test="useYn != null and !useYn.equals('') ">
+                AND USE_YN = #{useYn}
+            </if>
+         </where>
+   </select>
+
+
+    <!--
+    ******************************************************************************
+    * SELECT : 공통코드 목록 조회
+    * 작성자 : lee
+    * 작성 일자 : 2022-01-25
+    ******************************************************************************
+    -->
+    <!--
+    <resultMap id="comCdClsfSearchMap" type="HashMap">
+        <result property="LANG_CD" column="LANG_CD" />
+        <result property="COM_CLSF_CD" column="COM_CLSF_CD" />
+        <result property="COM_CLSF_CD_NM" column="COM_CLSF_CD_NM" />
+        <result property="COM_USR_DEFN_NM_TTL_1" column="COM_USR_DEFN_NM_TTL_1" />
+        <result property="COM_USR_DEFN_NM_TTL_2" column="COM_USR_DEFN_NM_TTL_2" />
+        <result property="COM_USR_DEFN_NM_TTL_3" column="COM_USR_DEFN_NM_TTL_3" />
+        <result property="COM_USR_DEFN_NM_TTL_4" column="COM_USR_DEFN_NM_TTL_4" />
+        <result property="COM_USR_DEFN_NM_TTL_5" column="COM_USR_DEFN_NM_TTL_5" />
+        <result property="USE_YN" column="USE_YN" />
+    </resultMap>
+    -->
+    <select id="selectComCdClsfSearchList" parameterType="HashMap" resultType="HashMap">
+        /* Com.selectComCdClsfSearchList */
+        SELECT LANG_CD
+             , COM_CLSF_CD
+             , COM_CLSF_CD_NM
+             , COM_USR_DEFN_NM_TTL_1
+             , COM_USR_DEFN_NM_TTL_2
+             , COM_USR_DEFN_NM_TTL_3
+             , COM_USR_DEFN_NM_TTL_4
+             , COM_USR_DEFN_NM_TTL_5
+             , EXST_CLCD
+             , USE_YN
+             , 0 AS COL_CHK
+          FROM SSP_APP.TB_CO_COM_CD_MST A
+             <where>
+                 <if test="comClsfCd != null and !comClsfCd.equals('') ">
+                     AND A.COM_CLSF_CD LIKE '%' || #{comClsfCd} || '%'
+                 </if>
+                 <if test="comClsfCdNm != null and !comClsfCdNm.equals('') ">
+                     AND A.COM_CLSF_CD_NM LIKE '%' || #{comClsfCdNm} || '%'
+                 </if>
+                 <if test="useYn != null and !useYn.equals('') ">
+                     AND A.USE_YN = #{useYn}
+                 </if>
+             </where>
+        <if test="sortColumn != null and sortColumn != ''">
+            ORDER BY ${sortColumn} ${sortType}
+        </if>
+        OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>
+
+    <!--
+    ******************************************************************************
+    * SELECT : 공통코드 상세 목록 조회
+    * 작성자 : lee
+    * 작성 일자 : 2022-01-25
+    ******************************************************************************
+    -->
+    <select id="selectComCdClsfDtlSearchList" parameterType="HashMap" resultType="HashMap">
+        /* coComCdMng.selectComCdClsfDtlSearchList */
+        SELECT LANG_CD
+             , COM_CLSF_CD
+             , COM_DTL_CD
+             , COM_DTL_CD_NM
+             , COM_USR_DEFN_NM_1
+             , COM_USR_DEFN_NM_2
+             , COM_USR_DEFN_NM_3
+             , COM_USR_DEFN_NM_4
+             , COM_USR_DEFN_NM_5
+             , SRT_SO
+             , USE_YN
+             , 0 AS COL_CHK
+          FROM SSP_APP.TB_CO_COM_CD_DTL A
+         WHERE A.COM_CLSF_CD = #{comClsfCd}
+      ORDER BY A.SRT_SO
+        <!--<where>
+            <if test="comClsfCd != null and !comClsfCd.equals('') ">
+                AND A.COM_CLSF_CD = #{comClsfCd}
+            </if>
+        </where>-->
+    </select>
+
+    <!--
+    ******************************************************************************
+    * INSERT : 공통코드 등록
+    * 작성자 : lee
+    * 작성 일자 : 2022-01-25
+    ******************************************************************************
+    -->
+    <insert id="insertComCdClsf" parameterType="HashMap">
+        /* coComCdMng.insertComCdClsf */
+        INSERT INTO SSP_APP.TB_CO_COM_CD_MST
+        (
+          LANG_CD
+        , COM_CLSF_CD
+        , COM_CLSF_CD_NM
+        , COM_USR_DEFN_NM_TTL_1
+        , COM_USR_DEFN_NM_TTL_2
+        , COM_USR_DEFN_NM_TTL_3
+        , COM_USR_DEFN_NM_TTL_4
+        , COM_USR_DEFN_NM_TTL_5
+        , USE_YN
+        , REG_DTM
+        , REGPSN_ID
+        ) VALUES (
+          #{langCd}
+        , #{comClsfCd}
+        , #{comClsfCdNm}
+        , #{comUsrDefnNmTtl1}
+        , #{comUsrDefnNmTtl2}
+        , #{comUsrDefnNmTtl3}
+        , #{comUsrDefnNmTtl4}
+        , #{comUsrDefnNmTtl5}
+        , #{useYn}
+        , SYSDATE
+        , #{regpsnId}
+        )
+    </insert>
+
+    <!--
+    ******************************************************************************
+    * UPDATE : 공통코드 등록
+    * 작성자 : lee
+    * 작성 일자 : 2022-01-25
+    ******************************************************************************
+    -->
+    <update id="updateComCdClsf" parameterType="HashMap">
+        /* coComCdMng.updateComCdClsf */
+        UPDATE SSP_APP.TB_CO_COM_CD_MST
+           SET COM_CLSF_CD = #{comClsfCd}
+             , COM_CLSF_CD_NM = #{comClsfCdNm}
+             , COM_USR_DEFN_NM_TTL_1 = #{comUsrDefnNmTtl1}
+             , COM_USR_DEFN_NM_TTL_2 = #{comUsrDefnNmTtl2}
+             , COM_USR_DEFN_NM_TTL_3 = #{comUsrDefnNmTtl3}
+             , COM_USR_DEFN_NM_TTL_4 = #{comUsrDefnNmTtl4}
+             , COM_USR_DEFN_NM_TTL_5 = #{comUsrDefnNmTtl5}
+             , USE_YN = #{useYn}
+             , UPD_DTM = SYSDATE
+             , UPDPSN_ID = #{updpsnId}
+         WHERE COM_CLSF_CD = #{comClsfCd}
+    </update>
+
+    <!--
+    ******************************************************************************
+    * DELETE : 공통코드 삭제
+    * 작성자 : lee
+    * 작성 일자 : 2022-01-25
+    ******************************************************************************
+    -->
+    <update id="deleteComCdClsf" parameterType="HashMap">
+        /* coComCdMng.deleteComCdClsf */
+        DELETE FROM SSP_APP.TB_CO_COM_CD_MST
+         WHERE COM_CLSF_CD = #{comClsfCd}
+    </update>
+
+    <!--
+    ******************************************************************************
+    * INSERT : 공통코드(상세코드) 등록
+    * 작성자 : lee
+    * 작성 일자 : 2022-01-25
+    ******************************************************************************
+    -->
+    <insert id="insertComCdClsfDtl" parameterType="HashMap">
+        /* coComCdMng.insertComCdClsfDtl */
+        INSERT INTO SSP_APP.TB_CO_COM_CD_DTL
+        (
+          LANG_CD
+        , COM_CLSF_CD
+        , COM_DTL_CD
+        , COM_DTL_CD_NM
+        , COM_USR_DEFN_NM_1
+        , COM_USR_DEFN_NM_2
+        , COM_USR_DEFN_NM_3
+        , COM_USR_DEFN_NM_4
+        , COM_USR_DEFN_NM_5
+        , SRT_SO
+        , USE_YN
+        , REG_DTM
+        , REGPSN_ID
+        ) VALUES (
+          #{langCd}
+        , #{comClsfCd}
+        , #{comDtlCd}
+        , #{comDtlCdNm}
+        , #{comUsrDefnNm1}
+        , #{comUsrDefnNm2}
+        , #{comUsrDefnNm3}
+        , #{comUsrDefnNm4}
+        , #{comUsrDefnNm5}
+        , #{srtSo}
+        , #{useYn}
+        , SYSDATE
+        , #{regpsnId}
+        )
+    </insert>
+
+    <!--
+    ******************************************************************************
+    * UPDATE : 공통코드 등록
+    * 작성자 : lee
+    * 작성 일자 : 2022-01-25
+    ******************************************************************************
+    -->
+    <update id="updateComCdClsfDtl" parameterType="HashMap">
+        /* coComCdMng.updateComCdClsfDtl */
+         UPDATE SSP_APP.TB_CO_COM_CD_DTL
+            SET COM_CLSF_CD = #{comClsfCd}
+              , COM_DTL_CD = #{comDtlCd}
+              , COM_DTL_CD_NM = #{comDtlCdNm}
+              , COM_USR_DEFN_NM_1 = #{comUsrDefnNm1}
+              , COM_USR_DEFN_NM_2 = #{comUsrDefnNm2}
+              , COM_USR_DEFN_NM_3 = #{comUsrDefnNm3}
+              , COM_USR_DEFN_NM_4 = #{comUsrDefnNm4}
+              , COM_USR_DEFN_NM_5 = #{comUsrDefnNm5}
+              , USE_YN = #{useYn}
+              , SRT_SO = #{srtSo}
+              , UPDPSN_ID = #{updpsnId}
+              , UPD_DTM = SYSDATE
+          WHERE COM_CLSF_CD = #{comClsfCd}
+            AND COM_DTL_CD = #{comDtlCd}
+    </update>
+
+    <!--
+    ******************************************************************************
+    * DELETE : 공통코드 삭제
+    * 작성자 : lee
+    * 작성 일자 : 2022-01-25
+    ******************************************************************************
+    -->
+    <update id="deleteComCdClsfDtl" parameterType="HashMap">
+        /* coComCdMng.deleteComCdClsfDtl */
+        DELETE FROM SSP_APP.TB_CO_COM_CD_DTL
+         WHERE COM_CLSF_CD = #{comClsfCd}
+           AND COM_DTL_CD = #{comDtlCd}
+    </update>
+
+    <!--
+    ******************************************************************************
+    * DELETE : 상세코드 존재여부 카운트
+    * 작성자 : lee
+    * 작성 일자 : 2022-01-28
+    ******************************************************************************
+    -->
+    <select id="selectComCdClsfDtlCount" parameterType="HashMap" resultType="int">
+        /* coComCdMng.selectComCdClsfDtlCount */
+        SELECT COUNT(1)
+          FROM SSP_APP.TB_CO_COM_CD_DTL
+         WHERE COM_CLSF_CD = #{comClsfCd}
+        <if test="comClsfCd != null and !comClsfCd.equals('') ">
+            AND COM_DTL_CD = #{comDtlCd}
+        </if>
+    </select>
+
+    <!--
+    ******************************************************************************
+    * SELECT : 분류코드 존재여부 카운트
+    * 작성자 : lee
+    * 작성 일자 : 2022-02-09
+    ******************************************************************************
+    -->
+    <select id="selectComCdClsCount" parameterType="HashMap" resultType="int">
+        /* coComCdMng.selectComCdClsCount */
+        SELECT COUNT(1)
+          FROM SSP_APP.TB_CO_COM_CD_MST
+         WHERE COM_CLSF_CD = #{comClsfCd}
+    </select>
+
+    <!--
+    ******************************************************************************
+    * SELECT : 공통코드 엑셀 다운로드
+    * 작성자 : lee
+    * 작성 일자 : 2022-05-19
+    ******************************************************************************
+    -->
+    <select id="comCodeExcelList" parameterType="HashMap" resultType="HashMap">
+        /* coComCdMng.comCodeExcelList */
+        SELECT A.COM_CLSF_CD
+             , A.COM_CLSF_CD_NM
+             , B.COM_DTL_CD
+             , B.COM_DTL_CD_NM
+             , B.SRT_SO
+             , B.COM_USR_DEFN_NM_1
+             , B.COM_USR_DEFN_NM_2
+             , B.COM_USR_DEFN_NM_3
+             , B.COM_USR_DEFN_NM_4
+             , B.COM_USR_DEFN_NM_5
+          FROM SSP_APP.TB_CO_COM_CD_MST A
+               INNER JOIN SSP_APP.TB_CO_COM_CD_DTL B
+                  ON A.COM_CLSF_CD = B.COM_CLSF_CD
+                     AND A.LANG_CD = B.LANG_CD
+          <where>
+              <if test="comClsfCd != null and !comClsfCd.equals('') ">
+                  AND A.COM_CLSF_CD LIKE '%' || #{comClsfCdNm} || '%'
+              </if>
+              <if test="comClsfCdNm != null and !comClsfCdNm.equals('') ">
+                  AND A.COM_CLSF_CD_NM LIKE '%' || #{comClsfCdNm} || '%'
+              </if>
+              <if test="useYn != null and !useYn.equals('') ">
+                  AND A.USE_YN = #{useYn}
+              </if>
+          </where>
+    </select>
+
+
+</mapper>

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcPlnPrfrtInfo">
+   <!--
+    ******************************************************************************
+    * SELECT : 공용상품가격관리
+    * 작성자 : 
+    * 작성 일자 : 2022.03.02
+    ******************************************************************************
+    -->
+	    
+    <sql id="listWhere"> 
+		<if test="coCd != null and coCd != ''">
+			AND A.CO_CD = #{coCd}
+		</if>
+		<if test="prdId != null and prdId != ''">
+			AND A.PRD_ID = #{prdId}
+		</if>	
+		<if test="dispStatsCd != null and dispStatsCd != ''">
+			AND A.DISP_STATS_CD = #{dispStatsCd}
+		</if>		
+		<if test="mallSprCd != null and mallSprCd != ''">
+			AND C.MALL_SPR_CD = #{mallSprCd}
+		</if>		
+		<if test="prdNm != null and prdNm != ''">
+			AND C.PRD_NM LIKE '%' || #{prdNm} || '%'
+		</if>		
+		<if test="prdClcd != null and prdClcd != ''">
+			AND C.PRD_CLCD = #{prdClcd}
+		</if>		
+		<if test="regpsnId != null and regpsnId != ''">
+			AND K.OPRTR_ID = #{regpsnId}
+		</if>		
+		<if test="mnfrNo != null and mnfrNo != ''">
+			AND D.MNFR_NO = #{mnfrNo}
+		</if>		
+		<if test="mroPrdStatsCd != null and mroPrdStatsCd != ''">
+			AND D.MRO_PRD_STATS_CD = #{mroPrdStatsCd}
+		</if>		
+		<if test="mroReprAttr != null and mroReprAttr != ''">
+			AND SSP_APP.FN_PR_ATTR_VAL_LIST(A.CO_CD,C.PRD_ID) = #{mroReprAttr}
+		</if>			
+		<if test="pubonlySprCd != null and pubonlySprCd != ''">
+			AND D.PUB_ONLY_SPR_CD = #{pubonlySprCd}
+		</if>	
+		<if test="bzplcId != null and bzplcId != ''">
+			AND B.BZPLC_ID = #{bzplcId}
+		</if>	
+		<if test="oprUnitId != null and oprUnitId != ''">
+			AND A.OPR_UNIT_ID = #{oprUnitId}
+		</if>	
+		
+		<if test="bzplcIdArr != null and bzplcIdArr.length > 0">
+	        AND D.BZPLC_ID IN
+	    	<foreach collection="bzplcIdArr" item="bzplcIdArr" open="(" close=")" separator=",">
+	        	#{bzplcIdArr}
+	        </foreach>
+	    </if>
+	    <if test="oprUnitIdArr != null and oprUnitIdArr.length > 0">
+	        AND C.OPR_UNIT_ID IN
+	    	<foreach collection="oprUnitIdArr" item="oprUnitIdArr" open="(" close=")" separator=",">
+	        	#{oprUnitIdArr}
+	        </foreach>
+	    </if>
+		<if test="prdIdArr != null and prdIdArr.length > 0">
+	        AND A.PRD_ID IN
+	    	<foreach collection="prdIdArr" item="prdIdArr" open="(" close=")" separator=",">
+	        	#{prdIdArr}
+	        </foreach>
+	    </if>
+		<if test="prdClcdArr != null and prdClcdArr.length > 0">
+	        AND C.PRD_CLCD IN
+	    	<foreach collection="prdClcdArr" item="prdClcdArr" open="(" close=")" separator=",">
+	        	#{prdClcdArr}
+	        </foreach>
+	    </if>
+	    <if test="regpsnIdArr != null and regpsnIdArr.length > 0">
+	        AND K.OPRTR_ID IN
+	    	<foreach collection="regpsnIdArr" item="regpsnIdArr" open="(" close=")" separator=",">
+	        	#{regpsnIdArr}
+	        </foreach>
+	    </if>
+	    <if test="prdNmArr != null and prdNmArr.length > 0">
+	        AND C.PRD_NM IN
+	    	<foreach collection="prdNmArr" item="prdNmArr" open="(" close=")" separator=",">
+	        	#{prdNmArr}
+	        </foreach>
+	    </if>	    
+	    <if test="mnfrNoArr != null and mnfrNoArr.length > 0">
+	        AND D.MNFR_NO IN
+	    	<foreach collection="mnfrNoArr" item="mnfrNoArr" open="(" close=")" separator=",">
+	        	#{mnfrNoArr}
+	        </foreach>
+	    </if>	    
+	    
+	    <if test="dateUnit != null and dateUnit != ''">
+            <if test="dateUnit != 0">
+		    	<if test="dateType == 1">
+		        	AND B.REG_DTM BETWEEN TO_DATE(#{regDtmStart}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{regDtmEnd}||'235959', 'YYYYMMDDHH24MISS')
+		        </if>
+		
+		    	<if test="dateType == 2">
+		        	AND B.UPD_DTM BETWEEN TO_DATE(#{regDtmStart}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{regDtmEnd}||'235959', 'YYYYMMDDHH24MISS')
+		        </if>
+	        </if>
+        </if>
+	</sql>
+	
+	<select id="selectPcPlnPrfrtInfoCount" parameterType="HashMap" resultType="Integer">
+        /* PcPlnPrfrtInfo.selectPcPrdPrcDtlsCount */
+        SELECT
+            COUNT(*)
+		FROM TB_PC_PLN_PRFRT_INFO A
+		LEFT OUTER JOIN TB_PR_MNFR_INFO B   --제조원
+		ON
+		(
+		    0=0
+		    AND B.CO_CD = A.CO_CD 
+		    AND B.MNFR_NO = A.MNFR_NO
+		    )
+		    LEFT JOIN TB_PR_PRD_CLSF_INFO C
+		ON
+		(
+		    0=0
+		    AND C.CO_CD = A.CO_CD
+		    AND C.PRD_CLCD = A.PRD_CLCD
+		    AND C.MALL_SPR_CD = '20' --10:SSP, 20:RND
+		)
+		WHERE 0=0
+		AND (A.MNFR_NO != '*' OR C.CO_CD IS NOT NULL) --계획매익률 RND 대상 조건        
+	 	<include refid="listWhere" />
+				      
+    </select>
+    
+    <select id="selectPcPlnPrfrtInfo" parameterType="HashMap" resultType="HashMap">
+    	/* PcPlnPrfrtInfo.selectPcPrdPrcDtls   */
+		SELECT 
+			'0' AS CHK--체크박스용
+			,A.CO_CD
+			,A.MNFR_NO  --제조원id
+			,A.PRD_CLCD --상품군ID
+			,A.SEQ --매익률 코드
+			,A.USE_YN --상태
+			,A.RND_PRFRT_SPR_CD --매익률구분
+			,B.MNFR_NM  --제조사명
+			,FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) AS PRD_CLCD_NM -- 상품군명
+			,'' --상품군상태
+			,A.PLN_PRFRT --사전설정매익률
+			,A.REGPSN_ID --등록자
+			,A.UPDPSN_ID --변경담당자
+			,A.REG_DTM --등록일 
+			,A.UPD_DTM --변경일
+			,C.CO_CD
+		FROM TB_PC_PLN_PRFRT_INFO A
+		LEFT OUTER JOIN TB_PR_MNFR_INFO B   --제조원
+		ON
+		(
+		    0=0
+		    AND B.CO_CD = A.CO_CD 
+		    AND B.MNFR_NO = A.MNFR_NO
+		    )
+		    LEFT JOIN TB_PR_PRD_CLSF_INFO C
+		ON
+		(
+		    0=0
+		    AND C.CO_CD = A.CO_CD
+		    AND C.PRD_CLCD = A.PRD_CLCD
+		    AND C.MALL_SPR_CD = '20' --10:SSP, 20:RND
+		)
+		WHERE 0=0
+		AND (A.MNFR_NO != '*' OR C.CO_CD IS NOT NULL) --계획매익률 RND 대상 조건
+		<include refid="listWhere" /> 		
+		
+		ORDER BY A.REG_DTM DESC
+		
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <!-- 수정 계획매익율정보 -->
+	<update id="updatePcPlnPrfrtInfo" parameterType="HashMap">
+		/*PcPlnPrfrtInfo.updatePcPrdPrcDtls*/
+		UPDATE TB_PC_PLN_PRFRT_INFO
+		   SET 
+		   	 PLN_PRFRT = #{plnPrfrt}
+		   	 , USE_YN = #{useYn}
+		   	 , UPDPSN_ID = #{updpsnId}
+		   	 , UPD_DTM = SYSDATE
+		 WHERE CO_CD = #{coCd}  
+		 AND MNFR_NO = #{mnfrNo}
+		 AND PRD_CLCD = #{prdClcd} 
+		 AND SEQ = #{seq}
+	</update>    
+
+    
+</mapper>

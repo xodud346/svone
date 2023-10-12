@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssp.bo.vo.zendesk">
+
+
+<select id="selectListZendesk" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.vo.zendesk.selectListZendesk */
+
+SELECT COUNT(*) OVER() AS TOT_CUNT
+     , ZDBS.CO_CD
+     , ZDBS.ZENDESK_GRP_ID
+     , ZDBS.ZENDESK_GRP_NM
+     , ZDBS.CHAT_URL
+     , ZDBS.USE_YN
+     , ZDPI.ZENDESK_CHRPSN_IDS
+     , ZDPI.ZENDESK_CHRPSN_NMS
+  FROM TB_VO_ZENDESK_BASIS          ZDBS
+     , (SELECT CO_CD
+             , ZENDESK_GRP_ID
+             , LISTAGG(DISTINCT ZENDESK_CHRPSN_ID, ',') WITHIN GROUP(ORDER BY CO_CD, ZENDESK_GRP_ID, ZENDESK_CHRPSN_ID)  ZENDESK_CHRPSN_IDS
+             , LISTAGG(DISTINCT ZENDESK_CHRPSN_NM, ',') WITHIN GROUP(ORDER BY CO_CD, ZENDESK_GRP_ID, ZENDESK_CHRPSN_ID)  ZENDESK_CHRPSN_NMS
+          FROM TB_VO_ZENDESK_CHRPSN_INFO
+         WHERE CO_CD  = NVL(#{coCd}, '1000')
+           AND USE_YN = 'Y'
+         GROUP BY
+               CO_CD
+             , ZENDESK_GRP_ID
+       )    ZDPI
+ WHERE ZDBS.CO_CD = ZDPI.CO_CD(+) AND ZDBS.ZENDESK_GRP_ID = ZDPI.ZENDESK_GRP_ID(+)
+   AND ZDBS.CO_CD = NVL(#{coCd}, '1000')
+   <if test='zendeskGrpId     != null and !"".equals(zendeskGrpId    .trim())'>AND ZDBS.ZENDESK_GRP_ID     LIKE '%'|| #{zendeskGrpId    } ||'%'</if>
+   <if test='zendeskGrpNm     != null and !"".equals(zendeskGrpNm    .trim())'>AND ZDBS.ZENDESK_GRP_NM     LIKE '%'|| #{zendeskGrpNm    } ||'%'</if>
+   <if test='chatUrl          != null and !"".equals(chatUrl         .trim())'>AND ZDBS.CHAT_URL           LIKE '%'|| #{chatUrl         } ||'%'</if>
+   <if test='zendeskChrpsnNms != null and !"".equals(zendeskChrpsnNms.trim())'>AND ZDPI.ZENDESK_CHRPSN_NMS LIKE '%'|| #{zendeskChrpsnNms} ||'%'</if>
+   
+ ORDER BY
+       ZDBS.CO_CD
+     , ZDBS.ZENDESK_GRP_ID
+       
+/* /com.ssp.bo.vo.zendesk.selectListZendesk */
+</select>
+
+
+
+
+</mapper>

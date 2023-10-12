@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_OA_COL_SEARCH" width="200" height="400" titletext="컬럼정보" onload="SSP_BO_OA_COL_SEARCH_onload" oninit="SSP_BO_OA_COL_SEARCH_oninit" scrolltype="none">
+    <Layouts>
+      <Layout height="400" width="200">
+        <Edit id="edt_tableName" taborder="1" left="10" top="10" height="30" right="10" onkeydown="edt_tableName_onkeydown" readonly="true"/>
+        <Grid id="grid_list01" taborder="0" left="10" top="10" right="10" bottom="50" autofittype="col" binddataset="ds_list01" oncelldblclick="grid_list01_oncelldblclick">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="48"/>
+                <Column size="0"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="Column ID"/>
+                <Cell col="1" text="Comment"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:COLUMN_NAME"/>
+                <Cell col="1" text="bind:COMMENTS"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_close" taborder="2" text="닫기" onclick="btn_close_onclick" positionstep="0" left="10" right="10" height="30" bottom="10"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="OWNER" type="STRING" size="256"/>
+          <Column id="TABLE_NAME" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list01">
+        <ColumnInfo>
+          <Column id="OWNER" type="STRING" size="256"/>
+          <Column id="TABLE_NAME" type="STRING" size="256"/>
+          <Column id="COLUMN_NAME" type="STRING" size="256"/>
+          <Column id="COMMENTS" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[// 컬럼조회
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+include "OD::odUtils.xjs";
+
+this.fv_oApp = nexacro.getApplication();	//application object 
+
+this.owner = "";
+this.tableName ="";
+
+/***********************************************************************************************
+* FORM EVENT 영역
+************************************************************************************************/
+this.SSP_BO_OA_COL_SEARCH_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.owner = this.parent.pv1;
+    this.tableName = this.parent.pv2;
+	trace("### owner : " + this.owner + ", tableName : " + this.tableName);
+	if (this.gfn_isNull(this.tableName) == false) {
+		this.edt_tableName.set_value(this.tableName);
+		this.fn_search();
+	}
+};
+
+this.SSP_BO_OA_COL_SEARCH_oninit = function(obj:nexacro.Form,e:nexacro.EventInfo)
+{
+	this.getOwnerFrame().set_resizable(true);
+	this.getOwnerFrame().set_width(this.parent.pv3);
+	this.getOwnerFrame().set_height(this.parent.pv4);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function() {
+	var sSvcId = "selectColumnList";
+	var sUrl = "/od/odrPopup/selectColumnList.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_list01=ds_output1";
+	var arg = "";
+	
+	this.fn_searchMapSetting();
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if (svcID == "selectColumnList") {
+		trace("### selectColumnList - ds_list01.rowcount : " + this.ds_list01.rowcount);
+	}
+};
+
+/***********************************************************************************************
+* 사용자 함수 영역
+************************************************************************************************/
+this.fn_searchMapSetting = function() {
+	this.ds_search.clearData();
+	this.ds_search.addRow();
+	this.tableName = this.edt_tableName.value;
+	this.ds_search.setColumn(0, "OWNER", this.owner);
+	this.ds_search.setColumn(0, "TABLE_NAME", this.tableName);
+};
+
+
+/***********************************************************************************************
+* COMPONENT EVENT 영역
+************************************************************************************************/
+// 에디트 키다운
+this.edt_tableName_onkeydown = function(obj:nexacro.Edit,e:nexacro.KeyEventInfo)
+{
+	if (e.keycode == 13 && this.gfn_isNull(this.edt_tableName.value) == false) {
+		this.fn_search();
+	}
+};
+
+// 닫기
+this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close(null);
+};
+
+// 그리드 더블클릭
+this.grid_list01_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	trace("### 그리드 더블클릭");
+	var resData = {};
+	var resString = "";
+	var row = this.ds_list01.rowposition;
+	resData.COLUMN_NAME = this.ds_list01.getColumn(row, "COLUMN_NAME");
+	resData.COMMENTS = this.ds_list01.getColumn(row, "COMMENTS");
+	resString = JSON.stringify(resData);	
+	this.close(resString);
+};
+]]></Script>
+  </Form>
+</FDL>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcPlnPrfrt">
+
+	<sql id="PlnPrfrtWhere">
+		AND MNFR_NO = '*'
+		<choose>
+			<when test="prdClcd != null and prdClcd != ''.toString()">
+				AND	A.PRD_CLCD = #{prdClcd}
+			</when>
+			<otherwise>
+				AND C.MALL_SPR_CD = '10'
+				AND	A.PRD_CLCD != '*'
+			</otherwise>
+		</choose>
+		<if test="strDtm != null and strDtm != ''.toString()">
+			<![CDATA[
+		    AND A.REG_DTM >= TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS')
+		    ]]>
+		</if>
+		<if test="endDtm != null and endDtm != ''.toString()">
+		    <![CDATA[
+		    AND A.REG_DTM < TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')
+		    ]]>
+		</if>
+		<if test="useYn != null and useYn != ''.toString()">
+		    AND	A.USE_YN = #{useYn}
+		</if>
+	</sql>
+
+	<!-- 카테고리 계획 매익률 목록 -->
+    <select id="selectPlnPrfrtList" parameterType="HashMap" resultType="HashMap">
+        /* PcPlnPrfrt.selectPlnPrfrtList */
+        SELECT * FROM (
+	        SELECT	
+	        	A.CO_CD,
+				A.PRD_CLCD,
+				FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) AS PRD_CLCD_NM,
+				A.PLN_PRFRT,
+				A.PLN_PRFRT||'%' AS PLN_PRFRT_NM,
+				A.REG_RSN,
+				A.SEQ,
+				DECODE(A.USE_YN, 'Y', '사용', 'N', '미사용','')  AS USE_YN_NM,
+				A.USE_YN,
+				A.VLD_STR_DTM,
+				A.VLD_END_DTM,
+				A.REGPSN_ID,
+				B.OPRTR_NM,
+				TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS') AS REG_DTM,
+				TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM
+			FROM TB_PC_PLN_PRFRT_INFO A
+			LEFT OUTER JOIN TB_PR_PRD_CLSF_INFO C
+				ON C.CO_CD = A.CO_CD
+				AND C.PRD_CLCD = A.PRD_CLCD
+			LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+				ON A.CO_CD = B.CO_CD
+				AND A.REGPSN_ID = B.OPRTR_ID
+			<where>
+			 	<include refid="PlnPrfrtWhere" />
+			</where>
+		)A
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.SEQ DESC</otherwise>
+		</choose>
+		OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <select id="selectPlnPrfrtCount" parameterType="hashMap" resultType="integer">
+    	/* PcPlnPrfrt.selectPlnPrfrtCount */
+		SELECT
+			COUNT(0)
+		 FROM TB_PC_PLN_PRFRT_INFO A
+		 LEFT OUTER JOIN TB_PR_PRD_CLSF_INFO C
+			ON C.CO_CD = A.CO_CD
+			AND C.PRD_CLCD = A.PRD_CLCD
+		 <where>
+		 	<include refid="PlnPrfrtWhere" />
+		</where>
+    </select>
+    
+    <!-- 카테고리 계획 매익률 목록 -->
+    <select id="selectPlnPrfrtDetail" parameterType="HashMap" resultType="HashMap">
+        /* PcPlnPrfrt.selectPlnPrfrtDetail */
+        SELECT
+	        	A.CO_CD,
+				A.PRD_CLCD,
+				A.PRD_CLCD AS PRD_CLCD_NM,
+				A.PLN_PRFRT,
+				TO_CHAR(A.PLN_PRFRT, 'FM9,999,999,990.00')||'%'AS PLN_PRFRT_NM,
+				A.REG_RSN,
+				A.SEQ,
+				DECODE(A.USE_YN, 'Y', '사용', 'N', '미사용','')  AS USE_YN_NM,
+				A.USE_YN,
+				A.VLD_STR_DTM,
+				A.VLD_END_DTM,
+				A.REGPSN_ID,
+				TO_CHAR(UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+			FROM TB_PC_PLN_PRFRT_INFO A
+			<where>
+			 	<include refid="PlnPrfrtWhere" />
+			</where>
+    </select>
+    
+    <insert id="insertPlnPrfrt" parameterType="HashMap">
+    	/* 계획매익률 등록 - insertPlnPrfrt */
+        INSERT INTO TB_PC_PLN_PRFRT_INFO
+			(CO_CD
+			, MNFR_NO
+			, SEQ
+			, PRD_CLCD
+			, PLN_PRFRT
+			, REG_RSN
+			, USE_YN
+			, VLD_STR_DTM
+			, VLD_END_DTM
+			, RND_PRFRT_SPR_CD
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM)
+		VALUES(
+			  #{coCd}
+			, #{mnfrNo}
+			, NVL((SELECT MAX(SEQ)+1 FROM TB_PC_PLN_PRFRT_INFO),0)
+			, #{prdClcd}
+			, #{plnPrfrt}
+			, #{regRsn}
+			, 'Y'
+			, TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')
+			, '99991231235959'
+			, #{rndPrfrtSprCd}
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE)
+    </insert>
+    
+    <!-- 카테고리 계획 매익률 수정 -->
+    <update id="updatePlnPrfrt" parameterType="HashMap">
+        /* PcDetrInfo.updatePlnPrfrt */
+        UPDATE	TB_PC_PLN_PRFRT_INFO 
+		SET	 
+			UPDPSN_ID = #{updpsnId}
+		 	,UPD_DTM = SYSDATE
+	 	<if test="useYn != null and useYn != ''.toString()">
+		    , USE_YN = #{useYn}
+		</if>
+		WHERE 
+			PRD_CLCD = #{prdClcd}
+			AND USE_YN = 'Y'
+    </update>
+    
+    
+</mapper>

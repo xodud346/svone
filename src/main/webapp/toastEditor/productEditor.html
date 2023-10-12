@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <!-- Editor's Style -->
+    <link rel="stylesheet" href="./css/toastui-editor.min.css" />
+    <link rel="stylesheet" href="./css/tui-color-picker.min.css" />
+    <link rel="stylesheet" href="./css/toastui-editor-plugin-color-syntax.css" />
+<!--    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />-->
+</head>
+<body>
+<input id="getData" name="getData" value="" type="button" onclick="getData();" style="display:none" />
+<input id="setData" name="setData" value="" type="button" onclick="setData();" style="display:none" />
+
+    <div id="editor" style="width: 100%; height: 100%;"></div>
+    <label for="editorData"></label><textarea name="editorData" id="editorData" style="width:100%; height:100px; display:none;"></textarea>
+
+    <script src="./js/toastui-editor-all.min.js"></script>
+    <script src="./js/tui-color-picker.min.js"></script>
+    <script src="./js/toastui-editor-plugin-color-syntax.js"></script>
+<!--    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>-->
+    <script type="text/javascript">
+	    const Editor = toastui.Editor;
+	    const plugin = Editor.plugin;
+        const uml = plugin.uml;
+
+	    const editor = new Editor({
+		      el : document.querySelector('#editor')
+            , initialValue : ""
+            , initialEditType : "wysiwyg"
+            , previewStyle : "vertical"
+            , autofocus : false
+            , toolbarItems : [['heading', 'bold', 'italic', 'strike'],
+            ['hr', 'quote'],
+            ['ul', 'ol', 'task', 'indent', 'outdent'],
+            ['table', 'image', 'link'],
+            ['code', 'codeblock']]
+            , plugins : [uml]
+            ,customHTMLRenderer : {
+                  htmlBlock: {
+                      iframe(node) {
+                          return [
+                              {
+                                  type: 'openTag',
+                                  tagName: 'iframe',
+                                  outerNewLine : true,
+                                  attributes: node.attrs
+                              },
+                              {type: 'html', content : node.childrenHTML},
+                              {type: 'closeTag', tagName: 'iframe', outerNewLine : true}
+                          ];
+                      }
+                  }
+
+            }
+	    });
+
+		function getMarkDown() {
+            return editor.getHTML();
+        }
+
+	    function getData() {
+		    document.getElementById("editorData").value = editor.getHTML();
+	    }
+
+	    function getMarkData() {
+		    return editor.getMarkdown();
+	    }
+
+	    function setData() {
+		    editor.setMarkdown(document.getElementById("editorData").value, false);
+	    }
+
+		window.addEventListener("load", function() {
+
+			//넥사크로의 웹 브라우저 클래스 찾는다.
+			let webFrame = window.parent.document.querySelectorAll(".WebBrowser");
+
+			//여러개일 수 있으니 루프.
+			for( let i = 0; i < webFrame.length; i++ ) {
+				//아이프레임내부의 에디터 객체 가져온다.
+                let editorIframe = webFrame[i].querySelector("iframe");
+				let editor = editorIframe.contentDocument.getElementById("editor");
+				let iframeHeight = parseInt(editorIframe.style.height, 10);
+
+                //높이 강제조절
+				editor.style.height = ( iframeHeight - 16 ) + "px";
+            }
+
+        });
+
+        document.getElementsByClassName('tab-item')[2].addEventListener('click', function() {
+
+                editor.setScrollTop(0);
+                editor.moveCursorToStart();
+
+        })
+    </script>
+</body>
+
+
+</html>

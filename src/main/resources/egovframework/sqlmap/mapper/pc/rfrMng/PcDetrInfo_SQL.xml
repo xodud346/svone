@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcDetrInfo">
+
+	<!-- 절사관리 목록 -->
+    <select id="selectDetrInfoList" parameterType="HashMap" resultType="HashMap">
+        /* PcDetrInfo.selectDetrInfoList */
+        SELECT 
+        	A.DETR_UNIT_SEQ, 
+        	A.DETR_UNIT_NM, 
+        	A.DETR_BSS_CD, 
+        	A.DETR_MTHD_CD, 
+        	'('||A.UPDPSN_ID||')'||B.OPRTR_NM AS UPDPSN_ID,
+        	TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM,
+        	LENGTH(A.MAX_PRC) AS MAX_PRC_LENGTH
+		FROM TB_PC_DETR_INFO A
+		LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+			ON A.CO_CD = B.CO_CD
+			AND A.UPDPSN_ID = B.OPRTR_ID
+		WHERE A.CO_CD = #{coCd}
+		ORDER BY DETR_UNIT_SEQ
+    </select>
+    
+    <!-- 절사관리 수정 -->
+    <update id="updateDetrInfo" parameterType="HashMap">
+        /* PcDetrInfo.updateDetrInfo */
+        UPDATE	TB_PC_DETR_INFO 
+		SET	 
+			UPDPSN_ID = #{updpsnId}
+		 	,UPD_DTM = SYSDATE
+	 	<if test="detrBssCd != null and detrBssCd!= ''.toString()">
+		    , DETR_BSS_CD = #{detrBssCd}
+		</if>
+		<if test="detrMthdCd != null and detrMthdCd != ''.toString()">
+		    , DETR_MTHD_CD = #{detrMthdCd}
+		</if>
+		WHERE 
+			DETR_UNIT_SEQ = #{detrUnitSeq}
+    </update>
+    
+</mapper>

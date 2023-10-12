@@ -1,0 +1,292 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_CN_02" width="1280" titletext="자주하는 질문 상세" onload="fn_onLoad" height="860">
+    <Layouts>
+      <Layout height="860" mobileorientation="landscape" width="1280">
+        <Div id="div_save" taborder="0" text="Div01" left="20" top="0" border="0px solid darkblue" right="20" height="810">
+          <Layouts>
+            <Layout>
+              <TextArea id="edt_qstCts" taborder="3" left="140" top="120" right="10" height="600"/>
+              <Static id="Static65" taborder="9" left="0" top="115" height="610" cssclass="sta_cm_box02L" right="0"/>
+              <Static id="Static07" taborder="7" left="0" top="84" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static03" taborder="5" left="0" top="53" height="32" cssclass="sta_cm_box02L_tdt" right="0" text=""/>
+              <Static id="Static00" taborder="0" text="자주하는 질문" left="0" top="22" height="30" cssclass="sta_WF_title01" onclick="Static00_onclick" width="300"/>
+              <Static id="Static02" taborder="4" text="유형" left="0" top="53" width="130" height="32" cssclass="sta_cm_box01L_tdt_necessary" onclick="Div_top_info_Static02_onclick"/>
+              <Static id="Static06" taborder="6" text="제목" left="0" top="84" width="130" height="32" cssclass="sta_cm_box01L_necessary"/>
+              <Static id="Static10" taborder="8" text="내용" left="0" top="115" width="130" height="610" cssclass="sta_cm_box01L_necessary"/>
+              <Edit id="edt_qstTtl" taborder="2" left="140" top="88" height="24" right="10" maxlength="60" displaynulltext="최대 60자 까지 입력하실 수 있습니다." onchanged="edt_qstTtl_onchanged"/>
+              <Combo id="cmb_rfiTpCd" taborder="1" left="140" top="58" width="150" height="24" index="-1" innerdataset="ds_rfiTpCd" datacolumn="COM_DTL_CD_NM" codecolumn="COM_DTL_CD"/>
+              <Static id="Static07_00" taborder="10" left="0" top="724" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static07_00_00" taborder="11" left="0" top="755" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <WebBrowser id="wbs_qstCts" taborder="12" onloadcompleted="webEditor_onloadcompleted" height="600" width="1090" left="140" top="120"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btn_cancel" taborder="1" text="취소" top="815" width="70" height="30" onclick="btn_cancel_onclick" left="555"/>
+        <Button id="btn_save" taborder="2" text="저장" top="815" width="70" height="30" cssclass="btn_WF_select" onclick="btn_save_onclick" left="703"/>
+        <Button id="btn_delete" taborder="3" text="삭제" top="815" width="70" height="30" onclick="btn_delete_onclick" left="629"/>
+        <Static id="Static16_01" taborder="4" text="최초 등록" left="20" top="724" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Static id="Static16_01_00" taborder="5" text="최종 수정" left="20" top="755" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Static id="Static16_01_00_00" taborder="6" text="수정 일시" left="642" top="755" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Static id="Static16_01_00_00_00" taborder="7" text="등록 일시" left="642" top="724" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Static id="sta_regPsnId" taborder="8" left="150" top="724" width="303" height="32" cssclass="sta_cm_box02L_txt"/>
+        <Static id="sta_updpsnId" taborder="9" left="150" top="755" width="303" height="32" cssclass="sta_cm_box02L_txt"/>
+        <Static id="sta_regDtm" taborder="10" left="773" top="724" width="303" height="32" cssclass="sta_cm_box02L_txt"/>
+        <Static id="sta_updDtm" taborder="11" left="773" top="755" width="303" height="32" cssclass="sta_cm_box02L_txt"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 
+*******************************************************/
+include "CO::coUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.fvDocWeb = "";
+this.fvRtnHeight=260; //버튼사이즈
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+	this.gfn_formOnLoad(this);
+	this.fn_commonCodeSearch();
+	this.ds_search.setColumn(0, "OFTEN_QST_SEQ", this.parent.oftenQstSeq);
+	this.fn_search();
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "",
+		SHIFT_ENTER : "",
+		SHIFT_S : "btn_save_onclick",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-usr-defn-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_rfiTpCd=ds_output1";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "CODE_LIST", "RFI_TP_CD");
+	this.ds_search.setColumn(0, "COM_USR_DEFN_NM_1", "Y");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//조회  
+this.fn_search = function(){
+	var sSvcId = "search"; 
+	var sUrl = "/co/often-qst/select-often-qst-detail.do";
+	var inDs = "ds_search=ds_search"
+	var outDs = "ds_oftenQstDetail=ds_output1";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack", false);
+};
+
+//저장
+this.fn_save = function(type){	
+	var sSvcId = "save";  
+	
+	if(type == "DEL"){
+		sSvcId = "delete";  
+	}
+	
+	var sUrl = "/co/often-qst/save-often-qst-list.do";  
+	var inDs = "ds_save=ds_oftenQstDetail:U"
+	var outDs = "";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	switch(svcID){
+		case "search":
+			break;
+		case "commonCodeSearch":
+			this.ds_rfiTpCd.insertRow(0);
+			this.ds_rfiTpCd.setColumn(0,"COM_DTL_CD_NM","선택");
+			
+			var sUrl = nexacro.getEnvironment().services["svcUrl"].url + "toastEditor/index.html";
+			this.div_save.form.wbs_qstCts.set_url(sUrl);
+	
+			break;
+		case "save":
+			if(errorCode == -100){
+				alert(errorMsg);
+			}else{
+				//alert("저장되었습니다.");
+				//this.close(true);
+				this.fn_search();
+			}
+			break;
+		case "delete":
+			if(errorCode == -100){
+				alert(errorMsg);
+			}else{
+				//alert("삭제되었습니다.");
+				this.close(true);
+			}
+			break;
+		default: 
+			break;
+	}
+};
+
+
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+//저장 유효성 체크
+this.fn_validationCheck = function(){
+	if(this.gfn_isNull(this.div_save.form.cmb_rfiTpCd.value)) {
+		alert(this.gfn_getMessage("ERRC000004", ["유형"])); //&1 은(는) 필수 입력값입니다. 
+		return false;
+	}
+	
+	if(this.gfn_isNull(this.div_save.form.edt_qstTtl.value)) {
+		alert(this.gfn_getMessage("ERRC000004", ["제목"])); //&1 은(는) 필수 입력값입니다. 
+		return false;
+	}
+	
+	//에디터 내용을 가져오기
+	this.fvDocWeb.getProperty("getData").callMethod("click");
+	var sEditorData = this.fvDocWeb.getProperty("editorData").getProperty("value");
+	
+	//직접 호출방식
+	/*
+	var _win = this.div_top_info.form.WebEditor.getProperty("window");
+	var sEditorData = _win.callMethod("getMarkDown");	
+	if( _win ) {
+		_win.destroy();
+		_win = null;
+	}	
+	*/
+	
+	if( sEditorData == ""  || sEditorData == null || sEditorData == '&nbsp;' || sEditorData == '<p><br></p>')  {
+       alert(this.gfn_getMessage("ERRC000004", ["내용"])); //&1 은(는) 필수 입력값입니다. 
+       return;
+	}
+	this.ds_oftenQstDetail.setColumn(0, "QST_CTS", sEditorData);
+	
+	var chkDsChange = this.fn_dataChangeCheck(this.ds_oftenQstDetail);
+	if( !chkDsChange ) {
+		//alert("저장할 내용이 없습니다.");
+		alert(this.gfn_getMessage("COMS000008", ["수정", "내용"]));	//수정된 내용이 없습니다.
+		return false;
+	}
+	
+			
+	return true;
+};
+
+
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//취소
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close(false);
+};
+
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.fn_validationCheck()){
+		var sReturn = this.confirm(this.gfn_getMessage("COMS000013", ["저장"]));
+		if(sReturn == true){
+			this.fn_save("INS");
+		}
+	}
+};
+
+this.btn_delete_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var sReturn = this.confirm(this.gfn_getMessage("COMS000013", ["삭제"]));
+	if(sReturn == true){
+		this.ds_oftenQstDetail.deleteAll();
+		this.fn_save("DEL");
+	}
+};
+
+this.edt_qstTtl_onchanged = function(obj:nexacro.Edit,e:nexacro.ChangeEventInfo)
+{
+	if(this.div_save.form.edt_qstTtl.value.toString().length == 0){
+		this.ds_oftenQstDetail.setColumn(0, "QST_TTL", null);
+	}
+};
+
+
+this.webEditor_onloadcompleted = function(obj:nexacro.WebBrowser,e:nexacro.WebLoadCompEventInfo)
+{
+	this.fvDocWeb = this.div_save.form.wbs_qstCts.getProperty("document").getProperty("all");
+	
+	var sContents = this.ds_oftenQstDetail.getColumn(0, "QST_CTS");
+	this.fvDocWeb.getProperty("editorData").setProperty("value", sContents);
+	this.fvDocWeb.getProperty("setData").callMethod("click");	
+};
+
+]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="OFTEN_QST_SEQ" type="INT" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_1" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_oftenQstDetail">
+        <ColumnInfo>
+          <Column id="OFTEN_QST_SEQ" type="STRING" size="256"/>
+          <Column id="RFI_TP_CD" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REGPSN_NM" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="UPDPSN_NM" type="STRING" size="256"/>
+          <Column id="QST_TTL" type="STRING" size="256"/>
+          <Column id="QST_CTS" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_rfiTpCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item7" compid="div_save.form.edt_qstTtl" propid="value" datasetid="ds_oftenQstDetail" columnid="QST_TTL"/>
+      <BindItem id="item0" compid="div_save.form.edt_qstCts" propid="value" datasetid="ds_oftenQstDetail" columnid="QST_CTS"/>
+      <BindItem id="item1" compid="div_save.form.cmb_rfiTpCd" propid="value" datasetid="ds_oftenQstDetail" columnid="RFI_TP_CD"/>
+      <BindItem id="item3" compid="div_top_info.form.Static04_00" propid="text" datasetid="ds_detail" columnid="REG_DTM"/>
+      <BindItem id="item4" compid="div_top_info.form.Static04_01" propid="text" datasetid="ds_detail" columnid="UPDPSN_ID"/>
+      <BindItem id="item5" compid="div_top_info.form.Static04_00_00" propid="text" datasetid="ds_detail" columnid="UPD_DTM"/>
+      <BindItem id="item2" compid="sta_regPsnId" propid="text" datasetid="ds_oftenQstDetail" columnid="REGPSN_NM"/>
+      <BindItem id="item6" compid="sta_regDtm" propid="text" datasetid="ds_oftenQstDetail" columnid="REG_DTM"/>
+      <BindItem id="item8" compid="sta_updpsnId" propid="text" datasetid="ds_oftenQstDetail" columnid="UPDPSN_NM"/>
+      <BindItem id="item9" compid="sta_updDtm" propid="text" datasetid="ds_oftenQstDetail" columnid="UPD_DTM"/>
+    </Bind>
+  </Form>
+</FDL>

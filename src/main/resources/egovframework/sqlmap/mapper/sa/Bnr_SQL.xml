@@ -1,0 +1,625 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Bnr">
+
+<!--
+	******************************************************************************
+	* SELECT : 배너
+	* 작성자 : 87minho
+	* 작성 일자 : 2022-03-14
+	******************************************************************************
+	-->
+	<select id="selectBnrExpsList" parameterType="HashMap" resultType="HashMap">
+		/* 배너 노출 목록 조회 - Bnr_SQL.selectBnrExpsList */
+		SELECT LEVEL AS BNR_EXPS_LVL
+				, CO_CD
+				, CHN_TP_CD
+				, MALL_SPR_CD
+				, BNR_EXPS_PST_ID
+				, BNR_EXPS_PST_NM
+				, HRNK_BNR_EXPS_PST_ID
+				, PRD_CLCD
+				, SRT_SO
+				, CATG_DEL_YN
+		FROM (
+			SELECT #{coCd} AS CO_CD, #{chnTpCd} AS CHN_TP_CD,  COM_DTL_CD AS MALL_SPR_CD, TO_NUMBER(COM_DTL_CD) AS BNR_EXPS_PST_ID, COM_DTL_CD_NM AS BNR_EXPS_PST_NM
+						, NULL AS HRNK_BNR_EXPS_PST_ID, NULL AS PRD_CLCD, SRT_SO, 'N' AS CATG_DEL_YN
+			FROM TB_CO_COM_CD_DTL
+			WHERE COM_CLSF_CD = 'MALL_SPR_CD'
+			UNION ALL
+			SELECT CO_CD, CHN_TP_CD, MALL_SPR_CD, BNR_EXPS_PST_ID, BNR_EXPS_PST_NM, HRNK_BNR_EXPS_PST_ID, NULL AS PRD_CLCD, SRT_SO, 'N' AS CATG_DEL_YN
+			FROM TB_SA_BNR_EXPS_INFO
+			WHERE CHN_TP_CD = #{chnTpCd}
+			AND HRNK_BNR_EXPS_PST_ID <![CDATA[<>]]> #{oneDpthCatgBnrId}
+			UNION ALL
+			SELECT CO_CD, CHN_TP_CD, MALL_SPR_CD, BNR_EXPS_PST_ID, BNR_EXPS_PST_NM,  HRNK_BNR_EXPS_PST_ID, PRD_CLCD, SRT_SO, CATG_DEL_YN
+			FROM (
+				SELECT A.CO_CD, NVL(B.CHN_TP_CD , #{chnTpCd}) AS CHN_TP_CD, A.MALL_SPR_CD, NVL(B.BNR_EXPS_PST_ID, 0) AS BNR_EXPS_PST_ID, PRD_CLSF_NM AS BNR_EXPS_PST_NM
+							, #{oneDpthCatgBnrId} AS HRNK_BNR_EXPS_PST_ID, NVL(B.PRD_CLCD, A.PRD_CLCD) AS PRD_CLCD, NVL(A.SRT_SO, 99999) AS SRT_SO
+							, CASE WHEN B.HRNK_BNR_EXPS_PST_ID IS NOT NULL AND A.PRD_CLCD IS NOT NULL AND (A.USE_YN = 'N' OR A.DEL_YN = 'Y') THEN 'Y'
+										ELSE 'N' END AS CATG_DEL_YN
+							, A.USE_YN
+				FROM TB_PR_PRD_CLSF_INFO A
+					, (
+							SELECT CO_CD, CHN_TP_CD, MALL_SPR_CD, BNR_EXPS_PST_ID, BNR_EXPS_PST_NM, HRNK_BNR_EXPS_PST_ID, PRD_CLCD, SRT_SO
+							FROM TB_SA_BNR_EXPS_INFO
+							WHERE CO_CD = #{coCd}
+								AND CHN_TP_CD = #{chnTpCd}
+								AND HRNK_BNR_EXPS_PST_ID = #{oneDpthCatgBnrId}
+					) B
+				WHERE A.CO_CD = B.CO_CD(+)
+					AND A.PRD_CLCD = B.PRD_CLCD(+)
+					AND A.CO_CD = #{coCd}
+					AND A.HIER_LVL = 1
+					AND A.MALL_SPR_CD = '10'
+			)
+			WHERE USE_YN = 'Y' OR BNR_EXPS_PST_ID <![CDATA[<>]]> 0
+		)
+		START WITH HRNK_BNR_EXPS_PST_ID IS NULL
+		CONNECT BY PRIOR BNR_EXPS_PST_ID = HRNK_BNR_EXPS_PST_ID
+		ORDER SIBLINGS BY SRT_SO
+	</select>
+
+	<select id="selectBnrListCnt" parameterType="HashMap" resultType="Integer">
+		/* 배너 목록 총 합계 조회 - Bnr_SQL.selectBnrListCnt */
+		SELECT COUNT(S.BNR_INFO_SEQ)
+		FROM (
+			SELECT CASE WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') >= MIN(A.DISP_STR_DT) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[<=]]> MIN(A.DISP_END_DT)
+								THEN 'ING'
+								WHEN MIN(A.DISP_STR_DT) > TO_CHAR(SYSDATE, 'YYYYMMDD')
+								THEN 'READY'
+								ELSE 'END' END BNR_STATS
+					, A.BNR_INFO_SEQ
+			FROM TB_SA_BNR_INFO A
+				, TB_SA_BNR_OPR_UNIT_DTL B
+				, TB_CC_OPR_UNIT_BASIS C
+				, TB_SA_BNR_EXPS_INFO D
+				<if test="oprUnitList != null and oprUnitList.size > 0 ">
+					, TB_OD_ODR_INQ_TGT_DTLS   T1
+					, TB_OD_ODR_INQ_TGT_DTLS   T2
+				</if>
+			WHERE A.CO_CD = B.CO_CD(+)
+				AND A.BNR_INFO_SEQ = B.BNR_INFO_SEQ(+)
+				AND B.CO_CD = C.CO_CD(+)
+				AND B.BZPLC_ID = C.BZPLC_ID(+)
+				AND B.OPR_UNIT_ID = C.OPR_UNIT_ID(+)
+				AND A.CO_CD = D.CO_CD
+				AND A.CHN_TP_CD = D.CHN_TP_CD
+				AND A.MALL_SPR_CD = D.MALL_SPR_CD
+				AND A.BNR_EXPS_PST_ID = D.BNR_EXPS_PST_ID
+				AND A.CO_CD = #{coCd}
+				AND A.BNR_EXPS_PST_ID = #{bnrExpsPstId}
+				AND A.CHN_TP_CD = #{chnTpCd}
+				AND A.MALL_SPR_CD = #{mallSprCd}
+				<if test="useYn != null and !useYn.equals('') ">
+					AND A.USE_YN = #{useYn}
+				</if>
+				<if test="expsNoticSprCd != null and !expsNoticSprCd.equals('') ">
+					AND A.EXPS_NOTIC_SPR_CD = #{expsNoticSprCd}
+				</if>
+				<if test="oprUnitList != null and oprUnitList.size > 0 ">
+					AND T1.SES_ID = #{sesId}
+					AND T1.INQ_COND_DTLS = #{inqCondDtls}
+					AND T1.COL_ITM = 'OPR_UNIT_ID'
+					AND T1.COND_DATA_VAL = B.OPR_UNIT_ID
+					AND T2.SES_ID = #{sesId}
+					AND T2.INQ_COND_DTLS = #{inqCondDtls}
+					AND T2.COL_ITM = 'BZPLC_ID'
+					AND T2.COND_DATA_VAL = B.BZPLC_ID
+				</if>
+			GROUP BY  A.CO_CD, A.BNR_INFO_SEQ
+		) S
+		<if test="bnrStats != null and bnrStats != '' ">
+			WHERE S.BNR_STATS = #{bnrStats}
+		</if>
+	</select>
+
+	<select id="selectBnrList" parameterType="HashMap" resultType="HashMap">
+		/* 배너 목록 조회 - Bnr_SQL.selectBnrList */
+		SELECT S.CO_CD
+				, S.BNR_INFO_SEQ
+				, S.BNR_EXPS_PST_ID
+				, S.CHN_TP_CD
+				, S.MALL_SPR_CD
+				, S.EXPS_NOTIC_SPR_CD
+				, S.EXPS_NOTIC_SPR_CD_NM
+				, S.TTL
+				, S.DISP_SO
+				, S.DISP_STR_DT
+				, S.DISP_END_DT
+				, S.USE_YN
+				, S.PRD_INC_YN
+				, S.REGPSN_ID
+				, S.REG_DTM
+				, S.OPR_UNIT_NM
+				, S.HRNK_BNR_EXPS_PST_ID
+				, S.BNR_STATS
+		FROM (
+			SELECT A.CO_CD
+					, A.BNR_INFO_SEQ
+					, MIN(A.BNR_EXPS_PST_ID) AS BNR_EXPS_PST_ID
+					, MIN(A.CHN_TP_CD) AS CHN_TP_CD
+					, MIN(A.MALL_SPR_CD) AS MALL_SPR_CD
+					, MIN(A.EXPS_NOTIC_SPR_CD) AS EXPS_NOTIC_SPR_CD
+				    , MIN(E.COM_DTL_CD_NM) AS EXPS_NOTIC_SPR_CD_NM		/* SSP-2971 */
+					, MIN(A.TTL) AS TTL
+					, MIN(A.DISP_SO) AS DISP_SO
+					, TO_CHAR(TO_DATE(MIN(A.DISP_STR_DT), 'YYYY-MM-DD'), 'YYYY-MM-DD') AS DISP_STR_DT
+					, TO_CHAR(TO_DATE(MIN(A.DISP_END_DT), 'YYYY-MM-DD'), 'YYYY-MM-DD') AS DISP_END_DT
+					, MIN(A.USE_YN) AS USE_YN
+					, MIN(A.PRD_INC_YN) AS PRD_INC_YN
+					, MIN(A.REGPSN_ID) AS REGPSN_ID
+					, TO_CHAR(MIN(A.REG_DTM), 'YYYY-MM-DD') AS REG_DTM
+					, CASE WHEN COUNT(C.OPR_UNIT_ID) > 0 THEN MIN(C.OPR_UNIT_NM) || '(' || COUNT(C.OPR_UNIT_ID) || ')'
+								ELSE MIN(C.OPR_UNIT_NM) END OPR_UNIT_NM
+					, MIN(D.HRNK_BNR_EXPS_PST_ID) AS HRNK_BNR_EXPS_PST_ID
+					, CASE WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') >= MIN(A.DISP_STR_DT) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[<=]]> MIN(A.DISP_END_DT)
+								THEN 'ING'
+							WHEN MIN(A.DISP_STR_DT) > TO_CHAR(SYSDATE, 'YYYYMMDD')
+								THEN 'READY'
+								ELSE 'END' END BNR_STATS
+			FROM TB_SA_BNR_INFO A
+				, TB_SA_BNR_OPR_UNIT_DTL B
+				, TB_CC_OPR_UNIT_BASIS C
+				, TB_SA_BNR_EXPS_INFO D
+				, TB_CO_COM_CD_DTL E
+				<if test="oprUnitList != null and oprUnitList.size > 0 ">
+					, TB_OD_ODR_INQ_TGT_DTLS   T1
+					, TB_OD_ODR_INQ_TGT_DTLS   T2
+				</if>
+			WHERE A.CO_CD = B.CO_CD(+)
+				AND A.BNR_INFO_SEQ = B.BNR_INFO_SEQ(+)
+				AND B.CO_CD = C.CO_CD(+)
+				AND B.BZPLC_ID = C.BZPLC_ID(+)
+				AND B.OPR_UNIT_ID = C.OPR_UNIT_ID(+)
+				AND A.CO_CD = D.CO_CD
+				AND A.CHN_TP_CD = D.CHN_TP_CD
+				AND A.MALL_SPR_CD = D.MALL_SPR_CD
+				AND A.BNR_EXPS_PST_ID = D.BNR_EXPS_PST_ID
+				
+				AND A.EXPS_NOTIC_SPR_CD = E.COM_DTL_CD
+			    AND E.LANG_CD = 'KO'
+			    AND E.COM_CLSF_CD =  'EXPS_NOTIC_SPR_CD'
+			    AND E.USE_YN = 'Y'
+			    
+				AND A.CO_CD = #{coCd}
+				AND A.BNR_EXPS_PST_ID = #{bnrExpsPstId}
+				AND A.CHN_TP_CD = #{chnTpCd}
+				AND A.MALL_SPR_CD = #{mallSprCd}
+				<if test="useYn != null and !useYn.equals('') ">
+					AND A.USE_YN = #{useYn}
+				</if>
+				<if test="expsNoticSprCd != null and !expsNoticSprCd.equals('') ">
+					AND A.EXPS_NOTIC_SPR_CD = #{expsNoticSprCd}
+				</if>
+				<if test="oprUnitList != null and oprUnitList.size > 0 ">
+					AND T1.SES_ID = #{sesId}
+					AND T1.INQ_COND_DTLS = #{inqCondDtls}
+					AND T1.COL_ITM = 'OPR_UNIT_ID'
+					AND T1.COND_DATA_VAL = B.OPR_UNIT_ID
+					AND T2.SES_ID = #{sesId}
+					AND T2.INQ_COND_DTLS = #{inqCondDtls}
+					AND T2.COL_ITM = 'BZPLC_ID'
+					AND T2.COND_DATA_VAL = B.BZPLC_ID
+				</if>
+			GROUP BY A.CO_CD, A.BNR_INFO_SEQ
+		) S
+		
+		<if test="bnrStats != null and bnrStats != '' ">
+			WHERE S.BNR_STATS = #{bnrStats}
+		</if>
+		
+		<if test="sortColumn != null and sortColumn != ''">
+ 			ORDER BY ${sortColumn} ${sortType}
+		</if>
+	
+		<if test="sortColumn == null or sortColumn == ''">		
+			ORDER BY S.USE_YN DESC, S.BNR_STATS DESC, S.EXPS_NOTIC_SPR_CD, NVL(S.DISP_SO, 0), S.REG_DTM DESC
+		</if>
+		
+	</select>
+
+	<update id="updateBnrDispSo" parameterType="HashMap">
+		/* 배너 순서 저장 - Bnr_SQL.updateBnrDispSo */
+		UPDATE TB_SA_BNR_INFO
+			SET DISP_SO = #{dispSo}
+				,  UPDPSN_ID = #{updpsnId}
+				,  UPD_DTM = SYSDATE
+			WHERE CO_CD = #{coCd}
+				AND BNR_INFO_SEQ = #{bnrInfoSeq}
+	</update>
+
+	<delete id="deleteBnrExps" parameterType="HashMap">
+	/* 배너 노출 정보 삭제 - Bnr_SQL.deleteBnrExps */
+		DELETE FROM TB_SA_BNR_EXPS_INFO
+		WHERE CO_CD = #{coCd}
+			AND CHN_TP_CD = #{chnTpCd}
+			AND MALL_SPR_CD = #{mallSprCd}
+			AND BNR_EXPS_PST_ID = #{bnrExpsPstId}
+	</delete>
+
+	<delete id="deleteBnrExpsRelBnr" parameterType="HashMap">
+		/* 배너 삭제(배너 노출정보 삭제 뒤 배너 정보 삭제) - Bnr_SQL.deleteBnrExpsRelBnr */
+		DELETE FROM TB_SA_BNR_INFO
+		WHERE CO_CD = #{coCd}
+			AND CHN_TP_CD = #{chnTpCd}
+			AND MALL_SPR_CD = #{mallSprCd}
+			AND BNR_EXPS_PST_ID = #{bnrExpsPstId}
+	</delete>
+
+	<select id="selectBnrInfo" parameterType="HashMap" resultType="HashMap">
+		/* 배너 상세 조회 - Bnr_SQL.selectBnrInfo */
+		SELECT A.CO_CD
+				, A.BNR_INFO_SEQ
+				, A.BNR_EXPS_PST_ID
+				, A.CHN_TP_CD
+				, A.MALL_SPR_CD
+				, A.EXPS_NOTIC_SPR_CD
+				, A.TTL
+				, A.DISP_SO
+				, A.DISP_STR_DT
+				, A.DISP_END_DT
+				, A.MAIN_DOC_REG_ID
+				, A.MAIN_URL_CNSOL_SPR_CD
+				, A.MAIN_URL
+				, A.SUB_DOC_REG_ID
+				, A.SUB_URL_CNSOL_SPR_CD
+				, A.SUB_URL
+				, A.USE_YN
+				, A.PRD_INC_YN
+				, A.NOTLOGN_INC_YN
+				, B.DOC_REG_SEQ AS MAIN_DOC_REG_SEQ
+				, B.ATFL_NM AS MAIN_ATFL_NM
+				, B.ATFL_STOR_PATH AS MAIN_ATFL_STOR_PATH
+				, B.ORI_ATFL_NM AS MAIN_ORI_ATFL_NM
+				, C.DOC_REG_SEQ AS SUB_DOC_REG_SEQ
+				, C.ATFL_NM AS SUB_ATFL_NM
+				, C.ATFL_STOR_PATH AS SUB_ATFL_STOR_PATH
+				, C.ORI_ATFL_NM AS SUB_ORI_ATFL_NM
+				, (SELECT LISTAGG(TO_NUMBER(PRD_ID), ',') WITHIN GROUP (ORDER BY PRD_ID) FROM TB_SA_BNR_PRD_DTL BPD WHERE BPD.CO_CD = A.CO_CD AND BPD.BNR_INFO_SEQ = A.BNR_INFO_SEQ) AS PRD_IDS
+		FROM TB_SA_BNR_INFO A
+			, TB_CO_ATFL_DTLS B
+			, TB_CO_ATFL_DTLS C
+		WHERE A.MAIN_DOC_REG_ID = B.DOC_REG_ID(+)
+		AND A.SUB_DOC_REG_ID = C.DOC_REG_ID(+)
+		AND A.CO_CD = #{coCd}
+		AND A.BNR_INFO_SEQ = #{bnrInfoSeq}
+	</select>
+
+	<select id="selectBnrOprUnitList" parameterType="HashMap" resultType="HashMap">
+		/* 배너 운영단위 리스트 조회 - Bnr_SQL.selectBnrOprUnitList */
+		SELECT A.CO_CD
+				, A.BNR_INFO_SEQ
+				, A.BZPLC_ID
+				, A.OPR_UNIT_ID
+				, B.OPR_UNIT_NM
+		FROM TB_SA_BNR_OPR_UNIT_DTL A
+			, TB_CC_OPR_UNIT_BASIS B
+		WHERE A.CO_CD = B.CO_CD
+			AND A.BZPLC_ID = B.BZPLC_ID
+			AND A.OPR_UNIT_ID = B.OPR_UNIT_ID
+			AND A.CO_CD = #{coCd}
+			AND A.BNR_INFO_SEQ = #{bnrInfoSeq}
+	</select>
+
+	<insert id="insertBnrExpsInfo" parameterType="HashMap">
+	<selectKey keyProperty="bnrExpsPstId" resultType="Integer" order="BEFORE">
+			SELECT COUNT(1) + 1 + #{oneDpthCatgBnr}
+			FROM TB_SA_BNR_EXPS_INFO
+			WHERE HRNK_BNR_EXPS_PST_ID = #{oneDpthCatgBnr}
+		</selectKey>
+		/* 배너 노출정보 등록 - Bnr_SQL.insertBnrExpsInfo */
+		INSERT INTO TB_SA_BNR_EXPS_INFO
+		(
+			CO_CD
+			, CHN_TP_CD
+			, MALL_SPR_CD
+			, BNR_EXPS_PST_ID
+			, BNR_EXPS_PST_NM
+			, HRNK_BNR_EXPS_PST_ID
+			, PRD_CLCD
+			, SRT_SO
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+		) VALUES (
+			#{coCd}
+			, #{chnTpCd}
+			, #{mallSprCd}
+			, #{bnrExpsPstId}
+			, #{bnrExpsPstNm}
+			, #{hrnkBnrExpsPstId}
+			, #{prdClcd}
+			, #{srtSo}
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE
+		)
+	</insert>
+
+	<insert id="insertBnrInfo" parameterType="HashMap">
+		/* 배너 등록 - Bnr_SQL.insertBnrInfo */
+		<selectKey keyProperty="bnrInfoSeq" resultType="Integer" order="BEFORE">
+			SELECT SQ_SA_BNR_INFO_01.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO TB_SA_BNR_INFO
+		(
+			CO_CD
+			, BNR_INFO_SEQ
+			, BNR_EXPS_PST_ID
+			, CHN_TP_CD
+			, MALL_SPR_CD
+			, EXPS_NOTIC_SPR_CD
+			, TTL
+			, DISP_SO
+			, DISP_STR_DT
+			, DISP_END_DT
+			, MAIN_DOC_REG_ID
+			, MAIN_URL_CNSOL_SPR_CD
+			, MAIN_URL
+			, SUB_DOC_REG_ID
+			, SUB_URL_CNSOL_SPR_CD
+			, SUB_URL
+			, USE_YN
+			, PRD_INC_YN
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+			, NOTLOGN_INC_YN
+		) VALUES (
+			#{coCd}
+			, #{bnrInfoSeq}
+			, #{bnrExpsPstId}
+			, #{chnTpCd}
+			, #{mallSprCd}
+			, #{expsNoticSprCd}
+			, #{TTL}
+			, NULL
+			, #{dispStrDt}
+			, #{dispEndDt}
+			, #{mainDocRegId}
+			, #{mainUrlCnsolSprCd}
+			, #{mainUrl}
+			, #{subDocRegId}
+			, #{subUrlCnsolSprCd}
+			, #{subUrl}
+			, #{useYn}
+			, #{prdIncYn}
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE
+			, #{notlognIncYn}
+		)
+	</insert>
+
+	<update id="updateBnrInfo" parameterType="HashMap">
+		/* 배너 수정 - Bnr_SQL.updateBnrInfo */
+		UPDATE TB_SA_BNR_INFO
+			SET EXPS_NOTIC_SPR_CD = #{expsNoticSprCd}
+				,  TTL = #{TTL}
+				,  DISP_STR_DT = #{dispStrDt}
+				,  DISP_END_DT = #{dispEndDt}
+				,  MAIN_DOC_REG_ID = #{mainDocRegId}
+				,  MAIN_URL_CNSOL_SPR_CD = #{mainUrlCnsolSprCd}
+				,  MAIN_URL = #{mainUrl}
+				,  SUB_DOC_REG_ID = #{subDocRegId}
+				,  SUB_URL_CNSOL_SPR_CD = #{subUrlCnsolSprCd}
+				,  SUB_URL = #{subUrl}
+				,  USE_YN = #{useYn}
+				,  PRD_INC_YN = #{prdIncYn}
+				,  UPDPSN_ID = #{updpsnId}
+				,  UPD_DTM = SYSDATE
+				,  NOTLOGN_INC_YN = #{notlognIncYn}
+		WHERE CO_CD = #{coCd}
+			AND BNR_INFO_SEQ = #{bnrInfoSeq}
+	</update>
+
+	<insert id="insertBnrOprUnit" parameterType="HashMap">
+		/* 배너 운영단위 등록 - Bnr_SQL.insertBnrOprUnit */
+		INSERT INTO TB_SA_BNR_OPR_UNIT_DTL
+		(
+			CO_CD
+			,  BNR_INFO_SEQ
+			,  BZPLC_ID
+			,  OPR_UNIT_ID
+			,  REGPSN_ID
+			,  REG_DTM
+			,  UPDPSN_ID
+			,  UPD_DTM
+		) VALUES(
+		#{coCd}
+			, #{bnrInfoSeq}
+			, #{bzplcId}
+			, #{oprUnitId}
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE
+		)
+	</insert>
+
+	<delete id="deleteBnrOprUnit" parameterType="HashMap">
+	/* 배너 운영단위 삭제 - Bnr_SQL.deleteBnrOprUnit */
+		DELETE FROM TB_SA_BNR_OPR_UNIT_DTL
+		WHERE CO_CD = #{coCd}
+			AND BNR_INFO_SEQ = #{bnrInfoSeq}
+			<if test="bzplcId != null and !bzplcId.equals('') and oprUnitId != null and !oprUnitId.equals('') ">
+				AND BZPLC_ID = #{bzplcId}
+				AND OPR_UNIT_ID = #{oprUnitId}
+			</if>
+	</delete>
+
+
+	<delete id="deleteBnrPrd" parameterType="HashMap">
+		/* 배너 상품 삭제 - Bnr_SQL.deleteBnrPrd */
+		DELETE FROM TB_SA_BNR_PRD_DTL
+		WHERE CO_CD = #{coCd}
+			AND BNR_INFO_SEQ = #{bnrInfoSeq}
+	</delete>
+
+	<insert id="insertBnrPrdDtl" parameterType="HashMap">
+		/* 배너 상품 등록 - Bnr_SQL.insertBnrPrdDtl */
+		INSERT INTO SSP_APP.TB_SA_BNR_PRD_DTL
+		(
+			CO_CD
+			, BNR_INFO_SEQ
+			, PRD_ID
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+			) VALUES(
+			#{coCd}
+			, #{bnrInfoSeq}
+			, LPAD(#{prdId}, 18, '0')
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE
+		)
+	</insert>
+
+	<delete id="deleteBnrInfo" parameterType="HashMap">
+	/* 배너 삭제 - Bnr_SQL.deleteBnrInfo */
+		DELETE FROM TB_SA_BNR_INFO
+		WHERE CO_CD = #{coCd}
+			AND BNR_INFO_SEQ = #{bnrInfoSeq}
+	</delete>
+
+	<select id="selectPprCatgBnrList" parameterType="HashMap" resultType="HashMap">
+		/* 인기카테고리 배너 목록 조회 - Bnr_SQL.selectPprCatgBnrList */
+		SELECT  MIN(A.CO_CD) AS CO_CD
+				, MIN(A.PPR_CATG_ZONE_SPR_CD) AS PPR_CATG_ZONE_SPR_CD
+				, MIN(A.BNR_EXPS_PST_ID) AS BNR_EXPS_PST_ID
+				, MIN(A.CHN_TP_CD) AS CHN_TP_CD
+				, MIN(A.MALL_SPR_CD) AS MALL_SPR_CD
+				, MIN(A.TTL) AS TTL
+				, MIN(B.PRD_CLSF_NM) AS PRD_CLSF_NM
+				, MIN(A.PRD_CLCD) AS PRD_CLCD
+				, LISTAGG(D.MNFR_NM, ',') WITHIN GROUP(ORDER BY D.MNFR_NM) AS MNFR_NMS
+				, MIN(A.REGPSN_ID) AS REGPSN_ID
+				, MIN(E.OPRTR_NM) AS REGPSN_NM
+				, MIN(A.REG_DTM) AS REG_DTM
+			FROM TB_SA_PPR_CATG_BNR_INFO A
+			, TB_PR_PRD_CLSF_INFO B
+			, TB_SA_PPR_CATG_BNR_MNFR_DTL C
+			, TB_PR_MNFR_INFO D
+			, TB_CO_MBR_OPRTR_INFO E
+			WHERE A.CO_CD = B.CO_CD(+)
+			AND A.PRD_CLCD = B.PRD_CLCD(+)
+			AND A.CO_CD = B.CO_CD(+)
+			AND A.PPR_CATG_ZONE_SPR_CD = C.PPR_CATG_ZONE_SPR_CD(+)
+			AND A.CHN_TP_CD = C.CHN_TP_CD(+)
+			AND C.CO_CD = D.CO_CD(+)
+			AND C.MNFR_NO = D.MNFR_NO(+)
+			AND A.CO_CD = E.CO_CD(+)
+			AND A.REGPSN_ID = E.OPRTR_ID(+)
+			AND A.CO_CD = #{coCd}
+			AND A.CHN_TP_CD = #{chnTpCd}
+			AND A.MALL_SPR_CD = #{mallSprCd}
+			AND A.BNR_EXPS_PST_ID = #{bnrExpsPstId}
+		GROUP BY A.PPR_CATG_ZONE_SPR_CD
+		ORDER BY A.PPR_CATG_ZONE_SPR_CD
+	</select>
+
+	<select id="selectPprCatgBnrInfo" parameterType="HashMap" resultType="HashMap">
+		/* 인기카테고리 배너 상세 조회 - Bnr_SQL.selectPprCatgBnrInfo */
+		SELECT A.CO_CD
+				, A.PPR_CATG_ZONE_SPR_CD
+				, A.BNR_EXPS_PST_ID
+				, A.CHN_TP_CD
+				, A.MALL_SPR_CD
+				, A.TTL
+				, A.PRD_CLCD
+				, B.PRD_CLSF_NM
+				, A.PRD_CLCD_DOC_REG_ID
+				, C.DOC_REG_SEQ AS PRD_CLCD_DOC_REG_SEQ
+				, C.ATFL_NM AS PRD_CLCD_ATFL_NM
+				, C.ATFL_STOR_PATH AS PRD_CLCD_ATFL_STOR_PATH
+				, C.ORI_ATFL_NM AS PRD_CLCD_ORI_ATFL_NM
+		FROM TB_SA_PPR_CATG_BNR_INFO A
+			, TB_PR_PRD_CLSF_INFO B
+			, TB_CO_ATFL_DTLS C
+		WHERE A.CO_CD = B.CO_CD(+)
+		AND A.PRD_CLCD = B.PRD_CLCD(+)
+		AND A.PRD_CLCD_DOC_REG_ID = C.DOC_REG_ID(+)
+		AND A.CO_CD = #{coCd}
+		AND A.CHN_TP_CD = #{chnTpCd}
+		AND A.PPR_CATG_ZONE_SPR_CD = #{pprCatgZoneSprCd}
+	</select>
+
+	<select id="selectPprCatgBnrMnfrList" parameterType="HashMap" resultType="HashMap">
+		/* 인기카테고리 배너 제조사 조회 - Bnr_SQL.selectPprCatgBnrMnfrList */
+		SELECT A.CO_CD
+					, A.CHN_TP_CD
+					, A.PPR_CATG_ZONE_SPR_CD
+					, A.MNFR_NO
+					, B.MNFR_NM
+					, A.MNFR_DOC_REG_ID
+					, C.DOC_REG_SEQ AS MNFR_DOC_REG_SEQ
+					, C.ATFL_NM AS MNFR_ATFL_NM
+					, C.ATFL_STOR_PATH AS MNFR_ATFL_STOR_PATH
+					, C.ORI_ATFL_NM AS MNFR_ORI_ATFL_NM
+			FROM  TB_SA_PPR_CATG_BNR_MNFR_DTL A
+				, TB_PR_MNFR_INFO B
+				, TB_CO_ATFL_DTLS C
+			WHERE A.CO_CD = B.CO_CD(+)
+			AND A.MNFR_NO = B.MNFR_NO(+)
+			AND A.MNFR_DOC_REG_ID = C.DOC_REG_ID(+)
+		AND A.CO_CD = #{coCd}
+			AND A.CHN_TP_CD = #{chnTpCd}
+			AND A.PPR_CATG_ZONE_SPR_CD = #{pprCatgZoneSprCd}
+	</select>
+
+	<update id="updatePprCatgBnrInfo" parameterType="HashMap">
+		/* 인기카테고리 배너 수정 - Bnr_SQL.updatePprCatgBnrInfo */
+		UPDATE TB_SA_PPR_CATG_BNR_INFO
+			SET TTL = #{TTL}
+				, PRD_CLCD = #{prdClcd}
+				, PRD_CLCD_DOC_REG_ID = #{prdClcdDocRegId}
+				, UPDPSN_ID = #{updpsnId}
+				, UPD_DTM = SYSDATE
+		WHERE CO_CD = #{coCd}
+		AND CHN_TP_CD = #{chnTpCd}
+		AND PPR_CATG_ZONE_SPR_CD = #{pprCatgZoneSprCd}
+	</update>
+
+	<delete id="deletePprCatgBnrMnfrInfo" parameterType="HashMap">
+		/* 인기카테고리 배너 제조사 삭제 - Bnr_SQL.deletePprCatgBnrMnfrInfo */
+		DELETE FROM TB_SA_PPR_CATG_BNR_MNFR_DTL
+		WHERE CO_CD = #{coCd}
+		AND CHN_TP_CD = #{chnTpCd}
+		AND PPR_CATG_ZONE_SPR_CD = #{pprCatgZoneSprCd}
+	</delete>
+
+	<insert id="insertPprCatgBnrMnfrInfo" parameterType="HashMap">
+		/* 인기카테고리 배너 제조사 등록 - Bnr_SQL.insertPprCatgBnrMnfrInfo */
+		INSERT INTO TB_SA_PPR_CATG_BNR_MNFR_DTL
+		(
+			CO_CD
+			, CHN_TP_CD
+			, PPR_CATG_ZONE_SPR_CD
+			, MNFR_NO
+			, MNFR_DOC_REG_ID
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+		) VALUES (
+			#{coCd}
+			, #{chnTpCd}
+			, #{pprCatgZoneSprCd}
+			, #{mnfrNo}
+			, #{mnfrDocRegId}
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE
+		)
+	</insert>
+</mapper>

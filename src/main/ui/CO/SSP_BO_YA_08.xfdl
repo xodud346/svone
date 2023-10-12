@@ -1,0 +1,655 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="errorLogList" width="1336" height="846" titletext="에러내용 조회" onload="errorLogList_onload">
+    <Layouts>
+      <Layout height="846" mobileorientation="landscape" width="1336">
+        <Grid id="grd_exceptionList" taborder="3" left="20" top="238" positionstep="0" binddataset="ExceptionDs" autofittype="none" oncellclick="grd_exceptionList_oncellclick" autosizingtype="none" bottom="96" right="20" nodatatext="조회된 데이터가 없습니다." cellsizingtype="both" selecttype="area" cellmovingtype="col">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="140"/>
+                <Column size="90"/>
+                <Column size="112"/>
+                <Column size="101"/>
+                <Column size="106"/>
+                <Column size="184"/>
+                <Column size="194"/>
+                <Column size="126"/>
+                <Column size="365"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="발생일시"/>
+                <Cell col="1" text="주제영역코드"/>
+                <Cell col="2" text="주제영역명"/>
+                <Cell col="3" text="입력위치타입코드"/>
+                <Cell col="4" text="화면ID"/>
+                <Cell col="5" text="화면명"/>
+                <Cell col="6" text="로그생성클래스"/>
+                <Cell col="7" text="로그생성메소드"/>
+                <Cell col="8" text="로그메시지"/>
+                <Cell col="9" text="예외내역"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:REG_DTM" autosizecol="none" displaytype="expr:REG_DTM!=undefined?'date':''" calendardisplaynulltype="none" calendardateformat="yyyy-MM-dd HH:mm:ss" calendareditformat="yyyy-MM-dd HH:mm:ss" textAlign="center"/>
+                <Cell col="1" text="bind:THME_DOMN_CD" autosizecol="none" textAlign="center"/>
+                <Cell col="2" text="bind:THME_DOMN_NM"/>
+                <Cell col="3" text="bind:IPT_PST_TYPE_CD" autosizecol="none" textAlign="center"/>
+                <Cell col="4" text="bind:UI_ID" autosizecol="default" controlautosizingtype="width"/>
+                <Cell col="5" text="bind:UI_NM" autosizecol="default" controlautosizingtype="width"/>
+                <Cell col="6" text="bind:LOG_CRT_CLASS" edittype="none" controlautosizingtype="both"/>
+                <Cell col="7" text="bind:LOG_CRT_METHOD" controlautosizingtype="both" autosizecol="none" textAlign="center"/>
+                <Cell col="8" text="bind:LOG_MSG" controlautosizingtype="both" autosizecol="default"/>
+                <Cell col="9" text="상세보기" displaytype="buttoncontrol" edittype="button"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <PopupDiv id="PopupDiv3" left="610" top="975" width="330" height="230" positionstep="0" background="#fffff" visible="false" text="" oncloseup="PopupDiv3_oncloseup">
+          <Layouts>
+            <Layout>
+              <Calendar id="searchStartDate" taborder="1" left="6" top="10" width="149" height="172" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd" type="monthonly" value=""/>
+              <Calendar id="searchEndDate" taborder="0" left="165" top="10" height="172" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd" type="monthonly" width="149"/>
+              <Button id="btn_confirm" taborder="3" text="Confirm" left="99" top="192" width="60" height="24" uWord="popup.ok" onclick="PopupDiv3_btn_confirm_onclick"/>
+              <Button id="btn_cancel" taborder="2" text="Cancel" left="169" top="192" width="60" height="24" uWord="popup.cancel" onclick="PopupDiv3_btn_cancel_onclick"/>
+            </Layout>
+          </Layouts>
+        </PopupDiv>
+        <Div id="div_paging" taborder="17" left="14" height="38" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="grd_exceptionList:30" text="" right="13"/>
+        <Static id="totalPageCount" taborder="18" text="(총 0건, 1 / 1)" left="20" width="300" usedecorate="true" bottom="grd_exceptionList:3" height="25"/>
+        <Div id="Div00" taborder="19" text="Div00" left="0" top="0" height="170" cssclass="div_WF_SearchArea" right="0">
+          <Layouts>
+            <Layout>
+              <Button id="btnExSearch" taborder="0" text="조회" top="124" height="26" positionstep="0" onclick="btnExSearch_onclick" cssclass="btn_WF_require" right="20" width="60"/>
+              <Static id="Static01" taborder="1" text="주제영역" left="20" top="20" width="96" height="32" positionstep="0" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static01_00_00" taborder="2" text="화면ID" left="20" top="51" width="96" height="32" positionstep="0" cssclass="sta_cm_box01L"/>
+              <Static id="Static02" taborder="3" text="발생일자" left="20" top="82" width="96" height="32" positionstep="0" cssclass="sta_cm_box01L"/>
+              <Static id="Static00_01_00_00" taborder="4" text="Static00" left="115" top="20" height="32" cssclass="sta_cm_box02L_tdt" onclick="Static00_01_00_00_onclick" right="20"/>
+              <Static id="Static01_00" taborder="6" text="입력위치타입" left="591" top="20" width="116" height="32" positionstep="0" cssclass="sta_cm_box01L_tdt" onclick="Static01_00_onclick"/>
+              <Combo id="cmb_thmeDownCd" taborder="5" text="" left="Static01:10" top="24" height="24" index="-1" innerdataset="ds_thmeDownCd" datacolumn="COM_DTL_CD_NM" codecolumn="COM_DTL_CD" right="Static01_00:10"/>
+              <Static id="Static00_01_00_00_01" taborder="7" text="Static00" left="115" top="51" height="32" cssclass="sta_cm_box02L" right="20"/>
+              <Static id="Static00" taborder="8" text="Static00" left="115" top="82" height="32" cssclass="sta_cm_box02L" right="20"/>
+              <Static id="Static01_00_01" taborder="10" text="화면 명" left="591" top="51" width="116" height="32" positionstep="0" cssclass="sta_cm_box01L"/>
+              <Edit id="uiId" taborder="9" left="Static01_00_00:10" top="55" height="24" positionstep="0" right="Static01_00_01:10"/>
+              <Edit id="uiNm" taborder="11" left="Static01_00_01:10" top="55" height="24" positionstep="0" right="30"/>
+              <Calendar id="searchStartDate" taborder="12" left="Static02:10" top="86" width="181" height="24" positionstep="0" dateformat="yyyy-MM-dd" cssclass="cal_WF_calendar" oncloseup="fn_date_oncloseup" readonly="false"/>
+              <Static id="Static02_00" taborder="13" text="~" left="searchStartDate:5" top="86" width="10" height="24" positionstep="0"/>
+              <Calendar id="searchEndDate" taborder="14" left="Static02_00:5" top="86" width="181" height="24" positionstep="0" dateformat="yyyy-MM-dd" cssclass="cal_WF_calendar" oncloseup="fn_date_oncloseup"/>
+              <Button id="btnClear" taborder="15" text="초기화" top="124" width="60" height="26" right="btnExSearch:4" onclick="Div00_btnClear_onclick"/>
+              <Combo id="iptPstTypeCd" taborder="16" text="Combo00" left="Static01_00:10" top="24" height="24" right="30" innerdataset="ds_iptPstType" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM"/>
+              <Combo id="DATE_TERM" taborder="17" left="searchEndDate:4" top="86" height="24" text="" index="-1" innerdataset="ds_trem" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" width="134" onitemchanged="Div00_DATE_TERM_onitemchanged"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btnLayoutClear" taborder="6" text="레이아웃 초기화" textPadding="0px" width="110" right="20" onclick="btnLayoutClear_onclick" height="28" top="200"/>
+        <Button id="btnLayoutSave" taborder="5" text="레이아웃 저장" textPadding="0px" width="110" right="btnLayoutClear:4" onclick="btnLayoutSave_onclick" height="28" top="200"/>
+        <Button id="btn_excelDown" taborder="6" text="엑셀다운로드" top="200" height="28" visible="true" cssclass="btn_WF_excel" right="btnLayoutSave:4" width="110" onclick="btn_excelDown_onclick"/>
+        <Grid id="grd_exceptionList_excel" taborder="7" left="20" top="1225" positionstep="0" binddataset="ExceptionDsExcel" autofittype="col" oncellclick="grd_exceptionList_oncellclick" autosizingtype="none" bottom="-529" right="-84" nodatatext="조회된 데이터가 없습니다." cellsizingtype="both" visible="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="140"/>
+                <Column size="90"/>
+                <Column size="112"/>
+                <Column size="101"/>
+                <Column size="106"/>
+                <Column size="184"/>
+                <Column size="194"/>
+                <Column size="126"/>
+                <Column size="365"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="발생일시"/>
+                <Cell col="1" text="주제영역코드"/>
+                <Cell col="2" text="주제영역명"/>
+                <Cell col="3" text="입력위치타입코드"/>
+                <Cell col="4" text="화면ID"/>
+                <Cell col="5" text="화면명"/>
+                <Cell col="6" text="로그생성클래스"/>
+                <Cell col="7" text="로그생성메소드"/>
+                <Cell col="8" text="로그메시지"/>
+                <Cell col="9" text="예외내역"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:REG_DTM" autosizecol="default" displaytype="date" calendardisplaynulltype="none" calendardateformat="yyyy-MM-dd HH:mm:ss" calendareditformat="yyyy-MM-dd HH:mm:ss" textAlign="center"/>
+                <Cell col="1" text="bind:THME_DOMN_CD" autosizecol="none" textAlign="center"/>
+                <Cell col="2" text="bind:THME_DOMN_NM"/>
+                <Cell col="3" text="bind:IPT_PST_TYPE_CD" autosizecol="none" textAlign="center"/>
+                <Cell col="4" text="bind:UI_ID" autosizecol="default" controlautosizingtype="width"/>
+                <Cell col="5" text="bind:UI_NM" autosizecol="default" controlautosizingtype="width"/>
+                <Cell col="6" text="bind:LOG_CRT_CLASS" edittype="none" controlautosizingtype="both"/>
+                <Cell col="7" text="bind:LOG_CRT_METHOD" controlautosizingtype="both" autosizecol="none" textAlign="center"/>
+                <Cell col="8" text="bind:LOG_MSG" controlautosizingtype="both" autosizecol="default"/>
+                <Cell col="9" text="상세보기" displaytype="buttoncontrol" edittype="button"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="searchDs" firefirstcount="0" useclientlayout="false" updatecontrol="true" enableevent="true" loadkeymode="keep" loadfiltermode="keep" reversesubsum="false">
+        <ColumnInfo>
+          <Column id="FORM_DATE" type="STRING" size="256"/>
+          <Column id="TO_DATE" type="STRING" size="256"/>
+          <Column id="THME_DOMN_CD" type="STRING" size="256"/>
+          <Column id="IPT_PST_TYPE_CD" type="STRING" size="256"/>
+          <Column id="UI_ID" type="STRING" size="256"/>
+          <Column id="UI_NM" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="codeList" type="STRING" size="256"/>
+          <Column id="langCd" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ExceptionDs">
+        <ColumnInfo>
+          <Column id="REG_DTM" type="DATE" size="256"/>
+          <Column id="THME_DOMN_CD" type="STRING" size="2"/>
+          <Column id="IPT_PST_TYPE_CD" type="STRING" size="2"/>
+          <Column id="UI_ID" type="STRING" size="30"/>
+          <Column id="UI_NM" type="STRING" size="100"/>
+          <Column id="LOG_CRT_CLASS" type="STRING" size="100"/>
+          <Column id="LOG_CRT_METHOD" type="STRING" size="100"/>
+          <Column id="LOG_MSG" type="STRING" size="2000"/>
+          <Column id="EXCEPT_DTLS" type="STRING" size="0"/>
+          <Column id="THME_DOMN_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ExceptionDsCopy">
+        <ColumnInfo>
+          <Column id="REG_DTM" type="DATE" size="256"/>
+          <Column id="THME_DOMN_CD" type="STRING" size="2"/>
+          <Column id="IPT_PST_TYPE_CD" type="STRING" size="2"/>
+          <Column id="UI_ID" type="STRING" size="30"/>
+          <Column id="UI_NM" type="STRING" size="100"/>
+          <Column id="LOG_CRT_CLASS" type="STRING" size="100"/>
+          <Column id="LOG_CRT_METHOD" type="STRING" size="100"/>
+          <Column id="LOG_MSG" type="STRING" size="2000"/>
+          <Column id="EXCEPT_DTLS" type="STRING" size="0"/>
+          <Column id="THME_DOMN_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_page">
+        <ColumnInfo>
+          <Column id="COUNT" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COUNT">10</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">20</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">30</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">40</Col>
+          </Row>
+          <Row>
+            <Col id="COUNT">50</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_thmeDownCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="searchDsOrigin" firefirstcount="0" useclientlayout="false" updatecontrol="true" enableevent="true" loadkeymode="keep" loadfiltermode="keep" reversesubsum="false">
+        <ColumnInfo>
+          <Column id="FORM_DATE" type="STRING" size="256"/>
+          <Column id="TO_DATE" type="STRING" size="256"/>
+          <Column id="THME_DOMN_CD" type="STRING" size="256"/>
+          <Column id="IPT_PST_TYPE_CD" type="STRING" size="256"/>
+          <Column id="UI_ID" type="STRING" size="256"/>
+          <Column id="UI_NM" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="codeList" type="STRING" size="256"/>
+          <Column id="langCd" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_iptPstType">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_trem">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ExceptionDsExcel">
+        <ColumnInfo>
+          <Column id="REG_DTM" type="DATE" size="256"/>
+          <Column id="THME_DOMN_CD" type="STRING" size="2"/>
+          <Column id="IPT_PST_TYPE_CD" type="STRING" size="2"/>
+          <Column id="UI_ID" type="STRING" size="30"/>
+          <Column id="UI_NM" type="STRING" size="100"/>
+          <Column id="LOG_CRT_CLASS" type="STRING" size="100"/>
+          <Column id="LOG_CRT_METHOD" type="STRING" size="100"/>
+          <Column id="LOG_MSG" type="STRING" size="2000"/>
+          <Column id="EXCEPT_DTLS" type="STRING" size="0"/>
+          <Column id="THME_DOMN_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_YA_08
+/* 작 성 일 자 : 2022.01.18
+/* 작  성   자 : 이성민
+/* 설       명 : 에러로그 조회 
+/***********************************************************/
+include "OD::odUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+this.pageCount = 1000;
+this.fv_oApp = nexacro.getApplication();	//application object 
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/ 
+//onload
+this.errorLogList_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	var objDate = new Date();
+	var sToday = objDate.getFullYear()
+			   + ((objDate.getMonth() + 1) + "").padLeft(2, '0')
+			   + (objDate.getDate() + "").padLeft(2, '0');
+
+     this.Div00.form.searchStartDate.set_value(sToday.substring(0,6) + "01");
+     this.Div00.form.searchEndDate.set_value(sToday);	
+
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	this.fn_commonCodeSearch();
+	
+	//this.fn_doSearch(0);
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "btnExSearch_onclick",
+		SHIFT_ENTER : "",
+		SHIFT_S : "",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+};
+
+
+//폼 keyup 이벤트
+/*this.errorLogList_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	if( e.keycode == 13 ) {
+		this.fn_doSearch(0);
+	}
+};*/
+
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_doSearch = function(page) {
+	 var sSvcId = "exceptionSearch";  
+     var sUrl = "/co/select-exception-info-list.do";
+	 var inDs = "ds_search=searchDs"
+     var outDs = "ExceptionDs=ds_output1";
+     var arg;
+     var callback = "fn_received";
+	 
+	 // 조회버튼 클릭시 페이징 초기화 시킨다.
+	 if( page == 0 ) {
+
+		this.div_paging.uPage=1;
+		this.div_paging.uPageNum=0;
+		this.searchDs.setColumn(0,"START_NUM", 0);
+		this.searchDs.setColumn(0,"ROW_COUNT",this.pageCount);
+		
+		oSortInfo = this.grd_exceptionList.uaSortInfo;
+		this.searchDs.setColumn(0,"SORT_COLUMN", "");
+		this.searchDs.setColumn(0,"SORT_TYPE", "");
+	 }
+	 
+	 this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+//공통코드조회
+this.fn_commonCodeSearch = function()
+{	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=searchDs";
+	var outDs = "ds_thmeDownCd=ds_output1 ds_iptPstType=ds_output2 ds_trem=ds_output3";
+	var arg = "";
+	
+	this.searchDs.setColumn(0, "codeList", "THME_DOMN_CD,IPT_PST_TYPE_CD,INQ_PERD_SPR_CD");
+	this.searchDs.setColumn(0, "langCd", "KO");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_received");
+};
+
+this.fn_search_excel = function() {
+	var sSvcId = "exceptionSearchExcel";  
+    var sUrl = "/co/select-exception-info-list.do";
+	var inDs = "ds_search=searchDs"
+    var outDs = "ExceptionDsExcel=ds_output1";
+    var arg;
+    var callback = "fn_received";
+	 
+	this.searchDs.setColumn(0,"START_NUM", null);
+	this.searchDs.setColumn(0,"ROW_COUNT", null);
+	 
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_received = function(svcID, errorCode, errorMsg) {
+	if(svcID == "exceptionSearch"){    
+		//trace(this.ds_sampleList.saveXML());
+				
+		// 조회 카운트가 없으면 데이터셋이 날라감으로 강제 설정
+		if( this.ExceptionDs.rowcount == 0 ) {
+			this.ExceptionDs.copyData(this.ExceptionDsCopy);			
+		}
+		
+		//paging 처리  this.fv_oApp.gv_pageViewCnt
+		this.div_paging.form.cfn_createPage(this.div_paging, this.totalCount, this.pageCount, "fn_pageCallback");
+		//this.div_paging.form.cfn_createPage(this.div_paging,1912,this.fv_oApp.gv_pageViewCnt,"fn_pageCallback");
+		
+	} else if(svcID == "commonCodeSearch"){
+		this.ds_thmeDownCd.insertRow(0);
+		this.ds_thmeDownCd.setColumn(0,"COM_DTL_CD_NM","전체");
+		
+		this.ds_iptPstType.insertRow(0);
+		this.ds_iptPstType.setColumn(0,"COM_DTL_CD_NM","전체");
+						
+		this.searchDsOrigin.copyData(this.searchDs);
+		
+		//초기 조회기간
+		this.Div00.form.DATE_TERM.set_index(1);	
+		this.fn_setSearchDate();
+	} else if( svcID == "exceptionSearchExcel" ) {
+		this.ofn_exportExcel({ form:this, grid:this.grd_exceptionList_excel, fileName:"에러로그" });
+	}
+}
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;
+	if(sFlag){
+		//this.searchDs.setColumn(0,"START_NUM", (oPaging.uPageNum == 0 || oPaging.uPageNum == 1 ? 0 : ( oPaging.uPageNum -1 ) * 10));
+		this.searchDs.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.searchDs.setColumn(0,"ROW_COUNT", this.pageCount);	
+		this.fn_doSearch();
+	}	
+	
+	var sTotText = "(총 "+ this.gfn_appendComma(oPaging.uTotCount, 0)+"건, "+ oPaging.uPage +" / "+ oPaging.uPageCnt +")";
+	this.totalPageCount.set_text(sTotText);
+}
+
+//정렬 콜백
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_exceptionList"){
+		oSortInfo = this.grd_exceptionList.uaSortInfo;
+		
+		this.searchDs.setColumn(0,"SORT_COLUMN", oSortInfo.bindCol);
+		this.searchDs.setColumn(0,"SORT_TYPE", oSortInfo.status);
+		
+		this.fn_doSearch();
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+
+	//grid 초기 설정
+	this.grd_exceptionList.uSortFlag = "false";
+	this.grd_exceptionList.uServerSortFlag = "true";
+	this.grd_exceptionList.uSortCallback = "fn_sortCallback";
+	
+	this.grd_exceptionList.uCellSizeType = "true";
+	
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 10;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;
+	
+	//grid 개인화(전제조건 : grid Head가 무조건 1Row인 경우)
+	this.uGridList = "grd_exceptionList";
+	this.grd_exceptionList.uRightMouse = "true";
+	this.grd_exceptionList.uPersonalFlag = "true";
+	this.grd_exceptionList.uDefaultFormat = "REG_DTM,THME_DOMN_CD,THME_DOMN_NM,IPT_PST_TYPE_CD,UI_ID,UI_NM,LOG_CRT_CLASS,LOG_CRT_METHOD,LOG_MSG";
+}
+
+
+this.cfn_personalPopupClose = function(sRet){
+	this.grd_exceptionList.set_formats(sRet);
+	this.pdiv_personal.closePopup();
+}
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+this.PopupDiv3_oncloseup = function(obj:nexacro.PopupDiv,e:nexacro.EventInfo)
+{
+	if(this.PopupDiv3.form.searchStartDate.value > this.PopupDiv3.form.searchEndDate.value){
+		alert(this.gfn_getMessage("ERRC000192")); //시작일이 종료일보다 클 수 없습니다.
+		this.Div00.form.searchEndDate.set_value("");
+	}
+};
+
+
+this.fn_setSearchDate = function() {
+
+	var term = this.Div00.form.DATE_TERM.value;
+	var objDate = new Date();
+	var sToday = objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0');
+
+	/*
+	1	1일
+	2	1주일
+	3	2주일
+	4	1개월
+	5	3개월
+	6	6개월
+	7	1년
+	*/
+	if( term == undefined ) term = "2";
+	
+	objDate.setDate(objDate.getDate()+1);
+	
+	if( term == "1" ) {
+		objDate.setDate(objDate.getDate() -1);
+	} else if( term == "2" ) {
+		objDate.setDate(objDate.getDate() -7);		
+	} else if( term == "3" ) {
+		objDate.setDate(objDate.getDate() -14);
+	} else if( term == "4" ) {
+		objDate.setMonth(objDate.getMonth() -1);
+	} else if( term == "5" ) {
+		objDate.setMonth(objDate.getMonth() -3);
+	} else if( term == "6" ) {
+		objDate.setMonth(objDate.getMonth() -6);
+	} else if( term == "7" ) {
+		objDate.setMonth(objDate.getMonth() -12);
+	}
+	//console.log(objDate + "/" + objDate.getFullYear() + "/" + (objDate.getMonth() +1) + "/" + objDate.getDate());
+	
+    this.Div00.form.searchStartDate.set_value(objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0'));
+    this.Div00.form.searchEndDate.set_value(sToday);	
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+//검색버튼
+this.btnExSearch_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	 
+	 this.fn_doSearch(0);	 
+};
+
+//달력의 확인버튼
+this.PopupDiv3_btn_confirm_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var sFrom = this.PopupDiv3.form.searchStartDate.value;
+	var sTo = this.PopupDiv3.form.searchEndDate.value;
+	
+	
+	this.searchDs.setColumn(0, "FORM_DATE", sFrom);
+	this.searchDs.setColumn(0, "TO_DATE", sTo);
+
+	//this.searchStartDate.set_value(sFrom);
+	//this.searchEndDate.set_value(sTo);
+	
+	this.PopupDiv3.closePopup();
+
+};
+
+
+//달력 취소버튼
+this.PopupDiv3_btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.PopupDiv3.closePopup();
+};
+
+//그리드 셀 클릭 이벤트
+this.grd_exceptionList_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	// 상세조회 팝업 호출
+	var dataSet = obj.getBindDataset();
+	if( e.col == 9 ) {
+		var params = {
+			detailMsg : dataSet.getColumn(e.row, "EXCEPT_DTLS")
+		};
+		
+		var options = {};
+		options.title = "Exception 상세 내역";
+	
+		this.gfn_openPopup("oprUntSinglePop", "CO_POP::exceptionDtsPopup.xfdl", params,  "", options);
+	}		
+	
+};
+
+//달력 드롭다운 이벤트
+this.searchStartDate_ondropdown = function(obj:nexacro.Calendar,e:nexacro.EventInfo)
+{
+	this.PopupDiv3.form.searchStartDate.set_value(this.searchDs.getColumn(0, "FORM_DATE"));
+	this.PopupDiv3.form.searchEndDate.set_value(this.searchDs.getColumn(0, "TO_DATE"));
+	this.PopupDiv3.trackPopupByComponent(this.Div00.form.searchStartDate, 0, obj.height);
+};
+
+
+//레이아웃 저장 버튼
+this.btnLayoutSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.gfn_personalSave("grd_exceptionList", this.grd_exceptionList.getCurFormatString()); 
+};
+
+//레이아웃 초기화
+this.btnLayoutClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	//suOrgFormat
+	this.gfn_personalReset("grd_exceptionList"); 
+	this.grd_exceptionList.set_formats(this.grd_exceptionList.uOrgFormat);
+};
+
+//초기화
+this.Div00_btnClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.searchDs.copyData(this.searchDsOrigin);
+};
+
+this.Div00_DATE_TERM_oninnerdatachanged = function(obj:nexacro.Combo,e:nexacro.InnerdataChangedEventInfo)
+{
+	this.fn_setSearchDate();
+};
+
+this.Div00_DATE_TERM_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_setSearchDate();
+};
+
+this.fn_date_oncloseup = function(obj:nexacro.Calendar,e:nexacro.CalendarCloseUpEventInfo)
+{
+	if(this.Div00.form.searchStartDate.value > this.Div00.form.searchEndDate.value){
+		alert(this.gfn_getMessage("ERRC000192")); //시작일이 종료일보다 클 수 없습니다.
+		
+		this.Div00.form.searchStartDate.set_value(this.searchDsOrigin.getColumn(0, "FORM_DATE"));
+		this.Div00.form.searchStartDate.dropdown();
+	}
+};
+
+//엑셀 다운로드
+this.btn_excelDown_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var listCnt = this.ExceptionDs.getRowCount();
+		if (listCnt == 0)
+		{
+			alert('조회결과가 없습니다.')
+			return;
+		}
+	if(this.searchDs.getRowType(0) == Dataset.ROWTYPE_UPDATE) {
+		alert(this.gfn_getMessage("COMS000007")); //조회 조건이 변경 되었습니다.\n다시 조회하시기 바랍니다.
+		return false;
+	}
+	
+	this.fn_search_excel();
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="Div00.form.cmb_thmeDownCd" propid="value" datasetid="searchDs" columnid="THME_DOMN_CD"/>
+      <BindItem id="item2" compid="Div00.form.uiId" propid="value" datasetid="searchDs" columnid="UI_ID"/>
+      <BindItem id="item3" compid="Div00.form.uiNm" propid="value" datasetid="searchDs" columnid="UI_NM"/>
+      <BindItem id="item4" compid="Div00.form.searchStartDate" propid="value" datasetid="searchDs" columnid="FORM_DATE"/>
+      <BindItem id="item5" compid="Div00.form.searchEndDate" propid="value" datasetid="searchDs" columnid="TO_DATE"/>
+      <BindItem id="item1" compid="Div00.form.iptPstTypeCd" propid="value" datasetid="searchDs" columnid="IPT_PST_TYPE_CD"/>
+    </Bind>
+  </Form>
+</FDL>

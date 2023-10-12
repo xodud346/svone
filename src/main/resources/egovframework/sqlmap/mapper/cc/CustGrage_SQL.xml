@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="custGrade">
+
+   <!--
+    ******************************************************************************
+    * SELECT : 
+    * 작성자 : moonjooh
+    * 작성 일자 : 2022-02-10
+    ******************************************************************************
+    -->
+    <select id="selectCustGrdList" parameterType="HashMap" resultType="HashMap">
+        /* CustGrade.selectCustGrdList */
+        SELECT LIST.*
+		FROM(
+			SELECT A.*
+				FROM(
+					SELECT '0' AS CHK
+			        	 , BZPLC_GRD_ID 
+				         <if test="fromDate != null and fromDate != ''"> 
+						 , CASE WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ <= ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') 
+						 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') THEN 'Y'
+						 		WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') 
+						 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') THEN 'Y'
+						   		ELSE 'N'
+						   END AS STATE
+				         </if>
+				         <if test="fromDate == null or fromDate == ''"> 
+						 , CASE WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ <= ]]>   SYSDATE 
+						 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE THEN 'Y'
+						 		WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE 
+						 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE THEN 'Y'
+						   		ELSE 'N'
+						   END AS STATE
+				         </if>
+						 , SEQ
+						 , BZPLC_GRD_NM
+						 , APLY_DCRT 
+						 , APLY_DCRT AS B_APLY_DCRT
+			      		 , TRUNC(APLY_DCRT, 0) AS APLY_DCRT_FR
+			      		 , ABS(MOD((TRUNC(APLY_DCRT, 2) - TRUNC(APLY_DCRT, 0))*100, 100)) AS APLY_DCRT_END
+						 , TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS') AS VLD_PERD_STR_DTM_STR
+						 , SUBSTR(VLD_PERD_STR_DTM,9,6) AS VLD_PERD_STR_DTM_END
+						 , TO_DATE(VLD_PERD_END_DTM , 'YYYYMMDDHH24MISS') AS VLD_PERD_END_DTM_STR
+						 , SUBSTR(VLD_PERD_END_DTM,9,6) AS VLD_PERD_END_DTM_END
+				         , VLD_PERD_STR_DTM
+				         , VLD_PERD_END_DTM
+						 , TO_DATE(VLD_PERD_END_DTM , 'YYYYMMDDHH24MISS') AS CHK_DTM1
+						 , SUBSTR(VLD_PERD_END_DTM,9,6) AS CHK_DTM2
+						 , USE_YN 
+						 , REGPSN_ID 
+						 , REG_DTM 
+						 , UPDPSN_ID 
+						 , UPD_DTM
+						 , DECODE(BZPLC_GRD_ID, 'G99999', 0, 1) TYPE
+						 , '0' AS MASTER 
+					FROM TB_CC_BZPLC_GRD_INFO
+				)A 
+				WHERE A.STATE = 'Y' 
+				  AND (A.BZPLC_GRD_ID, A.SEQ) IN ( SELECT LIST.BZPLC_GRD_ID
+											            , MIN(LIST.SEQ) AS SEQ
+		 											 FROM( SELECT '0' AS CHK
+												        	 	, BZPLC_GRD_ID 
+															 	, SEQ
+															 FROM TB_CC_BZPLC_GRD_INFO
+															WHERE ( TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')     <![CDATA[ <= ]]> TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') 
+						 											AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS') <![CDATA[ > ]]>  TO_DATE(#{fromDate},'YYYYMMDDHH24MISS')
+						 										  )
+						 									   OR ( TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')     <![CDATA[ > ]]>  TO_DATE(#{fromDate},'YYYYMMDDHH24MISS')
+						 											AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS') <![CDATA[ > ]]>  TO_DATE(#{fromDate},'YYYYMMDDHH24MISS')
+						 										  )
+													 )LIST
+											         GROUP BY BZPLC_GRD_ID ) 
+		        UNION ALL
+		        	SELECT B.*
+		        	FROM(
+						SELECT '0' AS CHK
+				        	 , BZPLC_GRD_ID 
+				        	 <if test="fromDate != null and fromDate != ''"> 
+							 , CASE WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ <= ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') 
+							 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') THEN 'Y'
+							 		WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') 
+							 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') THEN 'Y'
+							   		ELSE 'N'
+							   END AS STATE
+				        	 </if>
+				        	 <if test="fromDate == null or fromDate == ''"> 
+							 , CASE WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ <= ]]>   SYSDATE 
+							 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE THEN 'Y'
+							 		WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE 
+							 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE THEN 'Y'
+							   		ELSE 'N'
+							   END AS STATE
+				        	 </if>
+							 , SEQ
+							 , BZPLC_GRD_NM
+							 , APLY_DCRT 
+						 	 , APLY_DCRT AS B_APLY_DCRT
+				      		 , TRUNC(APLY_DCRT, 0) AS APLY_DCRT_FR
+				      		 , ABS(MOD((TRUNC(APLY_DCRT, 2) - TRUNC(APLY_DCRT, 0))*100, 100)) AS APLY_DCRT_END
+							 , TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS') AS VLD_PERD_STR_DTM_STR
+							 , SUBSTR(VLD_PERD_STR_DTM,9,6) AS VLD_PERD_STR_DTM_END
+							 , TO_DATE(VLD_PERD_END_DTM , 'YYYYMMDDHH24MISS') AS VLD_PERD_END_DTM_STR
+							 , SUBSTR(VLD_PERD_END_DTM,9,6) AS VLD_PERD_END_DTM_END
+					         , VLD_PERD_STR_DTM
+					         , VLD_PERD_END_DTM
+							 , TO_DATE(VLD_PERD_END_DTM , 'YYYYMMDDHH24MISS') AS CHK_DTM1
+							 , SUBSTR(VLD_PERD_END_DTM,9,6) AS CHK_DTM2
+							 , USE_YN 
+							 , REGPSN_ID 
+							 , REG_DTM 
+							 , UPDPSN_ID 
+							 , UPD_DTM
+							 , DECODE(BZPLC_GRD_ID, 'G99999', 0, 1) TYPE
+							 , '0' AS MASTER 
+						FROM TB_CC_BZPLC_GRD_INFO
+					)B
+					WHERE B.STATE = 'N'
+					AND (B.BZPLC_GRD_ID, B.SEQ) IN ( SELECT LIST.BZPLC_GRD_ID
+											        	  , MAX(LIST.SEQ) AS SEQ
+		 											 FROM(
+														SELECT '0' AS CHK
+												        	 , BZPLC_GRD_ID 
+															 , SEQ
+														FROM TB_CC_BZPLC_GRD_INFO
+													 )LIST
+											         GROUP BY BZPLC_GRD_ID )
+		)LIST
+		<where>
+			<if test="STATE != null and STATE != ''"> 
+	        LIST.STATE = #{STATE}
+	        </if>
+		</where> 
+        <if test="sortColumn != null and sortColumn != ''"> 
+        ORDER BY ${sortColumn} ${sortType} 
+        </if> 
+        <if test="sortColumn == null or sortColumn == ''"> 
+		ORDER BY BZPLC_GRD_ID, SEQ
+        </if>
+    </select>
+    
+    <select id="selectCustGrdListCount" parameterType="HashMap" resultType="int">
+        /* CustGrade.selectCustGrdListCount */
+        SELECT COUNT(*)
+        FROM(
+			SELECT A.*
+				FROM(
+					SELECT '0' AS CHK
+			        	 , BZPLC_GRD_ID 
+				         <if test="fromDate != null and fromDate != ''"> 
+						 , CASE WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ <= ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') 
+						 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') THEN 'Y'
+						 		WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') 
+						 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') THEN 'Y'
+						   		ELSE 'N'
+						   END AS STATE
+				         </if>
+				         <if test="fromDate == null or fromDate == ''"> 
+						 , CASE WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ <= ]]>   SYSDATE 
+						 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE THEN 'Y'
+						 		WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE 
+						 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE THEN 'Y'
+						   		ELSE 'N'
+						   END AS STATE
+				         </if>
+						 , SEQ
+						 , BZPLC_GRD_NM
+						 , APLY_DCRT 
+			      		 , TRUNC(APLY_DCRT, 0) AS APLY_DCRT_FR
+			      		 , ABS(MOD((TRUNC(APLY_DCRT, 2) - TRUNC(APLY_DCRT, 0))*100, 100)) AS APLY_DCRT_END
+						 , TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS') AS VLD_PERD_STR_DTM_STR
+						 , SUBSTR(VLD_PERD_STR_DTM,9,6) AS VLD_PERD_STR_DTM_END
+						 , TO_DATE(VLD_PERD_END_DTM , 'YYYYMMDDHH24MISS') AS VLD_PERD_END_DTM_STR
+						 , SUBSTR(VLD_PERD_END_DTM,9,6) AS VLD_PERD_END_DTM_END
+						 , USE_YN 
+						 , REGPSN_ID 
+						 , REG_DTM 
+						 , UPDPSN_ID 
+						 , UPD_DTM
+						 , DECODE(BZPLC_GRD_ID, 'G99999', 0, 1) TYPE
+						 , '0' AS MASTER 
+					FROM TB_CC_BZPLC_GRD_INFO
+				)A 
+				WHERE A.STATE = 'Y' 
+				  AND (A.BZPLC_GRD_ID, A.SEQ) IN ( SELECT LIST.BZPLC_GRD_ID
+											            , MIN(LIST.SEQ) AS SEQ
+		 											 FROM( SELECT '0' AS CHK
+												        	 	, BZPLC_GRD_ID 
+															 	, SEQ
+															 FROM TB_CC_BZPLC_GRD_INFO
+															WHERE ( TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')     <![CDATA[ <= ]]> TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') 
+						 											AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS') <![CDATA[ > ]]>  TO_DATE(#{fromDate},'YYYYMMDDHH24MISS')
+						 										  )
+						 									   OR ( TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')     <![CDATA[ > ]]>  TO_DATE(#{fromDate},'YYYYMMDDHH24MISS')
+						 											AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS') <![CDATA[ > ]]>  TO_DATE(#{fromDate},'YYYYMMDDHH24MISS')
+						 										  )
+													 )LIST
+											         GROUP BY BZPLC_GRD_ID ) 
+		        UNION ALL
+		        	SELECT B.*
+		        	FROM(
+						SELECT '0' AS CHK
+				        	 , BZPLC_GRD_ID 
+				        	 <if test="fromDate != null and fromDate != ''"> 
+							 , CASE WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ <= ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') 
+							 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') THEN 'Y'
+							 		WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') 
+							 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   TO_DATE(#{fromDate},'YYYYMMDDHH24MISS') THEN 'Y'
+							   		ELSE 'N'
+							   END AS STATE
+				        	 </if>
+				        	 <if test="fromDate == null or fromDate == ''"> 
+							 , CASE WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ <= ]]>   SYSDATE 
+							 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE THEN 'Y'
+							 		WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE 
+							 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')   <![CDATA[ > ]]>   SYSDATE THEN 'Y'
+							   		ELSE 'N'
+							   END AS STATE
+				        	 </if>
+							 , SEQ
+							 , BZPLC_GRD_NM
+							 , APLY_DCRT 
+				      		 , TRUNC(APLY_DCRT, 0) AS APLY_DCRT_FR
+				      		 , ABS(MOD((TRUNC(APLY_DCRT, 2) - TRUNC(APLY_DCRT, 0))*100, 100)) AS APLY_DCRT_END
+							 , TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS') AS VLD_PERD_STR_DTM_STR
+							 , SUBSTR(VLD_PERD_STR_DTM,9,6) AS VLD_PERD_STR_DTM_END
+							 , TO_DATE(VLD_PERD_END_DTM , 'YYYYMMDDHH24MISS') AS VLD_PERD_END_DTM_STR
+							 , SUBSTR(VLD_PERD_END_DTM,9,6) AS VLD_PERD_END_DTM_END
+							 , USE_YN 
+							 , REGPSN_ID 
+							 , REG_DTM 
+							 , UPDPSN_ID 
+							 , UPD_DTM
+							 , DECODE(BZPLC_GRD_ID, 'G99999', 0, 1) TYPE
+							 , '0' AS MASTER 
+						FROM TB_CC_BZPLC_GRD_INFO
+					)B
+					WHERE B.STATE = 'N'
+					AND (B.BZPLC_GRD_ID, B.SEQ) IN ( SELECT LIST.BZPLC_GRD_ID
+											        	  , MAX(LIST.SEQ) AS SEQ
+		 											 FROM(
+														SELECT '0' AS CHK
+												        	 , BZPLC_GRD_ID 
+															 , SEQ
+														FROM TB_CC_BZPLC_GRD_INFO
+													 )LIST
+											         GROUP BY BZPLC_GRD_ID )
+		)LIST
+		<if test="STATE != null and STATE != ''"> 
+        WHERE LIST.STATE = #{STATE}
+        </if> 
+        <if test="sortColumn != null and sortColumn != ''"> 
+        ORDER BY ${sortColumn} ${sortType} 
+        </if> 
+        <if test="sortColumn == null or sortColumn == ''"> 
+		ORDER BY BZPLC_GRD_ID, SEQ
+        </if>
+    </select>
+    
+    <update id="saveCustGrd" parameterType="HashMap">
+		/*CustGrade.saveCustGrd*/
+		INSERT INTO TB_CC_BZPLC_GRD_INFO
+		(
+			BZPLC_GRD_ID
+			, SEQ
+			, BZPLC_GRD_NM
+			, APLY_DCRT
+			, VLD_PERD_STR_DTM
+			, VLD_PERD_END_DTM
+			, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+		)
+		VALUES
+		(
+			( SELECT NVL(#{bzplcGrdId}, 'G'||NVL(LPAD( ( SELECT MAX(TO_NUMBER(SUBSTR(BZPLC_GRD_ID,2,5))+1)
+										FROM TB_CC_BZPLC_GRD_INFO 
+									   WHERE BZPLC_GRD_ID != 'G99999'), 5, 0 ), '00001')) FROM DUAL) 	/* GRD_ID 채번*/
+			, ( SELECT COUNT(*) + 1
+				  FROM TB_CC_BZPLC_GRD_INFO
+				 WHERE BZPLC_GRD_ID = (SELECT NVL(#{bzplcGrdId}, 'G'||NVL(LPAD( ( SELECT MAX(TO_NUMBER(SUBSTR(BZPLC_GRD_ID,2,5))+1)
+										FROM TB_CC_BZPLC_GRD_INFO 
+									   WHERE BZPLC_GRD_ID != 'G99999'), 5, 0 ), '00001')) FROM DUAL)) 	/* SEQ 채번*/
+			, #{bzplcGrdNm}
+			, #{aplyDcrt}
+        	<if test="vldPerdStrDtm != null and vldPerdStrDtm != ''">
+        	, #{vldPerdStrDtm}
+        	</if>
+        	<if test="vldPerdStrDtm == null or vldPerdStrDtm == ''">
+        	, CONCAT(TO_CHAR(SYSDATE, 'YYYYMMDD'), '000000')
+        	</if>
+			, #{vldPerdEndDtm}
+			, #{useYn}
+			, #{oprtrId}
+			, SYSDATE
+		)
+	</update>
+	
+	<select id="selectCustGrdChk" parameterType="HashMap" resultType="HashMap">
+        /* CustGrade.selectCustGrdChk */
+        SELECT COUNT(*) AS CNT
+		  FROM TB_CC_BZPLC_BASIS
+		 WHERE BZPLC_GRD_ID = ( SELECT BZPLC_GRD_ID 
+								FROM TB_CC_BZPLC_GRD_INFO
+								WHERE BZPLC_GRD_ID = #{bzplcGrdId}
+								  AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS')  <![CDATA[ > ]]> SYSDATE
+								  AND TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS') <![CDATA[ <= ]]> SYSDATE
+								  AND ROWNUM = 1 )
+    </select>
+    
+    <select id="selectChkLackTime" parameterType="HashMap" resultType="int">
+        /* CustGrade.selectChkLackTime 입력한 날짜에 대한 유효성 체크 */
+        SELECT COUNT(*) 
+		FROM(
+			/* 입력한 시간이 현재시간보다 큰지 체크 */
+			SELECT COUNT(*) A
+			FROM( 
+        		<if test="vldPerdStrDtm != null and vldPerdStrDtm != ''"> 
+				SELECT TO_DATE(#{vldPerdStrDtm}, 'YYYYMMDDHH24MISS') datetime FROM dual
+				UNION ALL
+				</if>
+				SELECT TO_DATE(#{vldPerdEndDtm}, 'YYYYMMDDHH24MISS') datetime FROM dual
+				) L
+			WHERE TO_DATE(TO_CHAR(datetime, 'YYYYMMDD'), 'YYYYMMDD') <![CDATA[ < ]]> TO_DATE(TO_CHAR(SYSDATE, 'YYYYMMDD'), 'YYYYMMDD')
+			UNION ALL 
+			/* 시작시간이 종료시간보다 빠른지 체크 */
+			SELECT COUNT(*) A
+			FROM(
+				SELECT <if test="vldPerdStrDtm != null and vldPerdStrDtm != ''"> 
+        			   TO_DATE(#{vldPerdStrDtm}, 'YYYYMMDDHH24MISS') a
+        			   </if>
+        			   <if test="vldPerdStrDtm == null or vldPerdStrDtm == ''">
+        			   TO_DATE(TO_CHAR(SYSDATE, 'YYYYMMDD'), 'YYYYMMDDHH24MISS') a 
+        			   </if>
+					 , TO_DATE(#{vldPerdEndDtm}, 'YYYYMMDDHH24MISS') b 
+				FROM dual
+				)B
+			WHERE B.a <![CDATA[ >= ]]> B.b
+		)LIST
+		WHERE LIST.A <![CDATA[ > ]]> 0
+    </select>
+    
+    <select id="selectOverlapTime" parameterType="HashMap" resultType="HashMap">
+        /* CustGrade.selectOverlapTime 해당 ID에 중복되는 유효기간 데이터가 있는지 체크 */
+        SELECT L.*
+		FROM (
+			SELECT COUNT(*) OVER() AS TOT_CUNT
+				 , BZPLC_GRD_ID
+				 , SEQ
+				 , BZPLC_GRD_NM
+				 , APLY_DCRT
+				 , VLD_PERD_STR_DTM
+				 , VLD_PERD_END_DTM
+				 , USE_YN
+			FROM TB_CC_BZPLC_GRD_INFO
+			WHERE BZPLC_GRD_ID  = #{bzplcGrdId}
+		)L
+		WHERE ( 
+			  ( L.VLD_PERD_STR_DTM <![CDATA[ < ]]> #{vldPerdEndDtm} AND #{vldPerdEndDtm} <![CDATA[ < ]]> L.VLD_PERD_END_DTM ) 
+			  <if test="vldPerdStrDtm != null and vldPerdStrDtm != ''">
+			  OR ( L.VLD_PERD_STR_DTM <![CDATA[ < ]]> #{vldPerdStrDtm} AND #{vldPerdStrDtm} <![CDATA[ < ]]> L.VLD_PERD_END_DTM )
+        	  </if>
+        	  <if test="vldPerdStrDtm == null or vldPerdStrDtm == ''"> 
+        	  OR ( L.VLD_PERD_STR_DTM <![CDATA[ < ]]> TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') AND TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') <![CDATA[ < ]]> L.VLD_PERD_END_DTM )
+              </if>
+              )
+    </select>
+    
+    <select id="selectVldPerdEndDtm" parameterType="HashMap" resultType="String">
+        /* CustGrade.selectVldPerdEndDtm 입력한 시간 1초 빼기 */
+    	SELECT <if test="vldPerdStrDtm != null and vldPerdStrDtm != ''">
+    		   TO_CHAR( TO_DATE( #{vldPerdStrDtm}, 'YYYYMMDDHH24MISS') - 1/(24*60*60), 'YYYYMMDDHH24MISS')
+    		   </if>
+        	   <if test="vldPerdStrDtm == null or vldPerdStrDtm == ''">
+    		   TO_CHAR( SYSDATE-1/(24*60*60), 'YYYYMMDDHH24MISS')
+    		   </if>
+		  FROM DUAL
+    </select>
+    
+    <update id="updateGrdDtm" parameterType="HashMap">
+		/*CustGrade.updateGrdDtm*/
+		UPDATE TB_CC_BZPLC_GRD_INFO
+		   SET VLD_PERD_END_DTM = #{vldPerdEndDtm}
+		   	 , UPDPSN_ID = #{oprtrId}
+		   	 , UPD_DTM = SYSDATE
+		 WHERE BZPLC_GRD_ID = #{bzplcGrdId}
+		   AND SEQ = #{SEQ}
+	</update>
+
+    <select id="selectCustGradeHst" parameterType="HashMap" resultType="HashMap">
+        /* CustGrade.selectCustGradeHst 고객등급관리 이력조회*/
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+		SELECT LIST.SEQ
+			 , LIST.STATE
+			 , LIST.BZPLC_GRD_ID
+			 , LIST.BZPLC_GRD_NM
+			 , LIST.APLY_DCRT
+			 , LIST.VLD_PERD_STR_DTM
+			 , LIST.VLD_PERD_END_DTM
+			 , LIST.USE_YN
+			 , LIST.UPDPSN_ID
+			 , M.OPRTR_NM AS UPDPSN_NM
+			 , LIST.UPD_DTM
+		FROM(
+			SELECT SEQ
+				 , CASE WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS') <![CDATA[ <= ]]> SYSDATE 
+						 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS') <![CDATA[ > ]]> SYSDATE THEN 'Y'
+						 		WHEN TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS') <![CDATA[ > ]]> SYSDATE 
+						 			AND TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS') <![CDATA[ > ]]> SYSDATE THEN 'Y'
+						   		ELSE 'N'
+						   END AS STATE
+				 , BZPLC_GRD_ID
+				 , BZPLC_GRD_NM
+				 , TO_CHAR(APLY_DCRT, '99990.00') || '%' AS APLY_DCRT
+				 , TO_DATE(VLD_PERD_STR_DTM, 'YYYYMMDDHH24MISS') AS VLD_PERD_STR_DTM
+				 , TO_DATE(VLD_PERD_END_DTM, 'YYYYMMDDHH24MISS') AS VLD_PERD_END_DTM
+				 , USE_YN
+				 , NVL(UPDPSN_ID, REGPSN_ID) AS UPDPSN_ID
+				 , NVL(UPD_DTM, REG_DTM) AS UPD_DTM
+			FROM TB_CC_BZPLC_GRD_INFO
+			WHERE BZPLC_GRD_ID = #{bzplcGrdId}
+		)LIST
+		LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO M
+			ON M.OPRTR_ID = LIST.UPDPSN_ID
+			AND ROWNUM = 1
+        <if test="STATE != null and STATE != ''"> 
+        WHERE LIST.STATE = #{STATE}
+        </if> 
+		ORDER BY SEQ DESC
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+	</select>
+	
+    <select id="selectChkLastSeq" parameterType="HashMap" resultType="int">
+        /* CustGrade.selectChkLastSeq 마스터값의 시퀀스가 마지막 시퀀스인지 체크 */
+		SELECT COUNT(*) 
+		  FROM TB_CC_BZPLC_GRD_INFO
+		 WHERE BZPLC_GRD_ID = #{bzplcGrdId}
+		   AND SEQ = TO_NUMBER(#{SEQ})+1
+	</select>
+	
+	<update id="updateGrdAplyDcrt" parameterType="HashMap">
+		/*CustGrade.updateGrdAplyDcrt*/
+		UPDATE TB_CC_BZPLC_GRD_INFO
+		   SET APLY_DCRT = #{aplyDcrt}
+		   	 , UPDPSN_ID = #{oprtrId}
+		   	 , UPD_DTM = SYSDATE
+		 WHERE BZPLC_GRD_ID = #{bzplcGrdId}
+		   AND SEQ = #{SEQ}
+	</update>
+	
+    <select id="selectchkLastDate" parameterType="HashMap" resultType="int">
+        /* CustGrade.selectchkLastDate 날짜 유효성 체크 - 유효시간 시작일시가 종료일시보다 빠른지 */
+		SELECT COUNT(*) A
+		FROM(
+			SELECT <if test="vldPerdStrDtm != null and vldPerdStrDtm != ''"> 
+        		   TO_DATE(#{vldPerdStrDtm}, 'YYYYMMDDHH24MISS') a
+        		   </if>
+        		   <if test="vldPerdStrDtm == null or vldPerdStrDtm == ''">
+        		   TO_DATE(TO_CHAR(SYSDATE, 'YYYYMMDD'), 'YYYYMMDDHH24MISS') a
+        		   </if>
+				 , TO_DATE(#{vldPerdEndDtm}, 'YYYYMMDDHH24MISS') b 
+			FROM dual
+			)B
+		WHERE B.a <![CDATA[ >= ]]> B.b
+	</select>
+	
+	<select id="selectchkDate" parameterType="HashMap" resultType="int">
+        /* CustGrade.selectchkDate 날짜 유효성 체크 -  */
+        <![CDATA[
+		SELECT COUNT(*) A
+		FROM(
+			SELECT TO_DATE(#{vldPerdStrDtm}, 'YYYYMMDDHH24MISS') a
+				 , TO_DATE(TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), 'YYYYMMDDHH24MISS') b 
+				 , TO_DATE(#{vldPerdEndDtm}, 'YYYYMMDDHH24MISS') c
+			FROM dual
+			)B
+		WHERE B.a < B.b AND B.c > B.b
+		]]>
+	</select>
+	
+	<select id="selectMaxSeq" parameterType="HashMap" resultType="int">
+        /* CustGrade.selectMaxSeq 마지막 SEQ 값 조회  */
+        SELECT MAX(SEQ)
+		FROM TB_CC_BZPLC_GRD_INFO
+		WHERE BZPLC_GRD_ID = #{bzplcGrdId}
+	</select>
+	
+	<update id="updateNextSeq" parameterType="HashMap">
+		/*CustGrade.updateNextSeq*/
+		UPDATE TB_CC_BZPLC_GRD_INFO
+		   SET SEQ = TO_NUMBER(#{SEQ}) + 1
+		 WHERE BZPLC_GRD_ID = #{bzplcGrdId}
+		   AND SEQ = #{SEQ}
+	</update>
+	
+	<update id="saveCustGrdSetSeq" parameterType="HashMap">
+		/*CustGrade.saveCustGrdSetSeq */
+		INSERT INTO TB_CC_BZPLC_GRD_INFO
+		(
+			BZPLC_GRD_ID
+			, SEQ
+			, BZPLC_GRD_NM
+			, APLY_DCRT
+			, VLD_PERD_STR_DTM
+			, VLD_PERD_END_DTM
+			, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+		)
+		VALUES
+		(
+			( SELECT NVL(#{bzplcGrdId}, 'G'||NVL(LPAD( ( SELECT MAX(TO_NUMBER(SUBSTR(BZPLC_GRD_ID,2,5))+1)
+										FROM TB_CC_BZPLC_GRD_INFO 
+									   WHERE BZPLC_GRD_ID != 'G99999'), 5, 0 ), '00001')) FROM DUAL) 	/* GRD_ID 채번*/
+			, TO_NUMBER(#{SEQ}) + 1
+			, #{bzplcGrdNm}
+			, #{aplyDcrt}
+        	, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, #{vldPerdEndDtm}
+			, #{useYn}
+			, #{oprtrId}
+			, SYSDATE
+		)
+	</update>
+	
+	<select id="selectVldPerdSysdate" parameterType="HashMap" resultType="String">
+        /* CustGrade.selectVldPerdSysdate 현재시간에서 1초 빼기 */
+    	SELECT TO_CHAR( SYSDATE-1/(24*60*60), 'YYYYMMDDHH24MISS')
+		  FROM DUAL
+    </select>
+	
+</mapper>

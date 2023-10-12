@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Property">
+
+	<!-- SSP속성관리 검색 조건 -->
+	<sql id="propertyWhere">
+		<where>
+			<if test="prdSprCd != null and prdSprCd != ''">
+				AND TSA.PRD_SPR_CD = #{prdSprCd} 
+			</if>
+			<if test="attrNm != null and attrNm != ''">
+				AND TSA.ATTR_NM = #{attrNm} 
+			</if>
+			<if test="searchAttrNms != null and searchAttrNms != ''">
+				AND TSA.ATTR_NM IN
+				<foreach collection="attrNmList" item="item" open="(" close=")" separator=",">
+					#{item}
+				</foreach>
+			</if>
+			<if test="searchAttrCds != null and searchAttrCds != ''">
+				AND TSA.ATTR_CD IN
+				<foreach collection="attrCdList" item="item" open="(" close=")" separator=",">
+					#{item}
+				</foreach>
+			</if>
+			<if test="searchStartDate != null and searchStartDate != '' and searchEndDate != null and searchEndDate != ''">
+				<if test="dateType == 'searchRegDate'">
+					AND TO_CHAR(TSA.REG_DTM, 'YYYYMMDD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+				</if>
+				<if test="dateType == 'searchUpdateDate'">
+					AND TO_CHAR(TSA.UPD_DTM, 'YYYYMMDD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+				</if>
+			</if>
+			<if test="searchUseYn != null and searchUseYn != ''">
+				AND TSA.USE_YN = #{searchUseYn}
+			</if>
+		</where>
+	</sql>
+	
+	<!-- SSP속성관리 리스트 갯수 -->
+	<select id="selectPropertyCount" parameterType="hashMap" resultType="integer">
+		/* Property.selectPropertyCount */
+		SELECT
+			COUNT(0)
+		FROM 
+			TB_SG_ATTR TSA
+		<include refid="propertyWhere"/>
+	</select> 
+	
+	<!-- SSP속성관리 리스트 조회 -->
+	<select id="selectPropertyList" parameterType="hashMap" resultType="SspMap">
+		/* Property.selectPropertyList */
+		SELECT
+			S2.*
+		FROM
+			(
+			SELECT
+				ROWNUM AS RNUM,
+				S1.* 
+			FROM
+				(
+					SELECT 
+						TSA.ATTR_CD,
+						TSA.ATTR_NM,
+						(SELECT COUNT(TSCAM.PRD_CLS_CD) FROM TB_SG_CLS_ATTR_MAPP TSCAM WHERE TSCAM.ATTR_CD = TSA.ATTR_CD) ATTR_CNT,
+						DECODE(TSA.USE_YN,'Y','사용','미사용') AS USE_YN,
+						TO_CHAR(TSA.REG_DTM,'yyyy-mm-dd hh24:mi:ss') AS REG_DTM,
+						TO_CHAR(TSA.UPD_DTM,'yyyy-mm-dd hh24:mi:ss') AS UPD_DTM
+					FROM
+						TB_SG_ATTR TSA
+					<include refid="propertyWhere"/>
+					<if test="sort != null and sort != ''">
+						ORDER BY 
+						<choose>
+							<when test="'ATTR_CD' eq sort">ATTR_CD <if test="'DESC' eq sortType">DESC</if></when>
+							<when test="'ATTR_NM' eq sort">ATTR_NM <if test="'DESC' eq sortType">DESC</if></when>
+							<when test="'ATTR_CNT' eq sort">ATTR_CNT <if test="'DESC' eq sortType">DESC</if></when>
+							<when test="'REG_DTM' eq sort">REG_DTM <if test="'DESC' eq sortType">DESC</if></when>
+							<when test="'UPD_DTM' eq sort">UPD_DTM <if test="'DESC' eq sortType">DESC</if></when>
+							<otherwise>ATTR_CD ASC</otherwise>
+						</choose>
+					</if>
+				)
+				S1 
+			)
+			S2 
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+	
+	<!-- SSP속성관리 엑셀 다운로드 리스트 조회 -->
+	<select id="selectPropertyListExcel" parameterType="hashMap" resultType="hashMap">
+		SELECT 
+			TSA.ATTR_CD,
+			TSA.ATTR_NM,
+			(SELECT COUNT(TSCAM.PRD_CLS_CD) FROM TB_SG_CLS_ATTR_MAPP TSCAM WHERE TSCAM.ATTR_CD = TSA.ATTR_CD) ATTR_CNT,
+			TSA.USE_YN,
+			TO_CHAR(TSA.REG_DTM,'yyyy-mm-dd hh24:mi:ss') AS REG_DTM,
+			TO_CHAR(TSA.UPD_DTM,'yyyy-mm-dd hh24:mi:ss') AS UPD_DTM
+		FROM
+			TB_SG_ATTR TSA
+		<include refid="propertyWhere"/>
+		<if test="sort != null and sort != ''">
+         	ORDER BY 
+         	<choose>
+         		<when test="'ATTR_CD' eq sort">ATTR_CD <if test="'DESC' eq sortType">DESC</if></when>
+         		<when test="'ATTR_NM' eq sort">ATTR_NM <if test="'DESC' eq sortType">DESC</if></when>
+         		<when test="'ATTR_CNT' eq sort">ATTR_CNT <if test="'DESC' eq sortType">DESC</if></when>
+         		<when test="'REG_DTM' eq sort">REG_DTM <if test="'DESC' eq sortType">DESC</if></when>
+         		<when test="'UPD_DTM' eq sort">UPD_DTM <if test="'DESC' eq sortType">DESC</if></when>
+         		<otherwise>ATTR_CD ASC</otherwise>
+        	</choose>
+        </if>
+    </select>
+	
+	<!-- SSP속성관리 싱세보기 -->
+	<select id="selectPropertyInfo" parameterType="hashMap" resultType="SspMap">
+		/* Property.selectPropertyInfo */
+		SELECT 
+			TSA.ATTR_CD,
+			TSA.ATTR_NM,
+			(SELECT COUNT(TSCAM.PRD_CLS_CD) FROM TB_SG_CLS_ATTR_MAPP TSCAM WHERE TSCAM.ATTR_CD = TSA.ATTR_CD) ATTR_CNT,
+			TSA.USE_YN,
+			TO_CHAR(TSA.REG_DTM,'yyyy-mm-dd hh24:mi:ss') AS REG_DTM,
+			TO_CHAR(TSA.UPD_DTM,'yyyy-mm-dd hh24:mi:ss') AS UPD_DTM
+		FROM
+			TB_SG_ATTR TSA
+		WHERE 
+			TSA.ATTR_CD = #{attrCd}
+	</select>
+	
+	<!-- SSP속성관리 체크 -->
+	<select id="selectPropertyChk" parameterType="hashMap" resultType="integer">
+		/* Property.selectPropertyChk */
+		SELECT
+			COUNT(0)
+		FROM 
+			TB_SG_ATTR
+		WHERE
+			ATTR_NM = #{attrNm}
+		AND
+			PRD_SPR_CD = #{prdSprCd}
+		<if test="attrCd != null and attrCd != ''">
+			AND 
+				ATTR_CD <![CDATA[ <> ]]> #{attrCd}
+		</if>
+	</select> 
+	
+	<!-- SSP속성관리 등록 -->
+	<insert id="insertProperty" parameterType="hashMap">
+	<selectKey keyProperty="attrCd" resultType="String" order="BEFORE">
+		SELECT NVL2(MAX(ATTR_CD), #{attrCdKey} || LPAD(REPLACE(MAX(ATTR_CD),#{attrCdKey})+1,4,'0'),#{attrCdKey}||'0001') FROM TB_SG_ATTR WHERE PRD_SPR_CD = #{prdSprCd} 
+	</selectKey>
+		/* Property.insertPopup */
+		INSERT INTO TB_SG_ATTR (
+			CO_CD,
+			ATTR_CD,
+			ATTR_NM,
+			USE_YN,
+			PRD_SPR_CD,
+			REG_DTM,
+			REGPSN_ID
+		)VALUES (
+			'1000',
+			#{attrCd},
+			#{attrNm},
+			#{useYn},
+			#{prdSprCd},
+			SYSDATE,
+			#{regpsnId}
+		) 
+	</insert>
+	
+	<!-- SSP속성관리 수정 -->
+	<update id="updateProperty" parameterType="hashMap">
+		/* Property.updateProperty */
+		UPDATE 
+			TB_SG_ATTR
+		SET
+			ATTR_NM = #{attrNm},
+			USE_YN = #{useYn},
+			UPD_DTM = SYSDATE,
+			UPDPSN_ID = #{updpsnId}
+		WHERE
+			ATTR_CD = #{attrCd}
+	</update>
+</mapper>

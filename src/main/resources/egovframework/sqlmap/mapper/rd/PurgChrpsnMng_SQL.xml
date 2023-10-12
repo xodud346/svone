@@ -1,0 +1,528 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PurgChrpsnMng">
+
+    <select id="selectPurgChrpsnMng" parameterType="HashMap" resultType="HashMap">
+        /* PurgChrpsnMng.selectPurgChrpsnMng 구매담당자정보 조회 */
+            SELECT CO_CD                                 /*회사코드 PK1*/
+                 , PRD_CLSF_CHRPSN_ID                    /*상품분류담당자ID PK2*/
+                 , PRD_CLCD                              /*상품분류코드 PK3*/
+                 , MNFR_NO                               /*제조사번호 PK4*/
+                 , PRD_CLSF_CHRPSN_SEQ                   /*상품분류담당자순번*/
+                 , MALL_SPR_CD                           /*몰구분코드*/
+                 , PRD_CLSF_CHRPSN_TP_CD                 /*상품분류담당자유형코드*/
+                 , PRD_CLSF_CHRPSN_USEYN                 /*상품분류담당자사용여부*/
+                 , PRD_CLSF_CHRPSN_SPR_CD                /*상품분류담당자구분코드*/
+                 , UPD_RSN                               /*수정사유*/
+                 , REGPSN_ID                             /*등록자ID*/
+                 , REG_DTM                               /*등록일시*/
+                 , UPDPSN_ID                             /*수정자ID*/
+                 , UPD_DTM                               /*수정일시*/
+                 , PRD_CLSF_CHRPSN_NM                    /*상품분류담당자명*/
+                 , PRD_CLSF_CHRPSN_GB_NM                 /*담당자구분명*/
+                 , PRD_CLSF_CHRPSN_USEYN_NM              /*담당자상태*/
+                 , PRD_CLCD_NM                           /*상품군명*/
+                 , MNFR_NM                               /*제조사명*/
+                 , REGPSN_NM                             /*등록자명*/
+                 , UPDPSN_NM                             /*수정자명*/
+              FROM (
+                  <![CDATA[
+                       SELECT /*+ USE_INDEX(A TB_PR_PRD_CLSF_CHRPSN_INFO_PK) */
+                              A.CO_CD                                              AS CO_CD                    /*회사코드 PK1*/
+                            , A.PRD_CLSF_CHRPSN_ID                                 AS PRD_CLSF_CHRPSN_ID       /*상품분류담당자ID PK2*/
+                            , A.PRD_CLCD                                           AS PRD_CLCD                 /*상품분류코드 PK3*/
+                            , A.MNFR_NO                                            AS MNFR_NO                  /*제조사번호 PK4*/
+                            , A.PRD_CLSF_CHRPSN_SEQ                                AS PRD_CLSF_CHRPSN_SEQ      /*상품분류담당자순번*/
+                            , A.MALL_SPR_CD                                        AS MALL_SPR_CD              /*몰구분코드*/
+                            , A.PRD_CLSF_CHRPSN_TP_CD                              AS PRD_CLSF_CHRPSN_TP_CD    /*상품분류담당자유형코드*/
+                            , A.PRD_CLSF_CHRPSN_USEYN                              AS PRD_CLSF_CHRPSN_USEYN    /*상품분류담당자사용여부*/
+                            , A.PRD_CLSF_CHRPSN_SPR_CD                             AS PRD_CLSF_CHRPSN_SPR_CD   /*상품분류담당자구분코드*/
+                            , A.UPD_RSN                                            AS UPD_RSN                  /*수정사유*/
+                            , A.REGPSN_ID                                          AS REGPSN_ID                /*등록자ID*/
+                            , TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS')           AS REG_DTM                  /*등록일시*/
+                            , A.UPDPSN_ID                                          AS UPDPSN_ID                /*수정자ID*/
+                            , TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS')          AS UPD_DTM                  /*수정일시*/
+                            , B.OPRTR_NM                                           AS PRD_CLSF_CHRPSN_NM       /*상품분류담당자명*/
+                            , DECODE(A.PRD_CLSF_CHRPSN_SPR_CD,'10','정','20','부') AS PRD_CLSF_CHRPSN_GB_NM    /*담당자구분명*/
+                            , DECODE(A.PRD_CLSF_CHRPSN_USEYN, 'Y', '사용', '삭제') AS PRD_CLSF_CHRPSN_USEYN_NM /*담당자상태*/
+                            , (
+                               SELECT SSP_APP.FN_PR_FULL_CLSF_NM
+                                      (
+                                        A.CO_CD
+                                      , A.PRD_CLCD
+                                      )
+                                 FROM DUAL
+                              )                                                    AS PRD_CLCD_NM              /*상품군명*/
+                            , C.MNFR_NM                                            AS MNFR_NM                  /*제조사명*/
+                            , D.OPRTR_NM                                           AS REGPSN_NM                /*등록자명*/
+                            , E.OPRTR_NM                                           AS UPDPSN_NM                /*수정자명*/
+                         FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO            A
+                         LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO             B
+                           ON 0=0
+                          AND B.CO_CD                  = A.CO_CD
+                          AND B.OPRTR_ID               = A.PRD_CLSF_CHRPSN_ID
+                         LEFT JOIN SSP_APP.TB_PR_MNFR_INFO                  C
+                           ON 0=0
+                          AND C.CO_CD                  = A.CO_CD
+                          AND C.MNFR_NO                = A.MNFR_NO
+                         LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO             D
+                           ON 0=0
+                          AND D.CO_CD                  = A.CO_CD
+                          AND D.OPRTR_ID               = A.REGPSN_ID
+                         LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO             E
+                           ON 0=0
+                          AND E.CO_CD                  = A.CO_CD
+                          AND E.OPRTR_ID               = A.UPDPSN_ID
+                  ]]>
+                    <if test="PRD_CLCD_CNT > 0">
+                        INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS          S2
+                           ON 0=0
+                          AND S2.SES_ID                = #{SES_ID}
+                          AND S2.INQ_COND_DTLS         = #{INQ_COND_DTLS}
+                          AND S2.COL_ITM               = 'PRD_CLCD'
+                          AND S2.COND_DATA_VAL         = A.PRD_CLCD
+                    </if>
+                    <if test="MNFR_NO_CNT > 0">
+                        INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS          S3
+                           ON 0=0
+                          AND S3.SES_ID                = #{SES_ID}
+                          AND S3.INQ_COND_DTLS         = #{INQ_COND_DTLS}
+                          AND S3.COL_ITM               = 'MNFR_NO'
+                          AND S3.COND_DATA_VAL         = A.MNFR_NO
+                    </if>
+                        WHERE 1=1
+                    <if test="CO_CD != null and CO_CD != ''">
+                        <![CDATA[
+                          AND A.CO_CD                  = #{CO_CD}
+                        ]]>
+                    </if>
+                    <if test="PRD_CLSF_CHRPSN_USEYN != null and PRD_CLSF_CHRPSN_USEYN != ''">
+                        <![CDATA[
+                          AND A.PRD_CLSF_CHRPSN_USEYN   = #{PRD_CLSF_CHRPSN_USEYN}
+                        ]]>
+                    </if>
+                    <if test="PRD_CLSF_CHRPSN_SPR_CD != null and PRD_CLSF_CHRPSN_SPR_CD != ''">
+                          AND A.PRD_CLSF_CHRPSN_SPR_CD = #{PRD_CLSF_CHRPSN_SPR_CD}
+                    </if>
+                    <if test="PSN_ID != null and PSN_ID != ''">
+                        <if test="PSN_TYPE == 'PRD_CLSF_CHRPSN_ID'">
+                            AND PRD_CLSF_CHRPSN_ID     = #{PSN_ID}
+                        </if>
+                        <if test="PSN_TYPE == 'REGPSN_ID'">
+                            AND A.REGPSN_ID            = #{PSN_ID}
+                        </if>
+                        <if test="PSN_TYPE == 'UPDPSN_ID'">
+                            AND A.UPDPSN_ID            = #{PSN_ID}
+                        </if>
+                    </if>
+        <![CDATA[
+                         AND A.PRD_CLSF_CHRPSN_TP_CD   = '30'         /*10:상품담당자, 20:MD담당자, 30:구매담당자*/
+                         AND A.MALL_SPR_CD             = '20'         /*10 : SSP, 20 : RD*/
+       ]]>
+                 <if test="DT_SPR != null and DT_SPR != ''">
+                     <if test="DT_SPR == 'REG_DTM'">
+                         AND A.REG_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS') 
+                                           AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                     </if>
+                     <if test="DT_SPR == 'UPD_DTM'">
+                         AND A.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                           AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                     </if>
+                 </if>
+                   ) A
+             WHERE 1=1
+<!--  2022-07-26 속도가 안나와서 SROT 기능 뺌.
+       <choose>
+           <when test='(SORT_COLUMN != null and SORT_COLUMN != "") and (SORT_TYPE != null and SORT_TYPE != "")'>
+               ORDER BY A.${SORT_COLUMN} ${SORT_TYPE}
+           </when>
+           <otherwise>
+               ORDER BY A.CO_CD
+                      , A.PRD_CLSF_CHRPSN_ID
+                      , A.PRD_CLCD
+                      , A.MNFR_NO
+           </otherwise>
+       </choose>
+-->
+              OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+
+    <select id="selectPurgChrpsnMngCount" parameterType="HashMap" resultType="Integer">
+        /* PurgChrpsnMng.selectPurgChrpsnMngCount 구매담당자정보 카운트 조회 */
+        <![CDATA[
+            SELECT COUNT(1) AS CNT
+              FROM (
+                       SELECT /*+ USE_INDEX(A TB_PR_PRD_CLSF_CHRPSN_INFO_PK) */
+                              A.CO_CD                                              AS CO_CD                      /*회사코드 PK1*/
+                            , A.PRD_CLSF_CHRPSN_ID                                 AS PRD_CLSF_CHRPSN_ID         /*상품분류담당자ID PK2*/
+                            , A.PRD_CLCD                                           AS PRD_CLCD                   /*상품분류코드 PK3*/
+                            , A.MNFR_NO                                            AS MNFR_NO                    /*제조사번호 PK4*/
+                            , A.PRD_CLSF_CHRPSN_SEQ                                AS PRD_CLSF_CHRPSN_SEQ        /*상품분류담당자순번*/
+                            , A.MALL_SPR_CD                                        AS MALL_SPR_CD                /*몰구분코드*/
+                            , A.PRD_CLSF_CHRPSN_TP_CD                              AS PRD_CLSF_CHRPSN_TP_CD      /*상품분류담당자유형코드*/
+                            , A.PRD_CLSF_CHRPSN_USEYN                              AS PRD_CLSF_CHRPSN_USEYN      /*상품분류담당자사용여부*/
+                            , A.PRD_CLSF_CHRPSN_SPR_CD                             AS PRD_CLSF_CHRPSN_SPR_CD     /*상품분류담당자구분코드*/
+                            , A.UPD_RSN                                            AS UPD_RSN                    /*수정사유*/
+                            , A.REGPSN_ID                                          AS REGPSN_ID                  /*등록자ID*/
+                            , TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS')           AS REG_DTM                    /*등록일시*/
+                            , A.UPDPSN_ID                                          AS UPDPSN_ID                  /*수정자ID*/
+                            , TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS')          AS UPD_DTM                    /*수정일시*/
+                            , B.OPRTR_NM                                           AS PRD_CLSF_CHRPSN_NM         /*상품분류담당자명*/
+                            , DECODE(A.PRD_CLSF_CHRPSN_SPR_CD,'10','정','20','부') AS PRD_CLSF_CHRPSN_GB_NM      /*담당자구분명*/
+                            , DECODE(A.PRD_CLSF_CHRPSN_USEYN, 'Y', '사용', '삭제') AS PRD_CLSF_CHRPSN_USEYN_NM   /*담당자상태*/
+                            , (
+                               SELECT SSP_APP.FN_PR_FULL_CLSF_NM
+                                      (
+                                        A.CO_CD
+                                      , A.PRD_CLCD
+                                      )
+                                 FROM DUAL
+                              )                                                    AS PRD_CLCD_NM                /*상품군명*/
+                            , C.MNFR_NM                                            AS MNFR_NM                    /*제조사명*/
+                            , D.OPRTR_NM                                           AS REGPSN_NM                  /*등록자명*/
+                            , E.OPRTR_NM                                           AS UPDPSN_NM                  /*수정자명*/
+                         FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO              A
+                         LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO               B
+                           ON 0=0
+                          AND B.CO_CD                  = A.CO_CD
+                          AND B.OPRTR_ID               = A.PRD_CLSF_CHRPSN_ID
+                         LEFT JOIN SSP_APP.TB_PR_MNFR_INFO                    C
+                           ON 0=0
+                          AND C.CO_CD                  = A.CO_CD
+                          AND C.MNFR_NO                = A.MNFR_NO
+                         LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO               D
+                           ON 0=0
+                          AND D.CO_CD                  = A.CO_CD
+                          AND D.OPRTR_ID               = A.REGPSN_ID
+                         LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO               E
+                           ON 0=0
+                          AND E.CO_CD                  = A.CO_CD
+                          AND E.OPRTR_ID               = A.UPDPSN_ID
+        ]]>
+                    <if test="PRD_CLCD_CNT > 0">
+                        INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS             S1
+                           ON 0=0
+                          AND S1.SES_ID                = #{SES_ID}
+                          AND S1.INQ_COND_DTLS         = #{INQ_COND_DTLS}
+                          AND S1.COL_ITM               = 'PRD_CLCD'
+                          AND S1.COND_DATA_VAL         = A.PRD_CLCD
+                    </if>
+                    <if test="MNFR_NO_CNT > 0">
+                        INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS             S2
+                           ON 0=0
+                          AND S2.SES_ID                = #{SES_ID}
+                          AND S2.INQ_COND_DTLS         = #{INQ_COND_DTLS}
+                          AND S2.COL_ITM               = 'MNFR_NO'
+                          AND S2.COND_DATA_VAL         = A.MNFR_NO
+                     </if>
+                        WHERE 1=1
+                  <if test="CO_CD != null and CO_CD != ''">
+                      <![CDATA[
+                         AND A.CO_CD                   = #{CO_CD}
+                      ]]>
+                  </if>
+                  <if test="PRD_CLSF_CHRPSN_USEYN != null and PRD_CLSF_CHRPSN_USEYN != ''">
+                      <![CDATA[
+                         AND A.PRD_CLSF_CHRPSN_USEYN   = #{PRD_CLSF_CHRPSN_USEYN}
+                      ]]>
+                  </if>
+                      <if test="PRD_CLSF_CHRPSN_SPR_CD != null and PRD_CLSF_CHRPSN_SPR_CD != ''">
+                         AND A.PRD_CLSF_CHRPSN_SPR_CD  = #{PRD_CLSF_CHRPSN_SPR_CD}
+                      </if>
+                  <if test="PSN_ID != null and PSN_ID != ''">
+                      <if test="PSN_TYPE == 'PRD_CLSF_CHRPSN_ID'">
+                         AND PRD_CLSF_CHRPSN_ID        = #{PSN_ID}
+                      </if>
+                      <if test="PSN_TYPE == 'REGPSN_ID'">
+                         AND A.REGPSN_ID               = #{PSN_ID}
+                      </if>
+                      <if test="PSN_TYPE == 'UPDPSN_ID'">
+                         AND A.UPDPSN_ID               = #{PSN_ID}
+                      </if>
+                  </if>
+                        AND A.PRD_CLSF_CHRPSN_TP_CD    = '30'         /*10:상품담당자, 20:MD담당자, 30:구매담당자*/
+                        AND A.MALL_SPR_CD              = '20'         /*10 : SSP, 20 : RD*/
+                   ) A
+             WHERE 1=1
+        <if test="DT_SPR != null and DT_SPR != ''">
+            <if test="DT_SPR == 'REG_DTM'">
+               AND A.REG_DTM BETWEEN TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00' 
+                                 AND TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59'
+            </if>
+            <if test="DT_SPR == 'UPD_DTM'">
+               AND A.UPD_DTM BETWEEN TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00' 
+                                 AND TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59'
+            </if>
+        </if>
+    </select>
+
+    <select id="selectPurgChrpsnMngDtl" parameterType="HashMap" resultType="HashMap">
+        /* PurgChrpsnMng.selectPurgChrpsnMngDtl | 구매담당자정보 상세 조회 */
+            SELECT A.CO_CD                                                                        AS CO_CD                     /*회사코드 PK1*/
+                 , A.PRD_CLSF_CHRPSN_ID                                                           AS PRD_CLSF_CHRPSN_ID        /*상품분류담당자ID PK2*/
+                 , CASE WHEN A.PRD_CLCD = '*' THEN '' ELSE A.PRD_CLCD END                         AS PRD_CLCD                  /*상품분류코드 PK3*/
+                 , CASE WHEN A.MNFR_NO = '*' THEN '' ELSE A.MNFR_NO END                           AS MNFR_NO                   /*제조사번호 PK4*/
+                 , F.USE_YN                                                                       AS USE_YN                    /*사용여부*/
+                 , A.PRD_CLSF_CHRPSN_SEQ                                                          AS PRD_CLSF_CHRPSN_SEQ       /*상품분류담당자순번*/
+                 , A.MALL_SPR_CD                                                                  AS MALL_SPR_CD               /*몰구분코드*/
+                 , A.PRD_CLSF_CHRPSN_TP_CD                                                        AS PRD_CLSF_CHRPSN_TP_CD     /*상품분류담당자유형코드*/
+                 , A.PRD_CLSF_CHRPSN_USEYN                                                        AS PRD_CLSF_CHRPSN_USEYN     /*상품분류담당자사용여부*/
+                 , A.PRD_CLSF_CHRPSN_SPR_CD                                                       AS PRD_CLSF_CHRPSN_SPR_CD    /*상품분류담당자구분코드(10:정, 20:부)*/
+                 , A.UPD_RSN                                                                      AS UPD_RSN                   /*수정사유*/
+                 , A.REGPSN_ID                                                                    AS REGPSN_ID                 /*등록자ID*/
+                 , TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS')                                     AS REG_DTM                   /*등록일시*/
+                 , A.UPDPSN_ID                                                                    AS UPDPSN_ID                 /*수정자ID*/
+                 , TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS')                                    AS UPD_DTM                   /*수정일시*/
+                 , B.OPRTR_NM                                                                     AS PRD_CLSF_CHRPSN_NM        /*상품분류담당자명*/
+                 , CASE WHEN A.PRD_CLCD = '*' 
+                        THEN '' 
+                        ELSE  '(' || A.PRD_CLCD || ') ' || (
+                                                            SELECT SSP_APP.FN_PR_FULL_CLSF_NM
+                                                                   (
+                                                                     A.CO_CD
+                                                                   , A.PRD_CLCD
+                                                                   )
+                                                              FROM DUAL
+                                                           ) 
+                   END                                                                            AS PRD_CLCD_NM               /*상품군명*/
+                 , CASE WHEN A.MNFR_NO = '*' 
+                        THEN '' 
+                        ELSE '(' || A.MNFR_NO || ') ' || C.MNFR_NM  
+                   END                                                                            AS MNFR_NM                   /*제조사명*/
+                 , CASE WHEN A.REGPSN_ID IS NOT NULL 
+                        THEN '('|| A.REGPSN_ID || ') ' || D.OPRTR_NM 
+                   END                                                                            AS REGPSN_NM                 /*등록자명*/
+                 , CASE WHEN A.UPDPSN_ID IS NOT NULL 
+                        THEN '('|| A.UPDPSN_ID || ') ' || E.OPRTR_NM 
+                   END                                                                            AS UPDPSN_NM                 /*수정자명*/
+                 , A.PRD_CLSF_CHRPSN_ID                                                           AS OLD_PRD_CLSF_CHRPSN_ID    /*기존담당자*/
+                 , A.PRD_CLSF_CHRPSN_USEYN                                                        AS OLD_PRD_CLSF_CHRPSN_USEYN /*기존사용여부*/
+              FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO                     A
+              LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO                      B
+                ON 0=0
+               AND B.CO_CD                 = A.CO_CD
+               AND B.OPRTR_ID              = A.PRD_CLSF_CHRPSN_ID
+              LEFT JOIN SSP_APP.TB_PR_MNFR_INFO                           C
+                ON 0=0
+               AND C.CO_CD                 = A.CO_CD
+               AND C.MNFR_NO               = A.MNFR_NO
+              LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO                      D
+                ON 0=0
+               AND D.CO_CD                 = A.CO_CD
+               AND D.OPRTR_ID              = A.REGPSN_ID
+              LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO                      E
+                ON 0=0
+               AND E.CO_CD                 = A.CO_CD
+               AND E.OPRTR_ID              = A.UPDPSN_ID
+              LEFT JOIN SSP_APP.TB_PR_PRD_CLSF_INFO                       F
+                ON 0=0
+               AND F.CO_CD    = A.CO_CD
+               AND F.PRD_CLCD = A.PRD_CLCD
+             WHERE 1=1
+               AND A.CO_CD                 = #{CO_CD}
+               AND A.PRD_CLSF_CHRPSN_ID    = #{PRD_CLSF_CHRPSN_ID}
+               AND A.PRD_CLCD              = #{PRD_CLCD}
+               AND A.MNFR_NO               = #{MNFR_NO}
+               AND A.PRD_CLSF_CHRPSN_TP_CD = '30'              /*10:상품담당자, 20:MD담당자, 30:구매담당자*/
+               AND A.MALL_SPR_CD           = '20'              /*10 : SSP, 20 : RD*/
+    </select>
+
+	<update id="updatePurgChrpsnMng" parameterType="HashMap">
+		/* PurgChrpsnMng.updatePurgChrpsnMng | 구매담당자정보 수정 */
+		<![CDATA[
+			BEGIN
+				/* 구매 담당자(정, 부), 사용여부 변경 처리 */
+				/* 2023.05.08 이상민 : 담당자 변경 로직 변경*/
+				UPDATE 	TB_PR_PRD_CLSF_CHRPSN_INFO TARGET
+				SET		PRD_CLSF_CHRPSN_ID 			= #{PRD_CLSF_CHRPSN_ID}
+						, PRD_CLSF_CHRPSN_USEYN 	= NVL(#{PRD_CLSF_CHRPSN_USEYN}, PRD_CLSF_CHRPSN_USEYN)
+						, PRD_CLSF_CHRPSN_SPR_CD 	= #{PRD_CLSF_CHRPSN_SPR_CD}
+						, UPD_RSN 					= #{UPD_RSN}
+						, UPDPSN_ID 				= #{SESSION_OPRTR_ID}
+						, UPD_DTM 					= SYSDATE
+				WHERE 	TARGET.CO_CD 				= #{CO_CD}
+				AND 	TARGET.PRD_CLSF_CHRPSN_ID 	= #{OLD_PRD_CLSF_CHRPSN_ID}
+				AND 	TARGET.PRD_CLCD 			= (
+														CASE
+															WHEN #{PRD_CLCD} IS NULL THEN '*'
+															ELSE #{PRD_CLCD}
+														END
+													)
+				AND 	TARGET.MNFR_NO 				= (
+														CASE
+															WHEN #{MNFR_NO} IS NULL THEN '*'
+															ELSE #{MNFR_NO}
+														END
+													)
+				AND 	TARGET.PRD_CLSF_CHRPSN_SEQ 	= #{PRD_CLSF_CHRPSN_SEQ}
+				AND 	TARGET.MALL_SPR_CD 			= '20';       				-- 10: SSP, 20:RND
+				
+				/* 담당자 변경이 정이 였울 경우 */
+				IF #{PRD_CLSF_CHRPSN_SPR_CD} = '10' THEN
+					BEGIN
+						/* 동일조건 정 담당자 -> 부 담당자 변경 처리 */
+						UPDATE 	TB_PR_PRD_CLSF_CHRPSN_INFO
+						SET		PRD_CLSF_CHRPSN_SPR_CD 	= '20'
+								, UPDPSN_ID 			= #{SESSION_OPRTR_ID}
+								, UPD_DTM 				= SYSDATE
+						WHERE 	CO_CD 					= #{CO_CD}
+						AND 	MALL_SPR_CD 			= '20'
+						AND 	PRD_CLSF_CHRPSN_SPR_CD 	= '10'
+						AND 	PRD_CLSF_CHRPSN_ID 		<> #{PRD_CLSF_CHRPSN_ID}
+						AND 	PRD_CLCD 	= (
+												CASE
+													WHEN #{PRD_CLCD} IS NULL THEN '*'
+													ELSE #{PRD_CLCD}
+												END
+											)
+						AND 	MNFR_NO 	= (
+												CASE
+													WHEN #{MNFR_NO} IS NULL THEN '*'
+													ELSE #{MNFR_NO}
+												END
+											);
+					END;
+				END IF;	
+			END;
+		]]>
+	</update>
+
+    <select id="selectPurgChrpsnMngDupl" parameterType="HashMap" resultType="Integer">
+        /* PurgChrpsnMng.selectPurgChrpsnMngDupl 구매담당자 담당자구분 중복체크 */
+        <![CDATA[
+        SELECT COUNT(1) AS CNT
+          FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO
+         WHERE CO_CD              = #{CO_CD}
+           AND PRD_CLSF_CHRPSN_ID = #{PRD_CLSF_CHRPSN_ID}
+           AND PRD_CLCD           = CASE WHEN #{PRD_CLCD} IS NULL 
+                                         THEN '*' 
+                                         ELSE #{PRD_CLCD} END
+           AND MNFR_NO            = CASE WHEN #{MNFR_NO} IS NULL 
+                                         THEN '*' 
+                                         ELSE #{MNFR_NO} END
+           AND MALL_SPR_CD        = '20'                    /*10 : SSP, 20 : RD*/
+        ]]>
+    </select>
+
+    <select id="selectPurgChrpsnMngSprChk" parameterType="HashMap" resultType="Integer">
+        /* PurgChrpsnMng.selectPurgChrpsnMngSprChk 구매담당자관리구분 체크 */
+        <![CDATA[
+        SELECT COUNT(1) AS CNT
+          FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO
+         WHERE CO_CD                  = #{CO_CD}
+           AND PRD_CLCD               = CASE WHEN #{PRD_CLCD} IS NULL 
+                                             THEN '*' 
+                                             ELSE #{PRD_CLCD} END
+           AND MNFR_NO                = CASE WHEN #{MNFR_NO} IS NULL 
+                                             THEN '*' 
+                                             ELSE #{MNFR_NO} END
+           AND PRD_CLSF_CHRPSN_SPR_CD = '10'                       /*10:정,20:부*/
+           AND PRD_CLSF_CHRPSN_USEYN  = 'Y'                        /*사용여부*/
+           AND PRD_CLSF_CHRPSN_TP_CD  = '30'                       /*구매담당자:30,상품담장자:10*/
+           AND MALL_SPR_CD            = '20'                       /*SSP:10,R&D:20*/
+         ]]>
+         <if test="CHK_PSN_ID != null and CHK_PSN_ID != ''">
+            AND PRD_CLSF_CHRPSN_ID != #{CHK_PSN_ID}
+         </if>
+    </select>
+
+	<insert id="insertPurgChrpsnMng" parameterType="HashMap">
+		/* PurgChrpsnMng.insertPurgChrpsnMng | 구매담당자 등록 */
+		<![CDATA[
+		BEGIN
+			/* 구매담당자 등록 */
+			INSERT INTO SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO (
+				CO_CD
+				, PRD_CLSF_CHRPSN_ID
+				, PRD_CLCD
+				, MNFR_NO
+				, PRD_CLSF_CHRPSN_SEQ
+				, MALL_SPR_CD
+				, PRD_CLSF_CHRPSN_TP_CD
+				, PRD_CLSF_CHRPSN_USEYN
+				, PRD_CLSF_CHRPSN_SPR_CD
+				, UPD_RSN
+				, REG_DTM
+				, REGPSN_ID
+			) VALUES (
+				#{CO_CD}
+				, #{PRD_CLSF_CHRPSN_ID}
+				, NVL2(#{PRD_CLCD}, #{PRD_CLCD}, '*')
+				, NVL2(#{MNFR_NO}, #{MNFR_NO}, '*')
+				, SQ_PR_PRD_CLSF_CHRPSN_INFO_01.NEXTVAL
+				, #{MALL_SPR_CD}
+				, #{PRD_CLSF_CHRPSN_TP_CD}
+				, #{PRD_CLSF_CHRPSN_USEYN}
+				, #{PRD_CLSF_CHRPSN_SPR_CD}
+				, #{UPD_RSN}
+				, SYSDATE
+				, #{SESSION_OPRTR_ID}
+			)
+			;
+
+			/* 정담당자 등록 시 기존 정 -> 부 담당자로 변경 */
+			IF #{PRD_CLSF_CHRPSN_SPR_CD} = '10' THEN
+				UPDATE SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO
+				SET
+					PRD_CLSF_CHRPSN_SPR_CD = '20'
+					, UPDPSN_ID = #{SESSION_OPRTR_ID}
+					, UPD_DTM = SYSDATE
+				WHERE CO_CD = #{CO_CD}
+				AND PRD_CLCD = NVL2(#{PRD_CLCD}, #{PRD_CLCD}, '*')
+				AND MNFR_NO = NVL2(#{MNFR_NO}, #{MNFR_NO}, '*')
+				AND MALL_SPR_CD = '20'
+				AND PRD_CLSF_CHRPSN_SPR_CD = '10'
+				AND PRD_CLSF_CHRPSN_ID <> #{PRD_CLSF_CHRPSN_ID}
+				;
+			END IF;
+		END;
+		]]>
+	</insert>
+
+	<select id="selectCodeChkYn" parameterType="HashMap" resultType="HashMap">
+        /* PurgChrpsnMng.selectCodeChkYn  저장 코드체크여부 조회  */
+        <![CDATA[
+            SELECT MAX(MNFR_NO_YN)      AS MNFR_NO_YN       /*제조원 코드*/
+                 , MAX(MD_EMP_NO_YN)    AS MD_EMP_NO_YN     /*구매담당자 코드*/
+              FROM (
+                       SELECT CASE WHEN COUNT(1) > 0
+                                   THEN 'Y'
+                                   ELSE 'N'
+                               END                     AS MNFR_NO_YN
+                            , ''                       AS MD_EMP_NO_YN
+                         FROM SSP_APP.TB_PR_MNFR_INFO
+                        WHERE CO_CD       = #{CO_CD}
+                              AND MNFR_NO = #{MNFR_NO}
+                        UNION ALL
+                       SELECT ''                       AS MNFR_NO_YN
+                            , CASE WHEN COUNT(1) > 0
+                                   THEN 'Y'
+                                   ELSE 'N'
+                              END                      AS MD_EMP_NO_YN
+                         FROM SSP_APP.TB_CO_MBR_OPRTR_INFO
+                        WHERE CO_CD        = #{CO_CD}
+                         AND UPPER(EMP_NO) = UPPER(#{MD_EMP_NO})
+                   )
+        ]]>
+    </select>
+    
+    <select id="selectUpCodeChkYn" parameterType="HashMap" resultType="HashMap">
+        /* PurgChrpsnMng.selectUpCodeChkYn  수정 코드체크여부 조회  */
+        <![CDATA[
+            <![CDATA[
+            SELECT MAX(MD_EMP_NO_YN)        AS MD_EMP_NO_YN     /*구매담당자 코드*/
+              FROM (
+                       
+                       SELECT CASE WHEN COUNT(1) > 0
+                                   THEN 'Y'
+                                   ELSE 'N'
+                              END                      AS MD_EMP_NO_YN
+                         FROM SSP_APP.TB_CO_MBR_OPRTR_INFO
+                        WHERE CO_CD        = #{CO_CD}
+                         AND UPPER(EMP_NO) = UPPER(#{MD_EMP_NO})
+                   )
+        ]]>
+    </select>
+    
+</mapper>

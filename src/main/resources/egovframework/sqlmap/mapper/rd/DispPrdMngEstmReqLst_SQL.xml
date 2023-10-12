@@ -1,0 +1,1653 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DispPrdMngEstmReqLst">
+	<select id="selectProductEstimateCount" parameterType="hashMap" resultType="Integer">
+		/* DispPrdMngEstmReqLst.selectProductEstimateCount | RND 전시상품 견적요청 리스트 카운트 */
+		SELECT
+			COUNT(*)
+		FROM (
+			SELECT *
+			FROM (
+				SELECT
+					T1.CO_CD
+					, T1.PRD_CLCD
+					, T1.DISP_PRD_NM
+					, FN_PR_FULL_CLSF_NM(T1.CO_CD, T1.PRD_CLCD) AS PRD_CLNM
+					, T1.REPR_PRD_ID
+					, T2.ESTM_REQ_NO
+					, TO_CHAR(T2.REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+					, TO_CHAR(TO_DATE(T2.ESTM_REQDT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS ESTM_REQDT
+					,(
+						CASE
+							WHEN (
+								SELECT ESTM_REQ_PROC_STATS_CD
+								FROM (
+									SELECT
+										S1.SEQ, S1.ESTM_REQ_PROC_STATS_CD
+									FROM TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+									WHERE S1.CO_CD = T2.CO_CD
+									AND S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+									ORDER BY SEQ DESC
+								)
+								WHERE ROWNUM = 1
+							) = '70'
+							THEN (
+								SELECT TO_CHAR(UPD_DTM, 'YYYY-MM-DD')
+								FROM TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+								WHERE S1.CO_CD = T2.CO_CD
+								AND S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+								AND S1.ESTM_REQ_PROC_STATS_CD = '70'
+							)
+							ELSE TO_CHAR(TO_DATE(T2.ESTM_CMPL_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+						END
+					) AS ESTM_CMPL_DT
+					, TO_CHAR(TO_DATE(T2.ESTM_VLD_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS ESTM_VLD_DT
+					, (
+						SELECT MALL_SPR_CD
+						FROM (
+							SELECT S1.SEQ, S1.MALL_SPR_CD
+							FROM TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+							WHERE S1.CO_CD = T2.CO_CD
+							AND S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+							ORDER BY SEQ DESC
+						)
+						WHERE ROWNUM = 1
+					) AS MALL_SPR_CD
+					, (
+						SELECT  ESTM_REQ_PROC_STATS_CD
+						FROM    (
+								SELECT  S1.SEQ, S1.ESTM_REQ_PROC_STATS_CD
+								FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+								WHERE   S1.CO_CD = T2.CO_CD
+								AND     S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+								ORDER BY SEQ DESC
+								)
+						WHERE   ROWNUM = 1
+					) AS ESTM_REQ_PROC_STATS_CD
+				     , CASE
+						WHEN '20' >= T9.ESTM_INFO_STATS_CD AND T9.ESTM_CUNT > 0 THEN '30'
+						ELSE T9.ESTM_INFO_STATS_CD
+					END AS ESTM_INFO_STATS_CD
+					, T3.MBR_ID
+					, T3.MBR_NM
+					, T3.BZPLC_ID
+					, (SELECT BZPLC_NM FROM TB_CC_BZPLC_BASIS S1 WHERE S1.CO_CD = T3.CO_CD AND S1.BZPLC_ID = T3.BZPLC_ID) AS BZPLC_NM
+					, T4.OPR_UNIT_ID
+					, (SELECT OPR_UNIT_NM FROM TB_CC_OPR_UNIT_BASIS S2 WHERE S2.CO_CD = T4.CO_CD AND S2.BZPLC_ID = T4.BZPLC_ID AND S2.OPR_UNIT_ID = T4.OPR_UNIT_ID) AS OPR_UNIT_NM
+					, T5.NEW_PRD_REQ_NO
+					, T5.MRO_REQ_NO
+					, T6.OPRTR_ID
+					, T6.OPRTR_NM
+					, T6.ORG_CD
+					, T6.ORG_NM
+				FROM    TB_RD_RND_DISP_BASIS T1
+						, TB_RD_RND_DISP_ESTM_REQ_DTLS T2
+						, TB_CC_MBR_BASIS T3
+						, TB_CC_DEPT_BASIS T4
+						, TB_PR_NEW_PRD_REQ_PROC T5
+						, (
+							SELECT  S1.CO_CD
+									, S1.PRD_CLCD
+									, S2.ORG_CD
+									, S2.OPRTR_ID
+									, S2.OPRTR_NM
+									, S2.ORG_NM
+							FROM    TB_PR_PRD_CLSF_CHRPSN_INFO S1
+									, TB_CO_MBR_OPRTR_INFO S2
+							WHERE   S1.CO_CD = S2.CO_CD
+							AND     S1.PRD_CLSF_CHRPSN_ID = S2.OPRTR_ID
+							AND     S1.PRD_CLSF_CHRPSN_TP_CD = '30'
+							AND     S1.PRD_CLSF_CHRPSN_SPR_CD = '10'
+							AND     S1.PRD_CLSF_CHRPSN_USEYN = 'Y'
+						) T6
+						, TB_PR_MRO_PRD_INFO T7
+						, TB_PR_PRD_INFO T8
+						, (
+							SELECT	CO_CD
+									, ESTM_REQ_NO
+									, MAX(ESTM_DTL_STATS_CD) KEEP(DENSE_RANK LAST ORDER BY SEQ) ESTM_INFO_STATS_CD
+									, MAX(UPDPSN_ID ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPDPSN_ID
+									, MAX(UPD_DTM ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPD_DTM
+									, (
+										SELECT COUNT(CASE WHEN ESTM_DTL_STATS_CD IN ('20', '40') THEN 1 END) ESTM_CUNT
+										FROM TB_RD_REQ_CPRTCP_DISP_ESTM_DTL D
+										WHERE D.CO_CD = K.CO_CD
+										AND D.ESTM_REQ_NO = K.ESTM_REQ_NO
+									) ESTM_CUNT
+							FROM 	TB_RD_REQ_CPRTCP_DISP_ESTM_STATS_DTLS K
+							GROUP BY CO_CD, ESTM_REQ_NO
+						) T9
+				WHERE   T1.CO_CD = T2.CO_CD
+				AND     T1.DISP_GRP_ID = T2.DISP_GRP_ID
+				AND     T1.PRD_CLCD = T2.PRD_CLCD
+				AND     T2.CO_CD = T9.CO_CD
+				AND     T2.ESTM_REQ_NO = T9.ESTM_REQ_NO
+				AND     T2.CO_CD = T3.CO_CD(+)
+				AND     T2.REGPSN_ID = T3.MBR_ID(+)
+				AND     T3.CO_CD = T4.CO_CD(+)
+				AND     T3.DEPT_ID = T4.DEPT_ID(+)
+				AND     T2.ESTM_REQ_NO = T5.ESTM_REQ_NO(+)
+				AND     T1.CO_CD = T6.CO_CD(+)
+				AND     T1.PRD_CLCD = T6.PRD_CLCD(+)
+				AND     T1.CO_CD = T7.CO_CD(+)
+				AND     T1.REPR_PRD_ID = T7.PRD_ID(+)
+				AND     T1.CO_CD = T8.CO_CD(+)
+				AND     T1.REPR_PRD_ID = T8.PRD_ID(+)
+				AND     T7.CO_CD = T5.CO_CD(+)
+				AND     T7.SSP_PRD_REG_REQ_ID = T5.NEW_PRD_REQ_NO(+)
+			)
+			WHERE CO_CD = #{CO_CD}
+			<!-- 요청번호/상품ID -->
+			<if test='PRD_ID != null and PRD_ID != "" '>
+				AND EXISTS (
+					SELECT 'X'
+					FROM TB_OD_ODR_INQ_TGT_DTLS A1
+					WHERE A1.SES_ID = #{SES_ID}
+					AND A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+					AND A1.COL_ITM = 'ESTM_REQ_NO'
+					<if test='PRD_ID_TYPE == "ESTI_NO" '>
+						AND ESTM_REQ_NO = A1.COND_DATA_VAL
+					</if>
+					<if test='PRD_ID_TYPE == "NEW_NO" '>
+						AND MRO_REQ_NO = A1.COND_DATA_VAL
+					</if>
+				)
+			</if>
+			<!-- 전시상품군 -->
+			<if test='PRD_GRP_CD != null and PRD_GRP_CD != "" '>
+				AND PRD_CLCD LIKE '%' || #{PRD_GRP_CD} || '%'
+			</if>
+			<if test='PRD_GRP_NM != null and PRD_GRP_NM != "" '>
+				AND PRD_CLNM LIKE '%' || #{PRD_GRP_NM} || '%'
+			</if>
+			<!-- 사업장/운영단위 -->
+			<if test='BZPLC_CD != null and BZPLC_CD != "" '>
+				AND EXISTS (
+					SELECT 'X'
+					FROM TB_OD_ODR_INQ_TGT_DTLS A1
+					WHERE A1.SES_ID = #{SES_ID}
+					AND A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+					<if test='BZPLC_TYPE == "BZPLC_ID" '>AND A1.COL_ITM = 'ESTM_BZP_NO'
+						AND
+						BZPLC_ID = A1.COND_DATA_VAL
+					</if>
+					<if test='BZPLC_TYPE == "OPR_UNIT_ID" '>AND A1.COL_ITM = 'ESTM_OPR_NO'
+						AND OPR_UNIT_ID = A1.COND_DATA_VAL
+					</if>
+				)
+			</if>
+			<if test='BZPLC_NM != null and BZPLC_NM != "" '>
+				AND EXISTS (
+					SELECT 'X'
+					FROM TB_OD_ODR_INQ_TGT_DTLS A1
+					WHERE A1.SES_ID = #{SES_ID}
+					AND A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+					<if test='BZPLC_TYPE == "BZPLC_ID" '>AND A1.COL_ITM = 'ESTM_BZP_NM'
+						AND REPLACE(BZPLC_NM, ' ', '') = A1.COND_DATA_VAL
+					</if>
+					<if test='BZPLC_TYPE == "OPR_UNIT_ID" '>AND A1.COL_ITM = 'ESTM_OPR_NM'
+						AND REPLACE(OPR_UNIT_NM, ' ', '') = A1.COND_DATA_VAL
+					</if>
+				)
+			</if>
+			<!-- 요청자 -->
+			<if test='REQ_CD != null and REQ_CD != "" '>
+				AND EXISTS (SELECT 'X'
+				FROM TB_OD_ODR_INQ_TGT_DTLS A1
+				WHERE A1.SES_ID = #{SES_ID}
+				AND A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				AND A1.COL_ITM = 'ESTM_MBR_NO'
+				AND MBR_ID = A1.COND_DATA_VAL)
+			</if>
+			<if test='REQ_NM != null and REQ_NM != "" '>
+				AND EXISTS (SELECT 'X'
+				FROM TB_OD_ODR_INQ_TGT_DTLS A1
+				WHERE A1.SES_ID = #{SES_ID}
+				AND A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				AND A1.COL_ITM = 'ESTM_MBR_NM'
+				AND MBR_NM = A1.COND_DATA_VAL)
+			</if>
+			<!-- 일자 -->
+			<if test='START_DTM != null and START_DTM != "" '>
+				<!-- 요청일 -->
+				<if test='DATE_TYPE == "REQ_DT" '>
+					AND TO_DATE(REG_DTM, 'YYYY-MM-DD') >= TO_DATE(#{START_DTM}, 'YYYY-MM-DD')
+				</if>
+				<!-- 최종처리일 -->
+				<if test='DATE_TYPE == "FNL_DT" '>
+					AND TO_DATE(ESTM_CMPL_DT, 'YYYY-MM-DD') >= TO_DATE(#{START_DTM}, 'YYYY-MM-DD')
+				</if>
+			</if>
+			<if test='END_DTM != null and END_DTM != "" '>
+				<!-- 요청일 -->
+				<if test='DATE_TYPE == "REQ_DT" '>
+					AND TO_DATE(REG_DTM, 'YYYY-MM-DD') <![CDATA[ <= ]]> TO_DATE(#{END_DTM}, 'YYYY-MM-DD')
+				</if>
+				<!-- 최종처리일 -->
+				<if test='DATE_TYPE == "FNL_DT" '>
+					AND TO_DATE(ESTM_CMPL_DT, 'YYYY-MM-DD') <![CDATA[ <= ]]> TO_DATE(#{END_DTM}, 'YYYY-MM-DD')
+				</if>
+			</if>
+			<!-- 처리상태 -->
+			<if test='PROC_STATS_CD != null and PROC_STATS_CD != "" '>
+				<if test='PROC_STATS_CD == "999"'>
+					AND ESTM_REQ_PROC_STATS_CD = '10'
+				</if>
+				<if test='PROC_STATS_CD != "999"'>
+					AND ESTM_REQ_PROC_STATS_CD != '10'
+					AND ESTM_INFO_STATS_CD = #{PROC_STATS_CD}
+			  	</if>
+			</if>
+			<!-- 담당팀 -->
+			<if test='TEAM_CD != null and TEAM_CD != "" '>
+				AND ORG_CD LIKE '%' || #{TEAM_CD} || '%'
+			</if>
+			<if test='TEAM_NM != null and TEAM_NM != "" '>
+				AND ORG_NM LIKE '%' || #{TEAM_NM} || '%'
+			</if>
+			<!-- 담당자 -->
+			<if test='CHAR_CD != null and CHAR_CD != "" '>
+				AND OPRTR_ID LIKE '%' || #{CHAR_CD} || '%'
+			</if>
+			<if test='CHAR_NM != null and CHAR_NM != "" '>
+				AND OPRTR_NM LIKE '%' || #{CHAR_NM} || '%'
+			</if>
+			<!-- 전시상품명 -->
+			<if test='PRD_NM != null and PRD_NM != "" '>
+				AND DISP_PRD_NM LIKE '%' || #{PRD_NM} || '%'
+			</if>
+			)
+    </select>
+
+	<select id="selectProductEstimateList" parameterType="hashMap" resultType="hashMap" fetchSize="1000">
+		/* DispPrdMngEstmReqLst.selectProductEstimateList | 전시상품 견적요청 목록 */
+        SELECT  *
+        FROM    (
+                    SELECT  MST.*
+                    		, CASE
+                    		    WHEN MST.ESTM_REQ_PROC_STATS_CD = '10' THEN '요청'
+                    		    ELSE (SELECT SSP_APP.FN_COM_DTL_CDNM('KO', 'ESTM_INFO_STATS_CD', MST.ESTM_INFO_STATS_CD) FROM DUAL)
+                    		END AS ESTM_INFO_STATS_NM
+                    FROM    (
+                                SELECT  '0' AS CHK
+                                        , T1.CO_CD
+                                        , T1.DISP_GRP_ID
+                                        , T1.PRD_CLCD
+                                        , T1.DISP_PRD_NM
+                                        , FN_PR_FULL_CLSF_NM(T1.CO_CD, T1.PRD_CLCD) AS PRD_CLNM
+                                        , LTRIM(T1.REPR_PRD_ID, '0') AS REPR_PRD_ID
+                                        , T2.ESTM_REQ_NO
+                                        , TO_CHAR(T2.REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                                        , TO_CHAR(TO_DATE(T2.ESTM_REQDT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS ESTM_REQDT
+                                        , (
+                                            CASE
+                                                WHEN    (
+                                                        SELECT  ESTM_REQ_PROC_STATS_CD
+                                                        FROM    (
+                                                                SELECT  S1.SEQ, S1.ESTM_REQ_PROC_STATS_CD
+                                                                FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                                                WHERE   S1.CO_CD = T2.CO_CD
+                                                                AND     S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                                                ORDER BY SEQ DESC
+                                                                )
+                                                        WHERE   ROWNUM = 1
+                                                        ) = '70'
+                                                THEN    (
+                                                        SELECT  TO_CHAR(UPD_DTM, 'YYYY-MM-DD')
+                                                        FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                                        WHERE   S1.CO_CD = T2.CO_CD
+                                                        AND     S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                                        AND     S1.ESTM_REQ_PROC_STATS_CD = '70'
+                                                        )
+                                                ELSE    TO_CHAR(TO_DATE(T2.ESTM_CMPL_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+                                            END
+                                        ) AS ESTM_CMPL_DT
+                                        , TO_CHAR(TO_DATE(T2.ESTM_VLD_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS ESTM_VLD_DT
+                                        , (
+                                            SELECT  MALL_SPR_CD
+                                            FROM    (
+                                                    SELECT S1.SEQ, S1.MALL_SPR_CD
+                                                    FROM TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                                    WHERE S1.CO_CD = T2.CO_CD
+                                                    AND S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                                    ORDER BY SEQ DESC
+                                                    )
+                                            WHERE   ROWNUM = 1
+                                        ) AS MALL_SPR_CD
+                                        , (
+                                            SELECT  ESTM_REQ_PROC_STATS_CD
+                                            FROM    (
+                                                    SELECT  S1.SEQ, S1.ESTM_REQ_PROC_STATS_CD
+                                                    FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                                    WHERE   S1.CO_CD = T2.CO_CD
+                                                    AND     S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                                    ORDER BY SEQ DESC
+                                                    )
+                                            WHERE   ROWNUM = 1
+                                        ) AS ESTM_REQ_PROC_STATS_CD
+                                     	, CASE
+											WHEN '20' >= T9.ESTM_INFO_STATS_CD AND T9.ESTM_CUNT > 0 THEN '30'
+											ELSE T9.ESTM_INFO_STATS_CD
+										END AS ESTM_INFO_STATS_CD
+                                        , T3.MBR_ID
+                                        , T3.MBR_NM
+                                        , T3.BZPLC_ID
+                                        , (
+                                            SELECT  BZPLC_NM
+                                            FROM    TB_CC_BZPLC_BASIS S1
+                                            WHERE   S1.CO_CD = T3.CO_CD AND S1.BZPLC_ID = T3.BZPLC_ID
+                                        ) AS BZPLC_NM
+                                        , T4.OPR_UNIT_ID
+                                        , (
+                                            SELECT  OPR_UNIT_NM
+                                            FROM    TB_CC_OPR_UNIT_BASIS S2
+                                            WHERE   S2.CO_CD = T4.CO_CD
+                                            AND     S2.BZPLC_ID = T4.BZPLC_ID
+                                            AND     S2.OPR_UNIT_ID = T4.OPR_UNIT_ID
+                                        ) AS OPR_UNIT_NM
+                                        , TO_CHAR(TO_NUMBER(T7.PRD_ID)) AS NEW_PRD_ID
+                                        , T5.NEW_PRD_REQ_NO
+                                        , T5.MRO_REQ_NO
+                                        , T6.OPRTR_ID
+                                        , T6.OPRTR_NM
+                                        , T6.ORG_CD
+                                        , T6.ORG_NM
+                                        , T7.MNFR_NO
+                                        , T7.ORGPLC_CTRY_CD
+                                        , T7.SELL_UNIT_CD
+                                        , T7.BASIS_UNIT_CD
+                                        , T7.BASIS_UNIT_QTY
+                                        , T8.DOC_REG_ID AS PPI_DOC_REG_ID
+                                        , T7.TX_CLCD
+                                        , T7.HUB_HNL_DIS_TP_CD
+                                        , (
+                                            SELECT  LISTAGG(A.OPTN_DTL_NM,',') WITHIN GROUP ( ORDER BY A.SRT_SO )
+                                            FROM    TB_RD_RND_DISP_OPTN_DTL A
+                                            WHERE   A.CO_CD = T1.CO_CD
+                                            AND     A.DISP_GRP_ID = T1.DISP_GRP_ID
+                                        ) AS NEW_PRD_REQ_PRVL_LIST
+                                		, T7.HUB_HNL_PSB_YN
+                                		, T7.HRM_CHM_MTL_YN AS CHM_MTL_YN
+                                FROM    TB_RD_RND_DISP_BASIS T1
+                                        , TB_RD_RND_DISP_ESTM_REQ_DTLS T2
+                                        , TB_CC_MBR_BASIS T3
+                                        , TB_CC_DEPT_BASIS T4
+                                        , TB_PR_NEW_PRD_REQ_PROC T5
+                                        , (
+                                            SELECT  S1.CO_CD
+                                                    , S1.PRD_CLCD
+                                                    , S2.ORG_CD
+                                                    , S2.OPRTR_ID
+                                                    , S2.OPRTR_NM
+                                                    , S2.ORG_NM
+                                            FROM    TB_PR_PRD_CLSF_CHRPSN_INFO S1
+                                                    , TB_CO_MBR_OPRTR_INFO S2
+                                            WHERE   S1.CO_CD = S2.CO_CD
+                                            AND     S1.PRD_CLSF_CHRPSN_ID = S2.OPRTR_ID
+                                            AND     S1.PRD_CLSF_CHRPSN_TP_CD = '30'
+                                            AND     S1.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                                            AND     S1.PRD_CLSF_CHRPSN_USEYN = 'Y'
+                                        ) T6
+                                		, TB_PR_MRO_PRD_INFO T7
+                                		, TB_PR_PRD_INFO T8
+                                		, (
+											SELECT	CO_CD
+													, ESTM_REQ_NO
+													, MAX(ESTM_DTL_STATS_CD) KEEP(DENSE_RANK LAST ORDER BY SEQ) ESTM_INFO_STATS_CD
+													, MAX(UPDPSN_ID ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPDPSN_ID
+													, MAX(UPD_DTM ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPD_DTM
+													, (
+														SELECT COUNT(CASE WHEN ESTM_DTL_STATS_CD IN ('20', '40') THEN 1 END) ESTM_CUNT
+														FROM TB_RD_REQ_CPRTCP_DISP_ESTM_DTL D
+														WHERE D.CO_CD = K.CO_CD
+														AND D.ESTM_REQ_NO = K.ESTM_REQ_NO
+													) ESTM_CUNT
+											FROM 	TB_RD_REQ_CPRTCP_DISP_ESTM_STATS_DTLS K
+											GROUP BY CO_CD, ESTM_REQ_NO
+										) T9
+                                WHERE   T1.CO_CD = T2.CO_CD
+                                AND     T1.DISP_GRP_ID = T2.DISP_GRP_ID
+                                AND     T1.PRD_CLCD = T2.PRD_CLCD
+                                AND     T2.CO_CD = T9.CO_CD
+                                AND     T2.ESTM_REQ_NO = T9.ESTM_REQ_NO
+                                AND     T2.CO_CD = T3.CO_CD(+)
+                                AND     T2.REGPSN_ID = T3.MBR_ID(+)
+                                AND     T3.CO_CD = T4.CO_CD(+)
+                                AND     T3.DEPT_ID = T4.DEPT_ID(+)
+                                AND     T2.ESTM_REQ_NO = T5.ESTM_REQ_NO(+)
+                                AND     T1.CO_CD = T6.CO_CD(+)
+                                AND     T1.PRD_CLCD = T6.PRD_CLCD(+)
+                                AND     T1.CO_CD = T7.CO_CD(+)
+                                AND     T1.REPR_PRD_ID = T7.PRD_ID(+)
+                                AND     T1.CO_CD = T8.CO_CD(+)
+                                AND     T1.REPR_PRD_ID = T8.PRD_ID(+)
+                                AND     T7.CO_CD = T5.CO_CD(+)
+                                AND     T7.SSP_PRD_REG_REQ_ID = T5.NEW_PRD_REQ_NO(+)
+                            ) MST
+        			WHERE	CO_CD = #{CO_CD}
+					<!-- 요청번호/상품ID -->
+					<if test='PRD_ID != null and PRD_ID != "" '>
+						AND	EXISTS (
+								SELECT 	'X'
+								FROM	TB_OD_ODR_INQ_TGT_DTLS A1
+								WHERE 	A1.SES_ID = #{SES_ID}
+								AND 	A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+								AND 	A1.COL_ITM = 'ESTM_REQ_NO'
+								<if test='PRD_ID_TYPE == "ESTI_NO" '>
+									AND ESTM_REQ_NO = A1.COND_DATA_VAL
+								</if>
+								<if test='PRD_ID_TYPE == "NEW_NO" '>
+									AND MRO_REQ_NO = A1.COND_DATA_VAL
+								</if>
+							)
+					</if>
+				<!-- 전시상품군 -->
+				<if test='PRD_GRP_CD != null and PRD_GRP_CD != "" '>
+					AND	PRD_CLCD LIKE '%' || #{PRD_GRP_CD} || '%'
+				</if>
+				<if test='PRD_GRP_NM != null and PRD_GRP_NM != "" '>
+					AND PRD_CLNM LIKE '%' || #{PRD_GRP_NM} || '%'
+				</if>
+				<!-- 사업장/운영단위 -->
+				<if test='BZPLC_CD != null and BZPLC_CD != "" '>
+					AND	EXISTS (
+							SELECT 	'X'
+							FROM 	TB_OD_ODR_INQ_TGT_DTLS A1
+							WHERE 	A1.SES_ID = #{SES_ID}
+							AND 	A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+							<if test='BZPLC_TYPE == "BZPLC_ID" '>
+								AND A1.COL_ITM = 'ESTM_BZP_NO'
+								AND BZPLC_ID = A1.COND_DATA_VAL
+							</if>
+							<if test='BZPLC_TYPE == "OPR_UNIT_ID" '>
+								AND A1.COL_ITM = 'ESTM_OPR_NO'
+								AND OPR_UNIT_ID = A1.COND_DATA_VAL
+							</if>
+						)
+				</if>
+				<if test='BZPLC_NM != null and BZPLC_NM != "" '>
+					AND EXISTS (
+							SELECT 	'X'
+							FROM 	TB_OD_ODR_INQ_TGT_DTLS A1
+							WHERE 	A1.SES_ID = #{SES_ID}
+							AND 	A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+							<if test='BZPLC_TYPE == "BZPLC_ID" '>
+								AND A1.COL_ITM = 'ESTM_BZP_NM'
+								AND REPLACE(BZPLC_NM, ' ', '') = A1.COND_DATA_VAL
+							</if>
+							<if test='BZPLC_TYPE == "OPR_UNIT_ID" '>
+								AND A1.COL_ITM = 'ESTM_OPR_NM'
+								AND REPLACE(OPR_UNIT_NM, ' ', '') = A1.COND_DATA_VAL
+							</if>
+						)
+				</if>
+				<!-- 요청자 -->
+				<if test='REQ_CD != null and REQ_CD != "" '>
+					AND EXISTS (
+							SELECT 	'X'
+							FROM 	TB_OD_ODR_INQ_TGT_DTLS A1
+							WHERE 	A1.SES_ID = #{SES_ID}
+							AND		A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+							AND 	A1.COL_ITM = 'ESTM_MBR_NO'
+							AND 	MBR_ID = A1.COND_DATA_VAL
+						)
+				</if>
+				<if test='REQ_NM != null and REQ_NM != "" '>
+					AND EXISTS (
+							SELECT 	'X'
+							FROM 	TB_OD_ODR_INQ_TGT_DTLS A1
+							WHERE 	A1.SES_ID = #{SES_ID}
+							AND 	A1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+							AND 	A1.COL_ITM = 'ESTM_MBR_NM'
+							AND 	MBR_NM = A1.COND_DATA_VAL
+						)
+				</if>
+				<!-- 일자 -->
+				<if test='START_DTM != null and START_DTM != "" '>
+					<!-- 요청일 -->
+					<if test='DATE_TYPE == "REQ_DT" '>
+						AND TO_DATE(REG_DTM, 'YYYY-MM-DD') >= TO_DATE(#{START_DTM}, 'YYYY-MM-DD')
+					</if>
+					<!-- 최종처리일 -->
+					<if test='DATE_TYPE == "FNL_DT" '>
+						AND TO_DATE(ESTM_CMPL_DT, 'YYYY-MM-DD') >= TO_DATE(#{START_DTM}, 'YYYY-MM-DD')
+					</if>
+				</if>
+				<if test='END_DTM != null and END_DTM != "" '>
+					<!-- 요청일 -->
+					<if test='DATE_TYPE == "REQ_DT" '>
+						AND TO_DATE(REG_DTM, 'YYYY-MM-DD') <![CDATA[ <= ]]> TO_DATE(#{END_DTM}, 'YYYY-MM-DD')
+					</if>
+					<!-- 최종처리일 -->
+					<if test='DATE_TYPE == "FNL_DT" '>
+						AND TO_DATE(ESTM_CMPL_DT, 'YYYY-MM-DD') <![CDATA[ <= ]]> TO_DATE(#{END_DTM}, 'YYYY-MM-DD')
+					</if>
+				</if>
+				<!-- 처리상태 -->
+				<if test='PROC_STATS_CD != null and PROC_STATS_CD != "" '>
+        			<if test='PROC_STATS_CD == "999"'>
+						AND ESTM_REQ_PROC_STATS_CD = '10'
+					</if>
+        			<if test='PROC_STATS_CD != "999"'>
+        			  	AND ESTM_REQ_PROC_STATS_CD != '10'
+						AND ESTM_INFO_STATS_CD = #{PROC_STATS_CD}
+					</if>
+				</if>
+				<!-- 담당팀 -->
+				<if test='TEAM_CD != null and TEAM_CD != "" '>
+					AND ORG_CD LIKE '%' || #{TEAM_CD} || '%'
+				</if>
+				<if test='TEAM_NM != null and TEAM_NM != "" '>
+					AND ORG_NM LIKE '%' || #{TEAM_NM} || '%'
+				</if>
+				<!-- 담당자 -->
+				<if test='CHAR_CD != null and CHAR_CD != "" '>
+					AND OPRTR_ID LIKE '%' || #{CHAR_CD} || '%'
+				</if>
+				<if test='CHAR_NM != null and CHAR_NM != "" '>
+					AND OPRTR_NM LIKE '%' || #{CHAR_NM} || '%'
+				</if>
+				<!-- 전시상품명 -->
+				<if test='PRD_NM != null and PRD_NM != "" '>
+					AND DISP_PRD_NM LIKE '%' || #{PRD_NM} || '%'
+				</if>
+        )
+        <!-- 정렬 -->
+        <if test="SORT_COLUMN != null and SORT_COLUMN != '' ">
+            ORDER BY ${SORT_COLUMN} ${SORT_TYPE}
+        </if>
+        <if test="SORT_COLUMN == null or SORT_COLUMN == '' ">
+            ORDER BY REG_DTM DESC, ESTM_REQ_NO DESC
+        </if>
+        OFFSET (${ROW_COUNT} * ${PAGE_NO}) - ${ROW_COUNT} ROWS FETCH FIRST ${ROW_COUNT} ROWS ONLY
+    </select>
+
+    <!-- 견적요청 상세 -->
+    <select id="selectProductEstimateDetail" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectProductEstimateDetail */
+		SELECT  MST.*
+				, CASE
+					WHEN MST.ESTM_REQ_PROC_STATS_CD = '10' THEN '요청'
+					ELSE (SELECT SSP_APP.FN_COM_DTL_CDNM('KO', 'ESTM_INFO_STATS_CD', MST.ESTM_INFO_STATS_CD) FROM DUAL)
+				END AS ESTM_INFO_STATS_NM
+        FROM    (
+                    SELECT  T1.CO_CD
+                            , T1.DISP_GRP_ID
+                            , T1.PRD_CLCD
+                            , T1.DISP_PRD_NM
+                            , FN_PR_FULL_CLSF_NM(T1.CO_CD, T1.PRD_CLCD) AS PRD_CLNM
+                            , T1.REPR_PRD_ID
+                            , TO_CHAR(T2.REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                            , T2.ESTM_REQ_NO
+                            , T2.ESTM_REQDT
+                            , T2.DLV_LT
+                            , T2.MIN_ORD_QTY
+                            , T2.MULT_ODR_UNIT
+                            , T2.ESTM_MEMO
+                            , T2.CPRTCP_EPRC
+                            , T2.ESTM_SBM_AMT
+                            , T2.ESTM_CMPL_DT
+                            , T2.ESTM_VLD_DT
+                            , T2.DOC_REG_ID
+                            , T2.EXCEPT_END_RSN
+                            , T3.MBR_ID
+                            , T3.MBR_NM
+                            , T3.ACCT_ID
+                            , T3.BZPLC_ID
+                            , T7.BZPLC_NM
+                            , (
+                                SELECT  MALL_SPR_CD
+                                FROM    (
+                                            SELECT  S1.MALL_SPR_CD
+                                            FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                            WHERE   S1.CO_CD = T2.CO_CD
+                                            AND     S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                            ORDER BY
+                                                    SEQ DESC
+                                        )
+                                WHERE   ROWNUM = 1
+                            ) AS MALL_SPR_CD
+                            , (
+                                SELECT  ESTM_REQ_PROC_STATS_CD
+                                FROM    (
+                                            SELECT  S1.ESTM_REQ_PROC_STATS_CD
+                                            FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+                                            WHERE   S1.CO_CD = T2.CO_CD
+                                            AND     S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                            ORDER BY
+                                                    SEQ DESC
+                                        )
+                                WHERE   ROWNUM = 1
+                            ) AS ESTM_REQ_PROC_STATS_CD
+                         	, CASE
+								WHEN '20' >= T16.ESTM_INFO_STATS_CD AND T16.ESTM_CUNT > 0 THEN '30'
+								ELSE T16.ESTM_INFO_STATS_CD
+							END AS ESTM_INFO_STATS_CD
+                            , T4.NEW_PRD_ID
+                            , T4.NEW_PRD_REQ_NO
+                            , T4.MRO_REQ_NO
+                            , T4.NEW_REG_DTM
+                            , T4.NEW_END_DTM
+                            , T4.MRO_PROC_STATS_CD
+                            , FN_COM_DTL_CDNM('KO', 'MRO_PROC_STATS_CD', T4.MRO_PROC_STATS_CD) AS MRO_PROC_STATS_NM
+                            , T4.NEW_PRD_REQ_STATS_CD
+                            , FN_COM_DTL_CDNM('KO', 'NEW_PRD_REQ_STATS_CD', T4.NEW_PRD_REQ_STATS_CD) AS NEW_PRD_REQ_STATS_NM
+                            , T5.SELL_UNIT_CD
+                            , T5.BASIS_UNIT_CD
+                            , T5.BASIS_UNIT_QTY
+                            , T5.MNFR_NO
+                            , T5.ORGPLC_CTRY_CD
+                            , T9.OPR_UNIT_ID
+                            , T9.OPR_UNIT_NM
+                            , T10.EMP_NO
+                            , T10.OPRTR_ID
+                            , T10.OPRTR_NM
+                            , T10.ORG_CD
+                            , T10.ORG_NM
+                            , T12.MNFR_NM
+                            , T13.ATFL_NM AS FILE_NM
+                            , T13.DOC_REG_SEQ
+                            , T14.CTRY_NM
+                            , T4.DISP_STATS_CD
+                            , FN_COM_DTL_CDNM('KO', 'PRC_PROC_STATS_CD', T4.DISP_STATS_CD) AS DISP_STATS_NM
+                            , T5.HUB_HNL_PSB_YN
+                            , T5.HUB_HNL_DIS_TP_CD
+                            , T5.TX_CLCD
+                            , (
+                                SELECT  LISTAGG(OPTN_ITM_SLT_CTS, ';') WITHIN GROUP (ORDER BY OPTN_ITM_NO)
+                                FROM    SSP_APP.TB_RD_RND_DISP_ESTM_OPTN_MAPP
+                                WHERE   ESTM_REQ_NO = T2.ESTM_REQ_NO
+                            ) AS NEW_PRD_REQ_PRVL_LIST
+                            , (
+                                SELECT	DECODE(S1.PRD_USE_YN, 'Y', '0', 'N', '1')
+                                FROM 	TB_RD_REQ_CPRTCP_DISP_ESTM_INFO S1
+                                WHERE 	S1.CO_CD       = T2.CO_CD
+                                AND 	S1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+                                AND 	ROWNUM         = 1
+                            ) AS PRD_USE_YN
+                            , T15.DOC_REG_ID AS PPI_DOC_REG_ID
+                            , T4.REQ_RSN
+                            , T5.CHM_MTL_PRD_YN AS CHM_MTL_YN
+                            , T2_2.ESTM_DIS_RSN
+                            , T2_2.ESTM_DIS_TP_CD
+                    FROM    TB_RD_RND_DISP_BASIS T1
+                            , TB_RD_RND_DISP_ESTM_REQ_DTLS T2
+                            , TB_RD_REQ_CPRTCP_DISP_ESTM_INFO T2_2
+                            , TB_CC_MBR_BASIS T3
+                            , (
+                                SELECT  TO_NUMBER(S2.PRD_ID) AS NEW_PRD_ID
+                                        , S1.NEW_PRD_REQ_NO
+                                        , S1.MRO_REQ_NO
+                                        , TO_CHAR(S1.REG_DTM, 'YYYY-MM-DD') AS NEW_REG_DTM
+                                        , DECODE(S1.MRO_PROC_STATS_CD, '10', TO_CHAR(TO_DATE(S1.PI_DATE, 'YYYY-MM-DD'), 'YYYY-MM-DD'), NULL) AS NEW_END_DTM
+                                        , S1.ESTM_REQ_NO
+                                        , S1.MRO_PROC_STATS_CD
+                                        , (
+                                            SELECT  NEW_PRD_REQ_STATS_CD
+                                            FROM    (
+                                                        SELECT  S3.NEW_PRD_REQ_STATS_CD
+                                                        FROM    TB_PR_NEW_PRD_REQ_STATS_DTLS S3
+                                                        WHERE   S3.NEW_PRD_REQ_NO = S1.NEW_PRD_REQ_NO
+                                                        AND     S2.MALL_SPR_CD = '10'
+                                                        ORDER BY
+                                                                SEQ DESC
+                                                    )
+                                            WHERE   ROWNUM = 1
+                                        ) AS NEW_PRD_REQ_STATS_CD
+                                        , S3.PRC_PROC_STATS_CD AS DISP_STATS_CD
+                                        , S4.REQ_RSN
+                                FROM    TB_PR_NEW_PRD_REQ_PROC S1
+                                        , TB_PR_MRO_PRD_INFO S2
+                                        , TB_PC_NEW_PRD_REQ_PRC_INFO S3
+                                        , TB_PR_NEW_PRD_CUST_REQ_INFO S4
+                                WHERE   S1.CO_CD = S2.CO_CD(+)
+                                AND     S1.NEW_PRD_REQ_NO = S2.SSP_PRD_REG_REQ_ID(+)
+                                AND     S1.CO_CD = S3.CO_CD(+)
+                                AND     S1.NEW_PRD_REQ_NO = S3.NEW_PRD_REQ_NO(+)
+                                AND     S1.CO_CD = S4.CO_CD
+                                AND     S1.NEW_PRD_REQ_NO = S4.NEW_PRD_REQ_NO
+                                AND     S1.NEW_PRD_REQ_NO = (
+                                            SELECT  MAX(NEW_PRD_REQ_NO)
+                                            FROM    TB_PR_NEW_PRD_REQ_PROC A1
+                                            WHERE   A1.ESTM_REQ_NO = S1.ESTM_REQ_NO
+                                        )
+                                AND		S1.MALL_SPR_CD = '20'
+                            ) T4
+                            , TB_PR_MRO_PRD_INFO T5
+                            , TB_CP_CPRTCP_BASIS T6
+                            , TB_CC_BZPLC_BASIS T7
+                            , TB_CC_DEPT_BASIS T8
+                            , TB_CC_OPR_UNIT_BASIS T9
+                            , (
+                                SELECT  S1.CO_CD
+                                        , S1.PRD_CLCD
+                                        , S2.ORG_CD
+                                        , S2.ORG_NM
+                                        , S2.EMP_NO
+                                        , S2.OPRTR_ID
+                                        , S2.OPRTR_NM
+                                FROM    TB_PR_PRD_CLSF_CHRPSN_INFO S1
+                                        , TB_CO_MBR_OPRTR_INFO S2
+                                WHERE   S1.PRD_CLSF_CHRPSN_ID = S2.OPRTR_ID
+                                AND     S1.PRD_CLSF_CHRPSN_TP_CD = '30'
+                                AND     S1.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                                AND     S1.PRD_CLSF_CHRPSN_USEYN = 'Y') T10
+                            , TB_PR_MNFR_INFO T12
+                            , TB_CO_ATFL_DTLS T13
+                            , TB_CO_CTRY_INFO T14
+                            , TB_PR_PRD_INFO T15
+                    		, (
+								SELECT	CO_CD
+										, ESTM_REQ_NO
+										, MAX(ESTM_DTL_STATS_CD) KEEP(DENSE_RANK LAST ORDER BY SEQ) ESTM_INFO_STATS_CD
+										, MAX(UPDPSN_ID ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPDPSN_ID
+										, MAX(UPD_DTM ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPD_DTM
+										, (
+											SELECT COUNT(CASE WHEN ESTM_DTL_STATS_CD IN ('20', '40') THEN 1 END) ESTM_CUNT
+											FROM TB_RD_REQ_CPRTCP_DISP_ESTM_DTL D
+											WHERE D.CO_CD = K.CO_CD
+											AND D.ESTM_REQ_NO = K.ESTM_REQ_NO
+										) ESTM_CUNT
+								FROM 	TB_RD_REQ_CPRTCP_DISP_ESTM_STATS_DTLS K
+								GROUP BY CO_CD, ESTM_REQ_NO
+							) T16
+                    WHERE   T1.CO_CD = T2.CO_CD
+                    AND     T1.PRD_CLCD = T2.PRD_CLCD
+                    AND     T1.DISP_GRP_ID = T2.DISP_GRP_ID
+                    AND     T2.CO_CD = T16.CO_CD
+                    AND     T2.ESTM_REQ_NO = T16.ESTM_REQ_NO
+                    AND     T2.CO_CD = T2_2.CO_CD
+                    AND     T2.ESTM_REQ_NO = T2_2.ESTM_REQ_NO
+                    AND     T2.CO_CD = T3.CO_CD(+)
+                    AND     T2.REGPSN_ID = T3.MBR_ID(+)
+                    AND     T2.ESTM_REQ_NO = T4.ESTM_REQ_NO(+)
+                    AND     T1.CO_CD = T5.CO_CD(+)
+                    AND     T1.REPR_PRD_ID = T5.PRD_ID
+                    AND     T2.CO_CD = T6.CO_CD(+)
+                    AND     T2.CPRTCP_ID = T6.CPRTCP_ID(+)
+                    AND     T1.CO_CD = T7.CO_CD(+)
+                    AND     T3.BZPLC_ID = T7.BZPLC_ID(+)
+                    AND     T1.CO_CD = T8.CO_CD(+)
+                    AND     T3.DEPT_ID = T8.DEPT_ID(+)
+                    AND     T1.CO_CD = T9.CO_CD(+)
+                    AND     T8.BZPLC_ID = T9.BZPLC_ID(+)
+                    AND     T8.OPR_UNIT_ID = T9.OPR_UNIT_ID(+)
+                    AND     T1.CO_CD = T10.CO_CD(+)
+                    AND     T1.PRD_CLCD = T10.PRD_CLCD(+)
+                    AND     T5.CO_CD = T12.CO_CD(+)
+                    AND     T5.MNFR_NO = T12.MNFR_NO(+)
+                    AND     T2.DOC_REG_ID = T13.DOC_REG_ID(+)
+                    AND     T5.CO_CD = T14.CO_CD(+)
+                    AND     T5.ORGPLC_CTRY_CD = T14.CTRY_SPR_CD
+                    AND     T5.PRD_ID = T15.PRD_ID
+                    AND     T2.CO_CD = #{CO_CD}
+                    AND     T2.ESTM_REQ_NO = #{ESTM_REQ_NO}
+                ) MST
+    </select>
+
+	 <!-- 견적요청 상세 -->
+    <select id="selectNewProductDetail" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectNewProductDetail */
+        SELECT	TB.*
+        		, CASE
+					WHEN TB.ESTM_REQ_PROC_STATS_CD = '10' THEN '요청'
+					ELSE (SELECT SSP_APP.FN_COM_DTL_CDNM('KO', 'ESTM_INFO_STATS_CD', TB.ESTM_INFO_STATS_CD) FROM DUAL)
+				END AS ESTM_INFO_STATS_NM
+        FROM	(
+					SELECT  MST.ESTM_REQ_NO
+							, MST.DISP_GRP_ID
+							, (
+								SELECT  ESTM_REQ_PROC_STATS_CD
+								FROM    (
+											SELECT  S1.ESTM_REQ_PROC_STATS_CD
+											FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+											WHERE   S1.CO_CD = MST.CO_CD
+											AND     S1.ESTM_REQ_NO = MST.ESTM_REQ_NO
+											ORDER BY
+													SEQ DESC
+										)
+								WHERE   ROWNUM = 1
+							) AS ESTM_REQ_PROC_STATS_CD
+					     	, CASE
+								WHEN '20' >= T9.ESTM_INFO_STATS_CD AND T9.ESTM_CUNT > 0 THEN '30'
+								ELSE T9.ESTM_INFO_STATS_CD
+							END AS ESTM_INFO_STATS_CD
+							, MST.PRD_CLCD
+							, ITM.PRD_NM AS DISP_PRD_NM
+							, FN_PR_FULL_CLSF_NM(MST.CO_CD, MST.PRD_CLCD) AS PRD_CLNM
+							, MRO.PUB_ONLY_SPR_CD
+							, PROC.REQ_PRD_NM
+							, MRO.MNFR_NO
+							, MNF.MNFR_NM
+							, PROC.BASIS_UNIT_QTY
+							, PROC.BASIS_UNIT_CD
+							, PROC.SELL_UNIT_CD
+							, PROC.ORGPLC_CTRY_CD
+							, CTR.CTRY_NM
+							, MRO.TX_CLCD
+							, MRO.HUB_HNL_DIS_TP_CD
+							, MRO.HUB_HNL_PSB_YN
+							, MRO.HRM_CHM_MTL_YN AS CHM_MTL_YN
+							, MST.ESTM_REQDT
+							, TO_CHAR(MST.REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+							, MBR.MBR_ID
+							, MBR.MBR_NM
+							, BZP.BZPLC_ID
+							, BZP.BZPLC_NM
+							, CUST.REQ_RSN
+							, CUST.NEW_PRD_REQ_NO
+							, PROC.RND_REQ_PRD_ID AS NEW_PRD_ID
+							, ITM.DOC_REG_ID AS PPI_DOC_REG_ID
+							, CPR.ESTM_DIS_RSN
+							, CPR.ESTM_DIS_TP_CD
+							, DECODE(CPR.PRD_USE_YN, 'Y', '0', 'N', '1') AS PRD_USE_YN
+							, ITM.SSP_REPR_ATTR AS NEW_PRD_REQ_PRVL_LIST
+							, CASE
+								WHEN TPPPH.STPRC IS NOT NULL AND TPCPPI.CPRTCP_ID IS NOT NULL
+									THEN 'Y'
+								ELSE 'N'
+							END AS PRD_PRC_STPRC_YN 									/* 상품 가격정보 유무 */
+							, MBR.EMAIL_ADDR AS MBR_EMAIL
+							, ORG.OPRTR_NM
+							, ORG.PSTN_NM
+							, ORG.OPRTR_MAIL
+							, ORG.ORG_NM
+							, FN_CO_IMG_PATH(MRO.PRD_ID, 1) AS IMG_PATH
+							, PG_OD_MAIL.GET_SERVEONE_URL_RD ||'/pr/pr-product-detail.do?mailYn=Y&amp;prdId='|| MRO.PRD_ID AS ITM_URL
+					FROM    TB_RD_RND_DISP_ESTM_REQ_DTLS MST
+							, TB_PR_NEW_PRD_REQ_PROC PROC
+							, TB_PR_PRD_INFO ITM
+							, TB_PR_NEW_PRD_CUST_REQ_INFO CUST
+							, TB_PR_MRO_PRD_INFO MRO
+							, TB_PR_MNFR_INFO MNF
+							, TB_CO_CTRY_INFO CTR
+							, TB_CC_MBR_BASIS MBR
+							, TB_CC_BZPLC_BASIS BZP
+							, TB_RD_REQ_CPRTCP_DISP_ESTM_INFO CPR
+							, TB_PC_PRD_PRC_HST TPPPH
+							, TB_PC_CPRTCP_PRD_PRC_INFO TPCPPI
+							, (
+								SELECT  S1.CO_CD
+										, S1.PRD_CLCD
+										, S2.ORG_CD
+										, S2.OPRTR_ID
+										, S2.OPRTR_NM
+										, S2.ORG_NM
+										, S2.PSTN_NM
+										, S2.EMAIL_ADDR AS OPRTR_MAIL
+								FROM    TB_PR_PRD_CLSF_CHRPSN_INFO S1
+										, TB_CO_MBR_OPRTR_INFO S2
+								WHERE   S1.CO_CD = S2.CO_CD
+								AND     S1.PRD_CLSF_CHRPSN_ID = S2.OPRTR_ID
+								AND     S1.PRD_CLSF_CHRPSN_TP_CD = '30'
+								AND     S1.PRD_CLSF_CHRPSN_SPR_CD = '10'
+								AND     S1.PRD_CLSF_CHRPSN_USEYN = 'Y'
+							) ORG
+							, (
+								SELECT	CO_CD
+										, ESTM_REQ_NO
+										, MAX(ESTM_DTL_STATS_CD) KEEP(DENSE_RANK LAST ORDER BY SEQ) ESTM_INFO_STATS_CD
+										, MAX(UPDPSN_ID ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPDPSN_ID
+										, MAX(UPD_DTM ) KEEP(DENSE_RANK LAST ORDER BY SEQ) UPD_DTM
+										, (
+											SELECT COUNT(CASE WHEN ESTM_DTL_STATS_CD IN ('20', '40') THEN 1 END) ESTM_CUNT
+											FROM TB_RD_REQ_CPRTCP_DISP_ESTM_DTL D
+											WHERE D.CO_CD = K.CO_CD
+											AND D.ESTM_REQ_NO = K.ESTM_REQ_NO
+										) ESTM_CUNT
+								FROM 	TB_RD_REQ_CPRTCP_DISP_ESTM_STATS_DTLS K
+								GROUP BY CO_CD, ESTM_REQ_NO
+							) T9
+					WHERE   MST.CO_CD = T9.CO_CD
+					AND		MST.ESTM_REQ_NO = T9.ESTM_REQ_NO
+					AND		MST.CO_CD = PROC.CO_CD
+					AND     MST.ESTM_REQ_NO = PROC.ESTM_REQ_NO
+					AND     MST.PRD_CLCD = PROC.PRD_CLCD
+					AND     PROC.CO_CD = MRO.CO_CD
+					AND     PROC.RND_REQ_PRD_ID = ITM.PRD_ID
+					AND     ITM.CO_CD = MRO.CO_CD
+					AND     ITM.PRD_ID = MRO.PRD_ID
+					AND     PROC.CO_CD = CUST.CO_CD
+					AND     PROC.NEW_PRD_REQ_NO = CUST.NEW_PRD_REQ_NO
+					AND     MRO.CO_CD = MNF.CO_CD(+)
+					AND     MRO.MNFR_NO = MNF.MNFR_NO(+)
+					AND     MRO.CO_CD = CTR.CO_CD(+)
+					AND     MRO.ORGPLC_CTRY_CD = CTR.CTRY_SPR_CD
+					AND     MST.CO_CD = MBR.CO_CD(+)
+					AND     MST.REGPSN_ID = MBR.MBR_ID(+)
+					AND     MBR.CO_CD = BZP.CO_CD(+)
+					AND     MBR.BZPLC_ID = BZP.BZPLC_ID(+)
+					AND     MST.CO_CD = CPR.CO_CD(+)
+					AND     MST.ESTM_REQ_NO = CPR.ESTM_REQ_NO(+)
+					AND     MST.CO_CD = TPPPH.CO_CD(+)
+					AND     MRO.PRD_ID = TPPPH.PRD_ID(+)
+					AND     TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') BETWEEN TPPPH.BSS_SALSPRC_STR_DTM(+) AND TPPPH.BSS_SALSPRC_END_DTM(+)    /* 유효한 가격정보 조회 */
+					AND     TPPPH.CO_CD = TPCPPI.CO_CD(+)
+					AND     TPPPH.PRD_ID = TPCPPI.PRD_ID(+)
+					AND     TPPPH.LWST_BUY_CPRTCP_ID = TPCPPI.CPRTCP_ID(+)
+					AND     TO_CHAR(SYSDATE, 'YYYYMMDDHH') BETWEEN TPCPPI.VLD_STR_DT(+) AND TPCPPI.VLD_END_DT(+)
+					AND     MST.CO_CD = ORG.CO_CD(+)
+					AND     MST.PRD_CLCD = ORG.PRD_CLCD(+)
+					AND     MST.CO_CD = #{CO_CD}
+					AND     MST.ESTM_REQ_NO = #{ESTM_REQ_NO}
+					AND     MST.DISP_GRP_ID = #{DISP_GRP_ID}
+					AND     PROC.MALL_SPR_CD = '20'
+        		) TB
+        WHERE	1 = 1
+    </select>
+
+    <!-- 견적요청 옵션 조회 -->
+    <select id="selectProductEstimateOption" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectProductEstimateOption */
+        WITH OPTN AS (
+            SELECT  *
+            FROM    TB_RD_RND_DISP_OPTN_BASIS
+            WHERE   DISP_GRP_ID = #{DISP_GRP_ID}
+        ),
+        MAPP AS (
+            SELECT  *
+            FROM    TB_RD_RND_DISP_ESTM_OPTN_MAPP
+            WHERE   DISP_GRP_ID = #{DISP_GRP_ID}
+            AND     ESTM_REQ_NO = #{ESTM_REQ_NO}
+        ),
+        ATTR AS (
+            SELECT  A.PRD_ATTR_CD, B.PRNM, A.PRD_CLCD
+            FROM    TB_PR_PRD_CLSF_ATTR_MAPP A
+                    , TB_PR_PRD_ATTR_INFO B
+            WHERE   A.CO_CD = B.CO_CD
+            AND     A.PRD_ATTR_CD = B.PRD_ATTR_CD
+            AND     A.PRD_CLCD = #{PRD_CLCD}
+            AND     B.MALL_SPR_CD = '20'
+        )
+        SELECT  A.CO_CD
+                , B.ESTM_REQ_NO
+                , A.DISP_GRP_ID
+                , A.OPTN_ITM_NO
+                , A.PRD_CLCD
+                , A.OPTN_NM
+                , B.OPTN_ITM_SLT_CTS
+                , C.PRD_ATTR_CD
+                , A.SRT_SO
+                , A.MAND_YN
+        FROM    OPTN A
+                , MAPP B
+                , ATTR C
+        WHERE   A.DISP_GRP_ID = B.DISP_GRP_ID(+)
+        AND     A.OPTN_ITM_NO = B.OPTN_ITM_NO(+)
+        AND     A.OPTN_NM = C.PRNM(+)
+        ORDER BY
+                A.SRT_SO
+    </select>
+
+	<!-- 견적요청 옵션 조회 -->
+    <select id="selectNewProductOption" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectNewProductOption */
+        SELECT  MST.CO_CD
+                , MST.ESTM_REQ_NO
+                , MST.DISP_GRP_ID
+                , MST.PRD_CLCD
+                , ATTR.PRNM OPTN_NM
+                , MAPP.PRVL AS OPTN_ITM_SLT_CTS
+                , ATTR.PRD_ATTR_CD
+                , MAPP.SRT_SO
+                , NULL AS MAND_YN
+        FROM    TB_RD_RND_DISP_ESTM_REQ_DTLS MST
+                , TB_PR_NEW_PRD_REQ_PROC PROC
+                , TB_PR_PRD_INFO_ATTR_MAPP MAPP
+                , TB_PR_PRD_ATTR_INFO ATTR
+        WHERE   MST.CO_CD = PROC.CO_CD
+        AND     MST.ESTM_REQ_NO = PROC.ESTM_REQ_NO
+        AND     MST.PRD_CLCD = PROC.PRD_CLCD
+        AND     PROC.CO_CD = MAPP.CO_CD
+        AND     PROC.RND_REQ_PRD_ID = MAPP.PRD_ID
+        AND     MAPP.CO_CD = ATTR.CO_CD
+        AND     MAPP.PRD_ATTR_CD = ATTR.PRD_ATTR_CD
+        AND		MST.DISP_GRP_ID = #{DISP_GRP_ID}
+        AND		MST.ESTM_REQ_NO = #{ESTM_REQ_NO}
+        ORDER BY MAPP.SRT_SO
+    </select>
+
+    <!-- 견적요청 추가옵션 조회 -->
+    <select id="selectProductEstimateAddOption" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectProductEstimateAddOption */
+        SELECT T1.CO_CD
+             , T1.ESTM_REQ_NO
+             , T1.PRD_CLCD
+             , T1.ADD_OPTN_ITM_NO
+             , T1.ADD_OPTN_ITM_SLT_CTS
+             , T1.DOC_REG_ID
+             , T1.DOC_REG_SEQ
+             , T1.DOC_USE_YN
+             , T1.DOC_REG_ID
+             , T1.ADD_OPTN_NM
+             , T1.ADD_OPTN_ITM_NO AS SRT_SO
+             , T3.DOC_REG_SEQ
+        FROM TB_RD_RND_DISP_ESTM_ADD_OPTN_MAPP T1
+           , TB_CO_ATFL_DTLS T3
+        WHERE T1.DOC_REG_ID = T3.DOC_REG_ID(+)
+          AND T1.ADD_OPTN_ITM_NO = T3.ETC_FDS_1(+)
+          AND T1.ESTM_REQ_NO = #{ESTM_REQ_NO}
+          AND T1.PRD_CLCD = #{PRD_CLCD}
+        ORDER BY T1.ADD_OPTN_ITM_NO
+    </select>
+
+    <!-- 견적요청 히스토리 조회 -->
+    <select id="selectProductEstimateHistory" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectProductEstimateHistory */
+        SELECT T2.CO_CD
+             , T2.ESTM_REQ_NO
+             , T2.SEQ
+             , T2.ESTM_REQ_PROC_STATS_CD
+             , FN_COM_DTL_CDNM('KO', 'ESTM_REQ_PROC_STATS_CD', T2.ESTM_REQ_PROC_STATS_CD) AS ESTM_REQ_PROC_STATS_NM
+             , T2.MALL_SPR_CD
+             , T2.REGPSN_ID
+             , TO_CHAR(T2.REG_DTM,'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+             , T2.UPDPSN_ID
+             , T2.UPD_DTM
+             , T3.EMP_NO
+             , T3.OPRTR_ID
+             , DECODE(T3.EMP_NO, '', '', '(' || T3.EMP_NO || ')' || T3.OPRTR_NM) AS OPRTR_NM
+             , T4.MBR_ID
+             , T4.MBR_NM
+             , T4.ACCT_ID
+             , DECODE(T4.MBR_ID, '', '', T4.MBR_NM || '(' || T4.MBR_ID || ')') AS REQ_USER_NM
+             , DECODE(T2.ESTM_REQ_PROC_STATS_CD, '10', T4.MBR_ID, DECODE(T3.EMP_NO, '', T4.MBR_ID, T3.EMP_NO)) AS REGPSN_ID
+             , DECODE(T2.ESTM_REQ_PROC_STATS_CD, '10', T4.MBR_NM, DECODE(T3.EMP_NO, '', T4.MBR_NM, T3.OPRTR_NM)) AS REGPSN_NM
+        FROM TB_PR_DISP_ESTM_REQ_DTLS T1
+           , TB_PR_DISP_ESTM_STATS_DTLS T2
+           , TB_CO_MBR_OPRTR_INFO  T3
+           , TB_CC_MBR_BASIS T4
+        WHERE T1.CO_CD = T2.CO_CD
+          AND T1.ESTM_REQ_NO = T2.ESTM_REQ_NO
+          AND T1.CO_CD = T3.CO_CD(+)
+          AND T2.REGPSN_ID = T3.OPRTR_ID(+)
+          AND T2.CO_CD = T4.CO_CD(+)
+          AND T2.REGPSN_ID = T4.MBR_ID(+)
+          AND T1.CO_CD = #{CO_CD}
+          AND T1.ESTM_REQ_NO = #{ESTM_REQ_NO}
+        ORDER BY T2.SEQ DESC
+    </select>
+
+    <!-- 견적요청 처리중 -->
+    <update id="updateProductEstimateReqDtl" parameterType="hashMap">
+        /* DispPrdMngEstmReqLst.updateProductEstimateReqDtl */
+        UPDATE TB_PR_DISP_ESTM_REQ_DTLS
+        SET
+        <if test='ESTM_REQ_PROC_STATS_CD == "30" '>
+            CPRTCP_ID = #{CPRTCP_ID}
+            , ESTM_REQDT = #{ESTM_REQDT}
+        </if>
+        <if test='ESTM_REQ_PROC_STATS_CD == "40" '>
+            DLV_LT = #{DLV_LT}
+            , MIN_ORD_QTY = #{MIN_ORD_QTY}
+            , MULT_ODR_UNIT = #{MULT_ODR_UNIT}
+            , ESTM_MEMO = #{ESTM_MEMO}
+            , CPRTCP_EPRC = #{CPRTCP_EPRC}
+            , ESTM_SBM_AMT = #{ESTM_SBM_AMT}
+            , ESTM_CMPL_DT = #{ESTM_CMPL_DT}
+            , ESTM_VLD_DT = #{ESTM_VLD_DT}
+            , DOC_REG_ID = #{DOC_REG_ID}
+        </if>
+        <if test='ESTM_REQ_PROC_STATS_CD == "70" '>
+            EXCEPT_END_RSN = #{EXCEPT_END_RSN}
+        </if>
+        , UPDPSN_ID = #{OPRTR_ID}
+        , UPD_DTM = SYSDATE
+        WHERE CO_CD = #{CO_CD}
+        AND ESTM_REQ_NO = #{ESTM_REQ_NO}
+    </update>
+
+    <!-- 견적요청 상태 -->
+    <insert id="insertProductEstimateStatus" parameterType="hashMap">
+        /* DispPrdMngEstmReqLst.insertProductEstimateStatus */
+        INSERT INTO TB_RD_RND_DISP_ESTM_STATS_DTLS (
+                                                 CO_CD
+                                               , ESTM_REQ_NO
+                                               , SEQ
+                                               , ESTM_REQ_PROC_STATS_CD
+                                               , MALL_SPR_CD
+                                               , REGPSN_ID
+                                               , REG_DTM
+                                               , UPDPSN_ID
+                                               , UPD_DTM
+        ) VALUES (
+                     #{CO_CD}
+                 , #{ESTM_REQ_NO}
+                 , (SELECT NVL(MAX(SEQ), 0) + 1 FROM TB_RD_RND_DISP_ESTM_STATS_DTLS WHERE CO_CD = #{CO_CD} AND ESTM_REQ_NO = #{ESTM_REQ_NO})
+                 , #{ESTM_REQ_PROC_STATS_CD}
+                 , #{MALL_SPR_CD}
+                 , #{OPRTR_ID}
+                 , SYSDATE
+                 , #{OPRTR_ID}
+                 , SYSDATE
+                 )
+    </insert>
+
+	<update id="updateCprtcpDispEstmInfo" parameterType="HashMap">
+		UPDATE	TB_RD_REQ_CPRTCP_DISP_ESTM_INFO
+		SET		ESTM_INFO_STATS_CD = #{ESTM_INFO_STATS_CD}
+		  		<if test='RND_REQ_PRD_ID != null and RND_REQ_PRD_ID != ""'>
+					, PRD_ID = #{RND_REQ_PRD_ID}
+				</if>
+		WHERE	CO_CD = #{CO_CD}
+		AND		ESTM_REQ_NO = #{ESTM_REQ_NO}
+	</update>
+
+	<update id="updateDispEstimateReqDt" parameterType="HashMap">
+		UPDATE	TB_RD_RND_DISP_ESTM_REQ_DTLS
+		SET		ESTM_REQDT = TO_CHAR(SYSDATE, 'YYYYMMDD')
+		WHERE	ESTM_REQ_NO = #{ESTM_REQ_NO}
+		AND		DISP_GRP_ID = #{DISP_GRP_ID}
+		AND		PRD_CLCD = #{PRD_CLCD}
+	</update>
+
+	<select id="selectLastRndDispReqEstmStats" parameterType="HashMap" resultType="String">
+		SELECT  ESTM_REQ_PROC_STATS_CD
+		FROM    (
+				SELECT  S1.ESTM_REQ_PROC_STATS_CD
+				FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS S1
+				WHERE   S1.CO_CD = #{CO_CD}
+				AND     S1.ESTM_REQ_NO = #{ESTM_REQ_NO}
+				ORDER BY SEQ DESC
+				)
+		WHERE   ROWNUM = 1
+	</select>
+
+    <!-- 견적완료 파일정보 변경 -->
+    <update id="updateProductEstimateReqAtflDtl" parameterType="hashMap">
+        /* DispPrdMngEstmReqLst.updateProductEstimateReqAtflDtl */
+        UPDATE TB_CO_ATFL_DTLS
+        SET ETC_FDS_1 = 'C4'
+        WHERE DOC_REG_ID = #{DOC_REG_ID}
+    </update>
+
+    <!-- 레이아웃 초기화 -->
+    <delete id="deleteProductEstimateLayoutReset" parameterType="hashMap">
+        /* DispPrdMngEstmReqLst.deleteProductEstimateLayoutReset */
+        DELETE TB_CO_UI_PSNL_DTLS
+        WHERE CO_CD = #{CO_CD}
+          AND OPRTR_ID = #{OPRTR_ID}
+          AND MNU_SEQ = '12'
+    </delete>
+
+    <!-- 신규상품요청번호 조회 -->
+    <select id="selectProductEstimateNewPrdReqNo" parameterType="hashMap" resultType="String">
+        /* DispPrdMngEstmReqLst.selectProductEstimateNewPrdReqNo */
+        SELECT 'R' || LPAD(SQ_PR_NEW_PRD_CUST_REQ_INFO_01.NEXTVAL,8,'0') FROM DUAL
+    </select>
+
+    <!-- 신규상품고객요청정보 -->
+    <insert id="insertProductEstimateNewCustReqInfo" parameterType="hashMap">
+        /* DispPrdMngEstmReqLst.insertProductEstimateNewCustReqInfo */
+        INSERT INTO TB_PR_NEW_PRD_CUST_REQ_INFO(
+        CO_CD							/* 회사코드			*/
+        , NEW_PRD_REQ_NO				/* 신규상품요청번호		*/
+        , REQ_PRD_NM					/* 요청상품명			*/
+        , MNFR_NO						/* 제조사번호			*/
+        , ORGPLC_CTRY_CD				/* 원산지국가코드		*/
+        , PRD_CLCD						/* 상품분류코드			*/
+        , CHM_MTL_YN
+        <!-- , DOC_REG_ID -->			/* 문서등록ID			*/
+        , PUB_ONLY_SPR_CD				/* 공용전용구분코드		*/
+        , REQ_RSN						/* 요청사유			*/
+        , REGPSN_ID						/* 등록자ID			*/
+        , REG_DTM						/* 등록일시			*/
+        , UPDPSN_ID						/* 수정자ID			*/
+        , UPD_DTM						/* 수정일시			*/
+        ) VALUES (
+        #{CO_CD}						/* 회사코드			*/
+        , #{NEW_PRD_REQ_NO}				/* 신규상품요청번호		*/
+        , #{DISP_PRD_NM}				/* 요청상품명			*/
+        , #{MNFR_NO}					/* 제조사번호			*/
+        , #{ORGPLC_CTRY_CD}				/* 원산지국가코드		*/
+        , #{PRD_CLCD}					/* 상품분류코드			*/
+        , 'N'
+        <!-- , #{docRegId} -->			/* 문서등록ID			*/
+        , 'E'							/* 공용전용구분코드		*/
+        , '전시상품 견적요청'					/* 요청사유			*/
+        , #{OPRTR_ID}					/* 등록자ID			*/
+        , SYSDATE						/* 등록일시			*/
+        , #{OPRTR_ID}					/* 수정자ID			*/
+        , SYSDATE						/* 수정일시			*/
+        )
+    </insert>
+
+    <!-- 전시상품 속성 -->
+    <select id="selectProductEstimateMroAttrInfo" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectProductEstimateMroAttrInfo */
+        SELECT ATR.INTG_ATTR_CD
+             , DECODE(OP.NEW_PRD_REQ_PRVL, '', ATR.NEW_PRD_REQ_PRVL, OP.NEW_PRD_REQ_PRVL) AS NEW_PRD_REQ_PRVL
+             , ATR.INTG_ATTR_SPR_CD
+        FROM (SELECT A.MRO_ATTR_CD AS INTG_ATTR_CD
+                   , A.PRVL AS NEW_PRD_REQ_PRVL
+                   , A.PRNM AS NEW_PRD_REQ_PRNM
+                   , '30' INTG_ATTR_SPR_CD
+              FROM TB_PR_MRO_PRD_INFO_ATTR_MAPP A
+              WHERE A.CO_CD = #{CO_CD}
+                AND A.PRD_ID = #{REPR_PRD_ID}
+                AND NOT EXISTS (SELECT 'X'
+                                FROM TB_PR_PRD_INFO_ATTR_MAPP B
+                                   , TB_PR_PRD_ATTR_INFO C
+                                WHERE B.CO_CD = C.CO_CD
+                                  AND B.PRD_ATTR_CD = C.PRD_ATTR_CD
+                                  AND B.CO_CD = A.CO_CD
+                                  AND B.PRD_ID = A.PRD_ID
+                                  AND C.PRNM = A.PRNM)
+              UNION ALL
+              SELECT A.PRD_ATTR_CD AS INTG_ATTR_CD
+                   , A.PRVL AS NEW_PRD_REQ_PRVL
+                   , C.PRNM AS NEW_PRD_REQ_PRNM
+                   , '10' INTG_ATTR_SPR_CD
+              FROM TB_PR_PRD_INFO_ATTR_MAPP A
+                 , TB_PR_PRD_ATTR_INFO C
+              WHERE A.CO_CD = C.CO_CD
+                AND A.PRD_ATTR_CD = C.PRD_ATTR_CD
+                AND A.CO_CD = #{CO_CD}
+                AND A.PRD_ID = #{REPR_PRD_ID}
+        ) ATR
+           , (SELECT T1.OPTN_NM AS NEW_PRD_REQ_PRNM
+                   , T2.OPTN_ITM_SLT_CTS AS NEW_PRD_REQ_PRVL
+              FROM TB_PR_DISP_OPTN_BASIS T1
+                 , TB_PR_DISP_ESTM_OPTN_MAPP T2
+              WHERE T1.CO_CD = T2.CO_CD
+                AND T1.PRD_CLCD = T2.PRD_CLCD
+                AND T1.OPTN_ITM_NO = T2.OPTN_ITM_NO
+                AND T1.CO_CD = #{CO_CD}
+                AND T1.PRD_CLCD = #{PRD_CLCD}
+                AND T2.ESTM_REQ_NO = #{ESTM_REQ_NO}
+              UNION ALL
+              SELECT T1.ADD_OPTN_NM AS NEW_PRD_REQ_PRNM
+                   , T2.ADD_OPTN_ITM_SLT_CTS AS NEW_PRD_REQ_PRVL
+              FROM TB_PR_DISP_ADD_OPTN_BASIS T1
+                 , TB_PR_DISP_ESTM_ADD_OPTN_MAPP T2
+              WHERE T1.CO_CD = T2.CO_CD
+                AND T1.PRD_CLCD = T2.PRD_CLCD
+                AND T1.ADD_OPTN_ITM_NO = T2.ADD_OPTN_ITM_NO
+                AND T1.CO_CD = #{CO_CD}
+                AND T2.ESTM_REQ_NO = #{ESTM_REQ_NO}
+                AND T1.PRD_CLCD = #{PRD_CLCD}
+                AND NOT EXISTS (SELECT 'X'
+                                FROM TB_PR_DISP_OPTN_BASIS S1
+                                WHERE T1.CO_CD = S1.CO_CD
+                                  AND T1.PRD_CLCD = S1.PRD_CLCD
+                                  AND T1.ADD_OPTN_NM = S1.OPTN_NM)
+        ) OP
+        WHERE ATR.NEW_PRD_REQ_PRNM = OP.NEW_PRD_REQ_PRNM(+)
+    </select>
+
+    <!-- 신규상품고객요청속성정보 -->
+    <insert id="insertProductEstimateNewCustReqAttrInfo" parameterType="hashMap">
+        /* DispPrdMngEstmReqLst.insertProductEstimateNewCustReqAttrInfo */
+        INSERT INTO TB_PR_NEW_PRD_CUST_REQ_ATTR_INFO(
+                                                      CO_CD							/* 회사코드			*/
+                                                    , NEW_PRD_REQ_NO				/* 신규상품요청번호		*/
+                                                    , INTG_ATTR_CD					/* 상품속성코드			*/
+                                                    , NEW_PRD_REQ_PRVL				/* 신규상품요청속성값		*/
+                                                    , INTG_ATTR_SPR_CD				/* 통합속성구분코드		*/
+                                                    , SRT_SO						/* 정렬순서			*/
+                                                    , REGPSN_ID						/* 등록자ID			*/
+                                                    , REG_DTM						/* 등록일시			*/
+                                                    , UPDPSN_ID						/* 수정자ID			*/
+                                                    , UPD_DTM						/* 수정일시			*/
+        ) VALUES (
+                     #{CO_CD}						/* 회사코드			*/
+                 , #{NEW_PRD_REQ_NO}				/* 신규상품요청번호		*/
+                 , #{INTG_ATTR_CD}				/* 상품속성코드			*/
+                 , #{NEW_PRD_REQ_PRVL}			/* 신규상품요청속성값		*/
+                 , #{INTG_ATTR_SPR_CD}			/* 통합속성구분코드		*/
+                 , (SELECT NVL(MAX(X.SRT_SO), 0) + 1
+                    FROM TB_PR_NEW_PRD_CUST_REQ_ATTR_INFO X
+                    WHERE X.CO_CD = #{CO_CD}
+                      AND X.NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO}
+                     )								/* 정렬순서			*/
+                 , #{OPRTR_ID}					/* 등록자ID			*/
+                 , SYSDATE						/* 등록일시			*/
+                 , #{OPRTR_ID}					/* 수정자ID			*/
+                 , SYSDATE						/* 수정일시			*/
+                 )
+    </insert>
+
+    <!-- 신규상품요청처리 -->
+    <insert id="insertProductEstimateNewReqProc" parameterType="hashMap">
+        /* DispPrdMngEstmReqLst.insertProductEstimateNewReqProc */
+        INSERT INTO TB_PR_NEW_PRD_REQ_PROC(
+                                            CO_CD							/* 회사코드			*/
+                                          , NEW_PRD_REQ_NO				/* 신규상품요청번호		*/
+                                          , REQ_PRD_NM					/* 요청상품명			*/
+                                          , PUB_ONLY_SPR_CD				/* 공용전용구분코드		*/
+                                          , PRD_CLCD						/* 상품분류코드			*/
+                                          , BASIS_UNIT_QTY				/* 기본단위수량			*/
+                                          , BASIS_UNIT_CD					/* 기본단위코드			*/
+                                          , SELL_UNIT_CD					/* 판매단위코드			*/
+                                          , MNFR_NO						/* 제조사번호			*/
+                                          , ORGPLC_CTRY_CD				/* 원산지국가코드		*/
+                                          , ESTM_REQ_NO					/* 견적요청번호			*/
+                                          , MALL_SPR_CD					/* 몰구분코드			*/
+                                          , REGPSN_ID						/* 등록자ID			*/
+                                          , REG_DTM						/* 등록일시			*/
+                                          , UPDPSN_ID						/* 수정자ID			*/
+                                          , UPD_DTM						/* 수정일시			*/
+        ) VALUES (
+                     #{CO_CD}						/* 회사코드			*/
+                 , #{NEW_PRD_REQ_NO}				/* 신규상품요청번호		*/
+                 , #{DISP_PRD_NM}				/* 요청상품명			*/
+                 , 'E'							/* 공용전용구분코드		*/
+                 , #{PRD_CLCD}					/* 상품분류코드			*/
+                 , #{BASIS_UNIT_QTY}				/* 기본단위수량			*/
+                 , #{BASIS_UNIT_CD}				/* 기본단위코드			*/
+                 , #{SELL_UNIT_CD}				/* 판매단위코드			*/
+                 , #{MNFR_NO}					/* 제조사번호			*/
+                 , #{ORGPLC_CTRY_CD}				/* 원산지국가코드		*/
+                 , #{ESTM_REQ_NO}				/* 견적요청번호			*/
+                 , '10'							/* 몰구분코드			*/
+                 , #{OPRTR_ID}					/* 등록자ID			*/
+                 , SYSDATE						/* 등록일시			*/
+                 , #{OPRTR_ID}					/* 수정자ID			*/
+                 , SYSDATE						/* 수정일시			*/
+                 )
+    </insert>
+
+    <!-- 신규상품요청상태내역 -->
+    <insert id="insertProductEstimateNewReqStatsDtls" parameterType="hashMap">
+        /* DispPrdMngEstmReqLst.insertProductEstimateNewReqStatsDtls */
+        INSERT INTO TB_PR_NEW_PRD_REQ_STATS_DTLS(
+                                                  CO_CD							/* 회사코드			*/
+                                                , NEW_PRD_REQ_NO				/* 신규상품요청번호		*/
+                                                , SEQ							/* 순번				*/
+                                                , NEW_PRD_REQ_STATS_CD			/* 요청상태코드			*/
+                                                , MALL_SPR_CD					/* 몰구분코드			*/
+                                                , REGPSN_ID						/* 등록자ID			*/
+                                                , REG_DTM						/* 등록일시			*/
+                                                , UPDPSN_ID						/* 수정자ID			*/
+                                                , UPD_DTM						/* 수정일시			*/
+        ) VALUES (
+                     #{CO_CD}						/* 회사코드			*/
+                 , #{NEW_PRD_REQ_NO}				/* 신규상품요청번호		*/
+                 , (SELECT NVL(MAX(X.SEQ), 0) + 1
+                    FROM TB_PR_NEW_PRD_REQ_STATS_DTLS X
+                    WHERE X.CO_CD = #{CO_CD}
+                      AND X.NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO}
+                     )								/* 순번				*/
+                 , '26'							/* 요청상태코드(요청)		*/
+                 , '10'							/* 몰구분코드			*/
+                 , #{OPRTR_ID}					/* 등록자ID			*/
+                 , SYSDATE						/* 등록일시			*/
+                 , #{OPRTR_ID}					/* 수정자ID			*/
+                 , SYSDATE						/* 수정일시			*/
+                 )
+    </insert>
+
+    <!-- 요청상품정보 -->
+    <select id="selectNewProductReqDetail" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectNewProductReqDetail */
+        SELECT A.CO_CD                                             /* 회사코드                 */
+             , A.REQ_PRD_NM                                        /* 요청상품명               */
+             , A.PRD_CLCD                                          /* 상품분류코드             */
+             , A.CHM_MTL_YN                                        /* 화학물질여부             */
+             , A.REQ_RSN                                           /* 요청사유                 */
+             , A.NEW_PRD_REQ_NO                                    /* 신규상품요청번호         */
+             , BB.BZPLC_ID                                         /* 사업장ID                 */
+             , OB.OPR_UNIT_ID                                      /* 운영단위ID               */
+             , MB.MBR_ID AS REQPSN_ID                            /* 요청자                   */
+             , B.PUB_ONLY_SPR_CD AS RP_PUB_ONLY_SPR_CD             /* 공용전용구분코드         */
+             , PC.MRO_PRD_CLCD AS RP_MRO_PRD_CLCD                /* MRO상품분류코드          */
+             , B.BASIS_UNIT_QTY AS RP_BASIS_UNIT_QTY              /* 기본단위수량             */
+             , B.BASIS_UNIT_CD AS RP_BASIS_UNIT_CD               /* 기본단위코드             */
+             , DECODE(B.SELL_UNIT_CD, B.BASIS_UNIT_CD, NULL, B.SELL_UNIT_CD) AS RP_SELL_UNIT_CD                /* 판매단위코드             */
+             , PI.EMP_NO AS RP_EMP_NO			               /* 상품담당자               */
+             , B.MNFR_NO AS RP_MNFR_NO                     /* 제조사번호               */
+             , B.ORGPLC_CTRY_CD AS RP_ORGPLC_CTRY_CD              /* 원산지국가               */
+             , A.HPE_SELL_UPRC AS HPE_SELL_UPRC_NUM            /* 희망단가                 */
+             , A.HPE_SELL_UNIT_QTY AS HPE_SELL_UNIT_QTY_NUM        /* 희망수량                 */
+             , DB.DEPT_ID                                          /* 부서 ID                  */
+             , DECODE(DECODE(B.SELL_UNIT_CD, B.BASIS_UNIT_CD, NULL, B.SELL_UNIT_CD), NULL, 0, 1) AS SELL_UNIT_QTY /* 판매단위수량             */
+             ,(SELECT LISTAGG(NEW_PRD_REQ_PRVL, ';') WITHIN GROUP (ORDER BY SRT_SO)
+               FROM TB_PR_NEW_PRD_REQ_PROC_ATTR_INFO X           /* 신규상품요청처리속성정보 */
+               WHERE X.CO_CD          = A.CO_CD
+                 AND X.NEW_PRD_REQ_NO = A.NEW_PRD_REQ_NO
+               GROUP BY NEW_PRD_REQ_NO
+        ) AS PI_REQ_PRVL                                     /* 요청규격                 */
+        FROM TB_PR_NEW_PRD_CUST_REQ_INFO A  /* 신규상품고객요청정보       */
+                 LEFT JOIN TB_PR_NEW_PRD_REQ_PROC B  /* 신규상품요청처리           */
+                           ON(B.CO_CD = A.CO_CD AND B.NEW_PRD_REQ_NO = A.NEW_PRD_REQ_NO)
+                 LEFT JOIN TB_PR_DISP_ESTM_REQ_DTLS C
+                           ON(B.CO_CD = C.CO_CD AND B.ESTM_REQ_NO = C.ESTM_REQ_NO)
+                 LEFT JOIN TB_PR_MRO_PRD_INFO     MR /* MRO상품정보                */
+                           ON(MR.CO_CD = B.CO_CD AND MR.PRD_ID = B.PRPS_PRD_ID)
+                 LEFT JOIN TB_CC_MBR_BASIS        MB /* 회원기본                   */
+                           ON(MB.CO_CD = C.CO_CD AND MB.MBR_ID = C.REGPSN_ID)
+                 LEFT JOIN TB_CC_DEPT_BASIS       DB /* 부서기본                   */
+                           ON(DB.CO_CD = MB.CO_CD AND DB.DEPT_ID = MB.DEPT_ID)
+                 LEFT JOIN TB_CC_BZPLC_BASIS      BB /* 사업장기본                 */
+                           ON(BB.CO_CD = DB.CO_CD AND BB.BZPLC_ID = DB.BZPLC_ID)
+                 LEFT JOIN TB_CC_OPR_UNIT_BASIS   OB /* 운영단위기본               */
+                           ON(OB.CO_CD = DB.CO_CD AND OB.BZPLC_ID = DB.BZPLC_ID AND OB.OPR_UNIT_ID = DB.OPR_UNIT_ID)
+                 LEFT JOIN TB_PR_PRD_CLSF_INFO    PC /* 상품분류정보               */
+                           ON(PC.CO_CD = B.CO_CD AND PC.PRD_CLCD = B.PRD_CLCD)
+                 LEFT JOIN TB_PR_PRD_CLSF_CHRPSN_INFO C1 /* 상품분류담당자정보     */
+                           ON(C1.PRD_CLSF_CHRPSN_TP_CD = '10' AND C1.PRD_CLSF_CHRPSN_SPR_CD = '10' AND C1.PRD_CLSF_CHRPSN_USEYN = 'Y' AND C1.CO_CD = PC.CO_CD AND C1.PRD_CLCD = PC.PRD_CLCD)
+                 LEFT JOIN TB_CO_MBR_OPRTR_INFO   PI /* 회원운영자정보             */
+                           ON(PI.CO_CD = C1.CO_CD AND PI.OPRTR_ID = C1.PRD_CLSF_CHRPSN_ID)
+        WHERE 1 = 1
+          AND A.CO_CD          = #{CO_CD}
+          AND A.NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO}
+    </select>
+
+    <!-- 속성정보 -->
+    <select id="selectReqProcAttrInfoList" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectReqProcAttrInfoList */
+        SELECT RA.CO_CD                     AS CO_CD
+             , RA.NEW_PRD_REQ_NO            AS NEW_PRD_REQ_NO
+             , RA.SRT_SO                    AS REQ_SEQ        /* 요청순번        */
+             , RA.INTG_ATTR_CD              AS ATTR_CD        /* 상품속성코드    */
+             , RA.NEW_PRD_REQ_PRVL          AS PRVL           /* 속성값          */
+             , RA.INTG_ATTR_SPR_CD          AS ATTR_TP        /* 통합속성구분코드*/
+        FROM(SELECT RA.CO_CD
+                  , RA.NEW_PRD_REQ_NO
+                  , RA.INTG_ATTR_CD
+                  , RA.NEW_PRD_REQ_PRVL
+                  , RA.INTG_ATTR_SPR_CD
+                  , RA.PRD_CLCD
+                  , RA.SRT_SO
+             FROM TB_PR_NEW_PRD_REQ_PROC_ATTR_INFO RA  /* 신규상품요청처리속성정보 */
+             WHERE RA.CO_CD          = #{CO_CD}
+               AND RA.NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO}
+             UNION ALL
+             SELECT CA.CO_CD
+                  , CA.NEW_PRD_REQ_NO
+                  , CA.INTG_ATTR_CD
+                  , CA.NEW_PRD_REQ_PRVL
+                  , CA.INTG_ATTR_SPR_CD
+                  ,(SELECT X.PRD_CLCD
+                    FROM TB_PR_NEW_PRD_CUST_REQ_INFO X  /* 신규상품고객요청정보 */
+                    WHERE X.NEW_PRD_REQ_NO = CA.NEW_PRD_REQ_NO
+             ) AS PRD_CLCD
+                  , CA.SRT_SO
+             FROM TB_PR_NEW_PRD_CUST_REQ_ATTR_INFO CA  /* 신규상품고객요청속성정보 */
+             WHERE CA.CO_CD            = #{CO_CD}
+               AND CA.NEW_PRD_REQ_NO   = #{NEW_PRD_REQ_NO}
+               AND CA.INTG_ATTR_SPR_CD = '30'
+               AND NOT EXISTS (SELECT *
+                               FROM TB_PR_NEW_PRD_REQ_PROC_ATTR_INFO X
+                               WHERE X.CO_CD          = #{CO_CD}
+                                 AND X.NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO}
+             )
+            ) RA
+        WHERE RA.INTG_ATTR_SPR_CD = '30'
+        ORDER BY RA.SRT_SO
+    </select>
+
+    <!-- 첨부파일 -->
+    <select id="selectNewProductReqAtflInfo" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectNewProductReqAtflInfo */
+        SELECT T2.DOC_REG_ID
+             , T2.DOC_REG_SEQ
+             , T2.ETC_FDS_1 AS ATFL_TP
+             , T2.STOR_PLC_SPR_CD AS STOR_PLC_SPR_VAL
+             , T2.ATFL_STOR_PATH AS ATTC_STOR_PATH
+             , T2.ORI_ATFL_NM
+             , T2.ATFL_NM AS SERVER_ATFL_NM
+             , T2.SAP_DOC_ID
+        FROM TB_PR_DISP_ESTM_REQ_DTLS T1
+           , TB_CO_ATFL_DTLS T2
+        WHERE T1.DOC_REG_ID = T2.DOC_REG_ID
+          AND T1.CO_CD = #{CO_CD}
+          AND T1.ESTM_REQ_NO = #{ESTM_REQ_NO}
+    </select>
+
+    <!-- 메모 -->
+    <select id="selectNewProductReqMemo" parameterType="hashMap" resultType="String">
+        /* DispPrdMngEstmReqLst.selectNewProductReqMemo */
+        SELECT '견적협력사:' || T2.CPRTCP_KOR_NM || ';' || '배송L/T:' || T1.DLV_LT || ';' || 'MOQ:' || T1.MIN_ORD_QTY || ';' || '배수주문단위:' || T1.MULT_ODR_UNIT || ';' || '견적메모:' || T1.ESTM_MEMO || ';' || '협력사견적가:' || T1.CPRTCP_EPRC || ';' || '견적제출가:' || T1.ESTM_SBM_AMT || ';' AS MEMO
+        FROM TB_PR_DISP_ESTM_REQ_DTLS T1
+           , TB_CP_CPRTCP_BASIS T2
+        WHERE T1.CO_CD = T2.CO_CD
+          AND T1.CPRTCP_ID = T2.CPRTCP_ID
+          AND T1.CO_CD = #{CO_CD}
+          AND T1.ESTM_REQ_NO = #{ESTM_REQ_NO}
+    </select>
+
+    <!-- 신규상품요청처리 수정 -->
+    <update id="updateNewPrdReqProc" parameterType="hashMap">
+        /* DispPrdMngEstmReqLst.updateNewPrdReqProc */
+        UPDATE TB_PR_NEW_PRD_REQ_PROC
+        SET MRO_REQ_NO = #{MRO_REQ_NO}	/* MRO요청번호 */
+          , UPDPSN_ID = #{OPRTR_ID}	/* 수정자ID   */
+          , UPD_DTM = SYSDATE			/* 수정일시    */
+        WHERE CO_CD = #{CO_CD}
+          AND NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO}
+    </update>
+
+    <select id="selectProductEstimateProcMailInfo" parameterType="hashMap" resultType="hashMap">
+        /* DispPrdMngEstmReqLst.selectProductEstimateProcMailInfo */
+        SELECT A.ESTM_REQ_NO                                         AS ESTM_REQ_NO                  /* 요청번호 */
+             , D.MBR_NM                                              AS MBR_NM                       /* 고객명 */
+             , D.EMAIL_ADDR                                          AS EMAIL_ADDR                   /* 수신이메일 */
+             , B.PRD_CLCD                                            AS PRD_CLCD                     /* 전시상품군코드 */
+             , B.DISP_PRD_NM                                         AS DISP_PRD_NM                  /* 전시상품명 */
+             , C.PRD_NM                                              AS PRD_NM                       /* 상품명 */
+             , NVL2(A.ESTM_SBM_AMT,A.ESTM_SBM_AMT||'원','')           AS ESTM_SBM_AMT                 /* 판매가 */
+             , A.MIN_ORD_QTY                                         AS MIN_ORD_QTY                  /* 최소주문수량 */
+             , A.MULT_ODR_UNIT                                       AS MULT_ODR_UNIT                /* 배수주문단위 */
+             , NVL2(A.DLV_LT,A.DLV_LT||'일','')                       AS DLV_LT                       /* 배송리드타임 */
+             , CASE WHEN A.ESTM_VLD_DT IS NOT NULL
+                        THEN SUBSTR(A.ESTM_VLD_DT,3,2) || '-' || SUBSTR(A.ESTM_VLD_DT,5,2) || '-' || SUBSTR(A.ESTM_VLD_DT,7,2)
+                    ELSE ''
+            END ESTM_VLD_DT                                                                      /* 견적유효기간 */
+             , A.EXCEPT_END_RSN                                      AS EXCEPT_END_RSN               /* 예외종료사유 */
+             , C.MALL_SPR_CD                                         AS MALL_SPR_CD                  /* 몰구분코드 */
+        FROM TB_PR_DISP_ESTM_REQ_DTLS A
+                 JOIN TB_PR_DISP_BASIS B
+                      ON (A.CO_CD = B.CO_CD AND A.PRD_CLCD = B.PRD_CLCD)
+                 JOIN TB_PR_PRD_INFO C
+                      ON ( B.CO_CD = C.CO_CD AND B.REPR_PRD_ID = C.PRD_ID )
+                 JOIN TB_CC_MBR_BASIS D
+                      ON (A.CO_CD = D.CO_CD AND A.REGPSN_ID = D.MBR_ID)
+        WHERE A.CO_CD = #{CO_CD}
+          AND A.ESTM_REQ_NO = #{ESTM_REQ_NO}
+    </select>
+
+	<insert id="insertRndDispEstmAddOptMapp" parameterType="HashMap">
+		INSERT INTO TB_RD_RND_DISP_ESTM_ADD_OPTN_MAPP
+		(
+			CO_CD
+			, ADD_OPTN_ITM_NO
+			, ESTM_REQ_NO
+			, PRD_CLCD
+			, ADD_OPTN_NM
+			, ADD_OPTN_ITM_SLT_CTS
+			, DOC_REG_ID
+			, DOC_REG_SEQ
+			, DOC_USE_YN
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+		) VALUES (
+		    #{CO_CD}
+		    , #{ADD_OPTN_ITM_NO}
+		    , #{ESTM_REQ_NO}
+		    , #{PRD_CLCD}
+		    , #{ADD_OPTN_NM}
+		    , #{ATFL_NM}
+		    , #{DOC_REG_ID}
+		    , #{DOC_REG_SEQ}
+		    , 'Y'
+		    , #{OPRTR_ID}
+		    , SYSDATE
+		    , #{OPRTR_ID}
+		    , SYSDATE
+		)
+	</insert>
+
+	<update id="updateDispEstmAddOptnInfo" parameterType="HashMap">
+		UPDATE	TB_RD_RND_DISP_ESTM_ADD_OPTN_MAPP
+		SET		ADD_OPTN_NM = #{ADD_OPTN_NM}
+				, DOC_USE_YN = #{DOC_USE_YN}
+		WHERE	CO_CD = #{CO_CD}
+		AND		ADD_OPTN_ITM_NO = #{ADD_OPTN_ITM_NO}
+		AND		ESTM_REQ_NO = #{ESTM_REQ_NO}
+	</update>
+
+	<select id="selectReqProcStat" parameterType="HashMap" resultType="HashMap">
+		SELECT  MAX(ESTM_REQ_PROC_STATS_CD) AS ESTM_REQ_PROC_STATS_CD
+		FROM    TB_RD_RND_DISP_ESTM_STATS_DTLS
+		WHERE   ESTM_REQ_NO = #{ESTM_REQ_NO}
+	</select>
+
+	<select id="selectDispEstmRejectInfo" parameterType="HashMap" resultType="HashMap">
+		SELECT  A.ESTM_REQ_NO
+                , A.CO_CD
+                , B.MBR_ID
+                , B.MBR_NM
+                , B.EMAIL_ADDR AS MBR_EMAIL
+                , C.OPRTR_NM
+                , C.PSTN_NM AS OPRTR_PSTN_NM
+                , C.OPRTR_MAIL
+                , D.RND_REQ_PRD_ID
+                , D.REQ_PRD_NM
+                , E.MNFR_NM
+                , F.SSP_REPR_ATTR
+                , G.ESTM_DIS_RSN
+        FROM    TB_RD_RND_DISP_ESTM_REQ_DTLS A
+                , TB_CC_MBR_BASIS B
+                , (
+                    SELECT  S1.CO_CD
+                            , S1.PRD_CLCD
+                            , S2.OPRTR_ID
+                            , S2.OPRTR_NM
+                            , S2.ORG_CD
+                            , S2.ORG_NM
+                            , S2.PSTN_NM
+                            , S2.EMAIL_ADDR AS OPRTR_MAIL
+                    FROM    TB_PR_PRD_CLSF_CHRPSN_INFO S1
+                            , TB_CO_MBR_OPRTR_INFO S2
+                    WHERE   S1.CO_CD = S2.CO_CD
+                    AND     S1.PRD_CLSF_CHRPSN_ID = S2.OPRTR_ID
+                    AND     S1.PRD_CLSF_CHRPSN_TP_CD = '30'
+                    AND     S1.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                    AND     S1.PRD_CLSF_CHRPSN_USEYN = 'Y'
+                ) C
+                , TB_PR_NEW_PRD_REQ_PROC D
+                , TB_PR_MNFR_INFO E
+                , TB_PR_PRD_INFO F
+                , TB_RD_REQ_CPRTCP_DISP_ESTM_INFO G
+        WHERE   A.CO_CD = B.CO_CD
+        AND     A.REGPSN_ID = B.MBR_ID
+        AND     A.CO_CD = C.CO_CD(+)
+        AND     A.PRD_CLCD = C.PRD_CLCD(+)
+        AND     A.CO_CD = D.CO_CD(+)
+        AND     A.ESTM_REQ_NO = D.ESTM_REQ_NO(+)
+        AND     D.CO_CD = E.CO_CD(+)
+        AND     D.MNFR_NO = E.MNFR_NO(+)
+        AND     D.CO_CD = F.CO_CD(+)
+        AND     D.RND_REQ_PRD_ID = F.PRD_ID(+)
+        AND     A.CO_CD = G.CO_CD
+        AND     A.ESTM_REQ_NO = G.ESTM_REQ_NO
+        AND     A.CO_CD = #{CO_CD}
+        AND     A.ESTM_REQ_NO = #{ESTM_REQ_NO}
+        AND     A.DISP_GRP_ID = #{DISP_GRP_ID}
+	</select>
+
+</mapper>

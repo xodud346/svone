@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="samplePage01" width="800" height="550" titletext="카테고리계획매익율 변경이력" onload="fn_onLoad" onkeyup="samplePage01_onkeyup">
+    <Layouts>
+      <Layout height="550" mobileorientation="landscape" width="800">
+        <Div id="Div00" taborder="0" text="Div01" left="20" top="75" height="415" right="20">
+          <Layouts>
+            <Layout>
+              <Grid id="grd_mainList" taborder="0" left="0" top="0" right="0" bottom="40" autofittype="none" fillareatype="none" binddataset="ds_list" oncellclick="grd_mainList_oncellclick" oncelldblclick="Div01_grd_mainList_oncelldblclick" autosizingtype="col" autosizebandtype="allband">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="135"/>
+                      <Column size="237"/>
+                      <Column size="283"/>
+                      <Column size="105"/>
+                      <Column size="98"/>
+                      <Column size="98"/>
+                      <Column size="80"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="24" band="head"/>
+                      <Row size="24"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell text="변경일시"/>
+                      <Cell col="1" text="SSP카테고리ID"/>
+                      <Cell col="2" text="SSP카테고리"/>
+                      <Cell col="3" text="계획매익율"/>
+                      <Cell col="4" text="변경담당자ID"/>
+                      <Cell col="5" text="변경담당자"/>
+                      <Cell col="6" text="변경사유"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="bind:REG_DTM"/>
+                      <Cell col="1" text="bind:PRD_CLCD" textAlign="center"/>
+                      <Cell col="2" text="bind:PRD_CLCD_NM" textAlign="left"/>
+                      <Cell col="3" text="bind:PLN_PRFRT" displaytype="mask" maskeditformat="#,0.00" maskeditpostfixtext="%"/>
+                      <Cell col="4" text="bind:REGPSN_ID"/>
+                      <Cell col="5" text="bind:OPRTR_NM"/>
+                      <Cell col="6" text="bind:REG_RSN"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Div id="div_paging" taborder="1" left="0" bottom="0" height="38" formscrollbartype="none none" right="0" url="COMM::cmmPaging.xfdl"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Static id="sta_totCount" taborder="1" text="(총 0건, 1 / 0)" left="20" usedecorate="true" width="180" bottom="Div00:10" height="17"/>
+        <Static id="st_title" taborder="2" text="카테고리계획매익율 변경이력" left="20" top="20" width="490" height="21" cssclass="sta_WF_title04"/>
+        <Button id="btn_close" taborder="3" text="닫기" top="495" width="65" height="30" cssclass="btn_WF_select" positionstep="0" left="46.25%" onclick="btn_close_onclick"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : SSP_BO
+  CREATION DATES : 
+*******************************************************/
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//부모창 데이터 처리
+	this.fn_checkData();
+	
+	this.resetScroll();
+	
+	//단축키 함수 호출
+	this.fn_regShortCutMethod();
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+	// 조회 
+	this.fn_search = function()	{
+		var sSvcId = "selectMbrHistPop";    
+		var sUrl = "/pc/plnPrfrt/selectPlnPrfrtList.do";
+		var inDs = "ds_search=ds_search";
+		var outDs = "ds_list=ds_output";
+		var arg = "";
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_received");
+	}
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+	//조회 트랜잭션 콜백함수
+	this.fn_received = function(svcID, errorCode, errorMsg)	{
+		if(this.ds_list.getRowCount() > 0) {		
+			this.Div00.form.div_paging.form.cfn_createPage(this.Div00.form.div_paging, this.totalCount, 10, "fn_pageCallback");
+		}
+		if( this.ds_list.rowcount == 0 ) {
+			this.Div00.form.grd_mainList.set_nodatatext("조회 결과가 없습니다.");
+		}
+	}
+	
+	this.fn_pageCallback = function(sFlag){
+		var oPaging = this.Div00.form.div_paging;
+		if(sFlag){
+			this.ds_search.setColumn(0,"START_NUM",oPaging.uPageNum);
+			this.ds_search.setColumn(0,"ROW_COUNT",10);	
+			this.fn_search();
+		}
+		
+		var sTotText = "(총 "+ this.fn_AmountCommas(oPaging.uTotCount)+"건, "+ this.fn_AmountCommas(oPaging.uPage) +" / "+ this.fn_AmountCommas(oPaging.uPageCnt) +")";
+		this.sta_totCount.set_text(sTotText);
+	};
+	
+	this.fn_sortCallback = function(sGridId){
+		var oGrid=null;
+		if(sGridId == "grd_mainList"){
+			oSortInfo = this.Div00.form.grd_mainList.uaSortInfo;
+			this.ds_search.setColumn(0,"SORT_COLUMN",oSortInfo.bindCol);
+			this.ds_search.setColumn(0,"SORT_TYPE",oSortInfo.status);
+			this.fn_search();
+		}
+	};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+	//화면 설정 함수
+	this.cfn_formInit = function(){
+		//grid 초기 설정
+		this.Div00.form.grd_mainList.uSortFlag = "false";
+		this.Div00.form.grd_mainList.uServerSortFlag = "true";
+		this.Div00.form.grd_mainList.uSortCallback = "fn_sortCallback";
+		this.Div00.form.grd_mainList.uCellSizeType = "true";
+		
+		//페이징 초기 설정
+		this.Div00.form.div_paging.uPage = 1;
+		this.Div00.form.div_paging.uPageNum = 0;
+		this.Div00.form.div_paging.uPageRowCnt = 10;
+		this.Div00.form.div_paging.uPageCnt = 0;
+		this.Div00.form.div_paging.uTotCount = 0;
+	};
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+	this.fn_checkData = function(){
+		var coCd = this.parent.coCd;
+		var prdClcd = this.parent.prdClcd;
+		
+		//prdClcd = "1111";
+		
+		// 파라미터 값 ds setcolumn
+		this.ds_search.setColumn(0, "CO_CD", coCd);
+		this.ds_search.setColumn(0, "PRD_CLCD", prdClcd);
+		
+		// 조회
+		this.fn_search();
+	}
+	
+	
+	this.fn_AmountCommas = function(val){ //세자리마다',' 적용
+		return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
+	}
+	
+	// 단축키 등록
+	this.fn_regShortCutMethod = function() {
+		this.fn_regMethodESC("btn_close_onclick");
+	};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/	
+this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+this.samplePage01_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	// 단축키 등록
+	this.fn_processKey(obj, e);
+};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="USE_YN" type="string" size="32"/>
+          <Column id="USE_YN_NM" type="string" size="32"/>
+          <Column id="PRD_CLCD" type="string" size="32"/>
+          <Column id="PRD_CLCD_NM" type="string" size="32"/>
+          <Column id="PRD_STD_YN" type="string" size="32"/>
+          <Column id="PRD_STD_YN_NM" type="string" size="32"/>
+          <Column id="PLN_PRFRT" type="string" size="16"/>
+          <Column id="PLN_PRFRT_NM" type="bigdecimal" size="16"/>
+          <Column id="REGPSN_ID" type="string" size="32"/>
+          <Column id="REG_RSN" type="string" size="32"/>
+          <Column id="REG_DTM" type="string" size="32"/>
+          <Column id="UPD_DTM" type="string" size="32"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="MBR_ID"/>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+            <Col id="CO_CD"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_hstSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_comCodeSearch">
+        <ColumnInfo>
+          <Column id="codeList" type="STRING" size="32"/>
+          <Column id="langCd" type="STRING" size="32"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

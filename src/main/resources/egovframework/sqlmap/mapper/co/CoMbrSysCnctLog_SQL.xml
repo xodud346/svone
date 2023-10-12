@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CoMbrSysCnctLog">
+
+   <!--
+    ******************************************************************************
+    * SELECT : 접속 로그 조회 공통 where
+    * 작성자 : 박성진
+    * 작성 일자 : 2022-03-24
+    ******************************************************************************
+    -->
+    
+    <sql id="Logwhere">
+    	<!-- 조건절 -->
+    	<where>
+    		<if test="fromDate != null and fromDate != '' and toDate != null and toDate != ''">
+                <![CDATA[ AND TO_CHAR(A.LOGN_DTM, 'YYYYMMDD') >= #{fromDate} AND TO_CHAR(A.LOGN_DTM, 'YYYYMMDD') <= #{toDate} ]]>
+            </if>
+            
+            <if test=" searchWord != null and searchWord != '' ">
+                <![CDATA[ AND (A.LOGN_ID LIKE '%' || #{searchWord} || '%') ]]>
+            </if>
+            
+            <if test=" iptPstTypeCd != null and iptPstTypeCd != '' ">
+                AND A.IPT_PST_TYPE_CD = #{iptPstTypeCd}
+            </if>
+            
+            <if test=" lognMthdCd != null and lognMthdCd != '' ">
+                AND A.LOGN_MTHD_CD = #{lognMthdCd}
+            </if>
+            
+            <if test=" bzplcId != null and bzplcId != '' ">
+                AND A.BZPLC_ID = #{bzplcId}
+            </if>
+    	</where>
+    </sql>
+    
+   <!--
+    ******************************************************************************
+    * SELECT : 접속 로그 조회 카운트
+    * 작성자 : 박성진
+    * 작성 일자 : 2022-03-18
+    ******************************************************************************
+    -->
+    <select id="selectCoMbrSysCnctLogListCount" parameterType="HashMap" resultType="int">
+        /* CoMbrSysCnctLog.selectCoMbrSysCnctLogListCount */
+        SELECT COUNT(1)
+        FROM TB_CO_MBR_SYS_CNCT_LOG A
+        <include refid="Logwhere"/>
+    </select>
+    
+   <!--
+    ******************************************************************************
+    * SELECT : 접속 로그 조회
+    * 작성자 : 박성진
+    * 작성 일자 : 2022-03-18
+    ******************************************************************************
+    -->
+	<resultMap id="CoMbrSysCnctLogResultMap" type="HashMap">
+        <result property="CNCT_LOG_SEQ"         column="CNCT_LOG_SEQ" />
+        <result property="IPT_PST_TYPE_CD"      column="IPT_PST_TYPE_CD" />
+        <result property="CO_CD"                column="CO_CD" />
+        <result property="BZPLC_ID"             column="BZPLC_ID" />
+        <result property="LOGN_ID"              column="LOGN_ID" />
+        <result property="MBR_ID"               column="MBR_ID" />
+        <result property="OPRTR_ID"             column="OPRTR_ID" />
+        <result property="SRVON_ODR_DLGTE_ID"   column="SRVON_ODR_DLGTE_ID" />
+        <result property="CNSOL_IP_ADDR"        column="CNSOL_IP_ADDR" />
+        <result property="LOGN_DTM"             column="LOGN_DTM" />
+        <result property="LOGN_MTHD_CD"         column="LOGN_MTHD_CD" />
+        <result property="REG_DTM"              column="REG_DTM" />
+        <result property="REGPSN_ID"            column="REGPSN_ID" />
+        <result property="UPD_DTM"              column="UPD_DTM" />
+        <result property="UPDPSN_ID"            column="UPDPSN_ID" />
+        <result property="SES_ID"            	column="SES_ID" />
+        <result property="BRWR_TYPE"            column="BRWR_TYPE" />
+        <result property="LOGN_MTHD_NM"         column="LOGN_MTHD_NM" />
+    </resultMap>
+    
+    <select id="selectCoMbrSysCnctLogList" parameterType="HashMap" resultType="HashMap">
+    	/* CoMbrSysCnctLog.selectCoMbrSysCnctLogList */
+    	SELECT A.CNCT_LOG_SEQ
+    		 , A.IPT_PST_TYPE_CD
+    		 , A.CO_CD
+    		 , A.BZPLC_ID
+    		 , A.LOGN_ID
+    		 , A.MBR_ID
+    		 , A.OPRTR_ID
+    		 , A.SRVON_ODR_DLGTE_ID
+    		 , A.CNSOL_IP_ADDR
+    		 , TO_CHAR(A.LOGN_DTM, 'YYYY-MM-DD HH24:MI') AS LOGN_DTM
+    		 , A.LOGN_MTHD_CD
+    		 , SSP_APP.FN_COM_DTL_CDNM('KO', 'LOGIN_MTHD_CD', A.LOGN_MTHD_CD ) AS LOGN_MTHD_NM
+    		 , A.REG_DTM
+    		 , A.REGPSN_ID
+    		 , A.UPD_DTM
+    		 , A.UPDPSN_ID
+    		 , A.SES_ID
+    		 , A.BRWR_TYPE 
+    	FROM SSP_APP.TB_CO_MBR_SYS_CNCT_LOG A
+    	
+    	<include refid="Logwhere"/>
+    	
+        <choose>
+            <when test="sortColumn != null and sortColumn != ''">
+                ORDER BY ${sortColumn} ${sortType}
+            </when>
+            <otherwise>
+                ORDER BY A.CNCT_LOG_SEQ DESC
+            </otherwise>
+        </choose>
+		
+		<if test="startNum != null and startNum > -1">
+        	OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+        </if>
+    </select>
+ 
+    <insert id="insertBoSysCnctLog" parameterType="HashMap">
+        <selectKey keyProperty="seq" resultType="java.lang.Long" order="BEFORE">
+            SELECT SQ_CO_MBR_SYS_CNCT_LOG_01.NEXTVAL FROM DUAL
+        </selectKey>
+        
+    	INSERT INTO SSP_APP.TB_CO_MBR_SYS_CNCT_LOG
+    	(
+    		   CNCT_LOG_SEQ
+    		 , IPT_PST_TYPE_CD
+    		 , CO_CD
+    		 , BZPLC_ID
+    		 , LOGN_ID
+    		 , MBR_ID
+    		 , OPRTR_ID
+    		 , SRVON_ODR_DLGTE_ID
+    		 , CNSOL_IP_ADDR    	
+    		 , SES_ID
+    		 , BRWR_TYPE    	
+    		 , LOGN_DTM
+    		 , LOGN_MTHD_CD
+    		 , REG_DTM
+    		 , REGPSN_ID
+    		 , UPD_DTM
+    		 , UPDPSN_ID
+        )
+    	VALUES
+    	(
+	    	  #{seq}
+	    	, #{iptPstTypeCd}
+	    	, #{coCd}
+	    	, #{bzplcId}
+	    	, #{lognId}
+	    	, #{mbrId}
+	    	, #{oprtrId}
+	    	, #{dlgteId}
+	    	, #{cnsolIpAddr}
+	    	, #{sesId}
+	    	, #{brwrType}
+	    	, SYSDATE
+	    	, #{lognMthd}
+	    	, SYSDATE
+	    	, #{oprtrId}
+	    	, SYSDATE
+	    	, #{oprtrId}
+    	)
+    </insert>
+</mapper>

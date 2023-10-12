@@ -1,0 +1,708 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.cc.vocCust">
+
+   <!--
+    ******************************************************************************
+    * SELECT : 
+    * 작성자 : 차상영 
+    * 작성 일자 : 2022-02-10
+    ******************************************************************************
+    -->
+
+    <select id="selectVocStatusList" parameterType="java.util.Map" resultType="java.util.Map">
+    	/* VOC현황조회 리스트 조회 - com.ssp.bo.cc.vocCust.selectVocStatusList */
+	    <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+		SELECT
+			A.*
+			,CASE 
+				WHEN LENGTH(A.ODRPSN_NM) = 2 THEN SUBSTR(A.ODRPSN_NM,1,1) || LPAD('*',(LENGTH(A.ODRPSN_NM)-1),'*')
+				WHEN LENGTH(A.ODRPSN_NM) = 3 THEN SUBSTR(A.ODRPSN_NM,1,1) || LPAD('*',(LENGTH(A.ODRPSN_NM)-2),'*') || SUBSTR(A.ODRPSN_NM,3,1)
+				ELSE SUBSTR(A.ODRPSN_NM,1,2) || LPAD('*',(LENGTH(A.ODRPSN_NM)-2),'*')
+			END AS MSKD_ODRPSN_NM				
+		FROM (
+			SELECT
+			    A.CO_CD
+			    ,A.VOC_NO
+			    ,B.VOC_ITM_NO	
+			    ,A.VOC_NO || '-' || B.VOC_ITM_NO AS VOC_ITM_NM		    	    
+			    ,A.BZPLC_ID
+			    ,A.OPR_UNIT_ID
+			    ,A.DEPT_ID
+			    ,A.ODRPSN_ID
+			    ,(SELECT MBR_NM FROM TB_CC_MBR_BASIS TMP WHERE TMP.CO_CD=A.CO_CD AND TMP.MBR_ID=A.REGPSN_ID) AS ODRPSN_NM
+			    ,TO_CHAR(TO_DATE(A.VOC_REQDT,'YYYYMMDD'),'YYYY-MM-DD') AS VOC_REQDT   		    
+			    ,B.VOC_STATS_CD
+			    ,FN_COM_DTL_CDNM_NVL('KO','VOC_STATS_CD',B.VOC_STATS_CD,'') AS VOC_STATS_NM
+			    ,B.VOC_PROC_SPR_CD
+			    ,B.VOC_GCLS_CD
+			    ,(SELECT GCLS_NM FROM TB_VO_VOC_GCLS_BASIS TMP WHERE B.VOC_GCLS_CD=TMP.VOC_GCLS_CD) AS VOC_GCLS_NM
+			    ,B.VOC_MCLAS_CD
+			    ,(SELECT MCLAS_NM FROM TB_VO_VOC_MCLAS_BASIS TMP WHERE B.VOC_GCLS_CD=TMP.VOC_GCLS_CD AND B.VOC_MCLAS_CD=TMP.VOC_MCLAS_CD) AS VOC_MCLAS_NM
+			    ,B.VOC_SCLS_CD
+			    ,(SELECT SCLS_NM FROM TB_VO_VOC_SCLS_BASIS TMP WHERE B.VOC_GCLS_CD=TMP.VOC_GCLS_CD AND B.VOC_MCLAS_CD=TMP.VOC_MCLAS_CD AND B.VOC_SCLS_CD=TMP.VOC_SCLS_CD) AS VOC_SCLS_NM
+			    ,B.ODR_NO		    
+			    ,B.ODR_ITM_NO
+			    ,CASE
+			    	WHEN B.ODR_NO IS NOT NULL AND B.ODR_ITM_NO IS NOT NULL THEN B.ODR_NO || '-' || B.ODR_ITM_NO 
+			    	ELSE NULL
+			    END AS ODR_ITM_NM		    
+			    ,TO_NUMBER(B.PRD_ID) AS PRD_ID_VIEW
+			    ,B.PRD_ID			    
+			    ,(SELECT PRD_NM FROM TB_PR_PRD_INFO TMP WHERE TMP.CO_CD=B.CO_CD AND TMP.PRD_ID=B.PRD_ID) AS PRD_NM
+			    ,TO_CHAR(A.REG_DTM+1,'YYYY-MM-DD  HH24:MI:SS') AS VOC_CMPL_HPE_DTM
+			    ,TO_CHAR(D.ACP_DTM,'YYYY-MM-DD HH24:MI:SS') AS ACP_CLOS_DTM
+			    -- ,TO_CHAR(B.PROC_STR_CLOS_DTM,'YYYY-MM-DD HH24:MI:SS') AS PROC_STR_CLOS_DTM
+			    ,'' AS PROC_STR_CLOS_DTM
+			    ,TO_CHAR(D.PROC_DTM,'YYYY-MM-DD HH24:MI:SS') AS PROC_CLOS_DTM
+			    ,TO_CHAR(D.CMPL_DTM,'YYYY-MM-DD HH24:MI:SS') AS CMPL_CLOS_DTM
+			    ,TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+			    ,E.EXCEPT_PROC_ODR_NO
+			    ,E.EXCEPT_PROC_ODR_ITM_NO
+			FROM TB_VO_VOC_MST A, TB_VO_VOC_DTL B, TB_CC_OPR_UNIT_BASIS C, TB_VO_VOC_TRSF_PROC D, TB_VO_VOC_EXCEPT_PROC E
+			WHERE A.CO_CD = B.CO_CD
+			AND A.VOC_NO = B.VOC_NO
+			AND A.CO_CD = C.CO_CD
+			AND A.BZPLC_ID = C.BZPLC_ID
+			AND A.OPR_UNIT_ID = C.OPR_UNIT_ID
+			AND A.CO_CD = D.CO_CD (+)
+			AND B.VOC_NO = D.VOC_NO (+)
+			AND B.VOC_ITM_NO = D.VOC_ITM_NO	(+)
+			AND A.CO_CD = E.CO_CD (+)
+			AND B.VOC_NO = E.VOC_NO (+)
+			AND B.VOC_ITM_NO = E.VOC_ITM_NO	(+) 
+			AND A.CO_CD = #{coCd}		
+	        <if test="salsChrCd != null and !salsChrCd.equals('')">
+				AND A.SALS_CHR_CD = #{salsChrCd}
+			</if>
+	        <if test="salsTeamCd != null and !salsTeamCd.equals('')">
+				AND A.SALS_TEAM_CD = #{salsTeamCd}
+			</if>		
+	        <if test="prdId != null and !prdId.equals('')">
+				AND B.PRD_ID = LPAD(#{prdId}, 18, '0')
+			</if>
+	 		<choose>
+				<when test="periodCd.equals('1'.toString())">
+			    	AND A.VOC_REQDT BETWEEN #{fromDate} AND #{toDate}
+				</when>
+				<when test="periodCd.equals('2'.toString())">
+			    	AND TO_CHAR(B.ACP_CLOS_DTM,'YYYYMMDD') BETWEEN #{fromDate} AND #{toDate}
+				</when>
+				<when test="periodCd.equals('3'.toString())">
+			    	AND TO_CHAR(B.PROC_STR_CLOS_DTM,'YYYYMMDD') BETWEEN #{fromDate} AND #{toDate}
+				</when>
+				<when test="periodCd.equals('4'.toString())">
+			    	AND TO_CHAR(B.PROC_CLOS_DTM,'YYYYMMDD') BETWEEN #{fromDate} AND #{toDate}
+				</when>
+				<when test="periodCd.equals('5'.toString())">
+			    	AND TO_CHAR(B.CMPL_CLOS_DTM,'YYYYMMDD') BETWEEN #{fromDate} AND #{toDate}
+				</when>			
+			</choose>	
+			<if test="vocGclsCd != null and !vocGclsCd.equals('')">
+	        	AND B.VOC_GCLS_CD = #{vocGclsCd}
+	        </if>					
+			<if test="vocMclasCd != null and !vocMclasCd.equals('')">
+	        	AND B.VOC_MCLAS_CD = #{vocMclasCd}
+	        </if>					
+			<if test="vocSclsCd != null and !vocSclsCd.equals('')">
+	        	AND B.VOC_SCLS_CD = #{vocSclsCd}
+	        </if>					
+			<if test="vocStatsCd != null and !vocStatsCd.equals('')">        	
+	        	<choose>
+	        		<when test="vocStatsCd.equals('00'.toString())">AND B.VOC_STATS_CD IN ('10','20','30','40') /*미완료(00) : 요청~처리 종료까지의 합*/ </when>
+	        		<otherwise>AND B.VOC_STATS_CD = #{vocStatsCd}</otherwise>
+	        	</choose>
+	        </if>					
+			<if test="custSprCd != null and !custSprCd.equals('')">
+	        	AND C.CUST_SPR_CD = #{custSprCd}
+	        </if>					
+			<if test="arrBzplcId != null and arrBzplcId.length > 0">
+	        	AND (0, A.BZPLC_ID) IN
+	        	<foreach collection="arrBzplcId" item="item" open="(" close=")" separator=",">
+	        	 	(0, #{item})
+	        	 </foreach>
+	        </if>		
+			<if test="arrOprUnitId != null and arrOprUnitId.length > 0">
+	        	AND (0, A.OPR_UNIT_ID) IN
+	        	<foreach collection="arrOprUnitId" item="item" open="(" close=")" separator=",">
+	        	 	(0, #{item})
+	        	 </foreach>
+	        </if>	
+			<if test="odrpsnId != null and !odrpsnId.equals('')">
+	        	AND A.ODRPSN_ID = #{odrpsnId}
+	        </if>		
+		) A
+		WHERE 1 = 1
+		<if test="arrVocItmNm != null and arrVocItmNm.length > 0">
+        	AND 
+        		
+        	(	(0, A.VOC_ITM_NM) IN
+        		<foreach collection="arrVocItmNm" item="item" open="(" close=")" separator=",">
+        	 		(0, #{item})
+        		</foreach>
+        	OR
+        	    (0, A.VOC_NO) IN
+        		<foreach collection="arrVocItmNm" item="item" open="(" close=")" separator=",">
+        	 		(0, #{item})
+        		</foreach>
+        	)
+        </if>
+		<if test="arrOdrItmNm != null and arrOdrItmNm.length > 0">
+        	AND (0, A.ODR_ITM_NM) IN
+        	<foreach collection="arrOdrItmNm" item="item" open="(" close=")" separator=",">
+        	 	(0, #{item})
+        	 </foreach>
+        </if>				
+		
+		<choose>
+			<when test='sortColumn != null and !sortColumn.equals("") and  sortType != null and !sortType.equals("")'>
+				<choose>
+					<when test=' "MSKD_ODRPSN_NM".equals(sortColumn) '>
+						ORDER BY ${sortColumn} ${sortType}
+					</when>
+					<otherwise> ORDER BY A.${sortColumn} ${sortType} </otherwise>
+				</choose>
+			</when>
+			<otherwise>ORDER BY A.VOC_NO DESC, A.VOC_ITM_NO ASC</otherwise>
+		</choose>
+		
+	    <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+            
+    </select>
+       
+	<select id="selectVocGclsList" parameterType="java.util.Map" resultType="java.util.Map">
+   		/* VOC현황 대분류 리스트 조회 - com.ssp.bo.cc.vocCust.selectVocGclsList */
+	    SELECT NULL   AS VOC_GCLS_CD
+		     , '전체' AS GCLS_NM
+		     , NULL   AS VOC_SPR_ITM_CD    
+	      FROM DUAL
+	     UNION ALL
+		SELECT VOC_GCLS_CD
+		     , GCLS_NM
+		     , VOC_SPR_ITM_CD
+		  FROM TB_VO_VOC_GCLS_BASIS
+		 WHERE USE_YN = 'Y'
+	</select>   
+
+	<select id="selectVocMclasList" parameterType="java.util.Map" resultType="java.util.Map">
+   		/* VOC현황 중분류 리스트 조회 - com.ssp.bo.cc.vocCust.selectVocMclasList */
+	    SELECT NULL   AS VOC_GCLS_CD
+		     , NULL   AS VOC_MCLAS_CD
+		     , '전체' AS MCLAS_NM    
+	      FROM DUAL
+	     UNION ALL
+	    SELECT VOC_GCLS_CD
+		     , VOC_MCLAS_CD
+		     , MCLAS_NM
+		  FROM TB_VO_VOC_MCLAS_BASIS
+	 	 WHERE USE_YN      = 'Y'
+	 	   AND VOC_GCLS_CD = #{vocGclsCd}
+	</select>   
+   
+	<select id="selectVocSclsList" parameterType="java.util.Map" resultType="java.util.Map">
+		/* VOC현황 소분류 리스트 조회 - com.ssp.bo.cc.vocCust.selectVocSclsList */
+		SELECT NULL   AS VOC_GCLS_CD
+		     , NULL   AS VOC_MCLAS_CD
+		     , NULL   AS VOC_SCLS_CD
+		     , '전체' AS SCLS_NM
+		  FROM DUAL
+		 UNION ALL
+		SELECT VOC_GCLS_CD
+		     , VOC_MCLAS_CD
+		     , VOC_SCLS_CD
+		     , SCLS_NM
+		  FROM TB_VO_VOC_SCLS_BASIS
+		 WHERE USE_YN       = 'Y'
+		   AND VOC_GCLS_CD  = #{vocGclsCd}
+		   AND VOC_MCLAS_CD = #{vocMclasCd}  
+	</select>     
+   
+   <select id="selectVocDtlInfo" parameterType="java.util.Map" resultType="java.util.Map">
+       WITH VOC_INFO AS (
+	        SELECT A.*
+		         , (A.VOC_GCLS_NM || '>' || A.VOC_MCLAS_NM || '>' || VOC_SCLS_NM) AS VO_CLS_NM  /* VOC 분류      */
+		         , B.MBR_NM AS ODRPSN_NM                                                        /* 주문자명      */
+		         , B.MAIL_RCV_AGRE_YN                                                        /* 업무메일수신여부      */		         
+		         , C.BZPLC_NM                                                                   /* 사업장명      */
+		         , D.OPR_UNIT_NM                                                                /* 운영단위명    */
+		         , F.CADDR_DISP_NM                                                              /* 처리자        */
+		         , F.CUST_HELPER_CADDR                                                          /* 처리자 연락처 */
+		      FROM (				
+	               SELECT A.*
+	                    , B.OPRTR_ID AS PROC_CHRPSN_IDS
+	                    , B.OPRTR_NM AS PROC_CHRPSN_NM                                          /* 처리자      */
+	                    , B.ORG_CD AS PROC_DEPT_CD                                              /* 처리부서코드  */
+	                    , B.ORG_NM AS PROC_DEPT_NM                                              /* 처리부서명   */
+	                    , B.TEL_NO AS PROC_CADDR_NO                                             /* 처리자 연락처 */
+	                 FROM (
+	                      SELECT A.CO_CD
+					           , A.VOC_NO
+					           , B.VOC_ITM_NO
+					           , A.VOC_NO || '-' || B.VOC_ITM_NO AS VOC_ITM_NM			    
+					           , A.BZPLC_ID
+					           , A.OPR_UNIT_ID
+					           , A.DEPT_ID
+					           , (SELECT DEPT_NM FROM TB_CC_DEPT_BASIS TMP WHERE TMP.CO_CD=A.CO_CD AND TMP.BZPLC_ID=A.BZPLC_ID AND TMP.OPR_UNIT_ID=A.OPR_UNIT_ID AND TMP.DEPT_ID=A.DEPT_ID) AS DEPT_NM
+					           , A.ODRPSN_ID	                                                                                                                                                         /* 주문자 */
+			                   , A.CADDR_NO		                                                                                                                                                         /* 연락처 */
+			                   , A.EMAIL_ADDR                                                                                                                                                            /* 이메일 */
+			                   , A.SALS_CHR_CD                                                                                                                                                           
+			                   , (SELECT SALS_CHR_NM FROM TB_CC_SALS_CHR_BASIS TMP WHERE TMP.SALS_CHR_CD=A.SALS_CHR_CD) AS SALS_CHR_NM                                                                   /* 담당자 */			            
+			                   , A.SALS_TEAM_CD                                                                                                                                                          
+			                   , (SELECT ORG_NM FROM TB_CO_MBR_OPRTR_ORG_INFO TMP WHERE TMP.CO_CD=A.CO_CD AND TMP.ORG_CD=A.SALS_TEAM_CD) AS SALS_TEAM_NM                                                 /* 담당부서 */		            
+	                           , CASE WHEN B.VOC_STATS_CD = '10' THEN C.ACPR_ID                                                                                                                          /* 요청(10) */
+	                                  WHEN B.VOC_STATS_CD IN ('20','30') THEN C.DEALR_ID                                                                                                                 /* 접수(20), 처리시작(30) */
+	                                  ELSE C.CMPLPSN_ID                                                                                                                                                  
+	                              END AS PROC_CHRPSN_ID                                                                                                                                                  
+					           , TO_CHAR(TO_DATE(A.VOC_REQDT,'YYYYMMDD'),'YYYY-MM-DD') AS VOC_REQDT   	                                                                                                 /* 요청일 */		    
+					           , B.VOC_STATS_CD                                                                                                                                                          
+					           , FN_COM_DTL_CDNM_NVL('KO','VOC_STATS_CD',B.VOC_STATS_CD,'') AS VOC_STATS_NM                                                                                              /* VOC상태 */
+			                   , A.REG_PATH_CD                                                                                                                                                           
+			                   , FN_COM_DTL_CDNM_NVL('KO','REG_PATH_CD',A.REG_PATH_CD,'') AS REG_PATH_NM                                                                                                 /* 접수채널 */
+			                   , B.RTNGDS_EXCH_CNC_AS_PSB_YN		            		           
+					           , B.VOC_PROC_SPR_CD
+					           , B.VOC_GCLS_CD
+					           , (SELECT GCLS_NM FROM TB_VO_VOC_GCLS_BASIS TMP WHERE B.VOC_GCLS_CD=TMP.VOC_GCLS_CD) AS VOC_GCLS_NM                                                                       /* 대분류 */
+					           , B.VOC_MCLAS_CD
+					           , (SELECT MCLAS_NM FROM TB_VO_VOC_MCLAS_BASIS TMP WHERE B.VOC_GCLS_CD=TMP.VOC_GCLS_CD AND B.VOC_MCLAS_CD=TMP.VOC_MCLAS_CD) AS VOC_MCLAS_NM                                /* 중분류 */
+					           , B.VOC_SCLS_CD
+					           , (SELECT SCLS_NM FROM TB_VO_VOC_SCLS_BASIS TMP WHERE B.VOC_GCLS_CD=TMP.VOC_GCLS_CD AND B.VOC_MCLAS_CD=TMP.VOC_MCLAS_CD AND B.VOC_SCLS_CD=TMP.VOC_SCLS_CD) AS VOC_SCLS_NM /* 소분류 */
+					           , B.ODR_NO		    
+					           , B.ODR_ITM_NO
+--					           , B.ODR_NO || '-' || B.ODR_ITM_NO AS ODR_ITM_NM
+                               , CASE WHEN B.ODR_NO IS NULL THEN ''
+					                  ELSE B.ODR_NO || '-' || B.ODR_ITM_NO
+					              END ODR_ITM_NM
+					           , TO_CHAR(B.VOC_CMPL_HPE_DTM,'YYYY-MM-DD')             AS VOC_CMPL_HPE_DTM
+					           , TO_CHAR(B.ACP_CLOS_DTM,'YYYY-MM-DD HH24:MI:SS')      AS ACP_CLOS_DTM
+					           , TO_CHAR(B.PROC_STR_CLOS_DTM,'YYYY-MM-DD HH24:MI:SS') AS PROC_STR_CLOS_DTM
+					           , TO_CHAR(B.PROC_CLOS_DTM,'YYYY-MM-DD HH24:MI:SS')     AS PROC_CLOS_DTM
+					           , TO_CHAR(B.CMPL_CLOS_DTM,'YYYY-MM-DD HH24:MI:SS')     AS CMPL_CLOS_DTM
+			                   , B.REG_REQ_TTL                                                                            /* 등록요청제목     */
+			                   , B.VOC_DTL_CTS                                                                            /* VOC상세내용      */
+			                   , B.VOC_PROC_RSLT_CTS                                                                      /* VOC처리결과내용  */
+			                   , B.VOC_DEALR_CTS                                                                          /* VOC처리자내용    */
+			                   , B.CMPL_NOTC_SPR_CD 																	/* 완료공지구분코드 */			                       
+			                   , B.DOC_REG_ID                                                                             /* 첨부파일ID       */
+			                   , B.PRD_ID
+			                   , B.REQ_QTY
+					        FROM TB_VO_VOC_MST A, TB_VO_VOC_DTL B, TB_VO_VOC_TRSF_PROC C
+					       WHERE A.CO_CD      = B.CO_CD
+					         AND A.VOC_NO     = B.VOC_NO	
+					         AND A.CO_CD      = C.CO_CD(+)
+					         AND A.VOC_NO     = C.VOC_NO(+)
+					         AND B.VOC_ITM_NO = C.VOC_ITM_NO(+)																											
+					         AND A.CO_CD      = #{coCd}
+			                 AND A.VOC_NO     = #{vocNo}
+			                 AND B.VOC_ITM_NO = #{vocItmNo}
+			                 AND ROWNUM       = 1
+			            ORDER BY C.VOC_TRSF_PROC_SEQ DESC
+	                      ) A
+	                      , TB_CO_MBR_OPRTR_INFO B
+	                  WHERE A.CO_CD           = B.CO_CD(+)
+	                    AND A.PROC_CHRPSN_ID  = B.OPRTR_ID(+)													
+		           ) A
+		           , TB_CC_MBR_BASIS B                                -- TB_회원기본
+		           , TB_CC_BZPLC_BASIS C                              -- TB_사업장기본
+		           , TB_CC_OPR_UNIT_BASIS D                           -- TB_운영단위기본
+		           , TB_VO_OPR_UNIT_CUST_HELPER_INFO E                -- TB_운영단위고객도우미정보
+		           , TB_VO_OPR_UNIT_CUST_HELPER_CADDR_MST F           -- TB_운영단위고객도우미연락처마스터
+		       WHERE A.CO_CD       = B.CO_CD
+		         AND A.ODRPSN_ID   = B.MBR_ID
+		         AND A.CO_CD       = C.CO_CD
+		         AND A.BZPLC_ID    = C.BZPLC_ID
+		         AND A.CO_CD       = D.CO_CD
+		         AND A.BZPLC_ID    = D.BZPLC_ID
+		         AND A.OPR_UNIT_ID = D.OPR_UNIT_ID	    
+		         AND A.CO_CD       = E.CO_CD(+)
+		         AND A.BZPLC_ID    = E.BZPLC_ID(+)
+		         AND A.OPR_UNIT_ID = E.OPR_UNIT_ID(+)	    
+		         AND E.CO_CD       = F.CO_CD(+)
+		         AND E.CUST_HELPER_CADDR_REG_NO = F.CUST_HELPER_CADDR_REG_NO(+)	  
+		)      
+	    SELECT A.*
+	         , C.ODR_STATS_CD
+	         , FN_COM_DTL_CDNM_NVL('KO','ODR_STATS_CD',C.ODR_STATS_CD,'') AS ODR_STATS_NM   /* 주문상태         */
+	         , D.PRD_ID                                                                     /* 상품ID           */
+	         , TO_NUMBER(D.PRD_ID) AS PRD_ID_VIEW                                           /* 상품ID DISPLAY용 */
+	         , D.PRD_NM                                                                     /* 상품명           */
+	         , C.REPR_SPEC                                                                  /* 규격             */
+	         , TO_CHAR(C.RTNGDS_QTY,'FM999,999,999') AS RTNGDS_QTY	                        /* 반품수량         */
+	         , TO_CHAR(C.ODR_QTY,'FM999,999,999') AS ODR_QTY	                            /* 주문수량         */
+	         , TO_CHAR(C.SALSPRC,'FM999,999,999') AS SALSPRC	                            /* 판매가           */
+	         , D.MNFR_NO                                                                    /* 제조사번호       */
+	         , E.MNFR_NM                                                                    /* 제조사명         */
+	         , C.ORI_ODR_QTY	                                                            /* 원주문수량       */
+	         , TO_CHAR(C.ORI_SALSPRC,'FM999,999,999') AS ORI_SALSPRC                        /* 원판매가         */
+	         , C.SELL_UNIT_CD                                                               /* 주문단위         */
+	         , TO_CHAR(C.CLOS_RQTY,'FM999,999,999') AS CLOS_RQTY	                        /* 요청수량         */
+	         , A.BZPLC_ID    || ' | ' || A.BZPLC_NM    AS BZPLC_DISPLAY                     /* 사업장 표시용    */
+	         , A.OPR_UNIT_ID || ' | ' || A.OPR_UNIT_NM AS OPR_UNIT_DPSLAY                   /* 운영단위 표시용  */
+	         , A.DEPT_ID     || ' | ' || A.DEPT_NM     AS DEPT_DISPLAY                      /* 부서 표시용      */
+	         , A.ODRPSN_ID   || ' | ' || A.ODRPSN_NM   AS ODRPSN_DISPLAY                    /* 주문자 표시용    */
+	         , F.CMPL_DTM                                                                   /* 완료일시         */
+	         , CASE WHEN A.PROC_DEPT_CD IS NULL THEN ''
+	                ELSE A.PROC_DEPT_CD || ' | ' || A.PROC_DEPT_NM
+	            END PROC_DEPT_DISPLAY                                                       /* VOC 처리내역 - 부서명 표시용 */
+	         , CASE WHEN A.PROC_CHRPSN_IDS IS NULL THEN ''
+	                ELSE A.PROC_CHRPSN_IDS || ' | ' || A.PROC_CHRPSN_NM
+	            END PROC_CHRPSN_DISPLAY                                                     /* VOC 처리내역 - 부서명 표시용 */
+	         , CASE WHEN A.SALS_CHR_CD IS NULL THEN ''
+	                ELSE A.SALS_CHR_CD || ' | ' || A.SALS_CHR_NM
+	            END SALS_CHR_DISPLAY                                                        /* VOC 처리현황 - 담당자 표시용 */
+	         , CASE WHEN A.SALS_TEAM_CD IS NULL THEN ''
+	                ELSE A.SALS_TEAM_CD || ' | ' || A.SALS_TEAM_NM
+	            END SALS_TEAM_DISPLAY                                                       /* VOC 처리현황 - 부서명 표시용 */
+	      FROM VOC_INFO A                                                                   /* TB_WITH          */
+	         , TB_OD_ODR_MST B                                                              /* TB_주문마스터    */
+	         , TB_OD_ODR_DTL C                                                              /* TB_주문상세      */
+	         , TB_PR_MRO_PRD_INFO D                                                         /* TB_MRO상품정보   */
+	         , TB_PR_MNFR_INFO E                                                            /* TB_제조사정보    */
+	         , ( SELECT CO_CD
+				      , VOC_NO
+				      , VOC_ITM_NO
+				      , MAX(VOC_TRSF_PROC_SEQ)
+				      , TO_CHAR(CMPL_DTM, 'YYYY-MM-DD HH24:MI:SS') AS CMPL_DTM
+		           FROM TB_VO_VOC_TRSF_PROC
+		          WHERE VOC_STATS_CD = '50'
+		       GROUP BY CO_CD
+		              , VOC_NO
+		              , VOC_ITM_NO
+		              , VOC_TRSF_PROC_SEQ
+		              , CMPL_DTM
+	           ) F                                                                          /* TB_VOC이관처리 */
+	     WHERE A.CO_CD        = B.CO_CD(+)
+	       AND A.BZPLC_ID     = B.BZPLC_ID(+)
+	       AND A.ODR_NO       = B.ODR_NO(+)
+	       AND A.CO_CD        = C.CO_CD(+)
+	       AND A.BZPLC_ID     = C.BZPLC_ID(+)
+	       AND A.ODR_NO       = C.ODR_NO(+)
+	       AND A.ODR_ITM_NO   = C.ODR_ITM_NO(+)
+	       AND A.CO_CD        = D.CO_CD(+)
+	       AND A.PRD_ID       = D.PRD_ID(+)
+	       AND C.CO_CD        = E.CO_CD(+)
+	       AND C.MNFR_NO      = E.MNFR_NO(+)
+	       AND A.CO_CD        = F.CO_CD(+)
+	       AND A.VOC_NO       = F.VOC_NO(+)
+	       AND A.VOC_ITM_NO   = F.VOC_ITM_NO(+)	      
+   </select>
+   
+<select id="selectVocProcList" parameterType="java.util.Map" resultType="java.util.Map">
+/* com.ssp.bo.cc.vocCust.selectVocProcList - VOC현황 */
+
+	   SELECT
+	        NO	   	
+	        ,DECODE(NO,1,'요청',2,'접수',3,'처리종료',4,'완료') AS PROC_STATS
+	        ,DECODE(NO,1,REAL_REQR_NM,2,REAL_ACPR_NM,3,REAL_DEALR_NM,4,REAL_CMPLPSN_NM) AS PROC_REAL_NM
+	        ,DECODE(NO,1,REQ_DTM,2,ACP_DTM,3,PROC_DTM,4,CMPL_DTM) AS PROC_DTM
+	        ,DECODE(NO,1,REQR_CTS,2,ACPR_CTS,3,DEALR_CTS,4,CMPLPSN_CTS) AS PROC_CTS
+	    FROM (
+	        SELECT
+	            TO_CHAR(A.REQ_DTM,'YYYY-MM-DD HH24:MI:SS') AS REQ_DTM
+	            ,A.REQR_ID
+	            ,A.REQ_TEAM_CD
+	            ,A.REAL_REQR_ID
+<!-- 	            ,(SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO TMP WHERE TMP.CO_CD=A.CO_CD AND TMP.OPRTR_ID=A.REAL_REQR_ID) AS REAL_REQR_NM -->
+	            , (SELECT FN_CC_GET_MBR_NM(A.CO_CD, A.REAL_REQR_ID  ) FROM DUAL)  REAL_REQR_NM
+	            ,A.REQR_CTS
+	            ,TO_CHAR(A.ACP_DTM,'YYYY-MM-DD HH24:MI:SS') AS ACP_DTM
+	            ,A.ACPR_ID
+	            ,A.ACP_TEAM_CD
+	            ,A.REAL_ACPR_ID
+<!-- 	            ,(SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO TMP WHERE TMP.CO_CD=A.CO_CD AND TMP.OPRTR_ID=A.REAL_ACPR_ID) AS REAL_ACPR_NM -->
+	            , (SELECT FN_CC_GET_MBR_NM(A.CO_CD, A.REAL_ACPR_ID  ) FROM DUAL)  REAL_ACPR_NM
+	            ,A.ACPR_CTS
+	            ,TO_CHAR(A.PROC_DTM,'YYYY-MM-DD HH24:MI:SS') AS PROC_DTM
+	            ,A.DEALR_ID            
+	            ,A.PROC_TEAM_CD
+	            ,A.REAL_DEALR_ID
+<!-- 	            ,(SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO TMP WHERE TMP.CO_CD=A.CO_CD AND TMP.OPRTR_ID=A.REAL_DEALR_ID) AS REAL_DEALR_NM -->
+	            , (SELECT FN_CC_GET_MBR_NM(A.CO_CD, A.REAL_DEALR_ID  ) FROM DUAL)  REAL_DEALR_NM
+	            ,A.DEALR_CTS
+	            ,TO_CHAR(A.CMPL_DTM,'YYYY-MM-DD HH24:MI:SS') AS CMPL_DTM
+	            ,A.CMPLPSN_ID
+	            ,A.CMPL_TEAM_CD
+	            ,A.REAL_CMPLPSN_ID
+<!-- 	            ,(SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO TMP WHERE TMP.CO_CD=A.CO_CD AND TMP.OPRTR_ID=A.REAL_CMPLPSN_ID) AS REAL_CMPLPSN_NM -->
+	            , (SELECT FN_CC_GET_MBR_NM(A.CO_CD, A.REAL_CMPLPSN_ID) FROM DUAL)  REAL_CMPLPSN_NM
+	            ,A.CMPLPSN_CTS
+	            ,TO_CHAR(A.RJCT_DTM,'YYYY-MM-DD HH24:MI:SS') AS RJCT_DTM
+	            ,A.RJCTR_ID
+	            ,A.RJCTR_CTS
+			FROM TB_VO_VOC_TRSF_PROC A
+		    WHERE A.CO_CD = #{coCd}
+			AND A.VOC_NO = #{vocNo}
+			AND A.VOC_ITM_NO = #{vocItmNo} 
+	    ) A , (
+	        SELECT LEVEL AS NO
+	        FROM DUAL
+	        CONNECT BY 4 >= LEVEL
+	    )
+
+/* /com.ssp.bo.cc.vocCust.selectVocProcList - VOC현황 */
+</select>
+   
+	<select id="selectExceptionProcDtl" parameterType="java.util.Map" resultType="java.util.Map">
+		/* com.ssp.bo.cc.vocCust.selectExceptionProcDtl */
+	    SELECT A.*
+	         , NVL2(A.DLV_FORM_CD      , A.DLV_FORM_CD          || ' | ' || A.DLV_FORM_NM       , '') AS DLV_FORM_TEXT			/* 배송형태 */
+	         , NVL2(A.CPRTCP_ID        , TO_NUMBER(A.CPRTCP_ID) || ' | ' || A.CPRTCP_NM         , '') AS CPRTCP_TEXT			/* 협력사 */
+	         , NVL2(A.ODR_EXCEPT_KND_CD, A.ODR_EXCEPT_KND_CD    || ' | ' || A.ODR_EXCEPT_KND_NM , '') AS ODR_EXCEPT_KND_TEXT	/* 예외처리상태 */
+	         , NVL2(A.GI_PLNT_ID       , (A.GI_PLNT_ID          || ' | ' || GI_PLNT_NM)         , '') AS GI_PLNT				/* 입고플랜트 */
+	         , NVL2(A.GO_PLNT_ID       , (A.GO_PLNT_ID			|| ' | ' || GO_PLNT_NM)         , '') AS GO_PLNT				/* 출고플랜트 */
+	         , (SELECT A.EXCEPT_PROC_STATS_CD 
+					   || ' | ' ||
+					   A.EXCEPT_PROC_STATS_NM AS EXCEPT_PROC_TEXT
+				  FROM (
+			           SELECT A.EXCEPT_PROC_STATS_CD
+					        , ( SELECT COM_DTL_CD_NM
+						  	      FROM TB_CO_COM_CD_DTL TMP
+						  	     WHERE TMP.LANG_CD     ='KO'
+						  	       AND TMP.COM_CLSF_CD = 'EXCEPT_PROC_STATS_CD'
+						  	       AND TMP.COM_DTL_CD  = A.EXCEPT_PROC_STATS_CD
+						      ) AS EXCEPT_PROC_STATS_NM
+					     FROM TB_VO_VOC_EXCEPT_PROC_STATS_INFO 			A
+				    LEFT JOIN TB_VO_VOC_EXCEPT_PROC            			B 
+				           ON A.CO_CD      			   = B.CO_CD 
+				          AND A.VOC_NO     			   = B.VOC_NO
+				          AND A.VOC_ITM_NO 			   = B.VOC_ITM_NO 
+			  	    LEFT JOIN TB_VO_VOC_EXCEPT_PROC_INFO 				C 
+				           ON B.CO_CD 				   = C.CO_CD 
+				          AND B.DLV_FORM_CD 		   = C.DLV_FORM_CD
+				          AND B.ODR_EXCEPT_KND_CD 	   = C.ODR_EXCEPT_KND_CD 
+				          AND B.EXCEPT_PROC_STATS_CD   = C.EXCEPT_PROC_STATS_CD 
+					    WHERE A.CO_CD		           = #{coCd}
+					      AND A.VOC_NO	               = #{vocNo}
+					      AND A.VOC_ITM_NO             = #{vocItmNo}
+			         ORDER BY A.EXCEPT_PROC_STATS_CD DESC
+			           OFFSET 0 ROWS FETCH FIRST 1 ROWS ONLY
+			       ) A 
+			   ) EXCEPT_PROC_TEXT
+	      FROM (
+	           SELECT C.DLV_FORM_CD
+			        , ( SELECT COM_DTL_CD_NM 
+			              FROM TB_CO_COM_CD_DTL TMP
+			             WHERE TMP.LANG_CD     ='KO'
+			               AND TMP.COM_CLSF_CD = 'DLV_FORM_SPR_CD'
+			               AND TMP.COM_DTL_CD  = C.DLV_FORM_CD
+			          ) AS DLV_FORM_NM
+			        , D.CPRTCP_ID
+			        , ( SELECT CPRTCP_KOR_NM
+			              FROM TB_CP_CPRTCP_BASIS TMP
+			             WHERE TMP.CO_CD     = D.CO_CD
+			               AND TMP.CPRTCP_ID = D.CPRTCP_ID
+			          ) AS CPRTCP_NM
+			        , C.ODR_EXCEPT_KND_CD
+			        , FN_COM_DTL_CDNM_NVL('KO','ODR_EXCEPT_KND_CD',C.ODR_EXCEPT_KND_CD,'') AS ODR_EXCEPT_KND_NM
+			        , D.GO_PLNT_ID
+			        , ( SELECT PLNT_NM
+			              FROM TB_DL_PLNT_BASIS TMP
+			             WHERE TMP.PLNT_ID = D.GO_PLNT_ID
+			          ) AS GO_PLNT_NM							/* 출고플랜트 */
+			        , D.GI_PLNT_ID
+			        , ( SELECT PLNT_NM
+			              FROM TB_DL_PLNT_BASIS TMP
+			             WHERE TMP.PLNT_ID = D.GI_PLNT_ID
+			          ) AS GI_PLNT_NM							/* 입고플랜트 */           
+			     FROM TB_VO_VOC_MST A
+			        , TB_VO_VOC_DTL B
+			        , TB_VO_VOC_EXCEPT_PROC C
+			        , TB_OD_ODR_DTL D
+			    WHERE A.CO_CD		 = B.CO_CD
+			      AND A.VOC_NO	 	 = B.VOC_NO
+			      AND A.CO_CD		 = C.CO_CD(+)
+			      AND A.VOC_NO	 	 = C.VOC_NO(+)
+			      AND B.VOC_ITM_NO 	 = C.VOC_ITM_NO(+)
+			      AND A.CO_CD		 = D.CO_CD(+)
+			      AND A.BZPLC_ID	 = D.BZPLC_ID(+)
+			      AND B.ODR_NO		 = D.ODR_NO(+)
+			      AND B.ODR_ITM_NO 	 = D.ODR_ITM_NO(+)			
+			      AND A.CO_CD        = #{coCd}
+			      AND A.VOC_NO     	 = #{vocNo}
+			      AND B.VOC_ITM_NO 	 = #{vocItmNo}
+	    	   ) A
+   </select>
+   
+	<select id="selectExceptionProcList1" parameterType="java.util.Map" resultType="java.util.Map">
+		/* com.ssp.bo.cc.vocCust.selectExceptionProcList1 */
+		SELECT B.EXCEPT_PROC_STATS_CD AS EXCEPT_PROC_STATS_CD 
+	         , ( SELECT COM_DTL_CD_NM
+				   FROM TB_CO_COM_CD_DTL TMP
+				  WHERE TMP.LANG_CD     ='KO'
+					AND TMP.COM_CLSF_CD = 'EXCEPT_PROC_STATS_CD'
+					AND TMP.COM_DTL_CD  = B.EXCEPT_PROC_STATS_CD
+			   ) AS EXCEPT_PROC_STATS_NM
+		     , TO_CHAR(C.PROC_DTM,'YYYY-MM-DD HH24:MI:SS') AS PROC_DTM
+	         , B.DLV_REL_TASK_SBJ_NM    AS DLV_REL_TASK_SBJ_NM 
+	      FROM TB_VO_VOC_EXCEPT_PROC        A
+	         , TB_VO_VOC_EXCEPT_PROC_INFO   B
+	         , ( 
+	             SELECT *  
+	               FROM TB_VO_VOC_EXCEPT_PROC_STATS_INFO C 
+	              WHERE CO_CD                = #{coCd} 
+	                AND VOC_NO               = #{vocNo} 
+	                AND VOC_ITM_NO           = #{vocItmNo}
+	                AND EXCEPT_PROC_SEQ      = 10 
+	           ) C              
+	       WHERE A.CO_CD  = B.CO_CD 
+	         AND A.ODR_EXCEPT_KND_CD           = B.ODR_EXCEPT_KND_CD  
+	         AND A.DLV_FORM_CD                 = B.DLV_FORM_CD 
+	         AND A.CO_CD                       = #{coCd} 
+	         AND A.VOC_NO                      = #{vocNo} 
+	         AND A.VOC_ITM_NO                  = #{vocItmNo}
+	         AND A.EXCEPT_PROC_SEQ             = 10 
+	         AND B.EXCEPT_PROC_STATS_CD        = C.EXCEPT_PROC_STATS_CD (+) 
+	    ORDER BY A.VOC_NO
+	           , A.VOC_ITM_NO
+	           , A.EXCEPT_PROC_SEQ
+	           , B.SRT_SO
+	</select>
+   
+	<select id="selectExceptionProcList2" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+		    B.DLV_LT_TP_CD
+		    ,(SELECT COM_DTL_CD_NM FROM TB_CO_COM_CD_DTL TMP WHERE TMP.LANG_CD='KO' AND TMP.COM_CLSF_CD = 'DLV_LT_TP_CD' AND TMP.COM_DTL_CD = B.DLV_LT_TP_CD) AS DLV_LT_TP_NM
+		    ,B.STR_EXCEPT_PROC_STATS_CD
+		    ,TO_CHAR(C.PROC_DTM,'YYYY-MM-DD HH24:MI:SS') AS STR_PROC_DTM
+		    ,B.END_EXCEPT_PROC_STATS_CD
+		    ,TO_CHAR(D.PROC_DTM,'YYYY-MM-DD HH24:MI:SS') AS END_PROC_DTM 
+		    ,ROUND(D.PROC_DTM - C.PROC_DTM) + 1 AS LT /*종료일-시작일 */ /* 당일처리인경우 1로 처리되야해서 +1 처리 추가 */  		    
+		FROM TB_VO_VOC_EXCEPT_PROC A, TB_VO_VOC_EXCEPT_PROC_DT_INFO B, TB_VO_VOC_EXCEPT_PROC_STATS_INFO C, TB_VO_VOC_EXCEPT_PROC_STATS_INFO D
+		WHERE A.CO_CD = B.CO_CD
+		AND A.DLV_FORM_CD = B.DLV_FORM_CD
+		AND A.ODR_EXCEPT_KND_CD = B.ODR_EXCEPT_KND_CD
+		AND A.CO_CD = C.CO_CD (+)
+		AND A.VOC_NO = C.VOC_NO (+)
+		AND A.VOC_ITM_NO = C.VOC_ITM_NO (+)
+		AND A.EXCEPT_PROC_SEQ = C.EXCEPT_PROC_SEQ (+)
+		AND B.STR_EXCEPT_PROC_STATS_CD    = C.EXCEPT_PROC_STATS_CD (+)
+		AND A.CO_CD = D.CO_CD (+)
+		AND A.VOC_NO = D.VOC_NO (+)
+		AND A.VOC_ITM_NO = D.VOC_ITM_NO (+)
+		AND A.EXCEPT_PROC_SEQ = D.EXCEPT_PROC_SEQ (+)
+		AND B.END_EXCEPT_PROC_STATS_CD    = D.EXCEPT_PROC_STATS_CD (+)
+		AND A.CO_CD = #{coCd}
+		AND A.VOC_NO = #{vocNo}
+		AND A.VOC_ITM_NO = #{vocItmNo} 	
+	</select> 
+	
+	<select id="selectVocReqFileList" parameterType="hashMap" resultType="hashMap">
+		SELECT DOC_REG_ID
+		     , DOC_REG_SEQ
+		     , ATFL_NM
+		     , ATFL_LEN
+		     , ATFL_STOR_PATH
+		     , STOR_PLC_SPR_CD
+		     , ORI_ATFL_NM
+		     , SAP_DOC_ID
+		     , RMKS_CTS
+		     , ETC_FDS_1
+		     , ETC_FDS_2
+		     , ETC_FDS_3
+		     , ETC_FDS_4
+		     , ETC_FDS_5
+		     , REG_DTM
+		     , REGPSN_ID
+		     , UPD_DTM
+		     , UPDPSN_ID 
+		  FROM TB_CO_ATFL_DTLS
+		 WHERE DOC_REG_ID = #{docRegId}
+	  ORDER BY DOC_REG_SEQ ASC
+	</select>
+	
+	<select id="selectDlvSrvonInfo" parameterType="hashMap" resultType="hashMap">
+		/* 주문상세 배송정보 배송자차 조회 - com.ssp.bo.cc.vocCust.selectDlvSrvonInfo */
+		SELECT DPT_DTM								/* 출발일시 */
+             , DVPR_NM								/* 배송자명 */
+             , CADDR_NO								/* 연락처번호 */
+             , CAR_NO								/* 차량번호 */
+          FROM TB_DL_ODR_DLV_DTLS  T1
+         WHERE T1.CO_CD			= #{coCd}
+           AND T1.BZPLC_ID		= #{bzplcId}
+           AND T1.ODR_NO		= #{exceptProcOdrNo}
+           AND T1.ODR_ITM_NO	= #{exceptProcOdrItmNo}
+           AND T1.DPT_DTM IS NOT NULL
+		 UNION ALL
+		SELECT T2.ACP_DTM           AS DPT_DTM		/* 출발일시 */
+		     , T2.RTRV_CHRPSN_NM    AS DVPR_NM		/* 배송자명 */
+		     , T2.RTRV_CADDR        AS CADDR_NO		/* 연락처번호 */
+		     , T2.RTRV_CAR_INFO_CTS AS CAR_NO		/* 차량번호 */
+		  FROM TB_VO_VOC_EXCEPT_PROC T1
+		  JOIN TB_VO_VOC_EXCEPT_PROC_CPRTCP_INFO	T2
+			ON T2.CO_CD           = T1.CO_CD
+		   AND T2.VOC_NO          = T1.VOC_NO
+		   AND T2.VOC_ITM_NO      = T1.VOC_ITM_NO
+		   AND T2.EXCEPT_PROC_SEQ = T1.EXCEPT_PROC_SEQ
+		 WHERE T1.CO_CD                  = #{coCd}
+		   AND T1.EXCEPT_PROC_ODR_NO     = #{exceptProcOdrNo}
+		   AND T1.EXCEPT_PROC_ODR_ITM_NO = #{exceptProcOdrItmNo}
+	</select>
+	
+	<select id="selectDlvHdvInfo" parameterType="hashMap" resultType="hashMap">
+		/* 주문상세 배송정보 배송택배 조회 - com.ssp.bo.cc.vocCust.selectDlvHdvInfo */
+		SELECT  T1.SEQ
+               ,T1.TRNS_VNDR_ID
+               ,T2.TRNS_VNDR_NM
+               ,T1.HDV_INVC_NO
+               ,T3.GDOC_NO
+               ,T2.DLV_TRC_MTD_CD
+               ,CASE WHEN T2.DLV_TRC_MTD_CD = '1' THEN T2.GSFLOW_DLV_TRC_URL
+                     ELSE T2.DLV_TRC_URL END TRNS_URL
+               ,CASE WHEN T2.DLV_TRC_MTD_CD = '1' THEN T2.GSFLOW_HDVCP_CD
+                     ELSE T2.INVC_NO_PRM_NM END TRNS_PRM
+               ,CASE WHEN T2.DLV_TRC_MTD_CD = '1' THEN
+                     T2.GSFLOW_DLV_TRC_URL||T3.GDOC_NO||T2.GSFLOW_HDVCP_CD||HDV_INVC_NO
+                     ELSE NULL END TRNS_LINK
+        FROM   TB_DL_ODR_DLV_PROC_DTLS   T1
+               JOIN
+               TB_DL_TRNS_VNDR_MST  T2
+               ON  T1.CO_CD = T2.CO_CD
+               AND T1.TRNS_VNDR_ID = T2.TRNS_VNDR_ID
+               JOIN
+               TB_OD_ODR_DTL        T3
+               ON   T3.CO_CD      	= T1.CO_CD
+               AND  T3.BZPLC_ID   	= T1.BZPLC_ID
+               AND  T3.ODR_NO     	= T1.ODR_NO
+               AND  T3.ODR_ITM_NO 	= T1.ODR_ITM_NO
+        WHERE   T1.CO_CD			= #{coCd}
+          AND   T1.BZPLC_ID			= #{bzplcId}
+          AND   T1.ODR_NO			= #{exceptProcOdrNo}
+          AND   T1.ODR_ITM_NO		= #{exceptProcOdrItmNo}
+	</select>
+	<select id="selectVocDocFileList" parameterType="java.util.Map" resultType="java.util.Map">
+		/* VOC등록 파일리스트 조회 - com.ssp.bo.cc.vocCust.selectVocDocFileList */
+		SELECT DOC_REG_ID
+		     , DOC_REG_SEQ
+		     , ATFL_NM
+		     , ATFL_LEN
+		     , ATFL_STOR_PATH
+		     , STOR_PLC_SPR_CD
+		     , ORI_ATFL_NM
+		     , SAP_DOC_ID
+		     , RMKS_CTS
+		     , ETC_FDS_1
+		     , ETC_FDS_2
+		     , ETC_FDS_3
+		     , ETC_FDS_4
+		     , ETC_FDS_5
+		     , REG_DTM
+		     , REGPSN_ID
+		     , UPD_DTM
+		     , UPDPSN_ID 
+		  FROM TB_CO_ATFL_DTLS
+		 <choose>
+		 <when test='docRegId != null and docRegId.indexOf(",") > -1'>
+		 WHERE SAP_DOC_REG_ID IN (
+                SELECT REGEXP_SUBSTR(DOC_IDS, '[^,]+', 1, LEVEL) DOC_ID
+                  FROM (SELECT #{docRegId} DOC_IDS FROM DUAL)  ATFL_DOC_IDS
+                       CONNECT BY LENGTH(DOC_IDS) - LENGTH(REPLACE(DOC_IDS, ',')) + 1 >= LEVEL
+		       )
+		 </when>
+		 <otherwise>
+		 WHERE SAP_DOC_REG_ID = #{docRegId}
+		 </otherwise>
+		 </choose>
+	  ORDER BY DOC_REG_SEQ ASC
+	</select>
+</mapper>

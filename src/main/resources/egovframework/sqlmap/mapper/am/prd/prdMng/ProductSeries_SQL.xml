@@ -1,0 +1,708 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ProductSeries">
+
+	<!-- SSP속성관리 검색 조건 -->
+    <sql id="productSeriesWhere">
+        <where>
+        	<if test="searchPrdGrpId != null and searchPrdGrpId != ''">
+				AND (
+					D.PRD_GRP_ID IN
+					<foreach collection="searchPrdGrpIds" item="item" open="(" close=")" separator=",">
+						#{item}
+					</foreach>
+					OR EXISTS (SELECT 1
+		                        FROM 
+		                        	TB_FV_PRD TFP,
+		                            TB_SG_PRD_GRP_DTL TSPGD
+		                        WHERE 
+		                        	TFP.PRD_ID = TSPGD.PRD_ID
+		                        AND 
+		                        	D.PRD_GRP_ID = TSPGD.PRD_GRP_ID
+		                        AND 
+		                        	TSPGD.PRD_ID IN
+		                        	<foreach collection="searchPrdGrpIds" item="item" open="(" close=")" separator=",">
+										#{item}
+									</foreach>
+		                        )
+					)
+			</if>
+			<if test="searchPrdGrpSprCd != null and searchPrdGrpSprCd != ''">
+				AND D.PRD_GRP_SPR_CD = #{searchPrdGrpSprCd}
+			</if>
+			<if test="searchPrdGrpNm != null and searchPrdGrpNm != ''">
+				<if test="searchPrdGrp == 'groupNm'">
+	            	AND D.PRD_GRP_NM LIKE '%' || #{searchPrdGrpNm} || '%'
+	            </if>
+	            <if test="searchPrdGrp == 'productNm'">
+	            	AND EXISTS (SELECT 1
+		                        FROM 
+		                        	TB_FV_PRD TFP,
+		                            TB_SG_PRD_GRP_DTL TSPGD
+		                        WHERE 
+		                        	TFP.PRD_ID = TSPGD.PRD_ID
+		                        AND 
+		                        	D.PRD_GRP_ID = TSPGD.PRD_GRP_ID
+		                        AND 
+		                        	TFP.PRD_NM LIKE '%' || #{searchPrdGrpNm} || '%'
+		                        )   
+	            </if>
+	       	</if>
+	       	<if test="searchUseYn != null and searchUseYn != ''">
+	               AND D.USE_YN = #{searchUseYn}
+			</if>
+			<if test="searchManagerId != null and searchManagerId != ''">
+	            <if test="selManagerType == 'regpsnId'">
+	            	AND D.REGPSN_ID = #{searchManagerId}
+	            </if>
+	            <if test="selManagerType == 'updpsnId'">
+	            	AND D.UPDPSN_ID = #{searchManagerId}
+	            </if>
+			</if>
+			<if test="searchStartDate != null and searchStartDate != '' and searchEndDate != null and searchEndDate != ''">
+	           	<if test="selDateType == 'regDtm'">
+	           		AND TO_CHAR(D.REG_DTM, 'YYYYMMDD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+	           	</if>
+	           	<if test="selDateType == 'updDtm'">
+	           		AND TO_CHAR(D.UPD_DTM, 'YYYYMMDD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+	           	</if>
+			</if>
+        </where>
+    </sql>
+
+	<!-- 시리즈그룹 갯수 -->
+    <select id="selectProductSeriesCount" parameterType="hashMap" resultType="integer">
+        /* ProductSeries.selectProductSeriesCount */
+        SELECT 
+		    COUNT(0)
+		FROM (
+		    SELECT
+		        A.CO_CD,
+		        A.PRD_GRP_ID,
+		        A.PRD_GRP_SPR_CD,
+		        A.PRD_GRP_NM,
+		        (SELECT COUNT(PRD_ID) FROM TB_SG_PRD_GRP_DTL WHERE PRD_GRP_ID = A.PRD_GRP_ID) PRD_GRP_CNT,
+		        B.PRD_ID,
+		        A.USE_YN,
+		        A.REG_DTM,
+		        A.REGPSN_ID,
+		        A.UPD_DTM,
+		        A.UPDPSN_ID
+		    FROM
+		        TB_SG_PRD_GRP_MST A,
+		        TB_SG_PRD_GRP_DTL B
+		    WHERE 
+		        A.PRD_GRP_ID = B.PRD_GRP_ID
+		    AND 
+		        A.PRD_GRP_SPR_CD = 'S'
+		    AND
+		        B.BSS_PRD_YN = 'Y'
+		    UNION ALL
+		    SELECT
+		        A.CO_CD,
+		        A.PRD_GRP_ID,
+		        A.PRD_GRP_SPR_CD,
+		        A.PRD_GRP_NM,
+		        (SELECT COUNT(PRD_ID) FROM TB_SG_PRD_GRP_DTL WHERE PRD_GRP_ID = A.PRD_GRP_ID) PRD_GRP_CNT,
+		        '',
+		        A.USE_YN,
+		        A.REG_DTM,
+		        A.REGPSN_ID,
+		        A.UPD_DTM,
+		        A.UPDPSN_ID
+		    FROM
+		        TB_SG_PRD_GRP_MST A,
+		        TB_SG_PRD_GRP_DTL B
+		    WHERE 
+		        A.PRD_GRP_ID = B.PRD_GRP_ID
+		    AND 
+		        A.PRD_GRP_SPR_CD = 'R'
+			AND ROWNUM = 1
+		) D
+		<include refid="productSeriesWhere"/>
+    </select> 
+    
+    <!-- 시리즈그룹 조회 -->
+    <select id="selectProductSeriesList" parameterType="hashMap" resultType="SspMap">
+        /* ProductSeries.selectProductSeriesList */
+        SELECT
+            S2.*            
+        FROM
+            (   SELECT
+                    ROWNUM AS RNUM,
+                    S1.* 
+                FROM
+                    ( 
+	                    SELECT
+	                    	D.CO_CD, 
+						    D.PRD_GRP_ID,
+						    PRD_GRP_SPR_CD,
+						    DECODE(D.PRD_GRP_SPR_CD, 'R', '연관', '시리즈') AS PRD_GRP_SPR_NM,
+						    D.PRD_GRP_NM,
+						    D.PRD_GRP_CNT,
+						    (SELECT D.PRD_ID||'('||PRD_NM||')' FROM TB_FV_PRD WHERE CO_CD = D.CO_CD AND PRD_ID = D.PRD_ID) PRD_NM,
+						    (
+						    	SELECT 
+						            LISTAGG(C.PRVL, ';') WITHIN GROUP (ORDER BY C.SORT,C.SPEC_SEQ) AS ATTR_CD 
+						        FROM 
+						            (
+						                SELECT 
+						                    NVL(A.PRD_ID,B.PRD_ID) AS PRD_ID,
+						                    NVL(A.ATTR_CD,B.ATTR_CD) AS ATTR_CD,
+						                    NVL(A.SPEC_SEQ,B.SPEC_SEQ) AS SPEC_SEQ,
+						                    NVL(A.PRNM,B.ATTR_NM) AS ATTR_NM,
+						                    NVL(B.PRVL,A.PRVL) AS PRVL,
+						                    CASE WHEN A.CO_CD IS NOT NULL and B.ATTR_CD IS NULL THEN 1 ELSE 2 END AS sort
+						                FROM 
+						                    (
+						                        SELECT C.* 
+						                        FROM TB_FV_PRD_SPEC C 
+						                        WHERE PRD_ID = D.PRD_ID
+						                    )  A
+						                    FULL OUTER JOIN (
+						                        SELECT 
+						                            A.PRD_ID,
+						                            A.ATTR_CD,
+						                            A.PRVL,
+						                            A.SPEC_SEQ,
+						                            B.ATTR_NM
+						                        FROM 
+						                            TB_SG_PRD_SPEC A,
+						                            TB_SG_ATTR B
+						                        WHERE A.ATTR_CD = B.ATTR_CD
+						                          AND PRD_ID = D.PRD_ID
+						                    ) B
+						                    ON A.PRNM = B.ATTR_NM
+						            )C
+						    ) ATTR_VAL,
+						    DECODE(D.USE_YN, 'Y', '사용', '미사용') AS USE_YN,
+						    TO_CHAR(D.REG_DTM,'yyyy-mm-dd hh24:mi:ss') AS REG_DTM,
+						    DECODE(D.REGPSN_ID,NULL,'','('||D.REGPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = D.REGPSN_ID)) AS REGPSN,
+						    TO_CHAR(D.UPD_DTM,'yyyy-mm-dd hh24:mi:ss') AS UPD_DTM,
+						    DECODE(D.UPDPSN_ID,NULL,'','('||D.UPDPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = D.UPDPSN_ID)) AS UPDPSN
+						FROM
+							(
+							    SELECT
+							        A.CO_CD,
+							        A.PRD_GRP_ID,
+							        A.PRD_GRP_SPR_CD,
+							        A.PRD_GRP_NM,
+							        (SELECT COUNT(PRD_ID) FROM TB_SG_PRD_GRP_DTL WHERE PRD_GRP_ID = A.PRD_GRP_ID) PRD_GRP_CNT,
+							        B.PRD_ID,
+							        A.USE_YN,
+							        A.REG_DTM,
+							        A.REGPSN_ID,
+							        A.UPD_DTM,
+							        A.UPDPSN_ID
+							    FROM
+							        TB_SG_PRD_GRP_MST A,
+							        TB_SG_PRD_GRP_DTL B
+							    WHERE 
+							        A.PRD_GRP_ID = B.PRD_GRP_ID
+							    AND 
+							        A.PRD_GRP_SPR_CD = 'S'
+							    AND
+							        B.BSS_PRD_YN = 'Y'
+							    UNION ALL
+							    SELECT
+							        A.CO_CD,
+							        A.PRD_GRP_ID,
+							        A.PRD_GRP_SPR_CD,
+							        A.PRD_GRP_NM,
+							        (SELECT COUNT(PRD_ID) FROM TB_SG_PRD_GRP_DTL WHERE PRD_GRP_ID = A.PRD_GRP_ID) PRD_GRP_CNT,
+							        '',
+							        A.USE_YN,
+							        A.REG_DTM,
+							        A.REGPSN_ID,
+							        A.UPD_DTM,
+							        A.UPDPSN_ID
+							    FROM
+							        TB_SG_PRD_GRP_MST A,
+							        TB_SG_PRD_GRP_DTL B
+							    WHERE 
+							        A.PRD_GRP_ID = B.PRD_GRP_ID
+							    AND 
+							        A.PRD_GRP_SPR_CD = 'R'
+								AND ROWNUM = 1
+							) D
+                        <include refid="productSeriesWhere"/>
+                        <if test="sort != null and sort != ''">
+                        	ORDER BY 
+                        	<choose>
+                        		<when test='sort == "PRD_GRP_ID".toString()'>PRD_GRP_ID <if test='sortType == "DESC".toString()'>DESC</if></when>
+                        		<when test='sort == "REG_DTM".toString()'>REG_DTM <if test='sortType == "DESC".toString()'>DESC</if></when>
+                        		<when test='sort == "UPD_DTM".toString()'>UPD_DTM <if test='sortType == "DESC".toString()'>DESC</if></when>
+                        		<otherwise>PRD_GRP_ID ASC</otherwise>
+                        	</choose>
+                        </if>
+                    )
+                    S1 
+            )
+            S2 
+        WHERE
+            S2.RNUM BETWEEN #{startNum} AND #{endNum}
+    </select>
+    
+    <!-- 시리즈그룹 조회 -->
+    <select id="selectProductSeriesListExcel" parameterType="hashMap" resultType="hashMap">
+        /* ProductSeries.selectProductSeriesListExcel */
+        SELECT
+		    D.PRD_GRP_ID,
+		    DECODE(D.PRD_GRP_SPR_CD, 'R', '연관', '시리즈') AS PRD_GRP_SPR_NM,
+		    D.PRD_GRP_NM,
+		    D.PRD_GRP_CNT,
+		    (SELECT D.PRD_ID||'('||PRD_NM||')' FROM TB_FV_PRD WHERE CO_CD = D.CO_CD AND PRD_ID = D.PRD_ID) PRD_NM,
+		    (
+		    	SELECT 
+		            LISTAGG(C.PRVL, ';') WITHIN GROUP (ORDER BY C.SORT,C.SPEC_SEQ) AS ATTR_CD 
+		        FROM 
+		            (
+		                SELECT 
+		                    NVL(A.PRD_ID,B.PRD_ID) AS PRD_ID,
+		                    NVL(A.ATTR_CD,B.ATTR_CD) AS ATTR_CD,
+		                    NVL(A.SPEC_SEQ,B.SPEC_SEQ) AS SPEC_SEQ,
+		                    NVL(A.PRNM,B.ATTR_NM) AS ATTR_NM,
+		                    NVL(B.PRVL,A.PRVL) AS PRVL,
+		                    CASE WHEN A.CO_CD IS NOT NULL and B.ATTR_CD IS NULL THEN 1 ELSE 2 END AS sort
+		                FROM 
+		                    (
+		                        SELECT C.* 
+		                        FROM TB_FV_PRD_SPEC C 
+		                        WHERE PRD_ID = D.PRD_ID
+		                    )  A
+		                    FULL OUTER JOIN (
+		                        SELECT 
+		                            A.PRD_ID,
+		                            A.ATTR_CD,
+		                            A.PRVL,
+		                            A.SPEC_SEQ,
+		                            B.ATTR_NM
+		                        FROM 
+		                            TB_SG_PRD_SPEC A,
+		                            TB_SG_ATTR B
+		                        WHERE A.ATTR_CD = B.ATTR_CD
+		                          AND PRD_ID = D.PRD_ID
+		                    ) B
+		                    ON A.PRNM = B.ATTR_NM
+		            )C
+		    ) ATTR_VAL,
+		    DECODE(D.USE_YN, 'Y', '사용', '미사용') AS USE_YN,
+		    TO_CHAR(D.REG_DTM,'yyyy-mm-dd hh24:mi:ss') AS REG_DTM,
+		    DECODE(D.REGPSN_ID,NULL,'','('||D.REGPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = D.REGPSN_ID)) AS REGPSN,
+		    TO_CHAR(D.UPD_DTM,'yyyy-mm-dd hh24:mi:ss') AS UPD_DTM,
+		    DECODE(D.UPDPSN_ID,NULL,'','('||D.UPDPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = D.UPDPSN_ID)) AS UPDPSN
+		FROM
+			(
+			    SELECT
+			        A.CO_CD,
+			        A.PRD_GRP_ID,
+			        A.PRD_GRP_SPR_CD,
+			        A.PRD_GRP_NM,
+			        (SELECT COUNT(PRD_ID) FROM TB_SG_PRD_GRP_DTL WHERE PRD_GRP_ID = A.PRD_GRP_ID) PRD_GRP_CNT,
+			        B.PRD_ID,
+			        A.USE_YN,
+			        A.REG_DTM,
+			        A.REGPSN_ID,
+			        A.UPD_DTM,
+			        A.UPDPSN_ID
+			    FROM
+			        TB_SG_PRD_GRP_MST A,
+			        TB_SG_PRD_GRP_DTL B
+			    WHERE 
+			        A.PRD_GRP_ID = B.PRD_GRP_ID
+			    AND 
+			        A.PRD_GRP_SPR_CD = 'S'
+			    AND
+			        B.BSS_PRD_YN = 'Y'
+			    UNION ALL
+			    SELECT
+			        A.CO_CD,
+			        A.PRD_GRP_ID,
+			        A.PRD_GRP_SPR_CD,
+			        A.PRD_GRP_NM,
+			        (SELECT COUNT(PRD_ID) FROM TB_SG_PRD_GRP_DTL WHERE PRD_GRP_ID = A.PRD_GRP_ID) PRD_GRP_CNT,
+			        '',
+			        A.USE_YN,
+			        A.REG_DTM,
+			        A.REGPSN_ID,
+			        A.UPD_DTM,
+			        A.UPDPSN_ID
+			    FROM
+			        TB_SG_PRD_GRP_MST A,
+			        TB_SG_PRD_GRP_DTL B
+			    WHERE 
+			        A.PRD_GRP_ID = B.PRD_GRP_ID
+			    AND 
+			        A.PRD_GRP_SPR_CD = 'R'
+				AND ROWNUM = 1
+			) D
+			<include refid="productSeriesWhere"/>
+			<if test="sort != null and sort != ''">
+			ORDER BY 
+			<choose>
+          		<when test='sort == "PRD_GRP_ID".toString()'>PRD_GRP_ID <if test='sortType == "DESC".toString()'>DESC</if></when>
+          		<when test='sort == "REG_DTM".toString()'>REG_DTM <if test='sortType == "DESC".toString()'>DESC</if></when>
+          		<when test='sort == "UPD_DTM".toString()'>UPD_DTM <if test='sortType == "DESC".toString()'>DESC</if></when>
+          		<otherwise>PRD_GRP_ID ASC</otherwise>
+          	</choose>
+          </if>
+    </select>
+    
+    
+    <!-- 시리즈그룹정보 --> 
+    <select id="selectSeriesInfo" parameterType="hashMap" resultType="SspMap">
+    	/* ProductSeries.selectSeriesInfo */
+    	SELECT
+		    TSPGM.PRD_GRP_SPR_CD,
+		    TSPGM.USE_YN,
+		    TSPGM.PRD_GRP_NM,
+		    TSPGM.PRD_GRP_ID,
+		    TSPGM.PRD_GRP_SPR_CD,
+		    TO_CHAR(TSPGM.REG_DTM,'yyyy-mm-dd hh24:mi:ss') AS REG_DTM,
+		    DECODE(TSPGM.REGPSN_ID,NULL,'','('||TSPGM.REGPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TSPGM.REGPSN_ID)) AS REGPSN,
+		    TO_CHAR(TSPGM.UPD_DTM,'yyyy-mm-dd hh24:mi:ss') AS UPD_DTM,
+		    DECODE(TSPGM.UPDPSN_ID,NULL,'','('||TSPGM.UPDPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TSPGM.UPDPSN_ID)) AS UPDPSN,
+            (
+                SELECT PRD_CLS_CD
+                FROM TB_SG_PRD 
+                WHERE PRD_ID = (
+                                    SELECT PRD_ID 
+                                    FROM TB_SG_PRD_GRP_DTL 
+                                    WHERE PRD_GRP_ID = TSPGM.PRD_GRP_ID 
+                                    AND BSS_PRD_YN = 'Y'
+                                )
+            ) PRD_CLS_CD
+		FROM 
+		    TB_SG_PRD_GRP_MST TSPGM
+		WHERE 
+		    TSPGM.PRD_GRP_ID = #{prdGrpId}
+    </select>
+     
+     <!-- 기준상품 중복체크 -->
+    <select id="selectBssPrdCount" parameterType="hashMap" resultType="integer">
+    	/* ProductSeries.selectBssPrdCount */
+    	SELECT 
+		    COUNT(0)
+		FROM 
+			TB_SG_PRD_GRP
+		WHERE 
+		    PRD_ID = #{prdId}
+		AND
+		    USE_YN = 'Y'
+		AND 
+		    BSS_PRD_YN = 'Y'
+    </select>
+    
+	<!-- 기준상품의 상품군 일치여부 -->
+    <select id="selectPrdClsCount" parameterType="hashMap" resultType="integer">
+    	/* ProductSeries.selectPrdClsCount */
+	    SELECT 
+		    COUNT(0)
+		FROM 
+			TB_SG_PRD
+		WHERE 
+		    USE_YN = 'Y'
+		AND 
+		    PRD_ID = #{prdId}
+		AND 
+		    PRD_CLS_CD = #{prdClsCd}
+	</select>
+    
+	<!-- 시리즈그룹 내 상품정보 -->
+    <select id="selectProductSeriesInfo" parameterType="hashMap" resultType="SspMap">
+    	/* ProductSeries.selectProductSeriesInfo */
+    	SELECT 
+		    D.CO_CD,
+		    D.PRD_SEQ,
+		    D.BSS_PRD_YN,
+		    D.PRD_ID,
+		    D.PRD_NM,
+		    D.ODR_UNT,
+		    D.FV_ATTR,
+            D.BSS_PRD_ATTR_CD,
+		    LISTAGG('{'||TSPS.ATTR_NM||': '||TSPS.PRVL||'}', '; ') WITHIN GROUP (ORDER BY TSPS.SPEC_SEQ) AS SG_ATTR,
+            (
+                SELECT 
+                    LISTAGG('{'||C.ATTR_NM||': '||C.PRVL||'}', '; ') WITHIN GROUP (ORDER BY C.SORT,C.SPEC_SEQ) AS ATTR_CD 
+                FROM 
+                    (
+                        SELECT 
+                            NVL(A.PRD_ID,B.PRD_ID) AS PRD_ID,
+                            NVL(A.ATTR_CD,B.ATTR_CD) AS ATTR_CD,
+                            NVL(A.SPEC_SEQ,B.SPEC_SEQ) AS SPEC_SEQ,
+                            NVL(A.PRNM,B.ATTR_NM) AS ATTR_NM,
+                            NVL(B.PRVL,A.PRVL) AS PRVL,
+                            CASE WHEN A.CO_CD IS NOT NULL and B.ATTR_CD IS NULL THEN 1 ELSE 2 END AS sort
+                        FROM 
+                            (
+                                SELECT C.* 
+                                FROM TB_FV_PRD_SPEC C 
+                                WHERE PRD_ID = D.PRD_ID
+                            )  A
+                            FULL OUTER JOIN (
+                                SELECT 
+                                    A.PRD_ID,
+                                    A.ATTR_CD,
+                                    A.PRVL,
+                                    A.SPEC_SEQ,
+                                    B.ATTR_NM
+                                FROM 
+                                    TB_SG_PRD_SPEC A,
+                                    TB_SG_ATTR B
+                                WHERE A.ATTR_CD = B.ATTR_CD
+                                  AND PRD_ID = D.PRD_ID
+                            ) B
+                            ON A.PRNM = B.ATTR_NM
+                    )C
+            ) FV_SG_ATTR
+		FROM
+			(
+				SELECT
+			    	TSPGD.CO_CD, 
+	                DECODE(TSPGD.BSS_PRD_YN, 'Y', '기준상품', TSPGD.PRD_SEQ) AS PRD_SEQ,
+			        TSPGD.BSS_PRD_YN,
+			        TSPGD.PRD_ID,
+			        (SELECT PRD_NM FROM TB_FV_PRD WHERE PRD_ID = TSPGD.PRD_ID AND CO_CD = TSPGD.CO_CD) PRD_NM,
+			        (SELECT ODR_UNT FROM TB_FV_PRD WHERE PRD_ID = TSPGD.PRD_ID AND CO_CD = TSPGD.CO_CD) ODR_UNT,
+	                (SELECT LISTAGG('{'||PRNM||': '||PRVL||'}', '; ') WITHIN GROUP (ORDER BY SPEC_SEQ ) FROM TB_FV_PRD_SPEC WHERE CO_CD = TSPGD.CO_CD AND PRD_ID = TSPGD.PRD_ID) AS FV_ATTR,
+                    BSS_PRD_ATTR_CD
+			    FROM 
+			        TB_SG_PRD_GRP_DTL TSPGD
+			    WHERE 
+			        TSPGD.PRD_GRP_ID = #{prdGrpId}
+			) D,
+			(
+	            SELECT 
+	                B.CO_CD,
+	                B.PRD_ID,
+	                A.ATTR_CD,
+	                A.ATTR_NM,
+	                B.PRVL,
+	                B.SPEC_SEQ
+	            FROM 
+	                TB_SG_ATTR A,
+	                TB_SG_PRD_SPEC B
+	            WHERE 
+	                A.ATTR_CD = B.ATTR_CD
+				AND 
+	                A.USE_YN = 'Y'
+	            AND 
+	                B.USE_YN = 'Y'
+	        )TSPS
+		WHERE 
+		    D.CO_CD = TSPS.CO_CD(+)
+		AND 
+		    D.PRD_ID = TSPS.PRD_ID(+)
+		GROUP BY  
+			D.CO_CD, D.PRD_SEQ, D.BSS_PRD_YN, D.PRD_ID, D.PRD_NM, D.ODR_UNT, D.FV_ATTR, D.BSS_PRD_ATTR_CD
+		ORDER BY 
+			D.BSS_PRD_YN DESC, PRD_SEQ
+    </select>
+    
+	<!-- 상품 정보 -->
+    <select id="selectProductInfo" parameterType="hashMap" resultType="SspMap">
+    	/* ProductSeries.selectProductInfo */
+    	SELECT 
+	        TSP.CO_CD,
+	        TSP.PRD_ID,
+	        TFP.PRD_NM,
+	        TSP.PRD_CLS_CD,
+	        TFP.ODR_UNT
+	    FROM
+	        TB_SG_PRD TSP,
+	        TB_FV_PRD TFP
+	    WHERE
+	        TSP.USE_YN = 'Y'
+		AND 
+			TSP.PRD_ID = #{prdId}
+	    AND
+	        TSP.CO_CD = TFP.CO_CD
+	    AND    
+	        TSP.PRD_ID = TFP.PRD_ID
+    </select>
+    
+    <!-- S-MRO상품 속성 정보 -->
+    <select id="selectProductMroAttrInfo" parameterType="hashMap" resultType="SspMap">
+    	SELECT 
+		    CO_CD,
+		    PRD_ID,
+		    ATTR_CD,
+		    PRNM||': '||PRVL AS FV_ATTR,
+		    PRNM,
+		    PRVL
+		FROM 
+		    TB_FV_PRD_SPEC
+		WHERE
+		    CO_CD = #{coCd}
+		AND 
+		    PRD_ID = #{prdId} 
+		ORDER BY SPEC_SEQ
+    </select>
+    
+    <!-- SSP상품 속성 정보 -->
+    <select id="selectProductSspAttrInfo" parameterType="hashMap" resultType="SspMap">
+    	/* ProductSeries.selectProductAttrInfo */
+		SELECT 
+		    B.CO_CD,
+		    B.PRD_ID,
+		    A.ATTR_CD,
+		    A.ATTR_NM||': '||B.PRVL AS SG_ATTR,
+		    A.ATTR_NM,
+		    B.PRVL
+		FROM 
+		    TB_SG_ATTR A,
+		    TB_SG_PRD_SPEC B
+		WHERE 
+		    A.ATTR_CD = B.ATTR_CD
+		AND 
+			B.CO_CD = #{coCd}
+		AND 
+			B.PRD_ID = #{prdId}
+		AND 
+		    A.USE_YN = 'Y'
+		AND 
+		    B.USE_YN = 'Y'
+		ORDER BY B.SPEC_SEQ
+    </select>
+    
+    <!-- SSP 상품 마스터 속성값 변경-->
+    <update id="updateProductSspAttrVal" parameterType="hashMap">
+    	UPDATE 
+    		TB_SG_PRD
+    	SET 
+    		ATTR_VAL = #{attrVal},
+    		UPD_DTM = SYSDATE,
+    		UPDPSN_ID = {updpsnId}
+    	WHERE
+    		CO_CD = #{coCd}
+    	AND
+    		PRD_ID = #{prdId}
+    </update>
+   
+    <!-- 시리즈그룹(MST) 등록 -->
+    <insert id="insertProductSeriesMst" parameterType="hashMap">
+    	<selectKey keyProperty="prdGrpId" resultType="String" order="BEFORE">
+	    	SELECT 
+	    		NVL2(MAX(PRD_GRP_ID), 'S' || LPAD(REPLACE(MAX(PRD_GRP_ID),'S')+1,7,'0'),'S0000001') AS PRD_GRP_ID 
+	    	FROM 
+	    		TB_SG_PRD_GRP_MST
+    	</selectKey>
+        /* ProductSeries.insertProductSeriesMst */
+        INSERT INTO TB_SG_PRD_GRP_MST 
+		(
+			CO_CD, 
+			PRD_GRP_ID, 
+			PRD_GRP_SPR_CD,
+			PRD_GRP_NM,
+            USE_YN,
+			REG_DTM,
+			REGPSN_ID,
+			UPD_DTM,
+			UPDPSN_ID
+		)VALUES(
+			#{coCd},
+			#{prdGrpId},
+			#{prdGrpSprCd},
+			#{prdGrpNm},
+			NVL(#{useYn},'Y'),
+			SYSDATE,
+			#{regpsnId},
+			SYSDATE,
+			#{updpsnId}
+		)
+    </insert>
+    
+    <!-- 시리즈그룹(MST) 수정 --> 
+    <update id="updateProductSeriesMst" parameterType="hashMap">
+        /* ProductSeries.updateProductSeries */
+        UPDATE
+        	TB_SG_PRD_GRP_MST
+        SET
+        	PRD_GRP_NM = #{prdGrpNm},
+        	USE_YN = #{useYn},
+        	UPD_DTM = SYSDATE,
+			UPDPSN_ID = #{updpsnId}
+        WHERE
+        	PRD_GRP_ID = #{prdGrpId} 
+    </update>
+    
+    <!-- 시리즈그룹(DTL) 등록 -->
+    <insert id="insertProductSeriesDtl" parameterType="hashMap">
+        /* ProductSeries.insertProductSeriesDtl */
+        INSERT INTO TB_SG_PRD_GRP_DTL 
+		(
+			CO_CD, 
+			PRD_GRP_ID, 
+			PRD_ID, 
+			BSS_PRD_YN,
+			REG_DTM,
+			REGPSN_ID,
+			UPD_DTM,
+			UPDPSN_ID,
+			PRD_SEQ,
+			BSS_PRD_ATTR_CD
+		)VALUES(
+			#{coCd},
+			#{prdGrpId},
+			#{prdId},
+			#{bssPrdYn},
+			SYSDATE,
+			#{regpsnId},
+			SYSDATE,
+			#{updpsnId},
+			#{prdSeq},
+			#{bssPrdAttrCd}
+		)
+    </insert>
+	
+    <!-- 시리즈그룹(DTL) 삭제 --> 
+    <delete id="deleteProductSeries" parameterType="hashMap">
+    	/* ProductSeries.deleteProductSeries */
+    	DELETE FROM
+    		TB_SG_PRD_GRP_DTL
+		WHERE
+			PRD_GRP_ID = #{prdGrpId} 
+    </delete>
+    
+    <!-- 기준상품으로 상품속성매핑 등록/수정-->
+    <update id="mergePrdAttrMapping" parameterType="hashMap">
+    	/* ProductSeries.mergePrdAttrMapping */
+	    MERGE INTO TB_SG_PRD_SPEC TSPS
+		    USING DUAL
+		       ON (TSPS.CO_CD = #{coCd} AND TSPS.PRD_ID = #{prdId} AND TSPS.ATTR_CD = #{attrCd})
+		    WHEN MATCHED THEN
+		        UPDATE SET 
+		            TSPS.PRVL = (SELECT PRVL FROM TB_SG_PRD_SPEC WHERE CO_CD = #{coCd} AND PRD_ID = #{bssPrdId} AND ATTR_CD = #{attrCd}),
+		            TSPS.UPD_DTM = SYSDATE,
+		            TSPS.UPDPSN_ID = #{updpsnId}
+		    WHEN NOT MATCHED THEN
+		        INSERT 
+		        (
+		            TSPS.CO_CD,
+		            TSPS.PRD_ID,
+		            TSPS.SPEC_SEQ,
+		            TSPS.ATTR_CD, 
+		            TSPS.PRVL,
+		            TSPS.USE_YN,
+		            TSPS.REG_DTM,
+		            TSPS.REGPSN_ID, 
+		            TSPS.UPD_DTM,
+		            TSPS.UPDPSN_ID
+		        )
+		        VALUES 
+		        (
+		            #{coCd},
+		            #{prdId},
+		            NVL((SELECT MAX(SPEC_SEQ)+1 FROM TB_SG_PRD_SPEC WHERE CO_CD = #{coCd} AND PRD_ID = #{prdId}),1),
+		            #{attrCd},
+		            (SELECT PRVL FROM TB_SG_PRD_SPEC WHERE CO_CD = #{coCd} AND PRD_ID = #{bssPrdId} AND ATTR_CD = #{attrCd}),
+		            (SELECT USE_YN FROM TB_SG_PRD_SPEC WHERE CO_CD = #{coCd} AND PRD_ID = #{bssPrdId} AND ATTR_CD = #{attrCd}),
+		            SYSDATE,
+		            #{updpsnId},
+		            SYSDATE,
+		            #{updpsnId}
+		        )
+    </update>
+    
+</mapper>

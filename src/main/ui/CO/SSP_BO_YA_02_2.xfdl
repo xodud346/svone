@@ -1,0 +1,469 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_YA_02_2" width="1336" height="846" titletext="메뉴권한그룹관리-메뉴권한그룹정보" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="846" width="1336">
+        <Div id="Div00" taborder="0" text="Div00" left="0" top="20" height="88" right="0" cssclass="div_WF_SearchArea">
+          <Layouts>
+            <Layout>
+              <Static id="Static03" taborder="0" left="0" top="0" height="32" cssclass="sta_cm_box02L_tdt" right="0" text=""/>
+              <Static id="Static02" taborder="1" text="권한그룹코드" left="0" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Button id="btnSearch" taborder="2" text="조회" top="42" width="60" cssclass="btn_WF_require" right="0" height="26" onclick="Div00_btnSearch_onclick"/>
+              <Button id="btnClear" taborder="3" text="초기화" top="42" width="60" right="btnSearch:4" height="26" onclick="Div00_btnClear_onclick"/>
+              <Combo id="cmb_authGrpCd" taborder="4" left="140" top="4" width="150" height="24" index="-1" onitemchanged="Div00_cmb_authGrpCd_onitemchanged" innerdataset="ds_authGrpCd" datacolumn="COM_DTL_CD_NM" codecolumn="COM_DTL_CD"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btnRegist" taborder="1" text="저장" width="81" right="0" height="28" top="Div00:30" onclick="btnRegist_onclick" cssclass="btn_WF_select"/>
+        <Button id="btnDel" taborder="2" text="삭제" width="81" right="btnRegist:4" height="28" top="Div00:30" onclick="btnDel_onclick"/>
+        <Button id="btnAdd" taborder="3" text="추가" width="81" right="btnDel:4" height="28" top="Div00:30" onclick="btnAdd_onclick"/>
+        <Grid id="grd_menu" taborder="4" top="214" binddataset="ds_menu" scrollbartype="auto auto" treeusecheckbox="false" autofittype="col" treeinitstatus="expand,all" cellmovingtype="none" scrolltype="both" right="0" bottom="6" cellsizingtype="both" width="296" oncellclick="grd_menu_oncellclick">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="300"/>
+              </Columns>
+              <Rows>
+                <Row size="31"/>
+              </Rows>
+              <Band id="body">
+                <Cell text="bind:MNU_NM" edittype="tree" displaytype="treeitemcontrol" treelevel="bind:MNU_LVL" tooltiptext="bind:MNU_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Grid id="grd_auth_list" taborder="5" left="0" top="176" right="grd_menu:10" bottom="6" binddataset="ds_mnuAuthGrpInfo" autofittype="col" autoenter="select" autoupdatetype="itemselect" oncellclick="grd_auth_list_oncellclick">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="38"/>
+                <Column size="48"/>
+                <Column size="116"/>
+                <Column size="131"/>
+                <Column size="144"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="순번"/>
+                <Cell col="2" text="권한역할코드" cssclass="grd_WF_bg_image"/>
+                <Cell col="3" text="등록일시"/>
+                <Cell col="4" text="등록자"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox" text="bind:CHK"/>
+                <Cell col="1" text="expr:currow+1"/>
+                <Cell col="2" text="bind:AUTH_ROLE_CD" displaytype="combotext" edittype="expr:AUTH_ROLE_CD== undefined || dataset.getRowType(currow) == 2 ? &quot;combo&quot; : &quot;none&quot; " combodataset="ds_authRoleCd" combocodecol="COM_DTL_CD" combodatacol="COM_DTL_CD_NM" combotype="dropdown"/>
+                <Cell col="3" text="bind:REG_DTM"/>
+                <Cell col="4" text="bind:REGPSN_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_collapse" taborder="6" top="176" width="70" height="28" cssclass="btn_WF_treeAll" text="+Close All" onclick="btn_collapse_onclick" right="0"/>
+        <Button id="btn_expand" taborder="7" top="176" height="28" cssclass="btn_WF_treeAll" text="-Open All" onclick="btn_expand_onclick" right="btn_collapse:4" width="71"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="AUTH_GRP_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_mnuAuthGrpInfo" oncolumnchanged="ds_main_oncolumnchanged">
+        <ColumnInfo>
+          <Column id="AUTH_GRP_CD" type="STRING" size="256"/>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="REGPSN_NM" type="STRING" size="256"/>
+          <Column id="AUTH_ROLE_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_authGrpCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_menu">
+        <ColumnInfo>
+          <Column id="MNU_SEQ" type="BIGDECIMAL" size="16"/>
+          <Column id="MNU_NM" type="STRING" size="32"/>
+          <Column id="MNU_LVL_SPR_CD" type="STRING" size="32"/>
+          <Column id="USE_YN" type="STRING" size="32"/>
+          <Column id="MNU_LVL" type="BIGDECIMAL" size="16"/>
+          <Column id="SRT_SO" type="BIGDECIMAL" size="16"/>
+          <Column id="MNU_TP_CD" type="STRING" size="32"/>
+          <Column id="PGM_ID" type="STRING" size="256"/>
+          <Column id="PGM_NM" type="STRING" size="256"/>
+          <Column id="RMKS_CTS" type="STRING" size="1000"/>
+          <Column id="HRNK_MNU_SEQ" type="INT" size="5"/>
+          <Column id="HGST_MNU_SEQ" type="INT" size="5"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_searchMenu">
+        <ColumnInfo>
+          <Column id="AUTH_ROLE_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_authRoleCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_delMnuAuthGrpInfo" oncolumnchanged="ds_main_oncolumnchanged">
+        <ColumnInfo>
+          <Column id="AUTH_GRP_CD" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="REGPSN_NM" type="STRING" size="256"/>
+          <Column id="AUTH_ROLE_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_mnuAuthGrpInfoCopy" oncolumnchanged="ds_main_oncolumnchanged">
+        <ColumnInfo>
+          <Column id="AUTH_GRP_CD" type="STRING" size="256"/>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="REGPSN_NM" type="STRING" size="256"/>
+          <Column id="AUTH_ROLE_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_YA_11_2
+/* 작 성 일 자 : 2022/03/21
+/* 작  성   자 : 이성민
+/* 설       명 : 시스템관리 > 운영자권한그룹관리 > 운영자별 메뉴권한
+/***********************************************************/
+
+/* 스크립트 인클루드 */
+include "CO::coUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+
+this.valiGridIds = [
+	  {"name" : "권한역할코드", "id" : "AUTH_ROLE_CD"}
+];
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+	this.gfn_formOnLoad(this);
+	this.fn_commonCodeSearch();
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "Div00_btnSearch_onclick",
+		SHIFT_ENTER : "",
+		SHIFT_S : "btnRegist_onclick",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_authGrpCd=ds_output1 ds_authRoleCd=ds_output2";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "CODE_LIST", "AUTH_GRP_CD,AUTH_ROLE_CD");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//메뉴권한그룹정보- 권한정보 조회
+this.fn_mnuAuthGrpSearch = function() {
+	var sSvcId = "mnuAuthGrpSearch";    
+	var sUrl = "/co/mnu_auth/select-mnu-auth-grp-info-list.do";
+	var inDs = "ds_search=ds_search"
+	var outDs = "ds_mnuAuthGrpInfo=ds_output1"; 
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//메뉴권한그룹정보- 권한역할코드별 메뉴 조회
+this.fn_oprtrAuthGrpMenu = function() {
+	if( this.ds_mnuAuthGrpInfo.rowcount > 0 ) {
+		this.ds_searchMenu.clearData();
+		var authRoleCd = this.ds_mnuAuthGrpInfo.getColumn(this.ds_mnuAuthGrpInfo.rowposition , "AUTH_ROLE_CD");
+		if( authRoleCd != undefined ) {
+			this.ds_searchMenu.addRow();
+			this.ds_searchMenu.setColumn(0, "AUTH_ROLE_CD", authRoleCd);			
+		}	
+	} else {
+		this.ds_menu.clearData();
+		return false;
+	}	
+	
+	var sSvcId = "oprtrAuthGrpMenuSearch";    
+	var sUrl = "/co/mnu_auth/select-oprtr-auth-grp-menu-list.do";
+	var inDs = "ds_search=ds_searchMenu"
+	var outDs = "ds_menu=ds_output1"; 
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//저장
+this.fn_save = function() {
+	if( !this.gfn_dsIsUpdated(this.ds_mnuAuthGrpInfo) ) {
+		alert(this.gfn_getMessage("COMS000008", ["수정", "내용"]));	//수정된 내용이 없습니다.
+		return false;
+	} else {
+	
+		// 권한역할코드 중복 확인
+		if(this.fn_authRoleCdCheck(this.ds_mnuAuthGrpInfo)){
+			//폼 필수값 체크
+			var validation = this.fn_validationGrid(this.grd_auth_list, this.valiGridIds, this.ds_mnuAuthGrpInfo);
+			if(validation) {
+				var sReturn = this.confirm(this.gfn_getMessage("COMS000013", ["저장"]));
+				if(sReturn == true){
+					var sSvcId = "save";  
+					var sUrl = "/co/mnu_auth/save-mnu-auth-grp-info.do";
+					var inDs = "ds_search=ds_search ds_save=ds_mnuAuthGrpInfo:U"
+					var outDs = "";
+					var arg;
+					this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");	
+				}
+			}
+		}
+	}
+};
+
+
+//삭제
+this.fn_delete = function(){	
+	var sSvcId = "delete";  
+	var sUrl = "/co/mnu_auth/delete-mnu-auth-grp-info-list.do";
+	var inDs = "ds_delete=ds_delMnuAuthGrpInfo:U"
+	var outDs = "";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+	switch(svcID){
+	case "mnuAuthGrpSearch":
+		if(this.ds_mnuAuthGrpInfo.rowcount < 1){
+			this.ds_mnuAuthGrpInfo.copyData(this.ds_mnuAuthGrpInfoCopy);
+		}
+		this.fn_oprtrAuthGrpMenu();
+		break;
+	case "oprtrAuthGrpMenuSearch":
+		//this.grd_menu.set_treeinitstatus("collapse,all");
+		break;
+	case "save":
+		alert(this.gfn_getMessage("COMS000014", ["저장"])); //저장되었습니다. 
+		this.fn_mnuAuthGrpSearch();
+		break;
+	case "commonCodeSearch":
+		this.Div00.form.cmb_authGrpCd.set_index(0);
+		this.fn_mnuAuthGrpSearch();
+		break;
+	case "delete":
+		if(this.ds_delMnuAuthGrpInfo.rowcount >= 0){
+			this.grd_auth_list.setCellProperty("head", 0,"text","0"); 
+		}
+		
+		this.ds_delMnuAuthGrpInfo.clearData();
+		alert(this.gfn_getMessage("COMS000014", ["삭제"])); //삭제되었습니다. 
+		this.fn_mnuAuthGrpSearch();
+		break;
+	default: 
+		break;
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_treeOpen = function(idx, type) {
+
+	var gridObj = this.grd_menu;
+	var nGridRow = gridObj.getTreeRow(idx);
+	var nStatus  = gridObj.getTreeStatus(nGridRow);
+
+	if(nStatus == 3) return;
+
+	if( type == "add" ) {
+		nStatus = (nStatus == 0 ? 1 : 1);
+	} else {
+		nStatus = (nStatus == 0 ? 1 : 0);
+	}
+	gridObj.setTreeStatus(nGridRow, nStatus);
+}
+
+//권한역할코드 중복 확인.		
+this.fn_authRoleCdCheck = function(oDs) {
+	if( oDs.rowcount == 1 ) return true;
+	for( var i = 0; i < oDs.rowcount; i++ ) {
+		if( oDs.getRowType(i) == 1 ) {	
+			if( oDs.getColumn(i, "AUTH_ROLE_CD") == oDs.getColumn(oDs.rowposition, "AUTH_ROLE_CD") ) {
+				alert(this.gfn_getMessage("COMS000015", ["권한역할코드", "중복"])); //&1 가 &2 되었습니다.
+				return false;
+			}			
+		}			
+	}
+	
+	return true;
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//초기화
+this.Div00_btnClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.clearData();
+	this.ds_search.addRow();
+	this.Div00.form.cmb_authGrpCd.set_index(0);
+};
+
+//권한분류 추가
+this.btnAdd_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var row = this.ds_mnuAuthGrpInfo.addRow();	
+};
+
+//그리드 셀 더블클릭 (트리)
+this.grd_menu_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	this.fn_treeOpen(e.row);
+};
+
+//전체열기
+this.btn_expand_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.grd_menu.set_treeinitstatus("expand,all");
+};
+
+//전체닫기
+this.btn_collapse_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.grd_menu.set_treeinitstatus("collapse,all");
+};
+
+//저장버튼
+this.btnRegist_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_save();
+};
+
+//삭제버튼
+this.btnDel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var delArr = [];
+	var chkCnt = this.ds_mnuAuthGrpInfo.getCaseCount("CHK == 1");
+	var nRowType = "";
+	var delArr = [];
+	
+	if(chkCnt == 0){
+		alert(this.gfn_getMessage("COMS000022", ["삭제", "데이터"])); //&1할 &2을(를) 선택해주세요.
+		return;
+	}
+	
+	var sReturn = this.confirm(this.gfn_getMessage("COMS000001",  ["선택한 데이터", "삭제"])); //선택한 데이터를 삭제하시겠습니까?
+	if(sReturn == true){
+		for(var i=0; i < this.ds_mnuAuthGrpInfo.rowcount; i++){
+			if(this.ds_mnuAuthGrpInfo.getColumn(i, "CHK") == 1){
+				nRowType = this.ds_mnuAuthGrpInfo.getRowType(i);
+				if(nRowType == Dataset.ROWTYPE_INSERT){
+					delArr.push(i);
+				}else{
+					var nRow = this.ds_delMnuAuthGrpInfo.addRow();		
+					this.ds_delMnuAuthGrpInfo.copyRow(nRow, this.ds_mnuAuthGrpInfo, i);
+				}
+			}
+		}
+
+		this.ds_mnuAuthGrpInfo.deleteMultiRows(delArr);
+		if(this.ds_delMnuAuthGrpInfo.rowcount > 0){
+			this.fn_delete();
+		}else{
+			this.grd_auth_list.setCellProperty("head", 0,"text","0"); 
+		}
+	}
+	
+};
+
+this.Div00_btnSearch_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_mnuAuthGrpSearch();
+};
+
+this.grd_auth_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(this.ds_mnuAuthGrpInfo.getRowType(e.row) != Dataset.ROWTYPE_INSERT){
+		this.fn_oprtrAuthGrpMenu();
+	}
+	
+	if(e.col ==  2){
+		obj.dropdownCombo();
+	}
+	
+};
+
+this.Div00_cmb_authGrpCd_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	var bReturn  = true;
+	
+	if(this.gfn_dsIsUpdated(this.ds_mnuAuthGrpInfo)){
+		bReturn = this.confirm(this.gfn_getMessage("COMS000023")); //변경된 내역이 존재합니다. 조회하시겠습니까?
+	}
+	
+	if(bReturn == true){
+		this.ds_menu.clearData();
+		this.ds_mnuAuthGrpInfo.clearData();
+		this.fn_mnuAuthGrpSearch();	
+	}else{
+		this.Div00.form.cmb_authGrpCd.set_value(e.prevalue);
+	}
+};
+
+
+this.grd_menu_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{	
+	var nGridRow = this.grd_menu.getTreeRow(e.row);
+	var nStatus  = this.grd_menu.getTreeStatus(nGridRow);
+
+	if(nStatus == 3) return;
+	
+	nStatus = (nStatus == 0 ? 1 : 0);
+		
+	this.grd_menu.setTreeStatus(nGridRow, nStatus);
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="Div00.form.cmb_authGrpCd" propid="value" datasetid="ds_search" columnid="AUTH_GRP_CD"/>
+    </Bind>
+  </Form>
+</FDL>

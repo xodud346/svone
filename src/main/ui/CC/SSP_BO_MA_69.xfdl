@@ -1,0 +1,295 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_MA_69" width="640" height="200" titletext="운영단위 입고 책임자 설정" onload="fn_onLoad" onkeyup="SSP_BO_MA_69_onkeyup">
+    <Layouts>
+      <Layout height="200" mobileorientation="landscape" width="640">
+        <Static id="lblBzplc" taborder="0" left="10" top="12" height="32" cssclass="sta_cm_box01L_tdt" text="사업장" width="130"/>
+        <Static id="txtBzplcInfo" taborder="1" left="140" top="12" height="32" cssclass="sta_cm_box02L_tdt" text="" right="10"/>
+        <Static id="lblOprunit" taborder="2" text="운영단위" left="10" top="44" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Static id="txtOprunitInfo" taborder="3" top="44" height="32" cssclass="sta_cm_box02L" left="140" right="10"/>
+        <Static id="lblOpuGi" taborder="4" text="입고 책임자" left="10" top="75" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Static id="txtOprunitInfo00" taborder="5" top="75" height="32" cssclass="sta_cm_box02L" left="140" right="10"/>
+        <Button id="btnSave" taborder="6" text="저장" left="325" top="145" width="70" height="30" cssclass="btn_WF_select" onclick="btnSave_onclick"/>
+        <Button id="btnCncl" taborder="7" text="취소" top="145" width="70" height="30" left="250" ondblclick="btnCncl_ondblclick" onclick="btnCncl_onclick"/>
+        <Edit id="edtOpuGiIds" taborder="8" left="147" top="79" width="210" height="24" enable="true" readonly="false"/>
+        <Edit id="edtOpuGiNms" taborder="9" left="360" top="79" width="210" height="24" enable="true" readonly="false"/>
+        <Button id="btnMultiPrsnGi" taborder="10" left="576" top="79" height="24" cssclass="btn_WF_multi" width="24" onclick="btnMultiMbrGi_onclick"/>
+        <Button id="btnMultiTextGi" taborder="11" left="601" top="79" height="24" cssclass="btn_WF_document" width="24" onclick="btnMultiTextGi_onclick" text=""/>
+      </Layout>
+    </Layouts>
+    <Bind>
+      <BindItem id="biOpuGiIds" compid="edtOpuGiIds" propid="value" datasetid="dsByoprunitGiChrpsn" columnid="GI_CHRPSN_ID"/>
+      <BindItem id="biOpuGiNms" compid="edtOpuGiNms" propid="value" datasetid="dsByoprunitGiChrpsn" columnid="GI_CHRPSN_NM"/>
+    </Bind>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT  NAME  : SSP
+  PROGRAM  NAME  : CC [SSP_BO_MA_69] 운영단위 입고 책임자 설정
+  CREATION DATES : 2022.03.08
+  CREATER        : 박성근
+*******************************************************/
+
+// 공통형 스크립트 인클루드
+include "CO::coUtils.xjs";
+include "CC::CcUtils.xjs";
+include "OD::odUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+
+this.extParamKeys = [ 'coCd', 'bzplcId', 'bzplcNm', 'oprUnitId', 'oprUnitNm' ];
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo) {
+	this.gfn_formOnLoad(this);  //공통 함수 호출(필수)
+
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fnSelectGiChrspnInfo=function() {
+	trace('this.fnSrchGiChrspnInfo()');
+	
+	var sSvc  = 'selectGiChrspnInfo';
+	var sUrl  = '/bo/cust/oprunit/gi/chrpsn.do';
+	var inDs  = 'dsParam=dsParam';
+	var outDs = 'dsByoprunitGiChrpsn=dsByoprunitGiChrpsn dsBydeptGiChrpsn=dsBydeptGiChrpsn'  ;
+	var arg   = '';
+	
+	trace('[sUrl:'+ sUrl +']');
+	this.gfn_transaction(sSvc, sUrl, inDs, outDs, arg, 'fnSelectGiChrspnInfoClbk');
+}
+
+this.fnSaveGiChrspnInfo=function() {
+	trace('this.fnSaveGiChrspnInfo()');
+	
+	var sSvc  = 'saveGiChrspnInfo';
+	var sUrl  = '/bo/cust/oprunit/gi/chrpsn/save.do';
+	var inDs  = 'dsParam=dsParam dsByoprunitGiChrpsn=dsSaveByoprunitGiChrpsn';
+	var outDs = '';
+	var arg   = '';
+	
+	trace('[sUrl:'+ sUrl +']');
+	this.gfn_transaction(sSvc, sUrl, inDs, outDs, arg, 'fnSaveGiChrspnInfoClbk');
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+// 공통코드 조회 콜백
+this.fnCcComCodesClbk=function(rCodes, rCode, rMesg) {
+	trace('this.fnCcComCodesClbk() >>' + rCodes);
+ 	trace('this.fnCcComCodesClbk[ this.dsParam:'+ this.dsParam +']');
+}
+
+// 입고 책임자 조회 콜백
+this.fnSelectGiChrspnInfoClbk = function(rCodes, rCode, rMesg) {
+	trace('this.fnSelectGiChrspnInfoClbk(rCodes:'+rCodes+', rCode:'+rCode+', rMesg:'+rMesg+')');
+	if (this.dsByoprunitGiChrpsn.rowcount < 1) {
+		var dsNm='dsByoprunitGiChrpsn', cols=['CO_CD', 'BZPLC_ID', 'OPR_UNIT_ID', 'GI_CHRPSN_ID', 'GI_CHRPSN_NM'];
+		var ds=new Dataset(dsNm);
+		for(var i in cols) { ds.addColumn(cols[i], 'String'); }
+		var nIdx=ds.addRow();
+		for(var i in cols) { // parameter to dataset
+			var colNm=cols[i], colNmCamel=this.cnvtUS2CC(colNm);
+			var pVal=this.dsParam.getColumn(0, colNmCamel);
+			if (pVal!=undefined) {
+				ds.setColumn(nIdx, colNm, pVal);
+			}
+		}
+		this.dsByoprunitGiChrpsn = ds;
+		
+		var rbldBinds=[
+			{ bindId: 'biOpuGiIds', cpntId: 'edtOpuGiIds', cpntProp: 'value', dsId: 'dsByoprunitGiChrpsn', dsCol: 'GI_CHRPSN_ID' },
+			{ bindId: 'biOpuGiNms', cpntId: 'edtOpuGiNms', cpntProp: 'value', dsId: 'dsByoprunitGiChrpsn', dsCol: 'GI_CHRPSN_NM' },
+		];
+		for (var i in rbldBinds) {  // 기존 바인딩 제거
+			var cBI=rbldBinds[i], oBI=this.binds[cBI.bindId];
+			if (oBI!=undefined) {
+				var cpick=this.removeChild( cBI.bindId );
+				cpick.destroy();
+			};
+  		}
+  		for (var i in rbldBinds) {  // 신규 바인딩 추가
+			var cBI=rbldBinds[i], nBi=new BindItem();
+			nBi.init(cBI.bindId, cBI.cpntId, cBI.cpntProp, cBI.dsId, cBI.dsCol);
+			this.addChild(cBI.bindId, nBi);
+			nBi.bind();
+		}
+		
+	}
+	trace(' >> [BindItem - this.biOpuGiIds : '+ this.biOpuGiIds +']');
+	trace(' >> [ds:'+ this.dsByoprunitGiChrpsn.id +':'+ this.dsByoprunitGiChrpsn +':'+ this.dsByoprunitGiChrpsn.rowcount +']');
+}
+
+this.fnSaveGiChrspnInfoClbk = function(rCodes, rCode, rMesg) {
+	trace('this.fnSaveGiChrspnInfoClbk(rCodes:'+rCodes+', rCode:'+rCode+', rMesg:'+rMesg+')');
+	if (rCode != 0) { return; }
+	
+	alert('저장하였습니다.');
+	this.close();
+}
+
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function() {
+	//trace('this.cfn_formInit() > [refCdGrpNm:'+ this.parent['refCdGrpNm'] +']');
+
+	// Parent Parameter 생성
+	if (this.parent != undefined) {
+		var p={ startNum: 0, rowCount: 20, giChrpsnType: 'OPU' };
+		
+		for (var i in this.extParamKeys) {
+			var k=this.extParamKeys[i], v=this.parent[k];  //trace('ext['+ k +':'+ v +']');
+			p[k]=v;
+			this.dsParam.setColumn(0, k, v);
+		}
+		if (p.bzplcNm   != undefined) { p['bzplcInf'  ]=p.bzplcId   +' | '+ p.bzplcNm  ; this.txtBzplcInfo  .set_text(p.bzplcInf  ); }
+		if (p.oprUnitNm != undefined) { p['oprUnitInf']=p.oprUnitId +' | '+ p.oprUnitNm; this.txtOprunitInfo.set_text(p.oprUnitInf); }
+		
+		this.cnvtObject2Dataset('dsParam', p);  // trace('  p >>> '+ JSON.stringify(p));
+		this.fnSelectGiChrspnInfo();
+	}
+};
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.testCtlAuth=function() {
+	this.cnvtObject2Dataset('dsParam', { coCd: '1000', bzplcId: 'S000013507', oprUnitId: 'S000013644' });
+	this.fnSelectCtlAuthDtl();
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.infDsModRow = { row: null, id: null, nm: null };
+
+// 
+this.btnMultiMbrGi_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo) {
+	this.infDsModRow = { row: 0, id: this.edtOpuGiIds, nm: this.edtOpuGiNms };
+	
+	var popParam={ giAuthUseYn: 'Y' }, aProp=[ 'coCd', 'bzplcId', 'oprUnitId' ];
+	for (var i in aProp) { var prop=aProp[i]; popParam[prop]=this.dsParam.getColumn(0, prop); }
+	
+	/*
+	this.$popup(this).mMbr (popParam, function(rID, rJson){  // this.edtOpuGiIds.id, { textId : this.edtOpuGiIds, giAuthUseYn: 'Y' }, 'fnMultiMbrClbk');
+		if (undefined==rJson) { return; }  trace("rJson: "+ rJson);
+		
+		var oJson=JSON.parse(rJson), sIDs='', sNMs='';  trace('[oJson.length:'+ oJson.length +']');
+		for (var j in oJson) {  // trace('[typeof oJson[j]"'+ (typeof oJson[j]) +']'+ oJson[j]);
+			var sRow=oJson[j], oRow=JSON.parse(sRow);
+			sIDs += (sIDs==''?'':',')+oRow['MBR_ID'];
+			sNMs += (sNMs==''?'':',')+oRow['MBR_NM'];
+		}
+		
+		var ds=this.dsByoprunitGiChrpsn;
+		trace('[sIDs:'+ sIDs +'][sNMs:'+ sNMs +'][ds:'+ ds.id +':'+ ds +':'+ ds.rowcount +']');
+		
+		if (ds.rowcount < 1) { trace('addRow()'); ds.addRow(); }
+		trace('addRow after ('+ (ds.rowcount < 1) +') > [this.dsByoprunitGiChrpsn.rowcount:'+ ds.rowcount +']');
+		
+		ds.setColumn(0, 'GI_CHRPSN_ID', sIDs);
+		ds.setColumn(0, 'GI_CHRPSN_NM', sNMs);
+		trace('[GI_CHRPSN_ID:'+ (ds.getColumn(0, 'GI_CHRPSN_ID')) +'][GI_CHRPSN_NM:'+ (ds.getColumn(0, 'GI_CHRPSN_NM')) +']');
+	});
+	*/
+	this.gfn_openPopup('', 'CC::SSP_BO_PP_25_1.xfdl', popParam, function(sPopupId, sRetValue) {
+		const cmpObj = JSON.parse(sRetValue);
+		var sIdList = '';
+		var sNmList = '';
+		for(var i=0; i<cmpObj.length; i++){
+			var rowData = JSON.parse(cmpObj[i]);
+			if(i == (cmpObj.length-1)){
+				sIdList += rowData.MBR_ID;
+				sNmList += rowData.MBR_NM;
+			}else{
+				sIdList += rowData.MBR_ID +',';
+				sNmList += rowData.MBR_NM +',';
+			}
+		}
+		var ds=this.dsByoprunitGiChrpsn;
+		ds.setColumn(0, 'GI_CHRPSN_ID', sIdList);
+		ds.setColumn(0, 'GI_CHRPSN_NM', sNmList);
+	}, { title: '운영단위 입고 책임자 조회', titlebar: 'true' });
+};
+
+this.fnMultiMbrClbk=function(rID, rJSON) {
+	trace('this.fnMultiMbrClbk(rID:'+ rID +', rJSON:'+ rJSON +')');
+	if (rJSON == undefined) { return; }
+	
+	var vRN=this.infDsModRow.row, rOBJ=JSON.parse(rJSON), vID=rOBJ.textValue, vNM=rOBJ.nameValue;
+	if (undefined!=vID) {
+		this.infDsModRow.id.set_value(vID);
+		this.dsByoprunitGiChrpsn.setColumn(this.infDsModRow.row, 'GI_CHRPSN_ID', vID);
+	}
+	if (undefined!=vNM) {
+		this.infDsModRow.nm.set_value(vID);
+		this.dsByoprunitGiChrpsn.setColumn(this.infDsModRow.row, 'GI_CHRPSN_NM', vNM);
+	}
+}
+
+this.btnMultiTextGi_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo) {
+	this.infDsModRow = { row: 0, id: this.edtOpuGiIds, nm: this.edtOpuGiNms };
+	this.fn_showTareaInput(this.name, 'GI_CHRPSN_ID', this.infDsModRow.id.value, 'fnTextMultiClbk', 120, 300);  //this.ccPopMultiText(this.edtOpuGiIds.id, { textId : this.edtOpuGiIds, giAuthUseYn: 'Y' }, 'fnMultiTextClbk');
+}
+
+this.fnTextMultiClbk=function(sPopId, sRetVal) {
+	trace('this.fnTextMultiClbk(sPopId:'+ sPopId +', sRetVal:'+ sRetVal +')');
+	if (sRetVal == undefined) { return; }
+	var oRetVal=JSON.parse(sRetVal), rIdx=this.infDsModRow.row, rVl='';  // , vID=rOBJ.textValue, vNM=rOBJ.nameValue;
+	for (var i in oRetVal) {
+		var r = JSON.parse( oRetVal[i] );
+		rVl += (''==rVl ? '' : ',') + r.VALUE;
+	}
+	
+	if (rVl != undefined) {
+		//this.infDsModRow.id.set_value(rVl);
+		this.dsByoprunitGiChrpsn.setColumn(rIdx, 'GI_CHRPSN_ID', rVl );
+		this.dsByoprunitGiChrpsn.setColumn(rIdx, 'GI_CHRPSN_NM', null);
+	}
+	
+	trace('this.infDsModRow.id.value('+ this.infDsModRow.id.get_value() +')');
+}
+
+this.btnSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	// Step01] Validation
+	
+	// Step03] Check Modified
+	var  dsSavNm  = 'dsSaveByoprunitGiChrpsn';
+	this[dsSavNm] = this.getChgdRowsDataset(this.dsByoprunitGiChrpsn);  trace('ds changed row count:'+ this[dsSavNm].rowcount);
+	if ( this[dsSavNm].rowcount < 1) { alert('변경된 정보가 없습니다.'); return; }
+	
+	
+	// Step03] Confirm
+	if (!confirm('저장하시겠습니까?')) { return; }
+	this.fnSaveGiChrspnInfo();
+};
+
+this.btnCncl_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+this.SSP_BO_MA_69_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	//ESC : 닫기기능
+	if(e.keycode == 27){
+		this.close();
+	}
+};
+]]></Script>
+    <Objects>
+      <Dataset id="dsParam"/>
+      <Dataset id="dsByoprunitGiChrpsn"/>
+      <Dataset id="dsBydeptGiChrpsn"/>
+    </Objects>
+  </Form>
+</FDL>

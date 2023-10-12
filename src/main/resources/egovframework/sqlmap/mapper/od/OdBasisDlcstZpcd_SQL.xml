@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.od.odBasisDlcstZpcd">
+
+    <!-- 배송비 구분 -->
+    <!-- ****************************************************************************** 
+        * SELECT : 배송비구분 조회 * 작성자 : neonlee * 작성 일자 : 2022-02-25
+        ****************************************************************************** -->
+    <select id="selectBasisDlcstList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.selectBasisDlcstList */
+        SELECT
+                 A.CART_DLCST_NO
+               , A.APLY_STR_DT
+               , A.CART_DLCST_NM
+               , A.CART_DLCST_SPR_CD
+               , A.DLCST_AMT
+               , A.DLCST_CURR_UNIT_CD
+               , A.APLY_END_DT
+               , A.REGPSN_ID
+               , TO_CHAR(REG_DTM,'YYYY.MM.DD HH24:MI:SS') AS REG_DTM
+               , A.UPDPSN_ID
+               , TO_CHAR(UPD_DTM,'YYYY.MM.DD HH24:MI:SS') AS UPD_DTM
+               , A.APLY_STR_DT  AS ORG_STR_DT
+               , A.DLCST_AMT    AS ORG_DLCST_AMT
+        FROM   TB_DL_BASIS_DLCST_INFO A
+        <where>
+            <if test="CRITERION != null and !CRITERION.equals('') ">
+                AND #{CRITERION} BETWEEN APLY_STR_DT AND APLY_END_DT
+            </if>
+        </where>
+        ORDER BY CART_DLCST_NO
+    </select>
+
+    <!-- ****************************************************************************** 
+        * INSERT : 배송비구분 등록(적용일자만 신규인 경우) * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <insert id="insertBasisDlcst" parameterType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.insertBasisDlcst */
+        INSERT INTO TB_DL_BASIS_DLCST_INFO
+        (
+           CART_DLCST_NO
+         , APLY_STR_DT
+         , CART_DLCST_NM
+         , CART_DLCST_SPR_CD
+         , DLCST_AMT
+         , DLCST_CURR_UNIT_CD
+         , APLY_END_DT
+         , REGPSN_ID
+         , REG_DTM
+         , UPD_DTM
+        ) VALUES (
+           #{CART_DLCST_NO}
+         , #{APLY_STR_DT}
+         , #{CART_DLCST_NM}
+         , #{CART_DLCST_SPR_CD}
+         , #{DLCST_AMT}
+         , #{DLCST_CURR_UNIT_CD}
+         , #{APLY_END_DT}
+         , #{REGPSN_ID}
+         , SYSDATE
+         , SYSDATE
+        )
+    </insert>
+
+    <!-- ****************************************************************************** 
+        * INSERT : 배송비구분 등록(카트배송비번호, 적용일자가 모두 신규인 경우) * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <insert id="insertBasisDlcst2" parameterType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.insertBasisDlcst2 */
+        INSERT INTO TB_DL_BASIS_DLCST_INFO
+        (
+           CART_DLCST_NO
+         , APLY_STR_DT
+         , CART_DLCST_NM
+         , CART_DLCST_SPR_CD
+         , DLCST_AMT
+         , DLCST_CURR_UNIT_CD
+         , APLY_END_DT
+         , REGPSN_ID
+         , REG_DTM
+         , UPD_DTM
+        ) 
+        VALUES (
+         (
+          SELECT TRIM(TO_CHAR(TO_NUMBER(NVL(MAX(CART_DLCST_NO), '100000')) + 1, '999999')) FROM TB_DL_BASIS_DLCST_INFO
+         )
+        , #{APLY_STR_DT}
+        , #{CART_DLCST_NM}
+        , #{CART_DLCST_SPR_CD}
+        , #{DLCST_AMT}
+        , #{DLCST_CURR_UNIT_CD}
+        , #{APLY_END_DT}
+        , #{REGPSN_ID}
+        , SYSDATE
+        , SYSDATE
+        )
+    </insert>
+
+    <!-- ****************************************************************************** 
+        * UPDATE : 배송비구분 수정 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+         ****************************************************************************** -->
+    <update id="updateBasisDlcst" parameterType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.updateBasisDlcst */
+        MERGE INTO TB_DL_BASIS_DLCST_INFO A
+        USING DUAL
+        ON (
+            A.CART_DLCST_NO = #{CART_DLCST_NO}
+            AND A.APLY_STR_DT = #{APLY_STR_DT}
+           )
+        WHEN MATCHED THEN
+        UPDATE SET
+              CART_DLCST_NM = #{CART_DLCST_NM}
+            , CART_DLCST_SPR_CD = #{CART_DLCST_SPR_CD}
+            , DLCST_AMT = #{DLCST_AMT}
+            , DLCST_CURR_UNIT_CD = #{DLCST_CURR_UNIT_CD}
+            , APLY_END_DT = #{APLY_END_DT}
+            , UPDPSN_ID = #{UPDPSN_ID}
+            , UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+        INSERT
+        (
+           CART_DLCST_NO
+         , APLY_STR_DT
+         , CART_DLCST_NM
+         , CART_DLCST_SPR_CD
+         , DLCST_AMT
+         , DLCST_CURR_UNIT_CD
+         , APLY_END_DT
+         , REGPSN_ID
+         , REG_DTM
+         , UPD_DTM
+        )
+        VALUES
+        (
+           #{CART_DLCST_NO}
+         , #{APLY_STR_DT}
+         , #{CART_DLCST_NM}
+         , #{CART_DLCST_SPR_CD}
+         , #{DLCST_AMT}
+         , #{DLCST_CURR_UNIT_CD}
+         , #{APLY_END_DT}
+         , #{REGPSN_ID}
+         , SYSDATE
+         , SYSDATE
+        )
+    </update>
+    
+    <!-- ****************************************************************************** 
+        * UPDATE : 배송비구분 수정 * 작성자 : neonlee * 작성 일자 : 2022-08-201
+         ****************************************************************************** -->
+    <update id="updateBasisDlcstSP" statementType="CALLABLE">
+    /* com.ssp.bo.od.odBasisDlcstZpcd.updateBasisDlcstSP */
+     <![CDATA[
+        {CALL SSP_APP.SP_DL_UPDATE_BASIS_DLCST_INFO (
+                        #{RTN_CD,               mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT   리턴코드 */
+                       , #{RTN_MSG,             mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT   리턴메시지 */
+                       , #{REGPSN_ID,           mode=IN, jdbcType=VARCHAR}
+                       , #{CART_DLCST_NO,       mode=IN, jdbcType=VARCHAR}
+                       , #{APLY_STR_DT,         mode=IN, jdbcType=VARCHAR}
+                       , #{APLY_END_DT,         mode=IN, jdbcType=VARCHAR}
+                       , #{DLCST_AMT,           mode=IN, jdbcType=NUMERIC}
+                       , #{CART_DLCST_SPR_CD,   mode=IN, jdbcType=VARCHAR}
+                       , #{CART_DLCST_NM,       mode=IN, jdbcType=VARCHAR}
+             )}
+       ]]>
+    </update>
+
+    <!-- ****************************************************************************** 
+        * UPDATE : 배송비구분 수정 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <update id="updateBasisDlcstWithStartDate" parameterType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.updateBasisDlcstWithStartDate */
+        UPDATE TB_DL_BASIS_DLCST_INFO SET
+             CART_DLCST_NM = #{CART_DLCST_NM}
+           , CART_DLCST_SPR_CD = #{CART_DLCST_SPR_CD}
+           , DLCST_AMT = #{DLCST_AMT}
+           , DLCST_CURR_UNIT_CD = #{DLCST_CURR_UNIT_CD}
+           , APLY_END_DT = TO_CHAR(TO_DATE(#{APLY_STR_DT}, 'YYYYMMDD') - 1, 'YYYYMMDD')
+           , UPDPSN_ID = #{UPDPSN_ID}
+           , UPD_DTM = SYSDATE
+        WHERE  CART_DLCST_NO = #{CART_DLCST_NO}
+               AND APLY_STR_DT = #{ORG_STR_DT}
+    </update>
+
+    <!-- ****************************************************************************** 
+        * DELETE : 배송비구분 삭제 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <delete id="deleteBasisDlcst" parameterType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.deleteBasisDlcst */
+        DELETE FROM TB_DL_BASIS_DLCST_INFO
+        WHERE CART_DLCST_NO = #{CART_DLCST_NO}
+        AND APLY_STR_DT = #{APLY_STR_DT}
+    </delete>
+
+    <!-- ****************************************************************************** 
+        * SELECT : 배송비구분 동일한 PK의 개수 조회 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <select id="selectBasisDlcstKeyCount" parameterType="HashMap" resultType="integer">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.selectBasisDlcstKeyCount */
+        SELECT COUNT(1)
+        FROM TB_DL_BASIS_DLCST_INFO A
+        <where>
+            <if test="CART_DLCST_NO != null and !CART_DLCST_NO.equals('') ">
+                AND CART_DLCST_NO = #{CART_DLCST_NO}
+            </if>
+            <if test="APLY_STR_DT != null and !APLY_STR_DT.equals('') ">
+                AND APLY_STR_DT = #{APLY_STR_DT}
+            </if>
+        </where>
+    </select>
+
+    <!-- ****************************************************************************** 
+        * SELECT : 배송비구분 첫번째 키컬럼의 개수 조회 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <select id="selectBasisDlcstFirstKeyCount" parameterType="HashMap" resultType="int">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.selectBasisDlcstFirstKeyCount */
+        SELECT COUNT(0)
+        FROM TB_DL_BASIS_DLCST_INFO A
+        WHERE CART_DLCST_NO = #{CART_DLCST_NO}
+        <!-- <where> <if test="CART_DLCST_NO != null and !CART_DLCST_NO.equals('') "> 
+                AND CART_DLCST_NO = #{CART_DLCST_NO} </if> </where> -->
+    </select>
+
+    <!-- ****************************************************************************** 
+        * SELECT : 배송비구분 테이블 Count 조회 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <select id="selectBasisDlcstCount" parameterType="HashMap" resultType="integer">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.selectBasisDlcstCount */
+        SELECT COUNT(1)
+        FROM TB_DL_BASIS_DLCST_INFO
+    </select>
+
+    <!-- ****************************************************************************** 
+        * SELECT : 배송비구분 이력 Count 조회 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <select id="selectBasisDlcstHistoryCount" parameterType="HashMap" resultType="integer">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.selectBasisDlcstHistoryCount */
+        SELECT COUNT(1)
+        FROM TB_DL_BASIS_DLCST_INFO
+        WHERE CART_DLCST_NO = #{CART_DLCST_NO}
+    </select>
+
+    <!-- ****************************************************************************** 
+        * SELECT : 배송비구분 이력조회 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <select id="selectCartDlcstPopupList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.selectCartDlcstPopupList */
+        SELECT
+                 A.CART_DLCST_NO
+               /*, REGEXP_REPLACE(A.APLY_STR_DT, '(.{4})(.{2})(.{2})', '\1.\2.\3') AS APLY_STR_DT */
+               , A.APLY_STR_DT
+               , A.CART_DLCST_NM
+               , A.CART_DLCST_SPR_CD
+               , A.DLCST_AMT
+               , A.DLCST_CURR_UNIT_CD
+               /*, REGEXP_REPLACE(A.APLY_END_DT, '(.{4})(.{2})(.{2})', '\1.\2.\3') AS APLY_END_DT */
+               , A.APLY_END_DT
+               , A.REGPSN_ID
+               , B.OPRTR_NM     AS REGPSN_NM
+               , A.REG_DTM
+               , A.UPDPSN_ID
+               , C.OPRTR_NM     AS UPDPSN_NM
+               , A.UPD_DTM
+        FROM   TB_DL_BASIS_DLCST_INFO A
+               LEFT JOIN
+               TB_CO_MBR_OPRTR_INFO B
+               ON A.REGPSN_ID = B.OPRTR_ID
+               LEFT JOIN
+               TB_CO_MBR_OPRTR_INFO C
+               ON A.UPDPSN_ID = C.OPRTR_ID
+        WHERE  CART_DLCST_NO = #{CART_DLCST_NO}
+        ORDER BY APLY_STR_DT
+    </select>
+
+
+    <!-- 도서산간 배송비 우편정보 -->
+    <!-- ****************************************************************************** 
+        * SELECT : 도서산간 배송비 우편정보 테이블 Count 조회 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <select id="selectIsareaZpcdCount" parameterType="HashMap" resultType="integer">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.selectIsareaZpcdCount */
+        SELECT COUNT(1)
+        FROM TB_DL_ISAREA_ZPCD_INFO
+    </select>
+
+    <!-- ****************************************************************************** 
+        * SELECT : 도서산간 배송비 우편정보 조회 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <select id="selectIsareaZpcdList" parameterType="hashMap" resultType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.selectIsareaZpcdList */
+        SELECT
+                 A.ISAREA_ZPCD_INFO_ID
+               , A.ZPCD_STR_NO
+               , A.ZPCD_END_NO
+               , A.CART_DLCST_NO
+               , A.RMKS_CTS
+               , A.USE_YN
+               , A.REGPSN_ID
+               , B.OPRTR_NM     AS REGPSN_NM
+               , A.REG_DTM
+               , A.UPDPSN_ID
+               , C.OPRTR_NM     AS UPDPSN_NM
+               , A.UPD_DTM
+        FROM   TB_DL_ISAREA_ZPCD_INFO A
+               LEFT JOIN
+               TB_CO_MBR_OPRTR_INFO B
+               ON A.REGPSN_ID = B.OPRTR_ID
+               LEFT JOIN
+               TB_CO_MBR_OPRTR_INFO C
+               ON A.UPDPSN_ID = C.OPRTR_ID
+        ORDER BY A.ZPCD_STR_NO
+        <!-- OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY ! -->
+    </select>
+
+    <!-- ****************************************************************************** 
+        * INSERT : 도서산간 배송비 우편정보 등록 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <insert id="insertIsareaZpcd" parameterType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.insertIsareaZpcd */
+        INSERT INTO TB_DL_ISAREA_ZPCD_INFO
+        (
+          ISAREA_ZPCD_INFO_ID
+         , ZPCD_STR_NO
+         , ZPCD_END_NO
+         , CART_DLCST_NO
+         , RMKS_CTS
+         , USE_YN
+         , REGPSN_ID
+         , REG_DTM
+         , UPD_DTM
+        ) 
+        VALUES 
+        (
+         (SELECT TRIM(TO_CHAR(TO_NUMBER(NVL(MAX(ISAREA_ZPCD_INFO_ID), '100000')) + 1, '999999')) FROM TB_DL_ISAREA_ZPCD_INFO)
+         , #{ZPCD_STR_NO}
+         , #{ZPCD_END_NO}
+         , #{CART_DLCST_NO}
+         , #{RMKS_CTS}
+         , #{USE_YN}
+         , #{REGPSN_ID}
+         , SYSDATE
+         , SYSDATE
+        )
+    </insert>
+
+    <!-- ****************************************************************************** 
+        * UPDATE : 도서산간 배송비 우편정보 수정 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <update id="updateIsareaZpcd" parameterType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.updateIsareaZpcd */
+        UPDATE TB_DL_ISAREA_ZPCD_INFO SET
+                  ZPCD_STR_NO = #{ZPCD_STR_NO}
+                , ZPCD_END_NO = #{ZPCD_END_NO}
+                , CART_DLCST_NO = #{CART_DLCST_NO}
+                , RMKS_CTS = #{RMKS_CTS}
+                , USE_YN = #{USE_YN}
+                , UPDPSN_ID = #{UPDPSN_ID}
+                , UPD_DTM = SYSDATE
+        WHERE ISAREA_ZPCD_INFO_ID = #{ISAREA_ZPCD_INFO_ID}
+    </update>
+
+    <!-- ****************************************************************************** 
+        * DELETE : 도서산간 배송비 우편정보 삭제 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <delete id="deleteIsareaZpcd" parameterType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.deleteIsareaZpcd */
+        DELETE FROM TB_DL_ISAREA_ZPCD_INFO
+        WHERE ISAREA_ZPCD_INFO_ID = #{ISAREA_ZPCD_INFO_ID}
+    </delete>
+
+    <!-- ****************************************************************************** 
+        * SELECT : 도서산간 배송비 우편정보 구분정보 조회 * 작성자 : neonlee * 작성 일자 : 2022-02-25 
+        ****************************************************************************** -->
+    <select id="selectIsareaZpcdGubunList" parameterType="hashMap" resultType="HashMap">
+        /* com.ssp.bo.od.odBasisDlcstZpcd.selectIsareaZpcdGubunList */
+        SELECT
+                 A.CART_DLCST_NO
+               , B.COM_DTL_CD_NM || '-' || A.CART_DLCST_NM AS ISAREA_ZPCD_GUBUN
+        FROM   TB_DL_BASIS_DLCST_INFO A,
+               (
+                SELECT * FROM TB_CO_COM_CD_DTL
+                WHERE  COM_CLSF_CD = 'CART_DLCST_SPR_CD'
+                AND    LANG_CD = 'KO'
+               ) B
+        WHERE  A.CART_DLCST_SPR_CD = B.COM_DTL_CD
+        AND    #{CRITERION} BETWEEN APLY_STR_DT AND APLY_END_DT
+    </select>
+
+</mapper>

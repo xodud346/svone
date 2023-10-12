@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+******************************************************************************
+* SELECT : 상품고시정보  관리
+* 작성자 : 
+* 작성 일자 : 2022.02.22
+******************************************************************************
+-->
+<mapper namespace="PrProductNotice">
+
+    <!-- TB_PR_NOTI_ITM_BASIS.Nextval -->
+    <select id="selectProductNoticeNextVal" resultType="String">
+        SELECT 'A'||LPAD(NVL(MAX(TO_NUMBER(SUBSTR(NOTI_ITM_ID, 2, 4))+1), 1), 4, '0')  FROM SSP_APP.TB_PR_NOTI_ITM_BASIS
+    </select>
+    
+    <!-- TB_PR_NOTI_ITM_DTL.Nextval -->
+    <select id="selectProductNoticeDetailNextVal" resultType="String">
+        SELECT NVL(MAX(NOTI_ITM_DTL_NO)+1, 1)  FROM SSP_APP.TB_PR_NOTI_ITM_DTL WHERE NOTI_ITM_ID = #{NOTI_ITM_ID}
+    </select>
+    
+    <!-- 고시품목목록 -->
+    <select id="selectProductNoticeList" parameterType="HashMap" resultType="HashMap">
+        /* PrProductNotice.selectProductNoticeList */
+        SELECT
+            CO_CD,
+            NOTI_ITM_ID,
+            NOTI_ITM_NM,
+            USE_YN,
+            REG_DTM,
+            REGPSN_ID,
+            UPD_DTM,
+            UPDPSN_ID
+        FROM
+            SSP_APP.TB_PR_NOTI_ITM_BASIS
+        WHERE CO_CD = #{CO_CD}
+        ORDER BY CO_CD, NOTI_ITM_ID
+    </select>
+
+    <!-- 고시품목 상세목록 -->
+    <select id="selectProductNoticeDetailList" parameterType="HashMap" resultType="HashMap">
+        /* PrProductNotice.selectProductNoticeDetailList */
+        SELECT
+            CO_CD,
+            NOTI_ITM_ID,
+            NOTI_ITM_DTL_NO,
+            NOTI_ITM_DTL_NM,
+            NOTI_ITM_DTL_CTS,
+            REG_DTM,
+            REGPSN_ID,
+            UPD_DTM,
+            UPDPSN_ID,
+            0 CHK
+        FROM
+            SSP_APP.TB_PR_NOTI_ITM_DTL
+        WHERE NOTI_ITM_ID = #{NOTI_ITM_ID}
+        ORDER BY CO_CD, NOTI_ITM_ID, NOTI_ITM_DTL_NO
+    </select>
+    
+    <!-- 품목정보 저장-->
+    <update id="mergeProductNotice" parameterType="HashMap">
+        /* PrProductNotice.mergeProductNotice */
+        MERGE INTO SSP_APP.TB_PR_NOTI_ITM_BASIS
+        USING DUAL
+        ON (CO_CD = #{CO_CD} AND NOTI_ITM_ID = #{NOTI_ITM_ID})
+        WHEN MATCHED THEN
+        UPDATE SET
+            NOTI_ITM_NM = #{NOTI_ITM_NM},
+            USE_YN = #{USE_YN},
+            UPD_DTM = SYSDATE,
+            UPDPSN_ID = #{SESSION_OPRTR_ID}
+        WHEN NOT MATCHED THEN
+        INSERT
+            (CO_CD,
+            NOTI_ITM_ID,
+            NOTI_ITM_NM,
+            USE_YN,
+            REG_DTM,
+            REGPSN_ID)
+        VALUES (#{CO_CD},
+            #{NOTI_ITM_ID},
+            #{NOTI_ITM_NM},
+            #{USE_YN},
+            SYSDATE,
+            #{SESSION_OPRTR_ID})
+    </update>
+    
+    <!-- 고시상세항목 저장 -->
+    <update id="mergeProductNoticeDetail" parameterType="HashMap">
+        /* PrProductNotice.mergeProductNoticeDetail */
+        MERGE INTO SSP_APP.TB_PR_NOTI_ITM_DTL
+        USING DUAL 
+        ON (CO_CD = #{CO_CD} AND NOTI_ITM_ID = #{NOTI_ITM_ID} AND NOTI_ITM_DTL_NO = #{NOTI_ITM_DTL_NO})
+        WHEN MATCHED THEN
+        UPDATE SET
+            NOTI_ITM_DTL_NM = #{NOTI_ITM_DTL_NM},
+            NOTI_ITM_DTL_CTS = #{NOTI_ITM_DTL_CTS},
+            UPD_DTM = SYSDATE,
+            UPDPSN_ID = #{SESSION_OPRTR_ID}
+        WHEN NOT MATCHED THEN
+        INSERT
+            (CO_CD,
+            NOTI_ITM_ID,
+            NOTI_ITM_DTL_NO,
+            NOTI_ITM_DTL_NM,
+            NOTI_ITM_DTL_CTS,
+            REG_DTM,
+            REGPSN_ID)
+        VALUES (#{CO_CD},
+            #{NOTI_ITM_ID},
+            #{NOTI_ITM_DTL_NO},
+            #{NOTI_ITM_DTL_NM},
+            #{NOTI_ITM_DTL_CTS},
+            SYSDATE,
+            #{SESSION_OPRTR_ID})
+    </update>
+    
+    <!-- 품목삭제 -->
+    <update id="deleteProductNoticeDetail" parameterType="HashMap">
+        /* PrProductNotice.deleteProductNoticeDetail */
+        DELETE FROM SSP_APP.TB_PR_NOTI_ITM_DTL
+        WHERE CO_CD = #{CO_CD}
+            AND NOTI_ITM_ID = #{NOTI_ITM_ID}
+            AND NOTI_ITM_DTL_NO = #{NOTI_ITM_DTL_NO}
+    </update>
+    
+</mapper>

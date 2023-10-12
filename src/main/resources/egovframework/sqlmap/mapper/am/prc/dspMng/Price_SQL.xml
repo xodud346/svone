@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Price">
+
+	<select id="selectCurrentDate" parameterType="HashMap" resultType="sspMap">
+		SELECT TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') AS CURRENT_DATE,
+				TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI') AS CURRENT_DT		
+		FROM DUAL
+	</select>
+
+    <select id="selectPartnerProductList" parameterType="HashMap" resultType="sspMap">
+        /* Price.selectPartnerProductList 협력사 구매정보 조회*/
+        SELECT * 
+        FROM (
+			SELECT 
+					C.CPRTCP_NO,
+					C.CPRTCP_HGL_NM,
+					TO_CHAR(A.PRD_PRC, '999,999,999,999,999') AS PRD_PRC,
+					DECODE(B.SPL_PSS_YN, 'Y', '가능', '불가능') AS SPL_PSS_YN,
+					TO_CHAR(TO_DATE(A.CONT_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS CONT_STR_DT,
+					TO_CHAR(TO_DATE(A.CONT_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS CONT_END_DT,
+					B.MIN_ORD_QTY,
+					CASE WHEN TO_CHAR(SYSDATE,'YYYYMMDD') <![CDATA[ > ]]> CONT_STR_DT AND TO_CHAR(SYSDATE,'YYYYMMDD') <![CDATA[ <= ]]> CONT_END_DT THEN 'Y' ELSE 'N' END AS USE_YN
+			FROM TB_FV_PRD_CPRTCP_PRC A
+			INNER JOIN TB_FV_PRD_CPRTCP B
+			ON A.CO_CD = B.CO_CD
+				AND A.PRD_ID = B.PRD_ID
+				AND A.CPRTCP_NO = B.CPRTCP_NO
+			INNER JOIN TB_FV_CPRTCP C
+				ON A.CPRTCP_NO = C.CPRTCP_NO
+			WHERE A.prd_id = #{prdId}
+		)A
+		ORDER BY 
+			USE_YN DESC,
+			SPL_PSS_YN DESC, -- 공급가능여부
+			PRD_PRC ASC,  -- 상품가격
+			MIN_ORD_QTY ASC,  --공급수량
+			CONT_END_DT DESC  --종료날짜
+    </select>
+    
+    <select id="selectPartnerBasePrice" parameterType="HashMap" resultType="sspMap">
+        /* Price.selectPartnerBasePrice 기초가격 조회 */
+        SELECT
+			C.PLN_PRFRT AS PLN_BUYRT,
+			TO_CHAR(NVL(C.UPD_DTM,C.REG_DTM), 'YYYYMMDDHH24MISS') AS PLN_BUYRT_CHG_DTM,
+			D.ISD_LWST_SELPR,
+			D.REG_DTM AS ISD_LWST_SELPR_CHG_DTM,
+			E.PRD_PRC AS BSS_PCPRC,
+			E.PRD_PRC * (1 + C.PLN_PRFRT /100) AS SSP_STPRC,
+			A.CO_CD
+		FROM
+			TB_SG_PRD A 
+		LEFT OUTER JOIN TB_FV_PRD B
+			ON A.PRD_ID = B.PRD_ID
+		LEFT OUTER JOIN TB_SG_CLS_PLN_PRFRT C
+			ON A.CO_CD = C.CO_CD
+			AND A.PRD_CLS_CD = C.PRD_CLS_CD
+			AND B.STD_PRD_YN = C.STD_PRD_YN
+		LEFT OUTER JOIN (
+			SELECT * from(
+				SELECT 
+					CO_CD,
+					PRD_ID,
+					ISD_LWST_SELPR,
+					REG_DTM,
+					ROW_NUMBER() OVER(ORDER BY ISD_LWST_SELPR) ROW_NUM
+					FROM TB_SG_ISD_LWST_SELPR
+				WHERE PRD_ID = #{prdId}
+					AND ADJ_YM BETWEEN to_char(add_months(sysdate,-12),'yyyymm') AND to_char(sysdate,'yyyymm')
+				)A
+			WHERE A.ROW_NUM = 1
+		)D
+		ON A.CO_CD = D.CO_CD
+		AND A.PRD_ID = D.PRD_ID
+		LEFT OUTER JOIN (
+			SELECT 
+				A.* 
+		    FROM 
+		    	(
+					SELECT 
+							C.CPRTCP_NO,
+							C.CPRTCP_HGL_NM,
+							A.PRD_PRC,
+							A.CO_CD,
+							A.PRD_ID,
+							ROW_NUMBER() OVER(ORDER BY B.SPL_PSS_YN DESC, A.PRD_PRC ASC, B.MIN_ORD_QTY ASC, A.CONT_END_DT DESC) ROW_NUM
+					FROM TB_FV_PRD_CPRTCP_PRC A
+					INNER JOIN TB_FV_PRD_CPRTCP B
+					ON A.CO_CD = B.CO_CD
+						AND A.PRD_ID = B.PRD_ID
+						AND A.CPRTCP_NO = B.CPRTCP_NO
+					INNER JOIN TB_FV_CPRTCP C
+						ON A.CPRTCP_NO = C.CPRTCP_NO
+					WHERE A.prd_id = #{prdId}
+						AND A.CO_CD = #{coCd}
+						AND TO_CHAR(SYSDATE,'YYYYMMDD') > CONT_STR_DT AND TO_CHAR(SYSDATE,'YYYYMMDD') <![CDATA[ <= ]]> CONT_END_DT
+						AND SPL_PSS_YN = 'Y'
+				)A 
+				WHERE ROW_NUM = 1
+		)E
+		ON A.CO_CD = E.CO_CD
+			AND A.PRD_ID = E.PRD_ID
+		WHERE A.PRD_ID = #{prdId}
+			AND A.CO_CD = #{coCd}
+    </select>
+    
+    <select id="truncationCalculation" parameterType="HashMap" resultType="sspMap">
+        /* Price.truncationCalculation 절사계산 */
+        SELECT 
+			CASE 
+			WHEN 
+				C.CMN_COM_IDX = 3119 -- 반올림
+			THEN 
+				ROUND(#{sspStprc}, B.CMN_COM_ETC1)
+			WHEN 
+				C.CMN_COM_IDX = 3120 -- 올림
+			THEN 
+				CASE WHEN B.CMN_COM_ETC1 <![CDATA[ < ]]> 0 THEN CEIL(#{sspStprc} / RPAD(1,(B.CMN_COM_ETC1*-1)+1,0))*RPAD(1,(B.CMN_COM_ETC1*-1)+1,0) ELSE CEIL(#{sspStprc} * RPAD(1,(B.CMN_COM_ETC1)+1,0))/RPAD(1,(B.CMN_COM_ETC1)+1,0) END
+			WHEN 
+				C.CMN_COM_IDX = 3121 -- 내림
+			THEN 
+				TRUNC(#{sspStprc}, B.CMN_COM_ETC1)
+			ELSE 
+				0
+			END AS SSP_STPRC
+		FROM TB_SG_DETR_UNT A
+		INNER JOIN T_CMM_COM B
+		ON A.UPRC_BSS_CD = B.CMN_COM_IDX
+		INNER JOIN T_CMM_COM C
+		ON A.RNOF_RULE_CD = C.CMN_COM_IDX
+		WHERE A.USE_YN = 'Y'
+		AND A.CO_CD = #{coCd}
+		AND A.PRD_SPR_CD = #{prdSprCd}
+		AND A.MIN_PRC <![CDATA[ <= ]]> #{sspStprc}
+		AND A.MAX_PRC <![CDATA[ >= ]]> #{sspStprc}
+    </select>
+    
+    <select id="selectProductPlanList" parameterType="HashMap" resultType="sspMap">
+        /* Price.selectProductPlanList 기획전 조회*/
+        SELECT  DISTINCT PM.PLN_MST_IDX, 
+				PM.PLN_MST_TITLE,
+				PLN_MST_ST_DT,
+				PLN_MST_ED_DT,
+				CM.CPN_MST_TITLE,
+				PLN_MST_REG_DT,
+				CPN_MST_IDX
+		FROM T_PLN_MST PM
+		INNER JOIN T_PLN_DTL PD
+			ON PM.PLN_MST_IDX = PD.PLN_MST_IDX
+		LEFT OUTER JOIN T_CPN_MST CM
+			ON CM.CPN_MST_IDX = PM.PLN_MST_CPN_ID
+		WHERE TO_CHAR(SYSDATE,'YYYYMMDD') BETWEEN PLN_MST_ST_DT AND PLN_MST_ED_DT
+		AND PM.PLN_MST_USE_YN = 'Y'
+		AND PD.PLN_PRD_MST_CD = #{prdId}
+		ORDER BY PLN_MST_REG_DT DESC
+    </select>
+    
+    
+</mapper>

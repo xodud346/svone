@@ -1,0 +1,385 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="dlvplcRegistPopup" width="500" height="290" titletext="계정신규생성 팝업" onload="fn_onLoad" onkeyup="dlvplcRegistPopup_onkeyup">
+    <Layouts>
+      <Layout height="290" mobileorientation="landscape" width="500" stepindex="">
+        <Div id="Div01" taborder="0" left="15" top="48" width="470" height="192" border="2px solid #000000,1px,1px solid" background="#ffffff">
+          <Layouts>
+            <Layout>
+              <Static id="Static00" taborder="0" text="계정유형" left="0" top="6" width="123" height="34" textAlign="center" background="#d8d8d8"/>
+              <Static id="Static00_01" taborder="5" text="계정명 *" left="0" top="41" width="123" height="34" textAlign="center" background="#d8d8d8"/>
+              <Edit id="ACCT_NM" taborder="1" left="131" top="43" width="336" height="30" enable="true" enableevent="true"/>
+              <Static id="Static00_00" taborder="6" text="계정 코드" left="0" top="76" width="123" height="34" textAlign="center" background="#d8d8d8"/>
+              <Static id="Static00_01_00" taborder="7" text="계정 레벨 *" left="0" top="111" width="123" height="34" textAlign="center" background="#d8d8d8"/>
+              <Edit id="ACCT_CD" taborder="2" left="131" top="78" width="336" height="30" enable="true" enableevent="true"/>
+              <Edit id="HRNK_ACCT_NM" taborder="3" left="131" top="149" width="303" height="30" enable="true" enableevent="true" readonly="true"/>
+              <Static id="Static00_00_00" taborder="8" text="상위 계정명" left="0" top="146" width="123" height="34" textAlign="center" background="#d8d8d8"/>
+              <Radio id="ACCT_TP_CD" taborder="4" left="130" top="7" width="263" height="35" rowcount="1" onitemchanged="Div01_o_onitemchanged" index="-1" text="일반" value="1" innerdataset="ds_acctTpCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM"/>
+              <Combo id="ACCT_LVL" taborder="9" left="131" top="113" width="336" height="30" innerdataset="ds_acctLvl" codecolumn="ACCT_LVL" datacolumn="ACCT_LVL_NM" value="" text="선택하세요." onitemchanged="fn_itemChg" enable="true" enableevent="true" readonly="true"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Static id="Static01" taborder="1" text="계정생성" left="21" top="8" width="182" height="37" font="bold 14pt &quot;Arial&quot;"/>
+        <Button id="btn_cancel" taborder="2" text="취소" left="157" top="250" width="100" height="32" onclick="btn_clear_onclick"/>
+        <Button id="btn_insert" taborder="3" text="등록" left="260" top="250" width="100" height="32" onclick="insert_btn_onclick" cssclass="btn_WF_select"/>
+        <Button id="Button01" taborder="4" left="456" top="203" height="24" cssclass="btn_WF_search02" width="24" enable="true" onclick="Button01_onclick" text=""/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : 배송지 등록
+CREATION DATES : 2021.01.19
+*******************************************************/
+// 공통형 스크립트 인클루드
+include "CO::coUtils.xjs";
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.valiFormIds = [
+	   {"name" : "계정명"     , "id" : "ACCT_NM"}
+	  ,{"name" : "계정레벨"   , "id" : "ACCT_LVL"}
+	  ,{"name" : "계정유형"   , "id" : "ACCT_TP_CD"}
+]; 
+
+//부모창에서 넘긴 파라미터
+//var mbrId = this.parent.mbrId;
+//var mbrNm = this.parent.mbrNm;
+
+this.CO_CD     = "";
+this.BZPLC_ID     = "";
+this.BZPLC_NM     = "";
+this.ACCT_LVL     = "";
+this.HRNK_ACCT_ID = "";
+this.HRNK_ACCT_NM = "";
+this.ACCT_TP_CD   = "";
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//공통 코드 호출
+	this.fn_commonCodeSearch();	//계정유형 코드 호출안됨 확인후 다시 추가예정 2022-02-17
+	
+	this.CO_CD     = this.parent.coCd;
+	this.BZPLC_ID     = this.parent.bzplcId;
+	this.BZPLC_NM     = this.parent.bzplcNm;
+	this.ACCT_LVL     = this.parent.acctLvl;
+	this.HRNK_ACCT_ID = this.parent.hrnkAcctId;
+	this.HRNK_ACCT_NM = this.parent.hrnkAcctNm;
+	this.ACCT_TP_CD   = this.parent.acctTpCd;
+
+	//화면 초기화 함수
+	this.fn_init();
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function()
+{	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl   = "/co/select-common-code-list.do";  
+	var inDs   = "ds_search=ds_search";
+	var outDs  = "ds_acctTpCd=ds_output1";
+	var arg    = "";
+	
+	this.ds_search.setColumn(0, "codeList", "ACCT_TP_CD");
+	this.ds_search.setColumn(0, "langCd", "KO");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+//계정 등록
+this.fn_regist = function()
+{	
+	var validation = this.fn_validationForm(this.Div01, this.valiFormIds, this.ds_acct);
+	if(validation){
+		//사업장 ID
+		this.ds_acct.setColumn(0, "CO_CD", this.CO_CD);
+		this.ds_acct.setColumn(0, "BZPLC_ID", this.BZPLC_ID);
+
+		trace("CO_CD  " + this.CO_CD);
+		var sSvcId = "insertAcctBasis";
+		var sUrl   = "/cc/acct/insertAcctBasis.do";
+		var inDs   = "ds_acct=ds_acct";
+		var outDs  = "ds_res=ds_output";
+		var arg    = "";
+		
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	}
+	
+};
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(errorCode != 0)
+	{
+		this.alert(errorCode+"\n"+errorMsg);
+		return;
+	}
+	
+	switch(svcID)
+	{
+	case "commonCodeSearch":						//공통코드 조회
+		if( this.ACCT_TP_CD != null && this.ACCT_TP_CD != '' && this.ACCT_TP_CD != undefined ){
+			this.Div01.form.ACCT_TP_CD.set_index(this.ACCT_TP_CD-1);	//공통코드 계정유형 일반으로 기본세팅
+		}else{
+			this.Div01.form.ACCT_TP_CD.set_index(0);	//공통코드 계정유형 일반으로 기본세팅
+		}
+		break;
+	case "insertAcctBasis":
+		if(this.ds_res.getColumn(0, "SUCCESS_YN") == "Y"){
+			alert(this.ds_res.getColumn(0, "RETURN_MSG"));
+			this.opener.fn_treeSearch();
+			this.close();
+		}else{
+			alert(this.ds_res.getColumn(0, "RETURN_MSG"));
+		}
+		break;
+	default: 
+		break;
+	}
+};
+//팝업 콜백함수
+this.fn_popupCallback = function(objID, rtnValue) 
+{
+	if(rtnValue == undefined){return false;}
+	
+	var resParam = JSON.parse(rtnValue);
+	if(objID == 'Button01'){
+		this.ds_acct.setColumn(0, "HRNK_ACCT_NM", resParam.ACCT_NM);
+		this.ds_acct.setColumn(0, "HRNK_ACCT_ID", resParam.ACCT_ID);
+		this.Div01.form.ACCT_LVL.set_index(resParam.A_LVL.hi+1);
+		this.ds_acct.setColumn(0, "ACCT_LVL", resParam.A_LVL.hi+1);
+	}
+}
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+/************************************************************************
+ *  폼 필수값 체크 
+ *  obj : div 객체
+ *  objIds : 필수값 체크할 id, name (  [{"name" : "분류코드", "id" : "COM_CLSF_CD"}] )
+ *  dataset : 검증할 데이터셋
+ ************************************************************************/
+this.fn_validationForm = function(obj, objIds, dataset) {
+	var object = obj.form.all;
+	for( var i = 0; i < object.length; i++ ){
+		var stype = object[i].valueOf();	
+		
+		for( var idx in objIds ) {
+			var id = objIds[idx].id;
+			var name = objIds[idx].name;
+			var txt = '은(는) 필수 입력항목입니다.';
+			if( object[i].id == id ) {
+				if( stype == "[object Edit]") {
+					var value = dataset.getColumn(dataset.rowposition, id);
+					
+					var originValue = dataset.getOrgColumn(dataset.rowposition, id);		
+					
+					if( this.gfn_isNull(value) ) {
+						alert( name + txt);
+						obj.form[id].setFocus();
+						if( stype == "[object Combo]" ) {
+							obj.form[id].dropdown();
+						}
+						return false;
+					}					
+				}
+				
+				if(stype == "[object Combo]") {
+					var value = dataset.getColumn(dataset.rowposition, id);
+					
+					var originValue = dataset.getOrgColumn(dataset.rowposition, id);		
+					
+					if( value == '' ) {
+						alert( name + txt);
+						obj.form[id].setFocus();
+						if( stype == "[object Combo]" ) {
+							obj.form[id].dropdown();
+						}
+						return false;
+					}					
+				}
+			}
+		}	
+	}		
+	return true;	
+}
+//초기화 함수
+this.fn_init = function()
+{
+	if (this.gfn_isNull(this.ACCT_LVL)){
+		this.Div01.form.ACCT_LVL.set_index(0);
+		this.ds_acct.setColumn(0, "ACCT_LVL", "");
+	} else if (this.ACCT_LVL == '0') {
+		this.ds_acct.setColumn(0, "ACCT_LVL", "1");
+		this.Div01.form.ACCT_LVL.set_index(1);
+	} else {
+		this.Div01.form.ACCT_LVL.set_index((this.ACCT_LVL*1)+1          );
+		this.ds_acct.setColumn(0, "ACCT_LVL"    , (this.ACCT_LVL*1)+1   );
+		this.ds_acct.setColumn(0, "HRNK_ACCT_ID", this.HRNK_ACCT_ID     );
+		this.ds_acct.setColumn(0, "HRNK_ACCT_NM", this.HRNK_ACCT_NM     );
+		this.ds_acct.setColumn(0, "ACCT_TP_CD"  , this.ACCT_TP_CD       );
+		this.Div01.form.ACCT_TP_CD.set_enable(false);
+	}
+	
+}
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//돋보기 버튼
+this.Button01_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	//레벨이 1인 경우 상위 계정이 없으므로 팝업을 열지 않는다.
+	if(this.ds_acct.getColumn(0, "ACCT_LVL") == '1'){
+		//alert("계정레벨 1의 경우 상위 계정 조회가 불가합니다.");
+		alert(this.fn_getMessage("ERRC000019"));
+		return false;
+	}else if(this.ds_acct.getColumn(0, "ACCT_LVL") == ''){
+		var params = { bzplcId : this.BZPLC_ID
+					 , coCd : this.CO_CD
+					 , underAcctSearch : "Y"
+					 , acctTpCd : this.ds_acct.getColumn(0, "ACCT_TP_CD")
+					 };		
+	}else{
+		var params = { bzplcId : this.BZPLC_ID
+					 , coCd : this.CO_CD
+					 , acctLvl : this.ds_acct.getColumn(0, "ACCT_LVL")
+					 , minusYn : "Y"
+					 , acctTpCd : this.ds_acct.getColumn(0, "ACCT_TP_CD")
+					 };
+	}
+	
+	var options = { };
+	
+	this.gfn_openPopup(e.fromobject.id, "CC::SSP_BO_MA_75.xfdl", params,  "fn_popupCallback", options);
+};
+//등록 버튼
+this.insert_btn_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_acct.getColumn(0, "ACCT_TP_CD") == null ){
+		alert('계정유형을 선택 해주세요.');
+		return false;
+	}
+	if(this.gfn_trim(this.ds_acct.getColumn(0, "ACCT_NM")).length == 0 ){
+		alert('계정명을 입력 해주세요.');
+		return false;
+	}
+	//if(this.confirm("등록하시겠습니까?")){this.fn_regist();}
+	if(this.confirm(this.fn_getMessage("ERRC000080"))){this.fn_regist();}
+};
+//취소 버튼
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	//if(this.confirm("취소하시겠습니까?")){this.close();}
+	this.close();
+};
+//계정레벨 ONCHANGE
+this.fn_itemChg = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.ds_acct.setColumn(0, "HRNK_ACCT_ID", null);
+	this.ds_acct.setColumn(0, "HRNK_ACCT_NM", null);
+	this.ds_acct.setColumn(0, "ACCT_LVL", obj.value)
+};
+
+this.dlvplcRegistPopup_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	//ESC : 닫기기능
+	if(e.keycode == 27){
+		this.close();
+	}
+};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="codeList" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_acctTpCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_acctLvl">
+        <ColumnInfo>
+          <Column id="ACCT_LVL" type="STRING" size="256"/>
+          <Column id="ACCT_LVL_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="ACCT_LVL"/>
+            <Col id="ACCT_LVL_NM">상위 계정을 선택하세요.</Col>
+          </Row>
+          <Row>
+            <Col id="ACCT_LVL">1</Col>
+            <Col id="ACCT_LVL_NM">1</Col>
+          </Row>
+          <Row>
+            <Col id="ACCT_LVL">2</Col>
+            <Col id="ACCT_LVL_NM">2</Col>
+          </Row>
+          <Row>
+            <Col id="ACCT_LVL">3</Col>
+            <Col id="ACCT_LVL_NM">3</Col>
+          </Row>
+          <Row>
+            <Col id="ACCT_LVL">4</Col>
+            <Col id="ACCT_LVL_NM">4</Col>
+          </Row>
+          <Row>
+            <Col id="ACCT_LVL">5</Col>
+            <Col id="ACCT_LVL_NM">5</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_acct">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_LVL" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="ACCT_TP_CD" type="STRING" size="256"/>
+          <Column id="HRNK_ACCT_ID" type="STRING" size="256"/>
+          <Column id="RMKS_CTS" type="STRING" size="256"/>
+          <Column id="HRNK_ACCT_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_res">
+        <ColumnInfo>
+          <Column id="SUCCESS_YN" type="STRING" size="256"/>
+          <Column id="RETURN_MSG" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="Div01.form.ACCT_TP_CD" propid="value" datasetid="ds_acct" columnid="ACCT_TP_CD"/>
+      <BindItem id="item1" compid="Div01.form.ACCT_NM" propid="value" datasetid="ds_acct" columnid="ACCT_NM"/>
+      <BindItem id="item2" compid="Div01.form.ACCT_CD" propid="value" datasetid="ds_acct" columnid="ACCT_CD"/>
+      <BindItem id="item3" compid="Div01.form.ACCT_LVL" propid="value" datasetid="ds_acct" columnid="ACCT_LVL"/>
+      <BindItem id="item4" compid="Div01.form.HRNK_ACCT_NM" propid="value" datasetid="ds_acct" columnid="HRNK_ACCT_NM"/>
+    </Bind>
+  </Form>
+</FDL>

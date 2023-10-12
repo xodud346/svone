@@ -1,0 +1,307 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_YA_03" width="795" height="650" titletext="프로그램 목록 popup" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="650" width="795">
+        <Div id="Div01" taborder="3" text="Div00" left="0" top="0" height="177" cssclass="div_WF_SearchArea" width="795">
+          <Layouts>
+            <Layout>
+              <Static id="Static60_00" taborder="0" text="| 프로그램 목록" left="20" top="20" height="30" cssclass="sta_WF_title02" width="300"/>
+              <Button id="btn_search" taborder="1" text="조회" top="133" width="65" height="28" onclick="btn_search_onclick" cssclass="btn_WF_require" right="20"/>
+              <Static id="Static03" taborder="2" left="20" top="60" height="32" cssclass="sta_cm_box02L_tdt" right="20" text=""/>
+              <Static id="Static07" taborder="3" left="20" top="91" height="32" cssclass="sta_cm_box02L" right="20"/>
+              <Static id="Static02" taborder="4" text="프로그램ID" left="20" top="60" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static04" taborder="5" text="프로그램명" left="395" top="60" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Edit id="edt_pgmId" taborder="6" left="159" top="64" width="231" height="24"/>
+              <Static id="Static06" taborder="7" text="주제영역코드" left="20" top="91" width="130" height="32" cssclass="sta_cm_box01L" onclick="Div00_Static06_onclick"/>
+              <Static id="Static06_00" taborder="8" text="화면 ID" left="395" top="91" width="130" height="32" cssclass="sta_cm_box01L" onclick="Div00_Static06_onclick"/>
+              <Edit id="edt_pgmNm" taborder="9" left="534" top="64" width="232" height="24"/>
+              <Combo id="cmb_thmeDownCd" taborder="10" text="" left="159" top="95" width="231" height="24" innerdataset="ds_thmeDownCd" datacolumn="COM_DTL_CD_NM" codecolumn="COM_DTL_CD"/>
+              <Edit id="edt_uiId" taborder="11" left="534" top="95" width="233" height="24"/>
+              <Button id="btn_reset" taborder="12" text="초기화" top="133" width="60" height="28" onclick="btn_reset_onclick" right="btn_search:4"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Grid id="grd_list" taborder="0" left="20" top="236" width="750" height="319" binddataset="ds_pgmMng" autofittype="none" cellsizebandtype="allband" oncelldblclick="grd_list_oncelldblclick" nodatatext="조회된 결과가 없습니다." autosizingtype="none" cellsizingtype="col" autosizebandtype="body">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="115"/>
+                <Column size="138"/>
+                <Column size="124"/>
+                <Column size="198"/>
+                <Column size="87"/>
+                <Column size="87"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="프로그램 ID"/>
+                <Cell col="1" text="프로그램명"/>
+                <Cell col="2" text="화면ID"/>
+                <Cell col="3" text="프로그램호출경로"/>
+                <Cell col="4" text="프로그램유형"/>
+                <Cell col="5" text="주제영역코드"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:PGM_ID" textAlign="center"/>
+                <Cell col="1" text="bind:PGM_NM" cssclass="grd_WF_left"/>
+                <Cell col="2" text="bind:UI_ID"/>
+                <Cell col="3" text="bind:PGM_CALL_PATH" displaytype="normal" edittype="none" cssclass="grd_WF_left"/>
+                <Cell col="4" text="bind:PGM_TP_CD" displaytype="combotext" edittype="none" combodataset="ds_pgmTpCd" combodatacol="COM_DTL_CD_NM" combocodecol="COM_DTL_CD"/>
+                <Cell col="5" text="bind:THME_DOMN_CD" displaytype="combotext" edittype="none" combodataset="ds_gThmeDownCd" combocodecol="COM_DTL_CD" combodatacol="COM_DTL_CD_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="sta_totcnt" taborder="1" text="(총 0건, 1 / 1)" left="20" top="207" width="170" height="25" usedecorate="true"/>
+        <Div id="div_paging" taborder="2" left="22" height="38" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="grd_list:30" width="grd_list:100.00%"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_pgmMng">
+        <ColumnInfo>
+          <Column id="PGM_ID" type="STRING" size="256"/>
+          <Column id="PGM_NM" type="STRING" size="256"/>
+          <Column id="PGM_CALL_PATH" type="STRING" size="256"/>
+          <Column id="PGM_TP_CD" type="STRING" size="256"/>
+          <Column id="THME_DOMN_CD" type="STRING" size="256"/>
+          <Column id="UI_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="PGM_ID" type="STRING" size="256"/>
+          <Column id="PGM_NM" type="STRING" size="256"/>
+          <Column id="THME_DOMN_CD" type="STRING" size="256"/>
+          <Column id="UI_ID" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_thmeDownCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_pgmTpCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_gThmeDownCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : MarketA
+CREATION DATES : 
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+this.fv_oApp = nexacro.getApplication();	//application object 
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.gfn_formOnLoad(this);
+	this.fn_commonCodeSearch();
+	this.Div01.form.cmb_thmeDownCd.set_index(0);
+	
+	this.Div01.form.edt_pgmId.set_value(this.parent.pgmId);
+	this.Div01.form.edt_pgmNm.set_value(this.parent.pgmNm);
+	
+	//조회
+	this.fn_search(true);
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "btn_search_onclick",
+		ESC : "",
+		CTRL_ENTER : "",
+		SHIFT_ENTER : "",
+		SHIFT_S : "",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+};
+
+/*this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	var objType = obj.getFocus();
+	if( e.keycode == 13 && objType == "[object Edit]" ) {
+		//조회
+		this.fn_search(true);
+	}
+};*/
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (bInit)
+{
+	var sSvcId = "search";    
+	var sUrl = "/co/pgm/select-pgm-mng-popup-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_pgmMng=ds_output1";
+	var arg = "";
+	this.ds_search.setColumn(0, "USE_YN", "Y");
+	
+	if(bInit) {
+		var oPaging = this.div_paging;
+		oPaging.uPage = 1;
+		oPaging.uPageNum = 0;
+		this.ds_search.setColumn(0,"START_NUM",0);
+		this.ds_search.setColumn(0,"ROW_COUNT",this.fv_oApp.gv_pageViewCnt);
+	}
+		
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	
+};
+
+
+//공통코드조회
+this.fn_commonCodeSearch = function()
+{	
+	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_thmeDownCd=ds_output1 ds_pgmTpCd=ds_output2";
+	var arg = "";
+
+	this.ds_search.setColumn(0, "CODE_LIST", "THME_DOMN_CD,PGM_TP_CD");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	switch(svcID)
+	{
+		case "search":
+			this.div_paging.form.cfn_createPage(this.div_paging,this.totalCount,this.fv_oApp.gv_pageViewCnt,"fn_pageCallback");
+			break;
+		case "commonCodeSearch":
+			this.ds_gThmeDownCd.copyData(this.ds_thmeDownCd,true);
+			this.ds_thmeDownCd.insertRow(0);
+			this.ds_thmeDownCd.setColumn(0,"COM_DTL_CD_NM","전체");
+			break;
+		default: 
+			break;
+	}
+	
+};
+
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;	
+
+	if(sFlag){
+		this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.ds_search.setColumn(0,"ROW_COUNT", this.fv_oApp.gv_pageViewCnt);
+		this.fn_search();
+	}
+
+	var sTotText = "(총 "+ this.gfn_appendComma(oPaging.uTotCount, 0)+"건, "+ oPaging.uPage +" / "+ oPaging.uPageCnt +")";
+	this.sta_totcnt.set_text(sTotText);
+};
+
+//정렬콜백
+this.fn_sortCallback = function(sGridId){
+	var oGrid = null;
+	if(sGridId == "grd_list"){
+		oSortInfo = this.grd_list.uaSortInfo;
+		this.ds_search.setColumn(0,"SORT_COLUMN",oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE",oSortInfo.status);
+		this.fn_search();
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+this.cfn_formInit = function(){
+	//grid 초기 설정
+	this.grd_list.uSortFlag = "false";
+	this.grd_list.uServerSortFlag = "true";
+	this.grd_list.uSortCallback = "fn_sortCallback";
+	this.grd_list.uCellSizeType = "true";
+	
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 10;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;
+};
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.Div01.form.edt_pgmId.set_value("");
+	this.Div01.form.edt_pgmNm.set_value("");
+	this.Div01.form.cmb_thmeDownCd.set_index(0);
+	this.Div01.form.edt_uiId.set_value("");
+};
+
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search(true);
+};
+
+this.grd_list_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var resData = {};
+	var resString = "";
+	
+	resData.PGM_ID = this.ds_pgmMng.getColumn(this.ds_pgmMng.rowposition, "PGM_ID");
+	resData.PGM_NM = this.ds_pgmMng.getColumn(this.ds_pgmMng.rowposition, "PGM_NM");
+	resString = JSON.stringify(resData);	
+	this.close(resString);
+};
+
+this.btn_reset_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.clearData();
+	this.ds_search.addRow();
+	this.Div01.form.cmb_thmeDownCd.set_index(0);
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item1" compid="searchDiv.form.comClsfCdNm" propid="value" datasetid="search_ds" columnid="comClsfCdNm"/>
+      <BindItem id="item0" compid="Div01.form.edt_pgmId" propid="value" datasetid="ds_search" columnid="PGM_ID"/>
+      <BindItem id="item2" compid="Div01.form.edt_pgmNm" propid="value" datasetid="ds_search" columnid="PGM_NM"/>
+      <BindItem id="item3" compid="Div01.form.cmb_thmeDownCd" propid="value" datasetid="ds_search" columnid="THME_DOMN_CD"/>
+      <BindItem id="item4" compid="Div01.form.edt_uiId" propid="value" datasetid="ds_search" columnid="UI_ID"/>
+    </Bind>
+  </Form>
+</FDL>

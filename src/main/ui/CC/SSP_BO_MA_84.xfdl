@@ -1,0 +1,500 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form1" width="1130" height="730" titletext="예산 부서/계정 설정(일반)" onload="fn_onLoad" onkeyup="form1_onkeyup">
+    <Layouts>
+      <Layout height="730" width="1130">
+        <Static id="Static01" taborder="0" text="예산설정" left="18" top="16" width="155" height="37" font="bold 14pt &quot;Arial&quot;"/>
+        <Div id="div_search" taborder="1" text="Div00" left="20" top="56" height="84" right="20">
+          <Layouts>
+            <Layout>
+              <Static id="Static60_00" taborder="0" text="| 조회" left="-1" top="7" height="30" cssclass="sta_WF_title02" width="300"/>
+              <Static id="Static03" taborder="1" left="20" top="36" height="32" cssclass="sta_cm_box02L_tdt" right="0" text=""/>
+              <Static id="Static02" taborder="2" text="선택부서" left="0" top="36" width="110" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static04" taborder="3" text="구분" left="395" top="36" width="110" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static04_00" taborder="4" text="예산기간" left="675" top="36" width="110" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Radio id="rdo_bgtPerdSprCd" taborder="5" columncount="2" index="0" innerdataset="ds_bgtPerdSprCd" codecolumn="CD" datacolumn="NM" value="1" left="523" top="42" width="120" height="21" onitemchanged="rdo_bgtPerdSprCd_onitemchanged"/>
+              <Combo id="cbo_year" taborder="6" text="" left="790" top="40" width="100" height="24" index="-1" innerdataset="ds_year" codecolumn="CD" datacolumn="NM"/>
+              <Combo id="cbo_month1" taborder="7" text="" left="904" top="40" width="80" height="24" index="-1" innerdataset="ds_month1" codecolumn="CD" datacolumn="NM" onitemchanged="cbo_month1_onitemchanged"/>
+              <Combo id="cbo_month2" taborder="8" text="" left="1000" top="40" width="80" height="24" index="-1" innerdataset="ds_month2" codecolumn="CD" datacolumn="NM" onitemchanged="cbo_month2_onitemchanged"/>
+              <Static id="Static01" taborder="9" text="~" left="988" top="44" width="1.47%" height="14"/>
+              <Edit id="edtDeptId" taborder="10" top="40" height="24" left="117" width="263" readonly="true"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Grid id="grd_list" taborder="2" left="20" top="200" height="450" binddataset="ds_list" right="20" oncellclick="grd_list_oncellclick" selecttype="area">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="110"/>
+                <Column size="180"/>
+                <Column size="50"/>
+                <Column size="110"/>
+                <Column size="180"/>
+                <Column size="80"/>
+                <Column size="120"/>
+                <Column size="120"/>
+                <Column size="120"/>
+                <Column size="160"/>
+                <Column size="200"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="normal" edittype="none" text="계정ID"/>
+                <Cell col="1" text="계정명"/>
+                <Cell col="2" text="레벨"/>
+                <Cell col="3" text="상위계정ID"/>
+                <Cell col="4" text="상위계정명"/>
+                <Cell col="5" text="예산 년/월"/>
+                <Cell col="6" text="예산 설정액"/>
+                <Cell col="7" text="주문가능액"/>
+                <Cell col="8" text="원 예산"/>
+                <Cell col="9" text="사유"/>
+                <Cell col="10" text="기존 사유"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:ACCT_ID" displaytype="normal" suppress="1"/>
+                <Cell col="1" text="bind:ACCT_NM" textAlign="left" suppress="1"/>
+                <Cell col="2" text="bind:ACCT_LVL" cssclass="grd_WF_left" textAlign="center" suppress="1"/>
+                <Cell col="3" text="bind:HRNK_ACCT_ID" suppress="1"/>
+                <Cell col="4" text="bind:HRNK_ACCT_NM" suppress="1"/>
+                <Cell col="5" text="bind:BGT_APLY_PERD_NM"/>
+                <Cell col="6" displaytype="maskeditcontrol" edittype="mask" textAlign="right" text="bind:BGT_AMT" maskeditformat="###,###,###,###,##0" maskeditlimitbymask="both"/>
+                <Cell col="7" text="bind:CUR_BGT_AMT" displaytype="expr:CUR_BGT_AMT=='-' ? 'normal' : 'number'" textAlign="right"/>
+                <Cell col="8" displaytype="expr:ORG_BGT_AMT=='-' ? 'normal' : 'number'" textAlign="right" text="bind:ORG_BGT_AMT"/>
+                <Cell col="9" displaytype="editcontrol" edittype="text" text="bind:CHG_RSN"/>
+                <Cell col="10" text="bind:CHG_RSN_HST" textAlign="left"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="Static60_00_00" taborder="3" text="| 목록" left="20" top="164" height="30" cssclass="sta_WF_title02" width="300"/>
+        <Button id="btn_cancel" taborder="4" text="취소" top="665" width="60" height="30" onclick="btn_cancel_onclick" left="463"/>
+        <Button id="btn_save" taborder="5" text="등록" left="528" top="665" width="70" height="30" cssclass="btn_WF_select" onclick="btn_save_onclick"/>
+        <Button id="btn_reset" taborder="6" text="초기화" top="132" width="60" height="30" onclick="btn_reset_onclick" right="83" cssclass="btn_WF_reset"/>
+        <Button id="btn_search" taborder="7" text="조회" top="132" width="60" height="30" right="19" onclick="btn_search_onclick" cssclass="btn_WF_select"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="DEPT_NM" type="STRING" size="256"/>
+          <Column id="BGT_PERD_SPR_CD" type="STRING" size="256"/>
+          <Column id="BGT_YY" type="STRING" size="256"/>
+          <Column id="BGT_APLY_PERD_CD_1" type="STRING" size="256"/>
+          <Column id="BGT_APLY_PERD_CD_2" type="STRING" size="256"/>
+          <Column id="BGT_REG_SPR_CD" type="STRING" size="256"/>
+          <Column id="ACCT_TP_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_bgtPerdSprCd">
+        <ColumnInfo>
+          <Column id="CD" type="STRING" size="256"/>
+          <Column id="NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CD">1</Col>
+            <Col id="NM">월별</Col>
+          </Row>
+          <Row>
+            <Col id="CD">2</Col>
+            <Col id="NM">분기별</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_year">
+        <ColumnInfo>
+          <Column id="CD" type="STRING" size="256"/>
+          <Column id="NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_month1">
+        <ColumnInfo>
+          <Column id="CD" type="STRING" size="256"/>
+          <Column id="NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_month2">
+        <ColumnInfo>
+          <Column id="CD" type="STRING" size="256"/>
+          <Column id="NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_qrtBgtUseYn">
+        <ColumnInfo>
+          <Column id="QRT_BGT_USE_YN" type="STRING" size="256"/>
+          <Column id="BGT_OVER_AGD_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_LVL" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="HRNK_ACCT_ID" type="STRING" size="256"/>
+          <Column id="HRNK_ACCT_NM" type="STRING" size="256"/>
+          <Column id="BGT_NO" type="STRING" size="256"/>
+          <Column id="BGT_YY" type="STRING" size="256"/>
+          <Column id="BGT_PERD_SPR_CD" type="STRING" size="256"/>
+          <Column id="BGT_APLY_PERD_CD" type="STRING" size="256"/>
+          <Column id="BGT_APLY_PERD_NM" type="STRING" size="256"/>
+          <Column id="BGT_AMT" type="STRING" size="256"/>
+          <Column id="CUR_BGT_AMT" type="STRING" size="256"/>
+          <Column id="ORG_BGT_AMT" type="STRING" size="256"/>
+          <Column id="BGT_REG_SPR_CD" type="STRING" size="256"/>
+          <Column id="CHG_RSN" type="STRING" size="256"/>
+          <Column id="CHG_RSN_HST" type="STRING" size="256"/>
+          <Column id="TOT_ODR_AMT" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 
+*******************************************************/
+include "OD::odUtils.xjs";
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.today = "";
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	this.copyPaste.addGrid(this.grd_list, this, false); //그리드 붙여넣기 기능	
+	
+	// 단축키 등록
+	this.fn_regShortCutMethod();
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_searchQrtBgtUseYn = function (bInit){
+	var sSvcId = "searchQrtBgtUseYn";    
+	var sUrl = "/bo/cust/bgt/ssp_bo_ma_84/selectQrtBgtUseYn.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_qrtBgtUseYn=ds_qrtBgtUseYn";
+	var arg = "";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");	
+};
+
+this.fn_search = function (bInit){
+	var sSvcId = "search";    
+	var sUrl = "/bo/cust/bgt/ssp_bo_ma_84/select-bgt-dept-dtl-mapp-list-by-dept.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_list=ds_list";
+	var arg = "";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");	
+};
+
+this.fn_save = function (bInit){
+	var sSvcId = "save";    
+	var sUrl = "/bo/cust/bgt/ssp_bo_ma_84/save-bgt-dept-dtl.do";  
+	var inDs = "ds_list=ds_list:U";
+	var outDs = "";
+	var arg = "";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");	
+};
+
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(errorCode == -1) {		
+		alert(this.fn_getMessage("ERRC000058"));
+	}
+	else {	
+		if(svcID == "searchQrtBgtUseYn") { //운영단위 제어권한 분기예산사용여부 조회
+			this.fn_resetSearch();
+		}
+		else if(svcID == "search"){    	
+			
+		}
+		else if(svcID == "save"){    				
+			alert(this.fn_getMessage("ERRC000081"));
+			this.fn_search();
+		}		
+	}	
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){	
+	this.ds_search.setColumn(0,"CO_CD",this.parent.CO_CD);
+	this.ds_search.setColumn(0,"BZPLC_ID",this.parent.BZPLC_ID);
+	this.ds_search.setColumn(0,"OPR_UNIT_ID",this.parent.OPR_UNIT_ID);
+	this.ds_search.setColumn(0,"DEPT_ID",this.parent.DEPT_ID);
+	this.ds_search.setColumn(0,"DEPT_NM",this.parent.DEPT_NM);
+	this.ds_search.setColumn(0,"BGT_REG_SPR_CD", "20"); //예산등록구분코드(10:계정별, 20:부서별) 
+	this.ds_search.setColumn(0,"ACCT_TP_CD", "1"); //계정유형코드(1:일반, 2:공통)
+	
+	this.div_search.form.edtDeptId.set_value(this.ds_search.getColumn(0,"DEPT_ID") + " | " + this.ds_search.getColumn(0,"DEPT_NM"));
+	
+	//예산기간 년도 데이터셋 설정
+	this.today = this.gfn_getDate();
+	var year = Number(this.gfn_left(this.today,4));
+	var nRow = this.ds_year.addRow();	
+	this.ds_year.setColumn(nRow, "CD", year);
+	this.ds_year.setColumn(nRow, "NM", year);
+	nRow = this.ds_year.addRow();
+	this.ds_year.setColumn(nRow, "CD", year+1);
+	this.ds_year.setColumn(nRow, "NM", year+1);			
+	
+	//운영단위 제어권한 분기예산, 예산 초과 사용유무 조회 
+	this.fn_searchQrtBgtUseYn();
+};
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_resetSearch = function() {
+	this.div_search.form.cbo_year.set_index(0); //년도콤보 첫행 표시
+	
+	if(this.ds_qrtBgtUseYn.getColumn(0,"QRT_BGT_USE_YN") == "Y") this.div_search.form.rdo_bgtPerdSprCd.set_index(1); //분기별
+	else this.div_search.form.rdo_bgtPerdSprCd.set_index(0); //월별
+			
+	//예산기간 월 설정
+	this.setMonthCombo(this.ds_search.getColumn(0,"BGT_PERD_SPR_CD"));				
+}
+
+this.setMonthCombo = function(cd) {
+	var month = this.today.substr(4,2);
+	this.ds_month1.clearData();
+	this.ds_month2.clearData();
+	
+	if(cd == "1") { //월별
+		for(var i=1; i<=12; i++) {
+			var nRow = this.ds_month1.addRow();
+			this.ds_month1.setColumn(nRow, "CD", i.toString().padLeft(2, '0'));
+			this.ds_month1.setColumn(nRow, "NM", i + "월");
+			nRow = this.ds_month2.addRow();
+			this.ds_month2.setColumn(nRow, "CD", i.toString().padLeft(2, '0'));
+			this.ds_month2.setColumn(nRow, "NM", i + "월");			
+		}
+		
+		this.div_search.form.cbo_month1.set_value(month);
+	} 
+	else if(cd == "2") { //분기별
+		for(var i=1; i<=4; i++) {
+			var nRow = this.ds_month1.addRow();
+			this.ds_month1.setColumn(nRow, "CD", (20+i).toString());
+			this.ds_month1.setColumn(nRow, "NM", i + "분기");
+			nRow = this.ds_month2.addRow();
+			this.ds_month2.setColumn(nRow, "CD", (20+i).toString());
+			this.ds_month2.setColumn(nRow, "NM", i + "분기");			
+		}
+		
+		if(month >= 1 && month <= 3) this.div_search.form.cbo_month1.set_value("21"); //1분기
+		else if(month >= 4 && month <= 6) this.div_search.form.cbo_month1.set_value("22"); //2분기
+		else if(month >= 7 && month <= 9) this.div_search.form.cbo_month1.set_value("23"); //3분기
+		else if(month >= 10 && month <= 12) this.div_search.form.cbo_month1.set_value("24"); //4분기
+	}	
+	
+	this.div_search.form.cbo_month2.set_index(this.div_search.form.cbo_month2.getCount()-1); //마지막 선택옵션 설정
+};
+
+this.fn_validatePeriod = function(cboId, prevIdx) {
+	var month = this.today.substr(4,2);
+		
+	if(this.ds_search.getColumn(0,"BGT_PERD_SPR_CD") == "1") { //월별
+		if(cboId == "cbo_month1") {
+			if(month > this.ds_search.getColumn(0,"BGT_APLY_PERD_CD_1")) {				
+				alert(this.fn_getMessage("ERRC000021"));
+				this.div_search.form.cbo_month1.set_index(prevIdx);
+				return;
+			}
+		}
+		else if(cboId == "cbo_month2") {
+			if(month > this.ds_search.getColumn(0,"BGT_APLY_PERD_CD_2")) {
+				alert(this.fn_getMessage("ERRC000021"));
+				this.div_search.form.cbo_month2.set_index(prevIdx);
+				return;
+			}
+		}	
+	}
+	else if(this.ds_search.getColumn(0,"BGT_PERD_SPR_CD") == "2") { //분기별
+		if(cboId == "cbo_month1") {			
+			if(month >= 4 && month <= 6) { //2분기
+				if(this.ds_search.getColumn(0,"BGT_APLY_PERD_CD_1") == "21") {
+					alert(this.fn_getMessage("ERRC000021"));
+					this.div_search.form.cbo_month1.set_index(prevIdx);
+					return;				
+				}
+			}
+			else if(month >= 7 && month <= 9) { //3분기
+				if(this.ds_search.getColumn(0,"BGT_APLY_PERD_CD_1") <= "22") {
+					alert(this.fn_getMessage("ERRC000021"));
+					this.div_search.form.cbo_month1.set_index(prevIdx);
+					return;				
+				}			
+			}
+			else if(month >= 10 && month <= 12) { //4분기			
+				if(this.ds_search.getColumn(0,"BGT_APLY_PERD_CD_1") <= "23") {
+					alert(this.fn_getMessage("ERRC000021"));
+					this.div_search.form.cbo_month1.set_index(prevIdx);
+					return;				
+				}				
+			}
+		}
+		else if(cboId == "cbo_month2") {
+			if(month >= 4 && month <= 6) { //2분기
+				if(this.ds_search.getColumn(0,"BGT_APLY_PERD_CD_2") == "21") {
+					alert(this.fn_getMessage("ERRC000021"));
+					this.div_search.form.cbo_month2.set_index(prevIdx);
+					return;				
+				}
+			}
+			else if(month >= 7 && month <= 9) { //3분기
+				if(this.ds_search.getColumn(0,"BGT_APLY_PERD_CD_2") <= "22") {
+					alert(this.fn_getMessage("ERRC000021"));
+					this.div_search.form.cbo_month2.set_index(prevIdx);
+					return;				
+				}			
+			}
+			else if(month >= 10 && month <= 12) { //4분기			
+				if(this.ds_search.getColumn(0,"BGT_APLY_PERD_CD_2") <= "23") {
+					alert(this.fn_getMessage("ERRC000021"));
+					this.div_search.form.cbo_month2.set_index(prevIdx);
+					return;				
+				}				
+			}			
+		}		
+	}	
+};
+
+// 창닫기
+this.fn_closeForm = function() {
+	this.close();
+};
+
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	this.fn_regMethodENTER("btn_search_onclick");
+	this.fn_regMethodESC("fn_closeForm");
+};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.rdo_bgtPerdSprCd_onitemchanged = function(obj:nexacro.Radio,e:nexacro.ItemChangeEventInfo)
+{
+	if(e.postvalue == "1") { //월별
+		if(this.ds_qrtBgtUseYn.getColumn(0,"QRT_BGT_USE_YN") == "Y") { //운영단위 제어권한 분기예산사용여부
+			this.div_search.form.rdo_bgtPerdSprCd.set_index(1);			
+			alert(this.fn_getMessage("ERRC000098")); //해당 운영단위는 월별 예산을 사용할 수 없습니다.
+			return;
+		}		
+	}
+	else if(e.postvalue == "2") { //분기별
+		if(this.ds_qrtBgtUseYn.getColumn(0,"QRT_BGT_USE_YN") != "Y") { //운영단위 제어권한 분기예산사용여부
+			this.div_search.form.rdo_bgtPerdSprCd.set_index(0);			
+			alert(this.fn_getMessage("ERRC000097")); //해당 운영단위는 분기별 예산을 사용할 수 없습니다.
+			return;
+		}	
+	}
+	
+	//예산기간 월 설정
+	this.setMonthCombo(e.postvalue);	
+};
+
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search();
+};
+
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(!confirm(this.fn_getMessage("ERRC000087"))) {
+		return;
+	}
+	
+	this.close();
+};
+
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(!this.gfn_dsIsUpdated(this.ds_list)) {		
+		alert(this.fn_getMessage("ERRC000039"));
+		return;
+	}
+	
+	for(i=0; i<this.ds_list.getRowCount(); i++) {
+		if(this.ds_list.getRowType(i)=="4" && this.gfn_isNull(this.ds_list.getColumn(i,"BGT_AMT"))) { //수정건중 예산설정액이 공백일때			
+			alert(this.fn_getMessage("ERRC000009", "예산설정액"));
+			return;
+		}
+	}
+	
+	if(this.ds_qrtBgtUseYn.getColumn(0,"BGT_OVER_AGD_YN") =='N'){ // 예산 초과 사용유무가 N 일 경우 
+		for(i=0; i<this.ds_list.getRowCount(); i++) {
+		 var sumBgtAmt = parseFloat(this.ds_list.getColumn(i,"TOT_ODR_AMT")) + parseFloat(this.ds_list.getColumn(i,"BGT_AMT"));
+			if(this.ds_list.getRowType(i)=="4" && 0 > sumBgtAmt) { //수정건중 예산설정액+ 주문액이 음수 일때			
+				alert(this.fn_getMessage("ERRS000484"));
+				return;
+			}
+		}
+	}
+	
+	if(!confirm(this.fn_getMessage("ERRC000080"))) {
+		return;
+	}
+	
+	this.fn_save();
+};
+
+this.btn_reset_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_resetSearch();			
+};
+
+this.cbo_month1_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_validatePeriod(obj.id, e.preindex);
+};
+
+this.cbo_month2_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_validatePeriod(obj.id, e.preindex);
+};
+
+this.grd_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	obj.showEditor(true); //한번 클릭시 그리드텍사스박스에 포커스 줌
+};
+
+this.form1_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="div_search.form.rdo_bgtPerdSprCd" propid="value" datasetid="ds_search" columnid="BGT_PERD_SPR_CD"/>
+      <BindItem id="item1" compid="div_search.form.cbo_year" propid="value" datasetid="ds_search" columnid="BGT_YY"/>
+      <BindItem id="item2" compid="div_search.form.cbo_month1" propid="value" datasetid="ds_search" columnid="BGT_APLY_PERD_CD_1"/>
+      <BindItem id="item3" compid="div_search.form.cbo_month2" propid="value" datasetid="ds_search" columnid="BGT_APLY_PERD_CD_2"/>
+    </Bind>
+  </Form>
+</FDL>

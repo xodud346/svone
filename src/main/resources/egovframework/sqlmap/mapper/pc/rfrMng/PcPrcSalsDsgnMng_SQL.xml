@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcPrcSalsDsgnMng">
+   <!--
+    ******************************************************************************
+    * SELECT : 공용상품처리대기
+    * 작성자 : 
+    * 작성 일자 : 2022.02.15
+    ******************************************************************************
+    -->
+	<sql id="ListWhereJoinPrdId">
+		<if test="prdId > 0 ">
+			JOIN TB_OD_ODR_INQ_TGT_DTLS AA
+		            ON  AA.SES_ID = #{sesId}
+		            AND AA.INQ_COND_DTLS = #{inqCondDtls}
+		            AND AA.COL_ITM = 'PRD_ID'
+		            AND LPAD(AA.COND_DATA_VAL, 18, '0') = A.PRD_ID
+		</if>
+	</sql>
+	<sql id="ListWhereJoinReprPrdGrpId">
+		<if test="reprPrdGrpId > 0 ">
+			JOIN TB_OD_ODR_INQ_TGT_DTLS BB
+		            ON  BB.SES_ID = #{sesId}
+		            AND BB.INQ_COND_DTLS = #{inqCondDtls}
+		            AND BB.COL_ITM = 'REPR_PRD_GRP_ID'
+		            AND LPAD(BB.COND_DATA_VAL, 10, '0') = K.REPR_PRD_GRP_ID
+		</if>
+	</sql>
+	<sql id="ListWhereJoinBzplcId">
+		<if test="bzplcId > 0 ">
+			JOIN TB_OD_ODR_INQ_TGT_DTLS CC
+		            ON  CC.SES_ID = #{sesId}
+		            AND CC.INQ_COND_DTLS = #{inqCondDtls}
+		            AND CC.COL_ITM = 'BZPLC_ID'
+		            AND CC.COND_DATA_VAL = A.BZPLC_ID
+		</if>
+	</sql>
+
+	
+	
+	<sql id="ListWhere">
+    			
+		<!-- SSP카테고리 검색 -->
+		<if test="prdClcd != null and prdClcd!= ''.toString()">
+			AND	A.PRD_CLCD = #{prdClcd}
+		</if>
+		
+		<!-- 대표상품구분 검색 -->
+		<if test="reprPrdSprCd != null and reprPrdSprCd!= ''.toString()">
+		    <choose>
+				<when test='"3" eq reprPrdSprCd'>
+					AND (K.REPR_PRD_SPR_YN = 'N')
+				</when>
+				<when test='"NONE" == reprPrdSprCd'>
+					AND (K.REPR_PRD_SPR_YN IS NULL)
+				</when>
+				<otherwise>
+					AND K.REPR_PRD_SPR_RSN_CD = #{reprPrdSprCd}
+				</otherwise>
+			</choose>
+		</if>
+		
+		<!-- 예외관리상품 검색 -->
+		<if test="prcAplySprCd != null and prcAplySprCd!= ''.toString()">
+		    
+		    <choose>
+		    	<when test='"0" eq prcAplySprCd'>
+			AND	A.PRC_APLY_SPR_CD IS NULL
+				</when>
+				<otherwise>
+			AND	A.PRC_APLY_SPR_CD = #{prcAplySprCd}
+				</otherwise>
+		    </choose>
+		</if>
+
+		<!-- SSP상품상태 검색 -->
+		<if test="prdStatsCd != null and prdStatsCd!= ''.toString()">
+		    AND	A.PRD_USE_YN = #{prdStatsCd}
+		</if>
+		
+		<!-- SSP진열상태 검색 -->
+		<if test="dispStatsCd != null and dispStatsCd!= ''.toString()">
+		    AND	C.DISP_STATS_CD = #{dispStatsCd}
+		</if>
+		<!-- 날짜 검색 -->
+		
+	</sql>
+
+	<!-- selectList -->
+    <select id="selectList" parameterType="HashMap" resultType="HashMap">
+        /* PcPrcSalsDsgnMng.selectList */
+        SELECT 
+        	*
+        FROM(
+			SELECT 
+			    A.PRD_ID, --상품ID
+			    TO_NUMBER(A.PRD_ID) AS "TRIM_PRD_ID", --0제거 PRD_ID데이터
+			    A.BZPLC_ID, --사업장ID
+			    F.BZPLC_NM, --사업장명
+			    K.REPR_PRD_GRP_ID, --대표상품그룹ID
+			    TO_NUMBER(K.REPR_PRD_GRP_ID) AS "TRIM_REPR_PRD_GRP_ID", --0제거 대표상품그룹ID
+			    A.PRD_CLCD, -- SSP카테고리
+			    FN_PR_FULL_CLSF_NM(#{coCd},A.PRD_CLCD) AS PRD_CLCD_NM, -- SSP카테고리 명
+			    FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD',A.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM, --공용전용구분 명
+			    FN_COM_DTL_CDNM('KO','SEL_MTHD_CD',L.SEL_MTHD_CD) AS SEL_MTHD_NM, --선정방식
+			    NVL(FN_COM_DTL_CDNM('KO','REPR_PRD_SPR_CD',DECODE(K.REPR_PRD_SPR_YN, 'Y', K.REPR_PRD_SPR_RSN_CD, 'N', '3')),'미사용') AS REPR_PRD_SPR_NM, --대표상품구분
+			    FN_COM_DTL_CDNM('KO','PRC_APLY_SPR_CD',A.PRC_APLY_SPR_CD) AS PRC_APLY_SPR_NM, -- 예외관리상품
+			    FN_COM_DTL_CDNM('KO', 'MRO_PRD_STATS_CD', A.MRO_PRD_STATS_CD) MRO_PRD_STATS_CD,  -- S-MRO상품상태
+			    FN_COM_DTL_CDNM('KO','USE_YN', A.PRD_USE_YN) PRD_STATS_CD, -- SSP상품상태
+			    FN_COM_DTL_CDNM('KO','DISP_STATS_CD',C.DISP_STATS_CD) AS DISP_STATS_NM, -- SSP진열상태
+			    A.PRD_NM, --상품명
+			    SSP_APP.FN_PR_ATTR_VAL_LIST(#{coCd},A.PRD_ID) ATTR_VAL, -- 대표규격
+			    A.MNFR_NO, -- 제조원ID
+			    E.MNFR_NM, -- 제조원명
+			    A.SELL_UNIT_CD, -- 주문단위
+			    A.ORGPLC_CTRY_CD, -- 원산지코드
+			    J.CTRY_NM AS ORGPLC_CTRY_NM, --원산지
+			    H.STPRC, -- SSP기준가
+			    H.SSP_BSS_SALSPRC, --SSP기준판매가
+			    N1.SALS_DSGN_SALSPRC, --영업지정판매가
+			    N1.SALS_DSGN_SALSPRC_STR_DTM, --영업지정판매가 시작일시
+			    N1.SALS_DSGN_SALSPRC_END_DTM, --영업지정판매가 마감일시 
+			    H.BSS_SALSPRC_STR_DTM, --기준판매가 시작일시 
+			    H.BSS_SALSPRC_END_DTM, --기준판매가 마감일시 
+			    F.SALS_CHRPSN_ID1 AS SALS_CHRPSN_ID, --영업담당자 사번
+			    (SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE OPRTR_ID = F.SALS_CHRPSN_ID1) AS SALS_CHRPSN_NM, --영업담당자명
+			    A.PURG_CHRPSN_ID, -- 구매담당자 사번
+			    (SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE OPRTR_ID = A.PURG_CHRPSN_ID) AS PURG_CHRPSN_NM, --구매담당자명
+			    I.OPRTR_ID, --MD담당자 사번
+			    I.OPRTR_NM, --MD담당자명
+			    N2.REGPSN_ID, --영업지정판매가 등록자
+			    N2.REG_DTM, --영업지정판매가 등록일
+			    SSP_APP.FN_PR_GET_SSP_PRD_NM(A.CO_CD, A.PRD_ID) SSP_PRD_NM   --SSP상품명
+			FROM (SELECT  /*+ materialize */
+                                A.*
+                        FROM    (
+                                SELECT   A.CO_CD
+                                        ,A.BZPLC_ID
+                                        ,A.PRD_ID
+                                        ,A.SEQ
+                                        ,A.SALS_DSGN_SALSPRC
+                                        ,A.SALS_DSGN_SALSPRC_STR_DTM
+                                        ,A.SALS_DSGN_SALSPRC_END_DTM
+                                        ,A.BSS_SALSPRC_USEYN
+                                        ,NVL(A.FST_HST_YN,'N')  FST_HST_YN
+                                        ,A.UPD_DTM
+                                        ,ROW_NUMBER() OVER(PARTITION BY A.CO_CD,A.BZPLC_ID,A.PRD_ID ORDER BY A.SALS_DSGN_SALSPRC_STR_DTM ASC)   RN_ASC
+                                        ,ROW_NUMBER() OVER(PARTITION BY A.CO_CD,A.BZPLC_ID,A.PRD_ID ORDER BY A.SALS_DSGN_SALSPRC_STR_DTM DESC)  RN_DESC
+                                        ,C.PRD_CLCD
+                                        ,D.PUB_ONLY_SPR_CD
+                                        ,C.PRC_APLY_SPR_CD
+                                        ,D.MRO_PRD_STATS_CD
+                                        ,C.PRD_USE_YN
+                                        ,C.PRD_NM
+                                        ,D.MNFR_NO
+                                        ,D.SELL_UNIT_CD
+                                        ,D.ORGPLC_CTRY_CD
+                                        ,D.MULT_SELL_UNIT_QTY
+                                        ,D.DLV_LT AS DLV_LT
+                                        ,D.PURG_CHRPSN_ID
+                                FROM    TB_PC_SALS_DSGN_SALSPRC_HST A
+                                        <if test="prdId > 0 ">
+                                            JOIN TB_OD_ODR_INQ_TGT_DTLS AA
+                                                    ON  AA.SES_ID = #{sesId}
+                                                    AND AA.INQ_COND_DTLS = #{inqCondDtls}
+                                                    AND AA.COL_ITM = 'PRD_ID'
+                                                    AND LPAD(AA.COND_DATA_VAL, 18, '0') = A.PRD_ID
+                                        </if>
+                                        <if test="bzplcId > 0 ">
+                                            JOIN TB_OD_ODR_INQ_TGT_DTLS CC
+                                                    ON  CC.SES_ID = #{sesId}
+                                                    AND CC.INQ_COND_DTLS = #{inqCondDtls}
+                                                    AND CC.COL_ITM = 'BZPLC_ID'
+                                                    AND CC.COND_DATA_VAL = A.BZPLC_ID
+                                        </if>
+                                        INNER JOIN
+                                        TB_PR_PRD_INFO C --SSP상품정보
+                                        ON   C.CO_CD = A.CO_CD
+                                        AND  C.PRD_ID = A.PRD_ID
+                                        AND  C.MALL_SPR_CD = '10'
+                                        INNER JOIN TB_PR_MRO_PRD_INFO D --MRO상품정보
+                                        ON   D.CO_CD = C.CO_CD
+                                        AND  D.PRD_ID = C.PRD_ID
+                                    	<include refid="ListWhereJoinPrdId" />
+										<include refid="ListWhereJoinBzplcId" />
+                                WHERE   1=1
+                                  AND  D.CO_CD = #{coCd}
+                                  AND  D.PUB_ONLY_SPR_CD = 'P'
+                                <if test="dateCd != null and dateCd!= ''.toString()">
+                                    <if test="strDtm != null and strDtm!= ''.toString() and endDtm != null and endDtm!= ''.toString()">
+                                        AND A.FST_HST_YN = 'Y'
+                                        AND A.REG_DTM BETWEEN TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS') AND TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')-1/(3600*24)
+                                    </if>
+                                </if>
+                                )   A
+                        WHERE 1=1
+                            <if test="dateCd != null and dateCd != '10'">
+                                AND A.RN_ASC = 1
+                            </if>
+                            <if test="dateCd eq null or dateCd eq '10'">
+                                AND A.RN_DESC = 1
+                            </if>) A --영업지정판매가정보
+            LEFT JOIN TB_PC_SALS_DSGN_SALSPRC_HST N1
+                    ON   N1.CO_CD =  A.CO_CD
+                    AND  N1.PRD_ID = A.PRD_ID
+                    AND  N1.BZPLC_ID = A.BZPLC_ID
+                    AND  TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN N1.SALS_DSGN_SALSPRC_STR_DTM AND N1.SALS_DSGN_SALSPRC_END_DTM
+        	LEFT JOIN TB_PC_SALS_DSGN_SALSPRC_HST N2
+                    ON   N2.CO_CD =  A.CO_CD
+                    AND  N2.PRD_ID = A.PRD_ID
+                    AND  N2.BZPLC_ID = A.BZPLC_ID
+                    AND  N2.FST_HST_YN = 'Y'
+			LEFT OUTER JOIN TB_DP_PRD_DISP_STATS_INFO C --진열정보
+			    ON C.CO_CD = A.CO_CD AND C.PRD_ID = A.PRD_ID AND C.BZPLC_ID = '*'
+			LEFT OUTER JOIN TB_PR_MNFR_INFO E --제조원
+			    ON E.CO_CD = A.CO_CD AND E.MNFR_NO = A.MNFR_NO
+			LEFT OUTER JOIN TB_CC_BZPLC_BASIS F --사업장정보
+			    ON F.CO_CD = A.CO_CD AND F.BZPLC_ID = A.BZPLC_ID
+			LEFT OUTER JOIN TB_PC_PRD_PRC_HST  H --가격정보
+			    ON H.CO_CD = A.CO_CD AND H.PRD_ID = A.PRD_ID AND H.BZPLC_ID = '*' AND TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN H.BSS_SALSPRC_STR_DTM AND H.BSS_SALSPRC_END_DTM
+			LEFT OUTER JOIN (
+			           SELECT A.CO_CD, A.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD ,B.ORG_CD
+			           FROM TB_PR_PRD_CLSF_CHRPSN_INFO A
+			           INNER JOIN TB_CO_MBR_OPRTR_INFO B
+			           ON A.CO_CD = B.CO_CD
+			           AND A.PRD_CLSF_CHRPSN_ID = B.OPRTR_ID
+			           WHERE A.PRD_CLSF_CHRPSN_SPR_CD = '10'
+			           AND A.PRD_CLSF_CHRPSN_TP_CD = '20'
+			        )I -- MD담당자
+				ON I.CO_CD = A.CO_CD AND I.PRD_CLCD = A.PRD_CLCD
+			LEFT OUTER JOIN TB_CO_CTRY_INFO J -- 국가
+			    ON J.CO_CD = A.CO_CD AND J.CTRY_SPR_CD = A.ORGPLC_CTRY_CD
+			LEFT OUTER JOIN TB_PR_REPR_PRD_MNG_DTL K  --대표상품
+			    ON K.CO_CD = A.CO_CD AND K.PRD_ID = A.PRD_ID AND K.SSP_PRD_YN = 'Y'
+			<include refid="ListWhereJoinReprPrdGrpId" />
+			LEFT OUTER JOIN TB_PR_PRD_CLSF_INFO L --카테고리정보
+			    ON L.CO_CD = A.CO_CD AND L.PRD_CLCD = A.PRD_CLCD
+			WHERE A.CO_CD = #{coCd}
+			AND A.PUB_ONLY_SPR_CD = 'P'
+			<include refid="ListWhere" />
+		)A
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.PRD_ID DESC, A.BZPLC_ID ASC </otherwise>
+		</choose>
+		OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY					 
+    </select>
+    
+    <select id="selectListCount" parameterType="hashMap" resultType="integer">
+	    /* PcPrcSalsDsgnMng.selectListCount*/
+	    SELECT count(*)
+	 
+		FROM (SELECT  /*+ materialize */
+                                A.*
+                        FROM    (
+                                SELECT   A.CO_CD
+                                        ,A.BZPLC_ID
+                                        ,A.PRD_ID
+                                        ,A.SEQ
+                                        ,A.SALS_DSGN_SALSPRC
+                                        ,A.SALS_DSGN_SALSPRC_STR_DTM
+                                        ,A.SALS_DSGN_SALSPRC_END_DTM
+                                        ,A.BSS_SALSPRC_USEYN
+                                        ,NVL(A.FST_HST_YN,'N')  FST_HST_YN
+                                        ,A.UPD_DTM
+                                        ,ROW_NUMBER() OVER(PARTITION BY A.CO_CD,A.BZPLC_ID,A.PRD_ID ORDER BY A.SALS_DSGN_SALSPRC_STR_DTM ASC)   RN_ASC
+                                        ,ROW_NUMBER() OVER(PARTITION BY A.CO_CD,A.BZPLC_ID,A.PRD_ID ORDER BY A.SALS_DSGN_SALSPRC_STR_DTM DESC)  RN_DESC
+                                        ,C.PRD_CLCD
+                                        ,D.PUB_ONLY_SPR_CD
+                                        ,C.PRC_APLY_SPR_CD
+                                        ,D.MRO_PRD_STATS_CD
+                                        ,C.PRD_USE_YN
+                                        ,C.PRD_NM
+                                        ,D.MNFR_NO
+                                        ,D.SELL_UNIT_CD
+                                        ,D.ORGPLC_CTRY_CD
+                                        ,D.MULT_SELL_UNIT_QTY
+                                        ,D.DLV_LT AS DLV_LT
+                                        ,D.PURG_CHRPSN_ID
+                                FROM    TB_PC_SALS_DSGN_SALSPRC_HST A
+                                        <if test="prdId > 0 ">
+                                            JOIN TB_OD_ODR_INQ_TGT_DTLS AA
+                                                    ON  AA.SES_ID = #{sesId}
+                                                    AND AA.INQ_COND_DTLS = #{inqCondDtls}
+                                                    AND AA.COL_ITM = 'PRD_ID'
+                                                    AND LPAD(AA.COND_DATA_VAL, 18, '0') = A.PRD_ID
+                                        </if>
+                                        <if test="bzplcId > 0 ">
+                                            JOIN TB_OD_ODR_INQ_TGT_DTLS CC
+                                                    ON  CC.SES_ID = #{sesId}
+                                                    AND CC.INQ_COND_DTLS = #{inqCondDtls}
+                                                    AND CC.COL_ITM = 'BZPLC_ID'
+                                                    AND CC.COND_DATA_VAL = A.BZPLC_ID
+                                        </if>
+                                        INNER JOIN
+                                        TB_PR_PRD_INFO C --SSP상품정보
+                                        ON   C.CO_CD = A.CO_CD
+                                        AND  C.PRD_ID = A.PRD_ID
+                                        AND  C.MALL_SPR_CD = '10'
+                                        INNER JOIN TB_PR_MRO_PRD_INFO D --MRO상품정보
+                                        ON   D.CO_CD = C.CO_CD
+                                        AND  D.PRD_ID = C.PRD_ID
+                                    	<include refid="ListWhereJoinPrdId" />
+										<include refid="ListWhereJoinBzplcId" />
+                                WHERE   1=1
+                                  AND  D.CO_CD = #{coCd}
+                                  AND  D.PUB_ONLY_SPR_CD = 'P'
+                                <if test="dateCd != null and dateCd!= ''.toString()">
+                                    <if test="strDtm != null and strDtm!= ''.toString() and endDtm != null and endDtm!= ''.toString()">
+                                        AND A.FST_HST_YN = 'Y'
+                                        AND A.REG_DTM BETWEEN TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS') AND TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')-1/(3600*24)
+                                    </if>
+                                </if>
+                                )   A
+                        WHERE 1=1
+                            <if test="dateCd != null and dateCd != '10'">
+                                AND A.RN_ASC = 1
+                            </if>
+                            <if test="dateCd eq null or dateCd eq '10'">
+                                AND A.RN_DESC = 1
+                            </if>) A --영업지정판매가정보
+			LEFT OUTER JOIN TB_DP_PRD_DISP_STATS_INFO C --진열정보
+			    ON C.CO_CD = A.CO_CD AND C.PRD_ID = A.PRD_ID AND C.BZPLC_ID = '*'
+			LEFT OUTER JOIN TB_PR_MNFR_INFO E --제조원
+			    ON E.CO_CD = A.CO_CD AND E.MNFR_NO = A.MNFR_NO
+			LEFT OUTER JOIN TB_CC_BZPLC_BASIS F --사업장정보
+			    ON F.CO_CD = A.CO_CD AND F.BZPLC_ID = A.BZPLC_ID
+			LEFT OUTER JOIN TB_PC_PRD_PRC_HST  H --가격정보
+			    ON H.CO_CD = A.CO_CD AND H.PRD_ID = A.PRD_ID AND H.BZPLC_ID = '*' AND TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN H.BSS_SALSPRC_STR_DTM AND H.BSS_SALSPRC_END_DTM
+			LEFT OUTER JOIN (
+			           SELECT A.CO_CD, A.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD ,B.ORG_CD
+			           FROM TB_PR_PRD_CLSF_CHRPSN_INFO A
+			           INNER JOIN TB_CO_MBR_OPRTR_INFO B
+			           ON A.CO_CD = B.CO_CD
+			           AND A.PRD_CLSF_CHRPSN_ID = B.OPRTR_ID
+			           WHERE A.PRD_CLSF_CHRPSN_SPR_CD = '10'
+			           AND A.PRD_CLSF_CHRPSN_TP_CD = '20'
+			        )I -- MD담당자
+				ON I.CO_CD = A.CO_CD AND I.PRD_CLCD = A.PRD_CLCD
+			LEFT OUTER JOIN TB_CO_CTRY_INFO J -- 국가
+			    ON J.CO_CD = A.CO_CD AND J.CTRY_SPR_CD = A.ORGPLC_CTRY_CD
+			LEFT OUTER JOIN TB_PR_REPR_PRD_MNG_DTL K  --대표상품
+			    ON K.CO_CD = A.CO_CD AND K.PRD_ID = A.PRD_ID AND K.SSP_PRD_YN = 'Y'
+			<include refid="ListWhereJoinReprPrdGrpId" />
+			LEFT OUTER JOIN TB_PR_PRD_CLSF_INFO L --카테고리정보
+			    ON L.CO_CD = A.CO_CD AND L.PRD_CLCD = A.PRD_CLCD
+			WHERE A.CO_CD = #{coCd}
+			AND A.PUB_ONLY_SPR_CD = 'P'
+			<include refid="ListWhere" />
+		
+    </select>
+    
+</mapper>

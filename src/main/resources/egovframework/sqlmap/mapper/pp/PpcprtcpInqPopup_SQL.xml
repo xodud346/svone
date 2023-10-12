@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+******************************************************************************
+* SELECT : 제조원관리
+* 작성자 : 
+* 작성 일자 : 2022.02.22
+******************************************************************************
+-->
+<mapper namespace="PpcprtcpInqPopup">
+    
+    <select id="selectManufacturerCount" parameterType="HashMap" resultType="Integer">
+        /* PrManufacturer.selectManufacturerCount */
+        SELECT
+            COUNT(*)
+        FROM
+            SSP_APP.TB_CP_CPRTCP_BASIS A
+            WHERE 1=1
+            AND CPRTCP_ID NOT LIKE 'A%'
+            AND NVL(DEAL_TRMN_YN,'N')  = 'N'
+            AND ROWNUM <![CDATA[<= ]]> 1000
+        <include refid="manufacturerWhere"/>
+    </select>
+    
+    <!-- 제조원 목록 -->
+    <select id="selectManufacturerList" parameterType="HashMap" resultType="HashMap">
+        /* PrManufacturer.selectManufacturerList */
+        SELECT
+            CO_CD,
+            CPRTCP_ID,
+            CPRTCP_KOR_NM
+        FROM
+            SSP_APP.TB_CP_CPRTCP_BASIS
+        WHERE 1=1
+            AND CPRTCP_ID NOT LIKE 'A%'
+            AND NVL(DEAL_TRMN_YN,'N')  = 'N'
+            AND ROWNUM <![CDATA[<= ]]> 1000
+            <include refid="manufacturerWhere"/>
+    </select>
+    
+    <sql id="manufacturerWhere">
+        
+        <if test="CPRTCP_ID != null and CPRTCP_ID != ''">
+            AND CPRTCP_ID like '%'||#{CPRTCP_ID}||'%'
+        </if>
+        <if test="CPRTCP_KOR_NM != null and CPRTCP_KOR_NM != ''">
+            AND CPRTCP_KOR_NM like '%'||#{CPRTCP_KOR_NM}||'%'
+        </if>
+		
+    </sql>
+    
+</mapper>

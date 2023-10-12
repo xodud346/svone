@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcPrdPrc">
+
+	<update id="updatePrdPrc" statementType="CALLABLE">
+    { Call SP_PC_PRD_PRC_HST_ONLINE(
+                 #{rtnCd,         mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴코드 */
+               , #{rtnMsg,        mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴메시지 */
+               , #{sesId,          mode=IN, jdbcType=VARCHAR}
+               , #{inqCondDtls,         mode=IN, jdbcType=VARCHAR}
+               , #{colItm,         mode=IN, jdbcType=VARCHAR}
+               , #{updpsnId,      mode=IN, jdbcType=VARCHAR}
+    )}
+    </update>
+    
+	<sql id="PrcHistoryWhere">
+		AND B.CO_CD = #{coCd}
+		AND B.PRD_ID = LPAD(#{prdId},18,'0')
+		<if test="strDtm != null and strDtm != ''.toString()">
+			<![CDATA[
+		    AND B.REG_DTM >= TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS')
+		    ]]>
+		</if>
+		<if test="endDtm != null and endDtm != ''.toString()">
+		    <![CDATA[
+		    AND B.REG_DTM < TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')
+		    ]]>
+		</if>
+		<if test="useYn != null and useYn != ''.toString()">
+		    AND	A.USE_YN = #{useYn}
+		</if>
+	</sql>
+
+	<select id="selectPrcHistoryCount" parameterType="HashMap" resultType="integer">
+		/* PcPrdPrc.selectPrcHistoryCount */
+		SELECT
+			COUNT(*)
+		FROM
+		(
+			SELECT
+				ROW_NUMBER() OVER (PARTITION BY B.CO_CD, B.PRD_ID, B.BZPLC_ID, B.SEQ ORDER BY B.UPD_DTM DESC) RN,
+				B.CO_CD,
+				B.REG_DTM,
+				B.BSS_PCPRC,
+				B.BSS_SALSPRC_CURR_UNIT_CD,
+				B.STPRC,
+				B.PURG_DSGN_SALSPRC,
+				B.DSTRB_STD_PRC,
+				B.MRK_LWST_SALSPRC,
+				B.INTL_LWST_SALSPRC,
+				B.SSP_BSS_SALSPRC,
+				'KRW' AS CUR_UNT_CD,
+				B.REGPSN_ID,
+				A.DISP_STATS_CD
+			FROM TB_PC_PRD_PRC_HST B
+			LEFT JOIN TB_DP_PRD_DISP_STATS_INFO_HST A
+				ON 0=0
+				AND B.CO_CD = A.CO_CD
+				AND B.PRD_ID = A.PRD_ID
+				AND B.UPD_DTM <![CDATA[>=]]> A.UPD_DTM
+			<where>
+			 	<include refid="PrcHistoryWhere" />
+			</where>
+		)A
+		LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+		ON A.CO_CD = B.CO_CD
+			AND A.REGPSN_ID = B.OPRTR_ID
+		WHERE 0=0
+			AND RN=1
+	</select>
+
+	<select id="selectPrcHistoryList" parameterType="HashMap" resultType="HashMap">
+		/* PcPrdPrc.selectPrcHistoryList */
+		SELECT
+			A.*,
+			B.OPRTR_NM,
+			FN_COM_DTL_CDNM('KO','DISP_STATS_CD',A.DISP_STATS_CD) AS DISP_STATS_NM,
+			TO_NUMBER(A.PRD_ID) AS PRD_ID_VIEW
+		FROM
+		(
+			SELECT
+				ROW_NUMBER() OVER (PARTITION BY B.CO_CD, B.PRD_ID, B.BZPLC_ID, B.SEQ ORDER BY B.UPD_DTM DESC) RN,
+				B.PRD_ID,
+				B.CO_CD,
+				B.REG_DTM,
+				B.BSS_PCPRC,
+				B.BSS_SALSPRC_CURR_UNIT_CD,
+				B.STPRC,
+				B.PURG_DSGN_SALSPRC,
+				B.DSTRB_STD_PRC,
+				B.MRK_LWST_SALSPRC,
+				B.INTL_LWST_SALSPRC,
+				B.SSP_BSS_SALSPRC,
+				'KRW' AS CUR_UNT_CD,
+				B.REGPSN_ID,
+				A.DISP_STATS_CD
+			FROM TB_PC_PRD_PRC_HST B
+			LEFT JOIN TB_DP_PRD_DISP_STATS_INFO_HST A
+				ON 0=0
+				AND B.CO_CD = A.CO_CD
+				AND B.PRD_ID = A.PRD_ID
+				AND B.UPD_DTM <![CDATA[>=]]> A.UPD_DTM
+			<where>
+			 	<include refid="PrcHistoryWhere" />
+			</where>
+
+		)A
+		LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+		ON A.CO_CD = B.CO_CD
+			AND A.REGPSN_ID = B.OPRTR_ID
+		WHERE 0=0
+			AND RN=1
+		ORDER BY A.REG_DTM DESC
+		OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+	</select>
+
+	<select id="selectCurrentDate" parameterType="HashMap" resultType="HashMap">
+		SELECT SYSDATE AS CURRENT_DATE FROM DUAL
+	</select>
+
+	<select id="selectCurrentDtm" parameterType="HashMap" resultType="sspMap">
+        SELECT TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') AS CURR_DTM FROM DUAL
+</select>
+
+	<insert id="insertToPrdPrcHst" parameterType="hashMap">
+    /* PcPrdPrc.insertToPrdPrcHst */
+    INSERT INTO TB_PC_PRD_PRC_HST(CO_CD,BZPLC_ID,PRD_ID,SEQ,BSS_PCPRC,PLN_PRFRT,STPRC,DSTRB_STD_PRC,MRK_LWST_SALSPRC,INTL_LWST_SALSPRC,
+            PURG_DSGN_SALSPRC,SSP_CURR_BSS_SALSPRC,BSS_SALSPRC_CURR_UNIT_CD,EXCHRT_APLY_YM,SSP_BSS_SALSPRC,
+            BSS_SALSPRC_STR_DTM,BSS_SALSPRC_END_DTM,FST_HST_YN,LWST_BUY_CPRTCP_ID,
+            SALSPRC_CAL_BSS_CD,REGPSN_ID,REG_DTM,UPDPSN_ID,UPD_DTM)
+    VALUES(#{coCd},#{bzplcId},#{prdId},FN_PC_HIST_SEQ_CRT('PRD_PRC_HST'), #{bssPcprc}, #{plnPrfrt}, #{stprc}, #{dstrbStdPrc}, #{mrkLwstSalsprc}, #{intlLwstSalsprc}
+            , #{purgDsgnSalsprc}, #{sspCurrBssSalsprc}, #{bssSalsprcCurrUnitCd}, #{exchrtAplyYm}, #{sspBssSalsprc},#{bssSalsprcStrDtm},
+              #{bssSalsprcEndDtm},#{fstHstYn}, #{lwstBuyCprtcpId},
+              #{salsprcCalBssCd}, #{regpsnId},SYSDATE,#{updpsnId},SYSDATE)
+    </insert>
+
+    <update id="updateToPrdPrcHst" parameterType="hashMap">
+    /* PcPrdPrc.updateToPrdPrcHst */
+    UPDATE TB_PC_PRD_PRC_HST T
+        SET   UPDPSN_ID = #{updpsnId}
+            , UPD_DTM = SYSDATE
+            , BSS_PCPRC = #{bssPcprc}
+            , PLN_PRFRT = #{plnPrfrt}
+            , STPRC = #{stprc}
+            , DSTRB_STD_PRC = #{dstrbStdPrc}
+            , MRK_LWST_SALSPRC = #{mrkLwstSalsprc}
+            , INTL_LWST_SALSPRC = #{intlLwstSalsprc}
+            , PURG_DSGN_SALSPRC = #{purgDsgnSalsprc}
+            , SSP_CURR_BSS_SALSPRC = #{sspCurrBssSalsprc}
+            , BSS_SALSPRC_CURR_UNIT_CD = #{bssSalsprcCurrUnitCd}
+            , EXCHRT_APLY_YM = #{exchrtAplyYm}
+            , SSP_BSS_SALSPRC = #{sspBssSalsprc}
+            , BSS_SALSPRC_STR_DTM = #{bssSalsprcStrDtm}
+            , BSS_SALSPRC_END_DTM = #{bssSalsprcEndDtm}
+            , SALSPRC_CAL_BSS_CD = #{salsprcCalBssCd}
+    WHERE  T.CO_CD = #{coCd}
+      and  T.BZPLC_ID = #{bzplcId}
+      and  T.PRD_ID = LPAD(#{prdId},18,0)
+      and  T.SEQ = #{seq}
+    </update>
+
+     <insert id="insertPcPrdPrcHistLast" statementType="CALLABLE">
+    { Call SP_PC_PRD_PRC_HST(
+                 #{rtnCd,         mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴코드 */
+               , #{rtnMsg,        mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴메시지 */
+               , #{iudGb,        mode=IN, jdbcType=VARCHAR}
+               , #{coCd,          mode=IN, jdbcType=VARCHAR}
+               , #{bzplcId,       mode=IN, jdbcType=VARCHAR}
+               , #{prdId,         mode=IN, jdbcType=VARCHAR}
+               , #{bssSalsprcStrDtm,     mode=IN, jdbcType=VARCHAR}
+               , #{regpsnId,      mode=IN, jdbcType=VARCHAR}
+    )}
+    </insert>
+
+	<select id="selectPcPrdPrcHistCount" parameterType="hashMap" resultType="INTEGER">
+		SELECT COUNT(1)
+		FROM TB_PC_PRD_PRC_HST
+		WHERE CO_CD = #{coCd}
+		AND PRD_ID = LPAD(#{prdId},18,0)
+		AND BSS_SALSPRC_STR_DTM = #{bssSalsprcStrDtm}
+		AND SSP_BSS_SALSPRC = #{sspBssSalsprc}
+	</select>
+
+	<select id="selectPcPrdPrcFstHstCount" parameterType="hashMap" resultType="INTEGER">
+		SELECT COUNT(1)
+		FROM TB_PC_PRD_PRC_HST
+		WHERE CO_CD = #{coCd}
+		  AND PRD_ID = LPAD(#{prdId},18,0)
+		  AND FST_HST_YN ='Y'
+	</select>
+</mapper>

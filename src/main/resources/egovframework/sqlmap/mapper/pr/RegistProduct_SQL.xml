@@ -1,0 +1,1036 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PrRegistProduct">
+   
+    <select id="selectRegistProductCount" parameterType="HashMap" resultType="Integer">
+        /* PrRegistProduct.selectRegistProductCount */
+        SELECT
+            /*+ USE_NL(SPRD MPRD) USE_HASH(GRP) INDEX(SPRD TB_PR_PRD_INFO_PK) */ COUNT(SPRD.PRD_ID)
+        FROM
+            SSP_APP.TB_PR_PRD_INFO SPRD  --상품기본정보
+            INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO MPRD    --MRO상품기본정보
+                 ON SPRD.CO_CD = MPRD.CO_CD AND SPRD.PRD_ID = MPRD.PRD_ID AND SPRD.MALL_SPR_CD = '10'
+            LEFT OUTER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_DTL REPR  --대표상품
+                 ON SPRD.CO_CD = REPR.CO_CD AND SPRD.PRD_ID = REPR.PRD_ID AND REPR.SSP_PRD_YN = 'Y'
+            LEFT OUTER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_BASIS REPRB   --대표상품
+                 ON REPRB.CO_CD = REPR.CO_CD AND REPR.REPR_PRD_GRP_ID = REPRB.REPR_PRD_GRP_ID
+            LEFT OUTER JOIN (SELECT CO_CD, REPR_PRD_GRP_ID, REPR_PRD_SPR_YN, MIN(REPR_PRD_SPR_RSN_CD) REPR_PRD_SPR_RSN_CD FROM TB_PR_REPR_PRD_MNG_DTL 
+                            WHERE SSP_PRD_YN = 'Y' AND REPR_PRD_SPR_RSN_CD IN ('1', '2') AND REPR_PRD_SPR_YN = 'Y'
+                            GROUP BY CO_CD, REPR_PRD_GRP_ID, REPR_PRD_SPR_YN) MIN_REPR 
+                ON MIN_REPR.CO_CD = REPR.CO_CD AND MIN_REPR.REPR_PRD_GRP_ID = REPR.REPR_PRD_GRP_ID 
+            INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR   --제조원
+                ON MNFR.CO_CD = MPRD.CO_CD AND MNFR.MNFR_NO = MPRD.MNFR_NO
+            INNER JOIN SSP_APP.TB_PR_PRD_CLSF_INFO CLSF    --SSP카테고리
+                 ON SPRD.CO_CD = CLSF.CO_CD AND SPRD.PRD_CLCD = CLSF.PRD_CLCD AND SPRD.MALL_SPR_CD = CLSF.MALL_SPR_CD 
+            INNER JOIN SSP_APP.TB_PR_MRO_PRD_CLSF_INFO MROCLSF  --MRO카테고리
+                 ON MPRD.CO_CD = MROCLSF.CO_CD AND MPRD.MRO_PRD_CLCD = MROCLSF.MRO_PRD_CLCD 
+            LEFT OUTER JOIN (SELECT GRP.CO_CD, GRP.PRD_ID, MIN(GRP.PRD_GRP_ID) PRD_GRP_ID FROM SSP_APP.TB_PR_PRD_GRP_DTL GRP INNER JOIN SSP_APP.TB_PR_PRD_GRP_BASIS B ON GRP.PRD_GRP_ID = B.PRD_GRP_ID AND B.USE_YN = 'Y' GROUP BY GRP.CO_CD, GRP.PRD_ID) GRP  --그룹(시리즈)
+                 ON GRP.CO_CD = SPRD.CO_CD AND SPRD.PRD_ID = GRP.PRD_ID
+            LEFT OUTER JOIN SSP_APP.TB_SA_BG_INFO BG  --배지
+                 ON BG.CO_CD = SPRD.CO_CD AND BG.BG_SEQ = SPRD.BG_SEQ AND BG.USE_YN = 'Y' AND SYSDATE BETWEEN SPRD.BG_APLY_STR_DTM AND SPRD.BG_APLY_END_DTM 
+            LEFT OUTER JOIN SSP_APP.TB_PR_DISP_BASIS DISP     --전시상품
+                 ON DISP.CO_CD = SPRD.CO_CD AND DISP.PRD_CLCD = SPRD.PRD_CLCD 
+            LEFT OUTER JOIN (SELECT PS.CO_CD, PS.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD
+                            FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP, SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO PS     --상품담당자
+                            WHERE OP.CO_CD = PS.CO_CD AND OP.OPRTR_ID = PS.PRD_CLSF_CHRPSN_ID  AND PS.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                            AND PS.PRD_CLSF_CHRPSN_TP_CD = '10'  AND PS.PRD_CLSF_CHRPSN_USEYN = 'Y' AND PS.MNFR_NO = '*') PRDPSN
+                ON CLSF.CO_CD = PRDPSN.CO_CD AND CLSF.PRD_CLCD = PRDPSN.PRD_CLCD
+            LEFT OUTER JOIN (SELECT PS.CO_CD, PS.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD
+                            FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP, SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO PS     --MD담당자
+                            WHERE OP.CO_CD = PS.CO_CD AND OP.OPRTR_ID = PS.PRD_CLSF_CHRPSN_ID  AND PS.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                            AND PS.PRD_CLSF_CHRPSN_TP_CD = '20' AND PS.PRD_CLSF_CHRPSN_USEYN = 'Y' AND PS.MNFR_NO = '*') MDPSN
+                ON CLSF.CO_CD = MDPSN.CO_CD AND CLSF.PRD_CLCD = MDPSN.PRD_CLCD
+            LEFT OUTER JOIN (SELECT
+                            DISTINCT ID.CO_CD
+                                , ID.PRD_CLCD
+                                , SSP_APP.FN_PR_CLSF_IDDT_LIST(ID.CO_CD, ID.PRD_CLCD,'ID') IDDT_ID
+                                , SSP_APP.FN_PR_CLSF_IDDT_LIST(ID.CO_CD, ID.PRD_CLCD) IDDT_NM
+                            FROM SSP_APP.TB_PR_PRD_CLSF_IDDT_MAPP ID
+                                , SSP_APP.TB_CC_IDDT_BASIS IDB
+                            WHERE IDB.IDDT_ID = ID.IDDT_ID
+                            AND IDB.USE_YN ='Y') IDM
+            ON CLSF.CO_CD = IDM.CO_CD AND CLSF.PRD_CLCD = IDM.PRD_CLCD
+        WHERE 1=1
+        <include refid="PrCommonIncludeSql.PrRegistProductListWhere"/>
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : 등록상품 목록 (작업중)
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.03.14
+    ******************************************************************************
+    -->
+    <select id="selectRegistProductList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectRegistProductList */
+        SELECT /*+ USE_NL(SPRD MPRD) USE_HASH(GRP) INDEX(SPRD TB_PR_PRD_INFO_PK) */
+            SPRD.CO_CD ,   --회사코드
+            SPRD.PRD_ID ,    --상품ID
+            TO_NUMBER(SPRD.PRD_ID) PRD_ID_VIEW,    --상품ID
+            GRP.PRD_GRP_ID, --시리즈그룹ID
+            SPRD.PRD_CLCD ,  --카테고리ID
+            --SSP_APP.FN_PR_FULL_CLSF_NM(SPRD.CO_CD, SPRD.PRD_CLCD) PRD_CLSF_NM,   --카테고리명
+            CLSF.FULL_PRD_CLSF_NM PRD_CLSF_NM,   --카테고리명
+            SPRD.PRD_NM ,    --상품명
+            SSP_APP.FN_PR_ATTR_VAL_LIST(SPRD.CO_CD, SPRD.PRD_ID) ATTR_VAL, --속성명(대표규격)
+            SSP_APP.FN_PR_ATTR_VAL_LIST_ALL(SPRD.CO_CD, SPRD.PRD_ID) ATTR_VAL_ALL, --속성명(대표규격)
+            MPRD.MNFR_NO, --제조사번호
+            MNFR.MNFR_NM ,  --제조사명
+            CASE WHEN BASIS_UNIT_CD = NVL(SELL_UNIT_CD, BASIS_UNIT_CD) 
+                     THEN NVL(BASIS_UNIT_QTY, '1') || BASIS_UNIT_CD
+                     ELSE NVL(SELL_UNIT_QTY, '1') || SELL_UNIT_CD || '(' || NVL(BASIS_UNIT_QTY, '1') || BASIS_UNIT_CD || ')' 
+                END AS SELL_UNIT_CD,    --주문단위
+            SPRD.BRND_NM,    --브랜드명
+            SPRD.HASH_TAG,   --해시태그
+            REPR.REPR_PRD_GRP_ID ,  --대표상품그룹ID
+            TO_NUMBER(REPR.REPR_PRD_GRP_ID) REPR_PRD_GRP_ID_VIEW ,  --대표상품그룹ID
+            NVL(SSP_APP.FN_COM_DTL_CDNM('KO', 'REPR_PRD_SPR_CD', DECODE(REPR.REPR_PRD_SPR_YN, 'N', '3', MIN_REPR.REPR_PRD_SPR_RSN_CD)),'미사용') REPR_PRD_SPR_CD,   --대표상품구분코드 피통합,가격,품질
+            (SELECT TO_NUMBER(D.PRD_ID) FROM TB_PR_REPR_PRD_MNG_DTL D WHERE D.REPR_PRD_GRP_ID = REPR.REPR_PRD_GRP_ID AND D.REPR_PRD_SPR_RSN_CD = MIN_REPR.REPR_PRD_SPR_RSN_CD) REPR_PRD_ID_VIEW, --대표상품ID
+            SSP_APP.FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD',MPRD.PUB_ONLY_SPR_CD) PUB_ONLY_SPR_CD, --공용전용구분코드
+            SSP_APP.FN_COM_DTL_CDNM('KO','USE_YN', SPRD.PRD_USE_YN) PRD_STATS_CD, --SSP상품상태
+            SSP_APP.FN_COM_DTL_CDNM('KO', 'MRO_PRD_STATS_CD', MPRD.MRO_PRD_STATS_CD) MRO_PRD_STATS_CD,    --MRO상품상태코드
+            SSP_APP.FN_COM_DTL_CDNM('KO', 'PRC_APLY_SPR_CD', DECODE(CLSF.MCND_PRD_YN, 'Y', '10', SPRD.PRC_APLY_SPR_CD)) PRC_APLY_SPR_CD,    --가격대상
+            BG.BG_NM,   --배지명
+            SSP_APP.FN_COM_DTL_CDNM('KO', 'DISP_PRD_SPR_CD', DISP.DISP_PRD_SPR_CD) DISP_PRD_SPR_CD, --전시상품구분코드
+            PRDPSN.OPRTR_ID PRD_OPRTR_ID, --상품담당자ID
+            PRDPSN.OPRTR_NM PRD_OPRTR_NM, --상품담당자이름
+            MDPSN.OPRTR_ID MD_OPRTR_ID,   --MD담당자ID
+            MDPSN.OPRTR_NM MD_OPRTR_NM,   --MD담당자이름
+            TO_CHAR(SPRD.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') REG_DTM,   --등록일
+            TO_CHAR(SPRD.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') UPD_DTM,     --수정일
+            SSP_APP.FN_PR_GET_SSP_PRD_NM(SPRD.CO_CD, SPRD.PRD_ID) SSP_PRD_NM,  /* SSP상품명 */
+            NVL(SPRD.SSP_PRD_NM_CHG_YN, 'N') SSP_PRD_NM_CHG_YN,
+            SSP_APP.FN_PR_CLSF_IDDT_LIST(SPRD.CO_CD, SPRD.PRD_CLCD) IDDT_NM
+        FROM
+            SSP_APP.TB_PR_PRD_INFO SPRD  --상품기본정보
+            INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO MPRD    --MRO상품기본정보
+                ON SPRD.CO_CD = MPRD.CO_CD AND SPRD.PRD_ID = MPRD.PRD_ID AND SPRD.MALL_SPR_CD = '10'
+            LEFT OUTER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_DTL REPR  --대표상품
+                ON SPRD.CO_CD = REPR.CO_CD AND SPRD.PRD_ID = REPR.PRD_ID AND REPR.SSP_PRD_YN = 'Y'
+            LEFT OUTER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_BASIS REPRB   --대표상품
+                ON REPRB.CO_CD = REPR.CO_CD AND REPR.REPR_PRD_GRP_ID = REPRB.REPR_PRD_GRP_ID
+            LEFT OUTER JOIN (SELECT CO_CD, REPR_PRD_GRP_ID, REPR_PRD_SPR_YN, MIN(REPR_PRD_SPR_RSN_CD) REPR_PRD_SPR_RSN_CD FROM TB_PR_REPR_PRD_MNG_DTL 
+                            WHERE SSP_PRD_YN = 'Y' AND REPR_PRD_SPR_RSN_CD IN ('1', '2') AND REPR_PRD_SPR_YN = 'Y'
+                            GROUP BY CO_CD, REPR_PRD_GRP_ID, REPR_PRD_SPR_YN) MIN_REPR 
+                ON MIN_REPR.CO_CD = REPR.CO_CD AND MIN_REPR.REPR_PRD_GRP_ID = REPR.REPR_PRD_GRP_ID 
+            INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR   --제조원
+                ON MNFR.CO_CD = MPRD.CO_CD AND MNFR.MNFR_NO = MPRD.MNFR_NO
+            INNER JOIN (SELECT 
+		                CO_CD,
+		                PRD_CLCD,
+		                PRD_CLSF_NM,
+		                MALL_SPR_CD,
+		                MCND_PRD_YN,
+		                SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLSF_NM, '>'),2) AS FULL_PRD_CLSF_NM
+		            FROM 
+		                SSP_APP.TB_PR_PRD_CLSF_INFO
+		            START WITH HIER_LVL = 1
+		            CONNECT BY PRIOR PRD_CLCD = HRNK_PRD_CLCD) CLSF    --SSP카테고리
+                ON SPRD.CO_CD = CLSF.CO_CD AND SPRD.PRD_CLCD = CLSF.PRD_CLCD AND SPRD.MALL_SPR_CD = CLSF.MALL_SPR_CD 
+            INNER JOIN SSP_APP.TB_PR_MRO_PRD_CLSF_INFO MROCLSF  --MRO카테고리
+                ON MPRD.CO_CD = MROCLSF.CO_CD AND MPRD.MRO_PRD_CLCD = MROCLSF.MRO_PRD_CLCD 
+            LEFT OUTER JOIN (SELECT GRP.CO_CD, GRP.PRD_ID, MIN(GRP.PRD_GRP_ID) PRD_GRP_ID FROM SSP_APP.TB_PR_PRD_GRP_DTL GRP INNER JOIN SSP_APP.TB_PR_PRD_GRP_BASIS B ON GRP.PRD_GRP_ID = B.PRD_GRP_ID AND B.USE_YN = 'Y' GROUP BY GRP.CO_CD, GRP.PRD_ID) GRP  --그룹(시리즈)
+                ON GRP.CO_CD = SPRD.CO_CD AND SPRD.PRD_ID = GRP.PRD_ID
+            LEFT OUTER JOIN SSP_APP.TB_SA_BG_INFO BG  --배지
+                ON BG.CO_CD = SPRD.CO_CD AND BG.BG_SEQ = SPRD.BG_SEQ AND BG.USE_YN = 'Y' AND SYSDATE BETWEEN SPRD.BG_APLY_STR_DTM AND SPRD.BG_APLY_END_DTM 
+            LEFT OUTER JOIN SSP_APP.TB_PR_DISP_BASIS DISP     --전시상품
+                ON DISP.CO_CD = SPRD.CO_CD AND DISP.PRD_CLCD = SPRD.PRD_CLCD 
+            LEFT OUTER JOIN (SELECT PS.CO_CD, PS.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD
+                            FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP, SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO PS     --상품담당자
+                            WHERE OP.CO_CD = PS.CO_CD AND OP.OPRTR_ID = PS.PRD_CLSF_CHRPSN_ID  AND PS.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                            AND PS.PRD_CLSF_CHRPSN_TP_CD = '10'  AND PS.PRD_CLSF_CHRPSN_USEYN = 'Y' AND PS.MNFR_NO = '*') PRDPSN
+                ON CLSF.CO_CD = PRDPSN.CO_CD AND CLSF.PRD_CLCD = PRDPSN.PRD_CLCD
+            LEFT OUTER JOIN (SELECT PS.CO_CD, PS.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD
+                            FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP, SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO PS     --MD담당자
+                            WHERE OP.CO_CD = PS.CO_CD AND OP.OPRTR_ID = PS.PRD_CLSF_CHRPSN_ID  AND PS.PRD_CLSF_CHRPSN_SPR_CD = '10'
+                            AND PS.PRD_CLSF_CHRPSN_TP_CD = '20' AND PS.PRD_CLSF_CHRPSN_USEYN = 'Y' AND PS.MNFR_NO = '*') MDPSN
+                ON CLSF.CO_CD = MDPSN.CO_CD AND CLSF.PRD_CLCD = MDPSN.PRD_CLCD
+            LEFT OUTER JOIN (SELECT
+                            DISTINCT ID.CO_CD
+                            , ID.PRD_CLCD
+                            , SSP_APP.FN_PR_CLSF_IDDT_LIST(ID.CO_CD, ID.PRD_CLCD,'ID') IDDT_ID
+                            , SSP_APP.FN_PR_CLSF_IDDT_LIST(ID.CO_CD, ID.PRD_CLCD) IDDT_NM
+                            FROM SSP_APP.TB_PR_PRD_CLSF_IDDT_MAPP ID
+                            , SSP_APP.TB_CC_IDDT_BASIS IDB
+                            WHERE IDB.IDDT_ID = ID.IDDT_ID
+                            AND IDB.USE_YN ='Y') IDM
+                ON CLSF.CO_CD = IDM.CO_CD AND CLSF.PRD_CLCD = IDM.PRD_CLCD
+        WHERE 1=1
+        <include refid="PrCommonIncludeSql.PrRegistProductListWhere"/>
+        <choose>
+            <when test="SORT_COLUMN != null and SORT_COLUMN != ''">
+                ORDER BY ${SORT_COLUMN} ${SORT_TYPE}
+            </when>
+            <otherwise>
+                ORDER BY SPRD.REG_DTM DESC, SPRD.UPD_DTM, SPRD.PRD_ID DESC
+            </otherwise>
+        </choose>
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * SELECT : SSP추가상품상세
+    * 작성자 : 조지훈
+    * 작성 일자 : 2022.03.22
+    ******************************************************************************
+    -->
+    <select id="selectRegistProductBasicInfo" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectRegistProductBasicInfo */
+        SELECT 
+            TB.*,
+            TO_NUMBER(PRD_ID) PRD_ID_VIEW,
+            TO_NUMBER(REPR_PRD_ID) REPR_PRD_ID_VIEW,
+            TO_NUMBER(REPR_PRD_GRP_ID) REPR_PRD_GRP_ID_VIEW
+        FROM (
+            SELECT
+                MROPRD.CO_CD,   --회사코드
+                MROPRD.PRD_ID,  --상품ID
+                (SELECT D.PRD_ID FROM TB_PR_REPR_PRD_MNG_DTL D WHERE D.REPR_PRD_GRP_ID = REPR.REPR_PRD_GRP_ID AND D.REPR_PRD_SPR_RSN_CD = MIN_REPR.REPR_PRD_SPR_RSN_CD) REPR_PRD_ID, --대표상품ID
+                REPR.REPR_PRD_GRP_ID ,  --대표상품그룹ID
+                REPRB.REPR_PRD_GRP_USEYN ,  --대표상품그룹사용여부
+                MROPRD.PRD_NM,  --상품명
+                MROPRD.MRO_PRD_STATS_CD ,   --MRO상품상태코드
+                SSP_APP.FN_COM_DTL_CDNM('KO', 'MRO_PRD_STATS_CD', MROPRD.MRO_PRD_STATS_CD) MRO_PRD_STATS_CD_NM,    --MRO상품상태코드
+                SSP_APP.FN_PR_ATTR_VAL_LIST(MROPRD.CO_CD, MROPRD.PRD_ID) ATTR_VAL, --속성명(대표규격)
+                SSP_APP.FN_PR_ATTR_VAL_LIST_ALL(MROPRD.CO_CD, MROPRD.PRD_ID) ATTR_VAL_ALL, --속성명(대표규격)
+                SSP_APP.FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD',MROPRD.PUB_ONLY_SPR_CD) PUB_ONLY_SPR_CD, --공용전용구분코드
+                CASE WHEN BASIS_UNIT_CD = NVL(SELL_UNIT_CD, BASIS_UNIT_CD) 
+                	THEN NVL(BASIS_UNIT_QTY, '1') || BASIS_UNIT_CD
+                	ELSE NVL(SELL_UNIT_QTY, '1') || SELL_UNIT_CD || '(' || NVL(BASIS_UNIT_QTY, '1') || BASIS_UNIT_CD || ')' 
+                	END AS SELL_UNIT_CD,  -- 고객노출주문단위
+                MNFR.MNFR_NO,  --제조사번호
+                MNFR.MNFR_NM,  --제조사명
+                MROPRD.ORGPLC_CTRY_CD ORGPLC_CTRY_CD,
+                (SELECT CTRY_NM FROM SSP_APP.TB_CO_CTRY_INFO CTRY WHERE CTRY.CO_CD = MROPRD.CO_CD AND CTRY.CTRY_SPR_CD = MROPRD.ORGPLC_CTRY_CD)  ORGPLC_CTRY_CD_NM, --원산지
+                DECODE(MROPRD.MULT_SELL_UNIT_QTY, 0, '', MROPRD.MULT_SELL_UNIT_QTY) MULT_SELL_UNIT_QTY, --배수주문수량
+                SSP_APP.FN_COM_DTL_CDNM('KO','MALL_SPR_CD',MROPRD.MALL_SPR_CD) MALL_SPR_CD, --몰구분
+                TO_CHAR(REPRB.REG_DTM , 'YYYY-MM-DD HH24:MI:SS') REPR_REG_DTM, --대표상품등록일
+                TO_CHAR(PRD.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') SSP_REG_DTM, --SSP등록일
+                TO_CHAR(PRD.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') SSP_UPD_DTM, --SSP수정일
+                PRD.PRD_CLCD, --SSP카테고리
+                MROPRD.QCK_DLV_YN MROPRD_QCK_DLV_YN,  --빠른배송여부
+                PRD.PRD_DTL_DESC,  --상품상세설명
+                MROPRD.MRO_PRD_CLCD,  --MRO상품분류코드
+                MROPRD.PURG_CHRPSN_ID PURG_OPRTR_ID,    --구매담당자
+                (SELECT OPR.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = MROPRD.CO_CD AND OPR.OPRTR_ID = MROPRD.PURG_CHRPSN_ID) PURG_OPRTR_NM,
+                PRDPSN.PRD_CLSF_CHRPSN_ID PRD_OPRTR_ID, --상품담당자
+                (SELECT OPR.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = MROPRD.CO_CD AND OPR.OPRTR_ID = PRDPSN.PRD_CLSF_CHRPSN_ID) PRD_OPRTR_NM,
+                MDPSN.PRD_CLSF_CHRPSN_ID MD_OPRTR_ID,   --MD담당자
+                (SELECT OPR.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = MROPRD.CO_CD AND OPR.OPRTR_ID = MDPSN.PRD_CLSF_CHRPSN_ID) MD_OPRTR_NM,
+                PRD_USE_YN,
+                PRD.PRD_NUSE_RSN_CD AS PRD_NUSE_RSN_CD,
+                PRD.DOC_REG_ID,
+                PRD.NOTI_ITM_ID,
+                (SELECT DECODE(COUNT(*), 0, 'N', 'Y') FROM SSP_APP.TB_PR_DISP_BASIS D WHERE D.CO_CD = PRD.CO_CD AND D.REPR_PRD_ID = PRD.PRD_ID) DISP_PRD_YN,
+                (SELECT DECODE(COUNT(*), 0, 'N', 'Y') FROM TB_PR_DISP_OPTN_DTL_MAPP D WHERE D.CO_CD = PRD.CO_CD AND D.PRD_CLCD = PRD.PRD_CLCD AND D.MAPP_PRD_ID = PRD.PRD_ID) DISP_PRD_CON_YN,
+                (SELECT DECODE(COUNT(*), 0, 'N', 'Y') FROM SSP_APP.TB_PR_PRD_GRP_DTL S  INNER JOIN SSP_APP.TB_PR_PRD_GRP_BASIS B ON S.PRD_GRP_ID = B.PRD_GRP_ID AND B.USE_YN = 'Y' AND S.CO_CD = B.CO_CD WHERE S.CO_CD = PRD.CO_CD AND S.PRD_ID = PRD.PRD_ID) GRP_PRD_YN,
+                SSP_APP.FN_PR_GET_SSP_PRD_NM(PRD.CO_CD, PRD.PRD_ID) SSP_PRD_NM,  /* SSP상품명 */
+                NVL(PRD.SSP_PRD_NM_CHG_YN, 'N') SSP_PRD_NM_CHG_YN,
+                PRD.MTNL_ORGPLC_YN MTNL_ORGPLC_YN,
+                SSP_APP.FN_PR_CLSF_IDDT_LIST(PRD.CO_CD, PRD.PRD_CLCD) AS IDDT_NM
+            FROM
+                SSP_APP.TB_PR_MRO_PRD_INFO MROPRD
+                INNER JOIN SSP_APP.TB_PR_PRD_INFO PRD 
+                    ON PRD.CO_CD = MROPRD.CO_CD AND PRD.PRD_ID = MROPRD.PRD_ID
+                LEFT OUTER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_DTL REPR  --대표상품
+                   ON MROPRD.CO_CD = REPR.CO_CD AND MROPRD.PRD_ID = REPR.PRD_ID AND REPR.SSP_PRD_YN = 'Y'
+                LEFT OUTER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_BASIS REPRB   --대표상품
+                   ON REPRB.CO_CD = REPR.CO_CD AND REPR.REPR_PRD_GRP_ID = REPRB.REPR_PRD_GRP_ID
+                LEFT OUTER JOIN (SELECT CO_CD, REPR_PRD_GRP_ID, REPR_PRD_SPR_YN, MIN(REPR_PRD_SPR_RSN_CD) REPR_PRD_SPR_RSN_CD FROM TB_PR_REPR_PRD_MNG_DTL 
+                            WHERE SSP_PRD_YN = 'Y' AND REPR_PRD_SPR_RSN_CD IN ('1', '2') AND REPR_PRD_SPR_YN = 'Y'
+                            GROUP BY CO_CD, REPR_PRD_GRP_ID, REPR_PRD_SPR_YN) MIN_REPR 
+                    ON MIN_REPR.CO_CD = REPR.CO_CD AND MIN_REPR.REPR_PRD_GRP_ID = REPR.REPR_PRD_GRP_ID 
+                INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR   --제조원
+                   ON MNFR.CO_CD = MROPRD.CO_CD AND MNFR.MNFR_NO = MROPRD.MNFR_NO
+                LEFT OUTER JOIN TB_PR_PRD_CLSF_CHRPSN_INFO  PRDPSN
+                    ON PRDPSN.CO_CD = PRD.CO_CD AND PRDPSN.PRD_CLSF_CHRPSN_SPR_CD = '10' AND PRDPSN.PRD_CLSF_CHRPSN_TP_CD = '10'  
+                    AND PRDPSN.PRD_CLSF_CHRPSN_USEYN = 'Y' AND PRDPSN.MNFR_NO = '*' AND PRDPSN.PRD_CLCD = PRD.PRD_CLCD AND ROWNUM = 1
+                LEFT OUTER JOIN TB_PR_PRD_CLSF_CHRPSN_INFO  MDPSN
+                    ON MDPSN.CO_CD = PRD.CO_CD AND MDPSN.PRD_CLSF_CHRPSN_SPR_CD = '10' AND MDPSN.PRD_CLSF_CHRPSN_TP_CD = '20' 
+                    AND MDPSN.PRD_CLSF_CHRPSN_USEYN = 'Y' AND MDPSN.MNFR_NO = '*' AND MDPSN.PRD_CLCD = PRD.PRD_CLCD AND ROWNUM = 1
+            WHERE MROPRD.CO_CD = #{CO_CD} AND MROPRD.PRD_ID = #{PRD_ID}
+        ) TB
+    </select>
+    
+    <select id="selectMroCategoryAttrList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectMroCategoryAttrList */
+        SELECT
+            MROPRD.PRD_ID ,
+            MROPRD.CO_CD ,
+            CATE.MRO_PRD_CLCD ,
+            CATE.MRO_PRD_CLSF_NM ,
+            SSP_APP.FN_PR_MRO_FULL_CLSF_NM(MROPRD.CO_CD, MROPRD.MRO_PRD_CLCD) FULL_MRO_PRD_CLSF_NM,
+            ATTR.ATTR_SEQ ,
+            ATTR.MRO_ATTR_CD ,
+            ATTR.PRNM ,
+            ATTR.PRVL ,
+            ATTR.MAND_YN,
+            NVL(SRT.EXPS_YN , 'Y') EXPS_YN
+        FROM
+            SSP_APP.TB_PR_MRO_PRD_INFO MROPRD
+            INNER JOIN SSP_APP.TB_PR_MRO_PRD_CLSF_INFO CATE
+                ON MROPRD.CO_CD = CATE.CO_CD AND MROPRD.MRO_PRD_CLCD = CATE.MRO_PRD_CLCD
+            LEFT JOIN (SELECT ATTRMAP.CO_CD, ATTRMAP.PRD_ID, ATTR.MRO_PRD_CLCD, ATTRMAP.ATTR_SEQ, ATTR.MAND_YN, ATTRMAP.PRVL, ATTRMAP.PRNM, ATTR.MRO_ATTR_CD
+			FROM SSP_APP.TB_PR_MRO_PRD_INFO_ATTR_MAPP ATTRMAP 
+			INNER JOIN SSP_APP.TB_PR_MRO_PRD_CLSF_ATTR_INFO ATTR
+				ON ATTRMAP.CO_CD = ATTR.CO_CD AND ATTRMAP.ATTR_SEQ = ATTR.ATTR_SEQ AND ATTRMAP.MRO_ATTR_CD = ATTR.MRO_ATTR_CD AND ATTR.USE_YN = 'Y') ATTR 
+                ON ATTR.CO_CD = MROPRD.CO_CD AND ATTR.PRD_ID = MROPRD.PRD_ID AND ATTR.MRO_PRD_CLCD = MROPRD.MRO_PRD_CLCD
+            LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+		        ON ATTR.CO_CD = SRT.CO_CD AND ATTR.MRO_ATTR_CD = SRT.INTG_ATTR_CD AND SRT.INTG_ATTR_SPR_CD = '30' AND SRT.PRD_CLCD = #{PRD_CLCD}
+        WHERE MROPRD.CO_CD = #{CO_CD} AND MROPRD.PRD_ID = #{PRD_ID}
+        ORDER BY NVL(SRT.SRT_SO, ATTR.ATTR_SEQ)
+    </select>
+    
+    <select id="selectMroCategoryAttrListDef" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectMroCategoryAttrListDef */
+        SELECT
+		    MROPRD.PRD_ID ,
+		    MROPRD.CO_CD ,
+		    CATE.MRO_PRD_CLCD ,
+		    CATE.MRO_PRD_CLSF_NM ,
+		    SSP_APP.FN_PR_MRO_FULL_CLSF_NM(MROPRD.CO_CD, MROPRD.MRO_PRD_CLCD) FULL_MRO_PRD_CLSF_NM
+		FROM
+		    SSP_APP.TB_PR_MRO_PRD_INFO MROPRD
+		    INNER JOIN SSP_APP.TB_PR_MRO_PRD_CLSF_INFO CATE
+		        ON MROPRD.CO_CD = CATE.CO_CD AND MROPRD.MRO_PRD_CLCD = CATE.MRO_PRD_CLCD
+		WHERE MROPRD.CO_CD = #{CO_CD} AND MROPRD.PRD_ID = #{PRD_ID}
+    </select>
+    
+    <select id="selectSspCategoryListByMroPrdClcd" parameterType="HashMap" resultType="HashMap">
+    	/* PrRegistProduct.selectSspCategoryList */
+        SELECT 
+            PRD.CO_CD ,
+            PRD.PRD_CLCD ,
+            PRD.NOTI_ITM_ID,
+            CLSF.MCND_PRD_YN,
+            CLSF.PRD_CLSF_NM,
+            SSP_APP.FN_PR_FULL_CLSF_NM(PRD.CO_CD, PRD.PRD_CLCD) FULL_PRD_CLSF_NM,
+            PRDPSN.PRD_CLSF_CHRPSN_ID PRD_OPRTR_ID, --상품담당자
+            (SELECT OPR.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = PRD.CO_CD AND OPR.OPRTR_ID = PRDPSN.PRD_CLSF_CHRPSN_ID) PRD_OPRTR_NM,
+            MDPSN.PRD_CLSF_CHRPSN_ID MD_OPRTR_ID,   --MD담당자
+            (SELECT OPR.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = PRD.CO_CD AND OPR.OPRTR_ID = MDPSN.PRD_CLSF_CHRPSN_ID) MD_OPRTR_NM,
+            CLSF.USE_YN,
+            PRD.PRC_APLY_SPR_CD AS PRC_APLY_SPR_CD,
+            0 ORD_SEQ
+        FROM SSP_APP.TB_PR_PRD_INFO PRD 
+            INNER JOIN SSP_APP.TB_PR_PRD_CLSF_INFO CLSF
+                ON PRD.CO_CD = CLSF.CO_CD AND PRD.PRD_CLCD = CLSF.PRD_CLCD 
+            LEFT OUTER JOIN TB_PR_PRD_CLSF_CHRPSN_INFO PRDPSN
+                ON PRDPSN.CO_CD = CLSF.CO_CD AND PRDPSN.PRD_CLSF_CHRPSN_SPR_CD = '10' AND PRDPSN.PRD_CLSF_CHRPSN_TP_CD = '10'  
+                AND PRDPSN.PRD_CLSF_CHRPSN_USEYN = 'Y' AND PRDPSN.MNFR_NO = '*' AND PRDPSN.PRD_CLCD = PRD.PRD_CLCD AND ROWNUM = 1
+            LEFT OUTER JOIN TB_PR_PRD_CLSF_CHRPSN_INFO MDPSN
+                ON MDPSN.CO_CD = CLSF.CO_CD AND MDPSN.PRD_CLSF_CHRPSN_SPR_CD = '10' AND MDPSN.PRD_CLSF_CHRPSN_TP_CD = '20' 
+                AND MDPSN.PRD_CLSF_CHRPSN_USEYN = 'Y' AND MDPSN.MNFR_NO = '*' AND MDPSN.PRD_CLCD = PRD.PRD_CLCD AND ROWNUM = 1
+        WHERE PRD.CO_CD = #{CO_CD} AND PRD.PRD_ID = #{PRD_ID}
+        UNION ALL
+        SELECT
+            CLSF.CO_CD ,
+            CLSF.PRD_CLCD ,
+            CLSF.NOTI_ITM_ID,
+            CLSF.MCND_PRD_YN,
+            CLSF.PRD_CLSF_NM,
+            SSP_APP.FN_PR_FULL_CLSF_NM(CLSF.CO_CD, CLSF.PRD_CLCD) FULL_PRD_CLSF_NM,
+            PRDPSN.PRD_CLSF_CHRPSN_ID PRD_OPRTR_ID, --상품담당자
+            (SELECT OPR.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = CLSF.CO_CD AND OPR.OPRTR_ID = PRDPSN.PRD_CLSF_CHRPSN_ID) PRD_OPRTR_NM,
+            MDPSN.PRD_CLSF_CHRPSN_ID MD_OPRTR_ID,   --MD담당자
+            (SELECT OPR.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.CO_CD = CLSF.CO_CD AND OPR.OPRTR_ID = MDPSN.PRD_CLSF_CHRPSN_ID) MD_OPRTR_NM,
+            CLSF.USE_YN,
+            (SELECT PRC_APLY_SPR_CD FROM TB_PR_PRD_INFO X WHERE  X.PRD_ID = #{PRD_ID}) AS PRC_APLY_SPR_CD,
+            ROWNUM ORD_SEQ
+        FROM SSP_APP.TB_PR_PRD_CLSF_INFO CLSF
+            LEFT OUTER JOIN TB_PR_PRD_CLSF_CHRPSN_INFO PRDPSN
+                ON PRDPSN.CO_CD = CLSF.CO_CD AND PRDPSN.PRD_CLSF_CHRPSN_SPR_CD = '10' AND PRDPSN.PRD_CLSF_CHRPSN_TP_CD = '10'  
+                AND PRDPSN.PRD_CLSF_CHRPSN_USEYN = 'Y' AND PRDPSN.MNFR_NO = '*' AND PRDPSN.PRD_CLCD = CLSF.PRD_CLCD AND ROWNUM = 1
+            LEFT OUTER JOIN TB_PR_PRD_CLSF_CHRPSN_INFO MDPSN
+                ON MDPSN.CO_CD = CLSF.CO_CD AND MDPSN.PRD_CLSF_CHRPSN_SPR_CD = '10' AND MDPSN.PRD_CLSF_CHRPSN_TP_CD = '20' 
+                AND MDPSN.PRD_CLSF_CHRPSN_USEYN = 'Y' AND MDPSN.MNFR_NO = '*' AND MDPSN.PRD_CLCD = CLSF.PRD_CLCD AND ROWNUM = 1
+        WHERE CLSF.CO_CD = #{CO_CD}
+            AND CLSF.MRO_PRD_CLCD = #{MRO_PRD_CLCD}
+            AND CLSF.MALL_SPR_CD = #{MALL_SPR_CD}
+            AND CLSF.USE_YN = 'Y'
+            AND CLSF.DEL_YN = 'N'
+            AND CLSF.LWST_CD_YN = 'Y'
+            AND CLSF.FRT_EXPS_YN = 'Y'
+            AND NOT EXISTS (SELECT 'X' FROM SSP_APP.TB_PR_PRD_INFO X WHERE X.CO_CD = CLSF.CO_CD AND X.PRD_CLCD = CLSF.PRD_CLCD AND X.PRD_ID = #{PRD_ID})
+        ORDER BY ORD_SEQ
+    </select>
+    
+    <select id="selectSspAttrList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectSspAttrList */
+        SELECT * FROM (
+	        SELECT 
+	            ATTRINFO.CO_CD ,
+	            ATTRINFO.PRD_ATTR_CD ,
+	            ATTRINFO.PRNM ,
+	            PRDATTR.PRD_ID ,
+	            #{PRD_ID} REF_PRD_ID, --참조용
+	            PRDATTR.PRVL ,
+	            NVL(SRT.SRT_SO, ATTRMAP.SRT_SO) SRT_SO,
+	            MAND_YN,
+	            CATE.PRD_CLCD,
+	            DECODE(GRP.PRD_GRP_ID, NULL, 'N', 'Y') GRP_PRD_YN,    --시리즈그룹상품여부(연관은 아님)
+	            NVL(GRP.BSS_PRD_YN, 'N') BSS_PRD_YN,  --시리즈그룹 기준상품여부
+	            GRP.PRD_GRP_SPR_CD,   
+	            DECODE(INSTR((SELECT S.BSS_PRD_ATTR_INFO FROM TB_PR_PRD_GRP_DTL S WHERE S.CO_CD = GRP.CO_CD 
+	                            AND S.PRD_GRP_ID = GRP.PRD_GRP_ID AND S.BSS_PRD_YN = 'Y'), ATTRINFO.PRD_ATTR_CD), 0, 'N', 'Y') BSS_ATTR_YN, --단독속성코드
+	            'N' DEL_YN,  --삭제대상여부
+	            NVL(SRT.EXPS_YN , 'Y') EXPS_YN
+	        FROM 
+	            SSP_APP.TB_PR_PRD_CLSF_INFO CATE
+	            INNER JOIN  SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP ATTRMAP
+	                ON CATE.CO_CD = ATTRMAP.CO_CD AND CATE.PRD_CLCD = ATTRMAP.PRD_CLCD
+	            INNER JOIN SSP_APP.TB_PR_PRD_ATTR_INFO ATTRINFO
+	                ON ATTRINFO.CO_CD = ATTRMAP.CO_CD AND ATTRINFO.PRD_ATTR_CD = ATTRMAP.PRD_ATTR_CD AND ATTRINFO.USE_YN = 'Y'
+	            LEFT OUTER JOIN SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP PRDATTR 
+	                ON PRDATTR.CO_CD = ATTRINFO.CO_CD AND PRDATTR.PRD_ATTR_CD = ATTRINFO.PRD_ATTR_CD AND PRDATTR.PRD_ID = #{PRD_ID}
+	            LEFT OUTER JOIN (SELECT MIN(GRPB.CO_CD) CO_CD, MIN(GRPB.PRD_GRP_ID) PRD_GRP_ID, MIN(GRPDTL.PRD_ID) PRD_ID, MIN(GRPDTL.BSS_PRD_YN) BSS_PRD_YN , MIN(GRPB.PRD_GRP_SPR_CD) PRD_GRP_SPR_CD 
+	                FROM TB_PR_PRD_GRP_BASIS GRPB, TB_PR_PRD_GRP_DTL GRPDTL 
+	                WHERE GRPB.CO_CD = GRPDTL.CO_CD AND GRPB.PRD_GRP_ID = GRPDTL.PRD_GRP_ID AND GRPB.MALL_SPR_CD = '10' AND GRPB.PRD_GRP_SPR_CD IN ('10', '20')
+	                AND GRPDTL.CO_CD = #{CO_CD} AND GRPDTL.PRD_ID = #{PRD_ID}
+	                AND GRPB.USE_YN ='Y') GRP
+	                ON 1=1
+	            LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+	                ON SRT.CO_CD = ATTRMAP.CO_CD AND SRT.PRD_CLCD = ATTRMAP.PRD_CLCD AND SRT.INTG_ATTR_CD = ATTRMAP.PRD_ATTR_CD
+	        WHERE CATE.USE_YN = 'Y'
+	            AND CATE.CO_CD = #{CO_CD}
+	            AND CATE.PRD_CLCD = #{PRD_CLCD}
+	        UNION ALL /* 상품이 속성을 가지고 있으나 카테고리의 속성이 삭제된경우 해당속성을 삭제하기위한 조회쿼리 */
+	        SELECT CO_CD,PRD_ATTR_CD,'' ,PRD_ID, '', '' , 9999 SRT_SO, '' , '' , '' , '' , '' , '' , 'Y' DEL_YN, 'N' 
+	        FROM TB_PR_PRD_INFO_ATTR_MAPP A 
+	            WHERE A.CO_CD = #{CO_CD} AND A.PRD_ID = #{PRD_ID}
+	            AND NOT EXISTS (SELECT 'X' FROM TB_PR_PRD_CLSF_ATTR_MAPP ATMAP 
+	                            WHERE ATMAP.CO_CD = A.CO_CD 
+	                            AND ATMAP.PRD_ATTR_CD = A.PRD_ATTR_CD 
+	                            AND ATMAP.PRD_CLCD = #{PRD_CLCD})
+            ) TB
+        ORDER BY SRT_SO
+    </select>
+    
+    <select id="selectMroAddInfo" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectMroAddInfo */
+        SELECT
+            CO_CD ,
+            PRD_ID ,
+            DECODE(HUB_HNL_PSB_YN, 'Y', '가능', '불가능') HUB_HNL_PSB_YN, --허브
+            DLV_LT||'일' DLV_LT,     --평균배송일
+            CHM_MTL_PRD_YN, --화학물질여부
+            (SELECT DECODE(COUNT(*), 0, 'N', 'Y')
+                FROM TB_PR_PRD_CHM_MTL_DTLS A
+                JOIN TB_RD_RGNT_SELL_BZCAT_PERMIT_INFO B ON A.CO_CD = B.CO_CD  AND A.CAS_NO = B.CAS_NO
+                WHERE A.CO_CD = MRO.CO_CD AND A.PRD_ID = MRO.PRD_ID  AND B.RGNT_SELL_PSB_YN = 'Y') RGNT_SELL_PSB_YN, --허가여부
+            SSP_APP.FN_COM_DTL_CDNM('KO', 'TX_CLCD', TX_CLCD) TX_CLCD, --과세유형코드
+            (SELECT DECODE(COUNT(*), 0, 'N', 'Y') FROM VW_IV_PRD_INVN_DTLS INVN WHERE INVN.CO_CD = MRO.CO_CD AND INVN.PRD_ID = MRO.PRD_ID AND INVN.PRD_INVN_QTY > 0) INVN_YN --재고여부
+        FROM
+            SSP_APP.TB_PR_MRO_PRD_INFO MRO
+        WHERE CO_CD = #{CO_CD}
+            AND PRD_ID = #{PRD_ID}
+    </select>
+    
+    <select id="selectSspAddInfo" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectSspAddInfo */
+        SELECT
+            PRD.CO_CD ,
+            PRD.PRD_ID ,
+            PRD.BRND_NM ,
+            HASH_TAG ,
+            BG.BG_SEQ ,
+            BG.BG_NM ,
+            PRD.BG_APLY_STR_DTM ,
+            PRD.BG_APLY_END_DTM ,
+            SSP_APP.FN_COM_DTL_CDNM('KO','DISP_PRD_SPR_CD', DISP.DISP_PRD_SPR_CD) DISP_PRD_SPR_CD, --전시상품구분
+            BG.ATFL_STOR_PATH,
+            BG.ORI_ATFL_NM,
+            BG.ATFL_NM
+        FROM
+            SSP_APP.TB_PR_PRD_INFO PRD
+            LEFT OUTER JOIN (SELECT
+                                BG.CO_CD,
+                                BG.BG_SEQ,
+                                BG.BG_NM,
+                                BG.DOC_REG_ID,
+                                DOC.ATFL_STOR_PATH,
+                                DOC.ORI_ATFL_NM,
+                                DOC.ATFL_NM
+                            FROM 
+                                TB_SA_BG_INFO BG
+                                INNER JOIN TB_CO_ATFL_DTLS DOC
+                                    ON BG.DOC_REG_ID = DOC.DOC_REG_ID
+                            WHERE BG.CO_CD = #{CO_CD}
+                                AND BG.USE_YN = 'Y') BG
+            ON PRD.CO_CD = BG.CO_CD AND PRD.BG_SEQ = BG.BG_SEQ
+            LEFT OUTER JOIN TB_PR_DISP_BASIS DISP
+            ON PRD.CO_CD = DISP.CO_CD AND PRD.PRD_CLCD = DISP.PRD_CLCD 
+        WHERE PRD.CO_CD = #{CO_CD}
+            AND PRD.PRD_ID = #{PRD_ID}
+    </select>
+    
+    <select id="selectBgList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectBgList */
+        SELECT
+            BG.CO_CD,
+            BG.BG_SEQ,
+            BG.BG_NM,
+            BG.DOC_REG_ID,
+            DOC.ATFL_STOR_PATH,
+            DOC.ORI_ATFL_NM,
+            DOC.ATFL_NM,
+            #{contextRealPath}||DOC.ATFL_STOR_PATH||DOC.ORI_ATFL_NM BG_IMG
+        FROM 
+            TB_SA_BG_INFO BG
+            INNER JOIN TB_CO_ATFL_DTLS DOC
+                ON BG.DOC_REG_ID = DOC.DOC_REG_ID
+        WHERE BG.CO_CD = #{CO_CD}
+            AND BG.USE_YN = 'Y'
+    </select>
+    
+    <select id="selectProductImageList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectProductImageList */
+        SELECT 
+            #{CO_CD} CO_CD,
+            #{PRD_ID} PRD_ID, 
+            DOC_REG_ID,
+            DOC_REG_SEQ,
+            ATFL_NM,
+            ATFL_LEN,
+            ATFL_STOR_PATH,
+            STOR_PLC_SPR_CD,
+            ORI_ATFL_NM,
+            SAP_DOC_ID,
+            RMKS_CTS,
+            ETC_FDS_1,
+            ETC_FDS_2,
+            ETC_FDS_3,
+            ETC_FDS_4,
+            ETC_FDS_5,
+            REG_DTM,
+            REGPSN_ID,
+            UPD_DTM,
+            UPDPSN_ID ,
+            #{contextRealPath}||ATFL_STOR_PATH||ORI_ATFL_NM PRD_IMG
+        FROM SSP_APP.TB_CO_ATFL_DTLS 
+        WHERE 
+            DOC_REG_ID = #{DOC_REG_ID} 
+            AND ETC_FDS_2 IN ('60', '61', '62', '63', '80') --상품이미지 고정
+    </select>
+    
+    <select id="selectProductCertList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectProductCertList */
+        SELECT 
+            CERT.CO_CD,
+            CERT.PRD_ID,    --상품ID
+            CERT.CPRTCP_ID, --협력사ID
+            SSP_APP.FN_COM_DTL_CDNM('KO', 'KC_CERT_CD', CERT.KC_CERT_CD) KC_CERT_CD,
+            CERT.KC_CERT_NO,
+            ATFL.ATFL_STOR_PATH,
+            ATFL.ORI_ATFL_NM,
+            ATFL.ATFL_NM,
+            ATFL.DOC_REG_ID ,
+            ATFL.DOC_REG_SEQ 
+        FROM TB_PR_KC_CERT_INFO CERT
+        INNER JOIN TB_PC_CPRTCP_PRD_PRC_INFO A
+            ON CERT.CO_CD = A.CO_CD AND CERT.PRD_ID = A.PRD_ID AND CERT.CPRTCP_ID = A.CPRTCP_ID AND A.CO_CD = #{CO_CD} AND A.PRD_ID = #{PRD_ID}
+        INNER JOIN TB_PC_CPRTCP_PRD_INFO B
+            ON A.CO_CD = B.CO_CD AND A.PRD_ID = B.PRD_ID AND A.CPRTCP_ID = B.CPRTCP_ID AND A.CURR_UNIT_CD = B.ORD_CURR_CD AND B.SPL_PSB_YN = 'Y'
+        LEFT OUTER JOIN SSP_APP.TB_CO_ATFL_DTLS ATFL
+            ON CERT.SAP_DOC_ID = ATFL.SAP_DOC_ID AND ATFL.DOC_REG_SEQ = 1
+        WHERE TO_CHAR(SYSDATE,'YYYYMMDD') BETWEEN VLD_STR_DT AND VLD_END_DT
+    </select>
+    
+    <select id="selectProductNoticeList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectProductNoticeList */
+        SELECT
+            DTL.CO_CD,
+            DTL.NOTI_ITM_ID,
+            MAPP.PRD_ID,
+            DTL.NOTI_ITM_DTL_NO,
+            #{PRD_ID} REF_PRD_ID,
+            BASIS.NOTI_ITM_NM ,
+            DTL.NOTI_ITM_DTL_NM,
+            MAPP.PRD_NOTI_ITM_MAPP_CTS,
+            'N' DEL_YN
+        FROM
+            SSP_APP.TB_PR_NOTI_ITM_DTL DTL 
+            INNER JOIN TB_PR_NOTI_ITM_BASIS BASIS 
+            ON DTL.CO_CD = BASIS.CO_CD AND DTL.NOTI_ITM_ID = BASIS.NOTI_ITM_ID 
+            LEFT OUTER JOIN TB_PR_PRD_NOTI_ITM_MAPP MAPP
+            ON DTL.CO_CD = MAPP.CO_CD AND DTL.NOTI_ITM_ID = MAPP.NOTI_ITM_ID AND DTL.NOTI_ITM_DTL_NO = MAPP.NOTI_ITM_DTL_NO AND MAPP.PRD_ID = #{PRD_ID}
+        WHERE BASIS.USE_YN = 'Y' AND DTL.CO_CD = #{CO_CD} 
+            AND DTL.NOTI_ITM_ID = NVL(#{NOTI_ITM_ID},
+                                  (SELECT DECODE(#{NOTI_ITM_ID}, NOTI_ITM_ID, NOTI_ITM_ID, NOTI_ITM_ID) FROM TB_PR_PRD_INFO WHERE CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID}))
+        UNION ALL 
+        SELECT A.CO_CD , A.NOTI_ITM_ID , A.PRD_ID , A.NOTI_ITM_DTL_NO  , '', '',  '', '', 'Y'
+        FROM TB_PR_PRD_NOTI_ITM_MAPP A 
+            WHERE CO_CD = #{CO_CD} AND A.PRD_ID = #{PRD_ID}
+            AND NOT EXISTS (SELECT 'X' FROM TB_PR_NOTI_ITM_DTL DTL 
+                            WHERE DTL.CO_CD = A.CO_CD 
+                                AND DTL.NOTI_ITM_ID = NVL(#{NOTI_ITM_ID},
+                                  (SELECT DECODE(#{NOTI_ITM_ID}, NOTI_ITM_ID, NOTI_ITM_ID, NOTI_ITM_ID) FROM TB_PR_PRD_INFO WHERE CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID}))
+                            AND A.NOTI_ITM_DTL_NO = DTL.NOTI_ITM_DTL_NO)
+        ORDER BY NOTI_ITM_DTL_NO
+    </select>
+    
+    <select id="selectSeriesGroupList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectSeriesGroupList */
+        SELECT
+            MIN(DTL.PRD_SEQ) OVER(PARTITION BY BASIS.PRD_GRP_SPR_CD) MIN_SEQ,
+            BASIS.CO_CD,
+            BASIS.PRD_GRP_ID,
+            BASIS.PRD_GRP_NM,
+            BASIS.PRD_GRP_SPR_CD ,
+            TO_CHAR(BASIS.REG_DTM, 'YYYY.MM.DD HH24:MI:SS') REG_DTM,
+            DTL.PRD_SEQ ,
+            DTL.PRD_ID ,
+            DTL.BSS_PRD_YN,
+            TO_NUMBER(DTL.PRD_ID) PRD_ID_VIEW,
+            PRD.PRD_NM ,
+            SSP_APP.FN_PR_ATTR_VAL_LIST(PRD.CO_CD, PRD.PRD_ID) ATTR_VAL,
+            CASE WHEN BASIS_UNIT_CD = NVL(SELL_UNIT_CD, BASIS_UNIT_CD) 
+                     THEN NVL(BASIS_UNIT_QTY, '1') || BASIS_UNIT_CD
+                     ELSE NVL(SELL_UNIT_QTY, '1') || SELL_UNIT_CD || '(' || NVL(BASIS_UNIT_QTY, '1') || BASIS_UNIT_CD || ')' 
+                END AS SELL_UNIT
+        FROM
+            SSP_APP.TB_PR_PRD_GRP_BASIS BASIS
+            INNER JOIN TB_PR_PRD_GRP_DTL DTL 
+                ON BASIS.CO_CD = DTL.CO_CD AND BASIS.PRD_GRP_ID = DTL.PRD_GRP_ID
+            INNER JOIN TB_PR_PRD_INFO PRD 
+                ON DTL.CO_CD = PRD.CO_CD AND DTL.PRD_ID = PRD.PRD_ID
+            INNER JOIN TB_PR_MRO_PRD_INFO MROPRD 
+                ON PRD.CO_CD = MROPRD.CO_CD AND PRD.PRD_ID = MROPRD.PRD_ID
+        WHERE BASIS.CO_CD = #{CO_CD}
+        	AND BASIS.USE_YN ='Y'
+            AND EXISTS (SELECT 'X' FROM TB_PR_PRD_GRP_DTL X1 ,SSP_APP.TB_PR_PRD_GRP_BASIS X2
+                        WHERE DTL.CO_CD = X1.CO_CD AND DTL.PRD_GRP_ID = X1.PRD_GRP_ID AND X1.CO_CD = X2.CO_CD AND X1.PRD_GRP_ID = X2.PRD_GRP_ID 
+                        AND X1.PRD_ID = #{PRD_ID})
+        ORDER BY BASIS.PRD_GRP_SPR_CD, BASIS.PRD_GRP_ID, DTL.PRD_SEQ 
+    </select>
+    
+    <select id="selectProductPrice" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectProductPrice */
+        SELECT 
+            PRD.CO_CD,
+            PRD.PRD_CLCD,
+            PRD.PRC_APLY_SPR_CD,
+            CLSF.MCND_PRD_YN
+        FROM SSP_APP.TB_PR_PRD_INFO PRD 
+            INNER JOIN SSP_APP.TB_PR_PRD_CLSF_INFO CLSF
+            ON PRD.CO_CD = CLSF.CO_CD AND PRD.PRD_CLCD = CLSF.PRD_CLCD 
+        WHERE PRD.CO_CD = #{CO_CD} AND PRD.PRD_ID = #{PRD_ID} AND CLSF.PRD_CLCD = #{PRD_CLCD}
+        UNION ALL
+        SELECT
+            CLSF.CO_CD ,
+            CLSF.PRD_CLCD ,
+            PRD.PRC_APLY_SPR_CD,
+            CLSF.MCND_PRD_YN
+        FROM
+            SSP_APP.TB_PR_PRD_CLSF_INFO CLSF
+            INNER JOIN SSP_APP.TB_PR_PRD_INFO PRD
+            ON CLSF.CO_CD = PRD.CO_CD AND CLSF.PRD_CLCD = PRD.PRD_CLCD
+        WHERE CLSF.CO_CD = #{CO_CD} AND PRD.PRD_ID = #{PRD_ID} AND CLSF.PRD_CLCD = #{PRD_CLCD}
+            AND CLSF.MRO_PRD_CLCD = #{MRO_PRD_CLCD}
+            AND CLSF.USE_YN = 'Y'
+            AND CLSF.DEL_YN = 'N'
+            AND CLSF.LWST_CD_YN = 'Y'
+            AND CLSF.FRT_EXPS_YN = 'Y'
+            AND NOT EXISTS (SELECT 'X' FROM SSP_APP.TB_PR_PRD_INFO X WHERE X.CO_CD = CLSF.CO_CD AND X.PRD_CLCD = CLSF.PRD_CLCD AND X.PRD_ID = #{PRD_ID})
+    </select>
+    
+    <select id="selectPriceInfo" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectPriceInfo */
+		SELECT
+			  NVL(STPRC, '0') STPRC                       --SSP기준가
+			, NVL(MRK_LWST_SALSPRC, '0') MRK_LWST_SALSPRC --시장최저판매가
+			, NVL(DSTRB_STD_PRC, '0') DSTRB_STD_PRC       --LIST PRICE
+		FROM TB_PC_PRD_PRC_HST
+		WHERE CO_CD = #{CO_CD}
+			AND PRD_ID = #{PRD_ID}
+			AND BZPLC_ID = '*'
+			AND TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN BSS_SALSPRC_STR_DTM AND BSS_SALSPRC_END_DTM
+    </select>
+    
+    <insert id="insertSspProductAttr" parameterType="HashMap">
+        /* PrRegistProduct.insertSspProductAttr */
+        INSERT INTO SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP
+            (CO_CD,
+            PRD_ID,
+            PRD_ATTR_CD,
+            SRT_SO,
+            PRVL,
+            UPD_RSN,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES(#{CO_CD},
+            #{PRD_ID},
+            #{PRD_ATTR_CD},
+            (SELECT NVL(MAX(SRT_SO), 0)+1 FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP WHERE CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID}),
+            #{PRVL},
+            #{UPD_RSN},
+            #{SESSION_OPRTR_ID},
+            SYSDATE)
+    </insert>
+    
+    <update id="updateSspProductAttr" parameterType="HashMap">
+        /* PrRegistProduct.updateSspProductAttr */
+        UPDATE SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP
+        SET
+            PRVL = #{PRVL},
+            UPD_RSN = #{UPD_RSN},
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHERE CO_CD = #{CO_CD}
+            AND PRD_ID = #{PRD_ID}
+            AND PRD_ATTR_CD = #{PRD_ATTR_CD}
+    </update>
+    
+    <delete id="deleteSspProductAttrByPrdId" parameterType="HashMap">
+        /* PrRegistProduct.deleteSspProductAttrByPrdId */
+        DELETE FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP
+        WHERE CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID}
+    </delete>
+    
+    <delete id="deleteSspProductAttr" parameterType="HashMap">
+        /* PrRegistProduct.deleteSspProductAttr */
+        DELETE FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP
+        WHERE CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID} AND PRD_ATTR_CD = #{PRD_ATTR_CD}
+    </delete>
+    
+    <select id="selectSeriesGroupListToAttrSync" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectSeriesGroupListToAttrSync */
+        SELECT
+            BASIS.CO_CD,
+            PRD.PRD_CLCD ,
+            BASIS.PRD_GRP_ID,
+            BASIS.PRD_GRP_SPR_CD ,
+            DTL.PRD_SEQ ,
+            DTL.PRD_ID ,
+            DTL.BSS_PRD_YN,
+            DTL.BSS_PRD_ATTR_INFO,
+            CASE 
+                WHEN BASIS.PRD_GRP_SPR_CD='10' THEN 
+                    (SELECT LISTAGG(ATTR.PRD_ATTR_CD, ',') FROM TB_PR_PRD_ATTR_INFO ATTR, TB_PR_PRD_CLSF_ATTR_MAPP ATTMAP
+                        WHERE ATTR.CO_CD = DTL.CO_CD AND ATTR.CO_CD = ATTMAP.CO_CD AND ATTR.PRD_ATTR_CD = ATTMAP.PRD_ATTR_CD AND ATTMAP.PRD_CLCD = PRD.PRD_CLCD 
+                        <if test="PRD_ATTR_CD != null and PRD_ATTR_CD != ''">AND ATTMAP.PRD_ATTR_CD = #{PRD_ATTR_CD}</if>)
+                WHEN BASIS.PRD_GRP_SPR_CD='20' THEN 
+                    (SELECT LISTAGG(ATTR.PRD_ATTR_CD, ',') FROM TB_PR_PRD_ATTR_INFO ATTR, TB_PR_PRD_CLSF_ATTR_MAPP ATTMAP
+                        WHERE ATTR.CO_CD = DTL.CO_CD AND ATTR.CO_CD = ATTMAP.CO_CD AND ATTR.PRD_ATTR_CD = ATTMAP.PRD_ATTR_CD AND ATTMAP.PRD_CLCD = PRD.PRD_CLCD 
+                        <if test="PRD_ATTR_CD != null and PRD_ATTR_CD != ''">AND ATTMAP.PRD_ATTR_CD = #{PRD_ATTR_CD}</if>
+                        AND ATTR.PRD_ATTR_CD NOT IN (SELECT REGEXP_SUBSTR(A.ATTR_SPLIT,'[^,]+', 1, ROWNUM) SP
+                                                 FROM (SELECT BSS_PRD_ATTR_INFO ATTR_SPLIT FROM TB_PR_PRD_GRP_DTL DTL2 
+                                                        WHERE DTL2.CO_CD = DTL.CO_CD AND DTL2.PRD_GRP_ID = DTL.PRD_GRP_ID AND DTL2.PRD_ID = LPAD(#{BSS_PRD_ID},18,'0') AND DTL2.BSS_PRD_YN = 'Y') A
+                                                CONNECT BY ROWNUM <![CDATA[ <= ]]> LENGTH(REGEXP_REPLACE(ATTR_SPLIT,'[^,]+')) + 1)) 
+            END TARGET_PRD_ATTR_INFO,
+            (SELECT LISTAGG(PRD_ATTR_CD, ',') FROM TB_PR_PRD_INFO_ATTR_MAPP PRDMAP
+                WHERE PRDMAP.CO_CD = PRD.CO_CD AND PRDMAP.PRD_ID = PRD.PRD_ID
+                AND NOT EXISTS (SELECT ATTR.PRD_ATTR_CD FROM TB_PR_PRD_ATTR_INFO ATTR, TB_PR_PRD_CLSF_ATTR_MAPP ATTMAP
+                                WHERE ATTR.CO_CD = DTL.CO_CD AND ATTR.CO_CD = ATTMAP.CO_CD AND ATTR.PRD_ATTR_CD = ATTMAP.PRD_ATTR_CD AND ATTMAP.PRD_CLCD = PRD.PRD_CLCD AND PRDMAP.PRD_ATTR_CD = ATTMAP.PRD_ATTR_CD
+                                ) ) DEL_PRD_ATTR_INFO
+        FROM
+            SSP_APP.TB_PR_PRD_GRP_BASIS BASIS
+            INNER JOIN TB_PR_PRD_GRP_DTL DTL 
+                ON BASIS.CO_CD = DTL.CO_CD AND BASIS.PRD_GRP_ID = DTL.PRD_GRP_ID
+            INNER JOIN TB_PR_PRD_INFO PRD 
+                ON DTL.CO_CD = PRD.CO_CD AND DTL.PRD_ID = PRD.PRD_ID AND PRD.MALL_SPR_CD = '10'
+            INNER JOIN TB_PR_MRO_PRD_INFO MROPRD 
+                ON PRD.CO_CD = MROPRD.CO_CD AND PRD.PRD_ID = MROPRD.PRD_ID
+        WHERE BASIS.CO_CD = #{CO_CD} AND BASIS.USE_YN = 'Y' AND BASIS.MALL_SPR_CD = '10' AND BASIS.PRD_GRP_SPR_CD IN('10', '20')    --시리즈그룹상품 대상(연관 제외)
+            AND EXISTS (SELECT 'X' FROM TB_PR_PRD_GRP_DTL X1 ,SSP_APP.TB_PR_PRD_GRP_BASIS X2
+            WHERE DTL.CO_CD = X1.CO_CD AND DTL.PRD_GRP_ID = X1.PRD_GRP_ID AND X1.CO_CD = X2.CO_CD AND X1.PRD_GRP_ID = X2.PRD_GRP_ID 
+            AND X1.PRD_ID = LPAD(#{BSS_PRD_ID},18,'0') AND X1.BSS_PRD_YN = 'Y')
+            AND (DTL.BSS_PRD_YN != 'Y' OR BSS_PRD_YN IS NULL)
+            <if test="PRD_ID != null and PRD_ID != ''">AND DTL.PRD_ID = #{PRD_ID}</if>
+        ORDER BY DTL.PRD_SEQ 
+    </select>
+    
+    <update id="updateSspProductAttrToAttrSync" parameterType="HashMap">
+        /* PrRegistProduct.updateSspProductAttrToAttrSync */
+        MERGE INTO SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP
+        USING DUAL 
+            ON (CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID} AND PRD_ATTR_CD = #{PRD_ATTR_CD})
+        WHEN MATCHED THEN
+            UPDATE SET
+                PRVL = (SELECT PRVL FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP WHERE CO_CD = #{CO_CD} AND PRD_ID = LPAD(#{BSS_PRD_ID},18,'0') AND PRD_ATTR_CD = #{PRD_ATTR_CD}),
+                UPDPSN_ID = #{SESSION_OPRTR_ID},
+                UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+                (CO_CD,
+                PRD_ID,
+                PRD_ATTR_CD,
+                SRT_SO,
+                PRVL,
+                REGPSN_ID,
+                REG_DTM)
+            VALUES (#{CO_CD},
+                #{PRD_ID},
+                #{PRD_ATTR_CD},
+                (SELECT NVL(MAX(SRT_SO), 0)+1 FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP WHERE CO_CD = #{CO_CD} AND PRD_ID = #{PRD_ID}),
+                (SELECT PRVL FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP WHERE CO_CD = #{CO_CD} AND PRD_ID = LPAD(#{BSS_PRD_ID},18,'0') AND PRD_ATTR_CD = #{PRD_ATTR_CD}),
+                #{SESSION_OPRTR_ID},
+                SYSDATE)
+    </update>
+    
+    <insert id="insertSspProductNoti" parameterType="HashMap">
+        /* PrRegistProduct.insertSspProductNoti */
+        INSERT INTO SSP_APP.TB_PR_PRD_NOTI_ITM_MAPP
+            (CO_CD,
+            NOTI_ITM_ID,
+            PRD_ID,
+            NOTI_ITM_DTL_NO,
+            PRD_NOTI_ITM_MAPP_CTS,
+            UPD_RSN,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES(#{CO_CD},
+            #{NOTI_ITM_ID},
+            #{PRD_ID},
+            #{NOTI_ITM_DTL_NO},
+            #{PRD_NOTI_ITM_MAPP_CTS},
+            #{UPD_RSN},
+            #{SESSION_OPRTR_ID},
+            SYSDATE)
+    </insert>
+    
+    <update id="updateSspProductNoti" parameterType="HashMap">
+        /* PrRegistProduct.updateSspProductNoti */
+        UPDATE SSP_APP.TB_PR_PRD_NOTI_ITM_MAPP
+        SET
+            PRD_NOTI_ITM_MAPP_CTS = #{PRD_NOTI_ITM_MAPP_CTS},
+            UPD_RSN = #{UPD_RSN},
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHERE
+            CO_CD = #{CO_CD}
+            AND NOTI_ITM_ID = #{NOTI_ITM_ID}
+            AND PRD_ID = #{PRD_ID}
+            AND NOTI_ITM_DTL_NO = #{NOTI_ITM_DTL_NO}
+    </update>
+    
+    <delete id="deleteSspProductNotiByPrdId" parameterType="HashMap">
+        /* PrRegistProduct.deleteSspProductNotiByPrdId */
+        DELETE FROM
+            SSP_APP.TB_PR_PRD_NOTI_ITM_MAPP
+        WHERE
+            CO_CD = #{CO_CD}
+            AND NOTI_ITM_ID = #{NOTI_ITM_ID}
+            AND PRD_ID = #{PRD_ID}
+    </delete>
+    
+    <delete id="deleteSspProductNoti" parameterType="HashMap">
+        /* PrRegistProduct.deleteSspProductNoti */
+        DELETE FROM
+            SSP_APP.TB_PR_PRD_NOTI_ITM_MAPP
+        WHERE
+            CO_CD = #{CO_CD}
+            AND NOTI_ITM_ID = #{NOTI_ITM_ID}
+            AND PRD_ID = #{PRD_ID}
+            AND NOTI_ITM_DTL_NO = #{NOTI_ITM_DTL_NO}
+    </delete>
+    
+    <update id="updateProductBasicInfo" parameterType="HashMap">
+        /* PrRegistProduct.updateProductBasicInfo */
+        UPDATE
+            SSP_APP.TB_PR_PRD_INFO
+        SET
+            PRC_APLY_SPR_CD = #{PRC_APLY_SPR_CD},
+            NOTI_ITM_ID = NVL(#{NOTI_ITM_ID}, NOTI_ITM_ID),
+            BRND_NM = #{BRND_NM},
+            SSP_REPR_ATTR = (SELECT LISTAGG(PRVL,';') WITHIN GROUP(ORDER BY A.SRT_SO) FROM  TB_PR_PRD_INFO_ATTR_MAPP A INNER JOIN TB_PR_PRD_ATTR_INFO C 
+                            ON A.CO_CD = C.CO_CD AND A.PRD_ATTR_CD = C.PRD_ATTR_CD AND C.USE_YN = 'Y'
+                            WHERE A.CO_CD = #{CO_CD} AND A.PRD_ID = #{PRD_ID}),
+            PRD_CLCD = #{PRD_CLCD},
+            PRD_USE_YN = #{PRD_USE_YN},
+            PRD_DTL_DESC = #{PRD_DTL_DESC},
+            HASH_TAG = #{HASH_TAG},
+            PRD_NUSE_RSN_CD = NVL(#{PRD_NUSE_RSN_CD}, PRD_NUSE_RSN_CD),
+            BG_SEQ = #{BG_SEQ},
+            BG_APLY_STR_DTM = TO_DATE(#{BG_APLY_STR_DTM}, 'YYYYMMDD'),
+            BG_APLY_END_DTM = TO_DATE(#{BG_APLY_END_DTM}, 'YYYYMMDD'),
+            UPD_RSN = #{UPD_RSN}, 
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE,
+            SSP_PRD_NM = DECODE(NVL(#{SSP_PRD_NM_CHG_YN}, SSP_PRD_NM_CHG_YN), 'Y', #{SSP_PRD_NM}, SSP_PRD_NM),
+            <if test="SSP_PRD_NM_CHG_YN != null  and SSP_PRD_NM_CHG_YN !='' ">
+                SSP_PRD_NM_CHG_YN = #{SSP_PRD_NM_CHG_YN},
+            </if>
+            MTNL_ORGPLC_YN = #{MTNL_ORGPLC_YN}
+        WHERE
+            CO_CD = #{CO_CD}
+            AND PRD_ID = #{PRD_ID}
+    </update>
+    
+    <select id="selectProductAddRegulationList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectProductAddRegulationList */
+        WITH TMP AS (
+            SELECT COUNT(*) AS CNT
+              FROM (SELECT S1.CAS_NO AS CAS_NO_S1
+                           , S2.CAS_NO AS CAS_NO_S2
+                           , S3.CAS_NO CAS_NO_S3 
+                   FROM TB_PR_PRD_CHM_MTL_DTLS S1
+                        , SSP_CMS.SCT_CHEM S2
+                        , SSP_CMS.CVW_FV_CHEM_RESTRICT_INFO S3
+                  WHERE S1.CO_CD = #{CO_CD}
+                    AND S1.PRD_ID = #{PRD_ID}
+                    AND S1.CAS_NO = S2.CAS_NO
+                    AND S2.CAS_NO = S3.CAS_NO(+)
+                   ) WHERE CAS_NO_S3 IS NULL
+        )
+        SELECT T1.LAW_CD
+               , T1.LAWKIND1
+               , T2.LAWKIND2
+               , CASE WHEN T1.MNG_CD = '101' 
+                      THEN CASE WHEN (SELECT CNT FROM TMP) > 0 
+                                THEN 'Y'
+                                ELSE 'N'
+                           END
+                      ELSE DECODE(T2.MNG_CD, NULL, 'N', 'Y') 
+                 END AS CHK_YN
+          FROM (SELECT COM_DTL_CD AS MNG_CD
+                       , COM_DTL_CD_NM AS LAWKIND1
+                       , COM_USR_DEFN_NM_1 AS LAW_CD
+                  FROM TB_CO_COM_CD_DTL
+                 WHERE COM_CLSF_CD = 'CHM_MTL_LMT_CD'
+                   AND LANG_CD = 'KO'
+               ) T1 
+               , (SELECT S2.LAW_CD 
+                         , S2.LAWKIND1 
+                         , S2.LAWKIND2
+                         , S2.MNG_CD
+                    FROM TB_PR_PRD_CHM_MTL_DTLS S1
+                         , SSP_CMS.CVW_FV_CHEM_RESTRICT_INFO S2
+                   WHERE S1.CO_CD = #{CO_CD}
+                     AND S1.PRD_ID = #{PRD_ID}
+                     AND S1.CAS_NO = S2.CAS_NO
+               ) T2
+         WHERE T1.LAW_CD = T2.LAW_CD(+)
+           AND T1.MNG_CD = T2.MNG_CD(+)
+         ORDER BY T1.MNG_CD
+    </select>
+    
+    <select id="selectProductAddRegulationVerticalList" parameterType="HashMap" resultType="HashMap">
+        /* PrRegistProduct.selectProductAddRegulationVerticalList */
+        WITH CHK_TBL AS (
+            SELECT COUNT(*) AS CNT
+              FROM (SELECT S1.CAS_NO AS CAS_NO_S1
+                           , S2.CAS_NO AS CAS_NO_S2
+                           , S3.CAS_NO CAS_NO_S3 
+                      FROM TB_PR_PRD_CHM_MTL_DTLS S1
+                           , SSP_CMS.SCT_CHEM S2
+                           , SSP_CMS.CVW_FV_CHEM_RESTRICT_INFO S3
+                     WHERE S1.CO_CD = #{CO_CD}
+                       AND S1.PRD_ID = #{PRD_ID}
+                       AND S1.CAS_NO = S2.CAS_NO
+                       AND S2.CAS_NO = S3.CAS_NO(+)
+                       AND S2.IS_DELETE=0
+                       AND S2.IS_ENABLE=1
+                       AND S2.CLOSE_DATE = '99991231235959'
+                   ) 
+             WHERE CAS_NO_S3 IS NULL
+        ) , BAS_TBL AS (
+            SELECT S2.LAW_CD 
+                   , S2.LAWKIND1 
+                   , S2.LAWKIND2
+                   , S2.MNG_CD
+              FROM TB_PR_PRD_CHM_MTL_DTLS S1
+                   , SSP_CMS.CVW_FV_CHEM_RESTRICT_INFO S2
+             WHERE S1.CO_CD = #{CO_CD}
+               AND S1.PRD_ID = #{PRD_ID}
+               AND S1.CAS_NO = S2.CAS_NO
+        ) , COM_TBL AS (
+            SELECT COM_DTL_CD AS MNG_CD 
+                   , COM_DTL_CD_NM AS LAWKIND1
+                   , COM_USR_DEFN_NM_1 AS LAW_CD
+              FROM TB_CO_COM_CD_DTL
+             WHERE COM_CLSF_CD = 'CHM_MTL_LMT_CD'
+               AND LANG_CD = 'KO'
+               AND USE_YN = 'Y'
+        ) , LAW_TBL1 AS (
+            SELECT #{PRD_ID} AS PRD_ID
+                   , SUBSTR(T1.MNG_CD, 3) AS NUM
+                   , T1.LAWKIND1 AS LAW_NM1
+                   , CASE WHEN T1.MNG_CD = '101' 
+                          THEN CASE WHEN (SELECT CNT FROM CHK_TBL) > 0 
+                                    THEN 'Y'
+                                    ELSE 'N'
+                               END
+                          ELSE DECODE(T2.MNG_CD, NULL, 'N', 'Y') 
+                    END AS CHK1
+              FROM (SELECT * 
+                      FROM COM_TBL
+                     WHERE LAW_CD = '1') T1 
+                   , BAS_TBL T2
+             WHERE T1.LAW_CD = T2.LAW_CD(+)
+               AND T1.MNG_CD = T2.MNG_CD(+)
+             ORDER BY T1.MNG_CD
+        ) , LAW_TBL2 AS (
+            SELECT #{PRD_ID} AS PRD_ID
+                   , SUBSTR(T1.MNG_CD, 3) AS NUM
+                   , T1.LAWKIND1 AS LAW_NM2
+                   , DECODE(T2.MNG_CD, NULL, 'N', 'Y') AS CHK2
+              FROM (SELECT * 
+                      FROM COM_TBL
+                     WHERE LAW_CD = '2') T1 
+                   , BAS_TBL T2
+              WHERE T1.LAW_CD = T2.LAW_CD(+)
+                AND T1.MNG_CD = T2.MNG_CD(+)
+              ORDER BY T1.MNG_CD
+         ) , LAW_TBL3 AS (
+            SELECT #{PRD_ID} AS PRD_ID
+                   , SUBSTR(T1.MNG_CD, 3) AS NUM
+                   , T1.LAWKIND1 AS LAW_NM3
+                   , DECODE(T2.MNG_CD, NULL, 'N', 'Y') AS CHK3
+              FROM (SELECT * 
+                      FROM COM_TBL
+                     WHERE LAW_CD = '3') T1 
+                   ,BAS_TBL T2
+             WHERE T1.LAW_CD = T2.LAW_CD(+)
+              AND T1.MNG_CD = T2.MNG_CD(+)
+             ORDER BY T1.MNG_CD
+         ) , LAW_TBL4 AS (
+            SELECT #{PRD_ID} AS PRD_ID
+                   , '1' AS NUM
+                   , T2.COM_DTL_CD_NM AS LAW_NM4
+              FROM TB_PR_MRO_PRD_INFO T1
+                   , (SELECT * 
+                        FROM TB_CO_COM_CD_DTL
+                       WHERE COM_CLSF_CD = 'DNGR_MTL_CD'
+                         AND USE_YN = 'Y' 
+                         AND LANG_CD = 'KO') T2
+             WHERE T1.PRD_ID = #{PRD_ID}
+               AND T1.DNGR_MTL_NO = T2.COM_DTL_CD
+         )
+         SELECT T1.LAW_NM1
+                , T1.CHK1
+                , T2.LAW_NM2
+                , T2.CHK2
+                , T3.LAW_NM3
+                , T3.CHK3
+                , T4.LAW_NM4
+           FROM LAW_TBL1 T1
+                , LAW_TBL2 T2
+                , LAW_TBL3 T3
+                , LAW_TBL4 T4
+          WHERE T1.PRD_ID = T2.PRD_ID(+)
+            AND T1.PRD_ID = T3.PRD_ID(+)
+            AND T1.PRD_ID = T4.PRD_ID(+)
+            AND T1.NUM = T2.NUM(+)
+            AND T1.NUM = T3.NUM(+)
+            AND T1.NUM = T4.NUM(+)
+    </select>
+    
+    
+    <update id="mergeSspPrdNmInfo" parameterType="hashMap" >
+        /* com.ssp.batch.pr.sspPrdNmBatch.mergeSspPrdNmInfo */
+        MERGE INTO SSP_APP.TB_PR_SSP_PRD_NM_INFO USING DUAL
+          ON (CO_CD=#{CO_CD} AND PRD_ID=#{PRD_ID})
+        WHEN MATCHED THEN 
+            UPDATE SET
+            SSP_PRD_NM=SSP_APP.FN_PR_GET_SSP_PRD_NM_BAT(#{CO_CD}, #{PRD_ID}),
+            UPDPSN_ID=#{SESSION_OPRTR_ID},
+            UPD_DTM=SYSDATE
+        WHEN NOT MATCHED THEN 
+            INSERT (CO_CD, PRD_ID, SSP_PRD_NM, REGPSN_ID, REG_DTM)
+            VALUES (#{CO_CD}, #{PRD_ID}, SSP_APP.FN_PR_GET_SSP_PRD_NM_BAT(#{CO_CD}, #{PRD_ID}), #{SESSION_OPRTR_ID}, SYSDATE)
+    </update>
+    
+</mapper>

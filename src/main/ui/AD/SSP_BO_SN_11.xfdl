@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_SN_11" width="1130" height="530" titletext="정산 확정 취소" onload="fn_onLoad" onkeyup="SSP_BO_SN_11_onkeyup">
+    <Layouts>
+      <Layout height="530" mobileorientation="landscape" width="1130">
+        <Grid id="grd_resList" taborder="0" left="20" top="82" right="20" bottom="70" fillareatype="none" cellmovingtype="col" cssclass="grd_WF_list" nodatatext="조회된 결과가 없습니다." binddataset="ds_resList" autoenter="none" selecttype="area">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="80"/>
+                <Column size="100"/>
+                <Column size="60"/>
+                <Column size="90"/>
+                <Column size="100"/>
+                <Column size="80"/>
+                <Column size="100"/>
+                <Column size="140"/>
+                <Column size="200"/>
+                <Column size="120"/>
+                <Column size="80"/>
+                <Column size="120"/>
+                <Column size="100"/>
+                <Column size="80"/>
+                <Column size="200"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="검수월"/>
+                <Cell col="1" text="주문 품목 번호"/>
+                <Cell col="2" text="주문수량"/>
+                <Cell col="3" text="주문 부서 코드"/>
+                <Cell col="4" text="주문 부서명"/>
+                <Cell col="5" text="주문자"/>
+                <Cell col="6" text="상품 ID"/>
+                <Cell col="7" text="상품명"/>
+                <Cell col="8" text="규격"/>
+                <Cell col="9" text="입고처리 일시"/>
+                <Cell col="10" text="입고자 명"/>
+                <Cell col="11" text="확정 일시"/>
+                <Cell col="12" text="확정자 ID"/>
+                <Cell col="13" text="확정자명"/>
+                <Cell col="14" text="취소 사유"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:ADJ_YM" textAlign="center" displaytype="date" calendardateformat="yyyy-MM" calendareditformat="yyyy-MM"/>
+                <Cell col="1" text="bind:JNT_ODR_ITM_NO" textAlign="center"/>
+                <Cell col="2" text="bind:ODR_QTY" displaytype="number"/>
+                <Cell col="3" text="bind:DEPT_ID" textAlign="center"/>
+                <Cell col="4" text="bind:DEPT_NM" textAlign="left"/>
+                <Cell col="5" text="bind:ODRPSN_NM" textAlign="center"/>
+                <Cell col="6" text="bind:PRD_ID"/>
+                <Cell col="7" text="bind:PRD_NM" textAlign="left"/>
+                <Cell col="8" text="bind:REPR_SPEC" textAlign="left"/>
+                <Cell col="9" text="bind:GI_DTM" displaytype="date" calendardateformat="yyyy-MM-dd HH:mm:ss" calendareditformat="yyyy-MM-dd HH:mm:ss" calendardisplayinvalidtext=" " calendardisplaynulltext=" "/>
+                <Cell col="10" text="bind:GDPSN_NM"/>
+                <Cell col="11" text="bind:ADJ_DCN_DTM"/>
+                <Cell col="12" text="bind:ADJ_DCN_DEALR_ID"/>
+                <Cell col="13" text="bind:ADJ_DCN_DEALR_NM"/>
+                <Cell col="14" displaytype="text" edittype="text" text="bind:FW_RSN_CTS"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="div_paging" taborder="1" left="20" bottom="210" height="38" formscrollbartype="none none" right="20" url="COMM::cmmPaging.xfdl"/>
+        <Static id="sta_totCount" taborder="2" text="(총 0건)" left="20" top="54" width="121" height="25" usedecorate="true"/>
+        <Button id="btn_save" taborder="3" text="저장" onclick="btn_save_onclick" height="30" bottom="30" width="60" right="482"/>
+        <Button id="btn_cancel" taborder="4" text="취소" onclick="btn_cancel_onclick" left="508" cssclass="btn_WF_default" height="30" bottom="30" width="60"/>
+        <Edit id="edt_cxlRsn" taborder="5" width="250" height="24" readonly="false" right="223" top="48"/>
+        <Static id="sta_cxlRsn" taborder="6" text="취소 사유" height="20" onclick="Static00_onclick" width="55" right="edt_cxlRsn:10" bottom="grd_resList:12"/>
+        <Static id="Static01" taborder="7" text="정산 확정 취소" left="20" top="20" width="155" font="bold 14pt &quot;Arial&quot;" height="21" cssclass="sta_WF_title03"/>
+        <Static id="Static03" taborder="8" text="20" left="41" top="40" width="20" height="20" cssclass="div_WF_guide" visible="false"/>
+        <Static id="Static02_00_01_00_00_01_00" taborder="9" top="72" height="10" cssclass="div_WF_guide" visible="false" text="10" width="30" right="106"/>
+        <Button id="btn_confirm" taborder="10" text="일괄적용" height="30" bottom="458" width="80" right="130" onclick="btn_confirm_onclick"/>
+        <Button id="btn_excel00" taborder="11" text="다운로드(P)" top="43" width="100" height="28" right="20" onclick="btn_excel_onclick" cssclass="btn_WF_excel"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_resList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="ADJ_YM" type="STRING" size="255"/>
+          <Column id="JNT_ODR_ITM_NO" type="STRING" size="255"/>
+          <Column id="ODR_NO" type="STRING" size="255"/>
+          <Column id="ODR_ITM_NO" type="STRING" size="255"/>
+          <Column id="ODR_QTY" type="STRING" size="255"/>
+          <Column id="DEPT_ID" type="STRING" size="255"/>
+          <Column id="DEPT_NM" type="STRING" size="255"/>
+          <Column id="ODRPSN_ID" type="STRING" size="255"/>
+          <Column id="ODRPSN_NM" type="STRING" size="255"/>
+          <Column id="PRD_ID" type="STRING" size="255"/>
+          <Column id="PRD_NM" type="STRING" size="255"/>
+          <Column id="REPR_SPEC" type="STRING" size="255"/>
+          <Column id="SSP_REPR_ATTR" type="STRING" size="255"/>
+          <Column id="GI_DTM" type="STRING" size="255"/>
+          <Column id="GDPSN_ID" type="STRING" size="255"/>
+          <Column id="GDPSN_NM" type="STRING" size="255"/>
+          <Column id="ADJ_DCN_DTM" type="STRING" size="255"/>
+          <Column id="ADJ_DCN_DEALR_ID" type="STRING" size="255"/>
+          <Column id="ADJ_DCN_DEALR_NM" type="STRING" size="255"/>
+          <Column id="FW_RSN_CTS" type="STRING" size="255"/>
+          <Column id="SES_ID" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="TOTAL_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="COL_ITM" type="STRING" size="256"/>
+          <Column id="SES_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CO_CD"/>
+            <Col id="ROW_COUNT">50</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_fromServer" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="RTN_CD" type="STRING" size="256"/>
+          <Column id="RTN_MSG" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : 재고 관리 - S-MRP 마스터 조회 목록
+  CREATION DATES : 
+*******************************************************/
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+include "OD::odUtils.xjs";
+
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;
+this.insertCount = 0;
+this.cocd;
+this.inq_cond_dtls;
+this.col_itm;
+this.bPage = 0;
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	this.resetScroll();
+	this.cocd 			= this.parent.pv1;
+	this.inq_cond_dtls  = this.parent.pv2;
+	this.col_itm 		= this.parent.pv3;
+	this.bPage = 0;
+	this.copyPaste.addGrid(this.grd_resList);
+	this.fn_odCommLoading("fn_search"); //공통메세지코드 로딩
+	this.fn_regShortCutMethod();
+};
+
+this.SSP_BO_SN_11_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+	
+//조회  
+this.fn_search = function()	{
+	
+	var sSvcId = "selectCalCxlList";    
+	var sUrl = "/ad/cal/popup/select-cal-cxl-list.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_resList=ds_output1";
+	var arg = "";
+	if(this.bPage == 0)	{
+		var oPaging = this.div_paging;
+		oPaging.uPage = 1;
+		oPaging.uPageNum = 0;
+		this.ds_search.setColumn(0,"START_NUM", 0);
+		this.ds_search.setColumn(0,"ROW_COUNT",1000);
+		this.ds_search.setColumn(0,"SORT_COLUMN", "");
+		this.ds_search.setColumn(0,"SORT_TYPE", "");
+		this.ds_search.setColumn(0,"INQ_COND_DTLS", this.inq_cond_dtls);
+		this.ds_search.setColumn(0,"COL_ITM", this.col_itm);
+		this.ds_search.setColumn(0,"CO_CD", this.cocd);
+		this.ds_search.setColumn(0,"TOTAL_COUNT", -1);
+	}
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");	
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if (svcID == "selectCalCxlList") {
+		trace("### ds_resList.getRowCount() : " + this.ds_resList.getRowCount());
+	}
+	else if(svcID == "saveCalCxlList"){    
+		trace("### ds_resList.getRowCount() : " + this.ds_resList.getRowCount());
+		if (errorCode == "0") {
+			var strRtnCdStl  = this.fn_getDSValue(this.ds_fromServer.getColumn(0,"RTN_CD"));
+			var strRtnMsgStl = this.fn_getDSValue(this.ds_fromServer.getColumn(0,"RTN_MSG"));
+			
+			if( strRtnCdStl == "S" )	{
+				alert(this.fn_getMessage("ERRS000156"));
+				this.close();
+			}
+			else	{
+				alert(strRtnMsg);
+			}
+		}
+	}
+};
+
+/***********************************************************************************************
+* 사용자 함수 영역
+************************************************************************************************/
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	this.fn_regMethodENTER("fn_search");
+	this.fn_regMethodESC("btn_cancel_onclick");
+	this.fn_regMethodShiftENTER("btn_save_onclick");
+};
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+// 취소
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+// 저장
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	for (var i = 0; i < this.ds_resList.rowcount; i++) {
+		var strCTS = this.fn_getDSValue(this.ds_resList.getColumn(i,"FW_RSN_CTS"));
+		if(strCTS == "")
+		{
+			//alert("취소 사유는 필수입력 사항입니다.");
+			alert(this.fn_getMessage("ERRS000144", "취소사유"));
+			return;
+		}
+	}
+	var sSvcId = "saveCalCxlList";
+	var sUrl = "/ad/cal/popup/save-cal-cxl-list.do";
+	var inDs = "ds_update1=ds_resList";
+	var outDs = "ds_fromServer=ds_output1";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+this.btn_confirm_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	for (var i = 0; i < this.ds_resList.rowcount; i++) {
+		this.ds_resList.setColumn(i,"FW_RSN_CTS",this.edt_cxlRsn.value);
+	}
+};
+
+this.btn_excel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ofn_exportExcel({form:this, grid:this.grd_resList, fileName:"정산확정취소목록"});
+};
+]]></Script>
+  </Form>
+</FDL>

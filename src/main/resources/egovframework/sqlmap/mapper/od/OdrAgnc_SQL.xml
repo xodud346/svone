@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="odrAgnc">
+<select id="selectMbrList" parameterType="HashMap" resultType="HashMap">
+Select
+        a.CO_CD                         /* 회사코드 */
+        , a.MBR_ID                      /* 회원ID */
+        , a.MBR_NM                      /* 회원이름 */
+        , a.BZPLC_ID                    /* 사업장ID */
+        , a.DEPT_ID                     /* 부서ID */
+        , a.DRMC_YN                     /* 휴면화여부 */
+        , a.UT_AGRE_YN                  /* 이용동의여부 */
+        , a.CLT_AGRE_YN                 /* 수집동의여부 */
+        , b.BZPLC_NM                    /* 사업장명 */
+        , c.ODR_AGNC_USE_YN             /* 주문대행사용여부 */
+        , d.DEPT_NM                      /* 부서명 */
+        , e.ADJ_SPR_CD                  /* 정산구분코드 */
+        , e.OPR_UNIT_ID                 /* 운영단위ID */
+        , e.OPR_UNIT_NM                 /* 운영단위명 */
+        , Case When 'C03' = e.ADJ_SPR_CD Then 'Y' Else 'N' End      MONTHLY_ADJ_YN
+        , g.COM_DTL_CD                   /* 회원상태 */  MBR_USE_CD
+        , g.COM_DTL_CD_NM               /* 회원상태명*/              MBR_USE_CD_NM
+        , h.COM_DTL_CD                  /* 고객유형ID */
+        , h.COM_DTL_CD_NM              /* 고객유형 */                CUST_SPR_CD
+From    TB_CC_MBR_BASIS a
+        Join
+        TB_CC_BZPLC_BASIS b
+            On (b.CO_CD = a.CO_CD
+            And b.BZPLC_ID = a.BZPLC_ID)
+        Left Join
+        TB_CC_BZPLC_CTL_AUTH_INFO c             /*사업장제어권한*/
+            On (c.CO_CD = a.CO_CD
+            And c.BZPLC_ID = a.BZPLC_ID)
+        Left Join
+        TB_CC_DEPT_BASIS d
+            On (d.CO_CD = a.CO_CD
+            And d.DEPT_ID = a.DEPT_ID)
+        Left Join
+        TB_CC_OPR_UNIT_BASIS e
+            On (e.CO_CD = d.CO_CD
+            And e.BZPLC_ID = d.BZPLC_ID
+            And e.OPR_UNIT_ID = d.OPR_UNIT_ID)
+        Left Join
+        VW_CC_OPR_UNIT_CTL_AUTH_INFO f
+            On (f.CO_CD = d.CO_CD
+            And f.BZPLC_ID = d.BZPLC_ID
+            And f.OPR_UNIT_ID = d.OPR_UNIT_ID)
+        Left Join
+        TB_CO_COM_CD_DTL g
+            On (g.COM_DTL_CD = a.MBR_USE_CD
+            And g.COM_CLSF_CD = 'MBR_USE_CD')
+        Left Join
+        TB_CO_COM_CD_DTL h
+              On (h.COM_DTL_CD = b.CUST_SPR_CD
+              And h.COM_CLSF_CD = 'CUST_SPR_CD')
+         <if test=" DEPT_ID > 0 ">
+         JOIN
+         TB_OD_ODR_INQ_TGT_DTLS   T1
+         ON  T1.SES_ID = #{SES_ID}
+         AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+         AND T1.COL_ITM = 'DEPT_ID'
+         AND T1.COND_DATA_VAL = a.DEPT_ID
+        </if>
+        <if test=" BZPLC_ID > 0 ">
+          JOIN
+         TB_OD_ODR_INQ_TGT_DTLS   T2
+         ON  T2.SES_ID = #{SES_ID}
+         AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+         AND T2.COL_ITM = 'DEPT_ID'
+         AND T2.COND_DATA_VAL = a.BZPLC_ID
+        </if>
+         <if test=" MBR_ID > 0 ">
+          JOIN
+         TB_OD_ODR_INQ_TGT_DTLS   T3
+         ON  T3.SES_ID = #{SES_ID}
+         AND T3.INQ_COND_DTLS = #{INQ_COND_DTLS}
+         AND T3.COL_ITM = 'DEPT_ID'
+         AND T3.COND_DATA_VAL = a.MBR_ID
+        </if>
+          <if test=" OPR_UNIT_ID > 0 ">
+          JOIN
+         TB_OD_ODR_INQ_TGT_DTLS   T4
+         ON  T4.SES_ID = #{SES_ID}
+         AND T4.INQ_COND_DTLS = #{INQ_COND_DTLS}
+         AND T4.COL_ITM = 'DEPT_ID'
+         AND T4.COND_DATA_VAL = e.OPR_UNIT_ID
+        </if>
+        Where  a.UT_AGRE_YN = 'Y'
+            And a.CLT_AGRE_YN = 'Y'
+            And c.ODR_AGNC_USE_YN = 'Y'
+        <if test="MBR_USE_CD != null and !MBR_USE_CD.equals('')">
+            And g.COM_DTL_CD = #{MBR_USE_CD}
+        </if>
+        <if test="CUST_SPR_CD != null and !CUST_SPR_CD.equals('')">
+            And h.COM_DTL_CD = #{CUST_SPR_CD}
+        </if>
+        ORDER BY a.MBR_ID
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+
+</select>
+
+<select id="selectMbrListCount" parameterType="HashMap" resultType="Integer">
+Select
+       COUNT(0)
+From    TB_CC_MBR_BASIS a
+        Join
+        TB_CC_BZPLC_BASIS b
+            On (b.CO_CD = a.CO_CD
+            And b.BZPLC_ID = a.BZPLC_ID)
+        Left Join
+        TB_CC_BZPLC_CTL_AUTH_INFO c             /*사업장제어권한*/
+            On (c.CO_CD = a.CO_CD
+            And c.BZPLC_ID = a.BZPLC_ID)
+        Left Join
+        TB_CC_DEPT_BASIS d
+            On (d.CO_CD = a.CO_CD
+            And d.DEPT_ID = a.DEPT_ID)
+        Left Join
+        TB_CC_OPR_UNIT_BASIS e
+            On (e.CO_CD = d.CO_CD
+            And e.BZPLC_ID = d.BZPLC_ID
+            And e.OPR_UNIT_ID = d.OPR_UNIT_ID)
+        Left Join
+        VW_CC_OPR_UNIT_CTL_AUTH_INFO f
+            On (f.CO_CD = d.CO_CD
+            And f.BZPLC_ID = d.BZPLC_ID
+            And f.OPR_UNIT_ID = d.OPR_UNIT_ID)
+        Left Join
+        TB_CO_COM_CD_DTL g
+            On (g.COM_DTL_CD = a.MBR_USE_CD
+            And g.COM_CLSF_CD = 'MBR_USE_CD')
+        Left Join
+        TB_CO_COM_CD_DTL h
+              On (h.COM_DTL_CD = b.CUST_SPR_CD
+              And h.COM_CLSF_CD = 'CUST_SPR_CD')
+         <if test=" DEPT_ID > 0 ">
+         JOIN
+         TB_OD_ODR_INQ_TGT_DTLS   T1
+         ON  T1.SES_ID = #{SES_ID}
+         AND T1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+         AND T1.COL_ITM = 'DEPT_ID'
+         AND T1.COND_DATA_VAL = a.DEPT_ID
+        </if>
+        <if test=" BZPLC_ID > 0 ">
+          JOIN
+         TB_OD_ODR_INQ_TGT_DTLS   T2
+         ON  T2.SES_ID = #{SES_ID}
+         AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+         AND T2.COL_ITM = 'DEPT_ID'
+         AND T2.COND_DATA_VAL = a.BZPLC_ID
+        </if>
+         <if test=" MBR_ID > 0 ">
+          JOIN
+         TB_OD_ODR_INQ_TGT_DTLS   T3
+         ON  T3.SES_ID = #{SES_ID}
+         AND T3.INQ_COND_DTLS = #{INQ_COND_DTLS}
+         AND T3.COL_ITM = 'DEPT_ID'
+         AND T3.COND_DATA_VAL = a.MBR_ID
+        </if>
+          <if test=" OPR_UNIT_ID > 0 ">
+          JOIN
+         TB_OD_ODR_INQ_TGT_DTLS   T4
+         ON  T4.SES_ID = #{SES_ID}
+         AND T4.INQ_COND_DTLS = #{INQ_COND_DTLS}
+         AND T4.COL_ITM = 'DEPT_ID'
+         AND T4.COND_DATA_VAL = e.OPR_UNIT_ID
+        </if>
+        Where  a.UT_AGRE_YN = 'Y'
+            And a.CLT_AGRE_YN = 'Y'
+            And c.ODR_AGNC_USE_YN = 'Y'
+        <if test="MBR_USE_CD != null and !MBR_USE_CD.equals('')">
+            And g.COM_DTL_CD = #{MBR_USE_CD}
+        </if>
+        <if test="CUST_SPR_CD != null and !CUST_SPR_CD.equals('')">
+            And h.COM_DTL_CD = #{CUST_SPR_CD}
+        </if>
+        ORDER BY a.MBR_ID
+</select>
+</mapper>

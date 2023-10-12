@@ -1,0 +1,200 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form" width="740" height="800" titletext="상품이력 상세뷰어" background="black" onload="form_onload" onclose="form_onclose">
+    <Layouts>
+      <Layout height="800" width="740" stepindex="">
+        <Static id="sta_bg" taborder="3" left="0" top="22" right="0" bottom="0" background="white" text=""/>
+        <Button id="btn_exit" taborder="1" text="닫기" left="320" width="100" height="32" top="744" onclick="btn_exit_onclick"/>
+        <WebBrowser id="wbs_prdDetail" taborder="1" onloadcompleted="webEditor_onloadcompleted" onusernotify="webEditor_onusernotify" width="703" height="690" left="17" top="39" onsize="div_prdDetail_wbs_prdDetail_onsize"/>
+        <Static id="sta_title" taborder="2" text="상품상세설명" left="20" top="3" height="16" cssclass="sta_WF_title02" width="155" color="white"/>
+        <Button id="btn_close00" taborder="4" left="720" top="0" height="20" text="X" visible="true" onclick="btn_close_onclick" background="black" cursor="pointer" width="20"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/**********************************************************************
+* FormID(화면   ID명): SSP_BO_RD_56.xfdl(공통 히스트로 팝업관리)
+* 작 성			일 명: 나용철
+* 작 성	    	일 자: 2018/09/17
+* 변 경     	일 자:
+* 변 경			자 명:
+* 변경 및 수정 로그 : 일자별로 변경자 및 변경사항을 간략히 기술
+*/
+/**********************************************************************
+	01. 전처리 공통 함수 선언 
+***********************************************************************/
+include "RD::rdMain.xjs";
+/**********************************************************************
+	02. 폼 변수 정의 
+***********************************************************************/
+this.fv_oApp                = nexacro.getApplication();	//application object
+this.lv_coCd                = this.gfn_nvl(this.fv_oApp.gds_userInfo.getColumn(0,"CO_CD"),"") == "" ? "1000" : this.gfn_nvl(this.fv_oApp.gds_userInfo.getColumn(0,"CO_CD"),"");
+
+this.sParamArg1;
+this.sParamArg2;
+this.sParamArg3;
+/**********************************************************************
+	03. 폼 로드 및 닫을때(폼이 포커스 갈때)
+***********************************************************************/
+/**
+ * 기능 : 폼 로드 완료후 초기값 Setting
+ */
+this.form_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//폼에 공통으로 로드시 사용하는 함수.
+	this.gfn_formOnLoad(this);
+	//사용자 초기화 함수
+	this.fn_formInit();
+}; 
+/**
+ * 기능 : 폼언 로드(닫기전 셋팅)  Setting
+ */
+this.form_onclose = function(obj:nexacro.Form,e:nexacro.CloseEventInfo)
+{
+	
+};
+/**********************************************************************
+	04. 공통 코드 및 콤보 데이타 조회 
+***********************************************************************/
+this.fn_formInit = function()
+{
+
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal01))
+	{
+		 this.sParamArg1 = this.getOwnerFrame().pv_sVal01;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal02))
+	{
+		 this.sParamArg2 = this.getOwnerFrame().pv_sVal02;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal03))
+	{
+		 this.sParamArg3 = this.getOwnerFrame().pv_sVal03;        
+	}
+	this.ds_search.setColumn(0, "CO_CD", 		this.lv_coCd);
+	this.ds_search.setColumn(0, "PRD_ID", 		this.sParamArg1);
+	this.ds_search.setColumn(0, "HST_SEQ", 		this.gfn_trim(this.sParamArg3) );
+	
+	this.fn_initEditor();
+};
+/**
+ * 기능 : 콜백함수(후처리) 
+ */
+this.fn_callBack = function(sSvcId,nErrorCode, sErrorMsg) 
+{
+	if(nErrorCode != 0)
+	{
+		this.fn_alert(sErrorMsg,"에러정보","","error");
+		return false;
+	}else
+	{
+		/*sSvcId (Transaction Id)*/
+		switch(sSvcId)
+		{
+			case "Search":
+			    this.postSearch();
+				break;
+			default:
+				break;
+		}
+	}
+};
+/**********************************************************************
+	05. 조회 함수 선언  
+***********************************************************************/
+/**
+ * 기능 : 조회 전 실행
+ */
+this.preSearch = function()
+{ 
+	// 조회조건 셋팅
+	return true;
+};
+/**
+ * 기능 : 화면조회 전 실행
+ */
+this.fn_search = function()
+{
+	if(!this.preSearch())
+	{
+		return false;
+	}
+	var strSvc 		= "Search";                                                                                                                                               
+	var strUrl 		= "/rd/rd-product-com-history/select-rd-hst-dtl-html-info.do";      
+	var strInDs  	= "ds_search=ds_search";                                                                                                                                            
+	var strOutDs 	= "ds_output=ds_output";                                                                                                                                            
+	var strArg 		= "";                                                                                                                                                     
+	var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack                                                                                                                    
+	var strASync    = true;			   //샏략이나 공백일시에는 ASync=true,싱크시는 false로                                                                                                          
+	this.gfn_transaction(strSvc                                                                                                                                                                                  
+				   		, strUrl                                                                                                                                                                     
+				   		, strInDs                                                                                                                                                                    
+				   		, strOutDs                                                                                                                                                                   
+				   		, strArg                                                                                                                                                                     
+				   		, strCallBack                                                                                                                                                                
+				   		, strASync);
+}
+
+/**
+ * 기능 : 조회 후 실행
+ */
+this.postSearch = function()
+{ 
+	this.fvDocWeb = this.wbs_prdDetail.getProperty("document").getProperty("all");
+	var sContents = this.gfn_trim(this.ds_output.getColumn(0, "PRD_DTL_DESC"));
+	this.fvDocWeb.getProperty("editorData").setProperty("value",sContents);
+	this.fvDocWeb.getProperty("setData").callMethod("click");		
+};
+/**********************************************************************
+	06. 닫기버튼
+***********************************************************************/
+this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close("CLOSE");
+};
+
+this.btn_exit_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close("EXIT");	
+};
+/**********************************************************************
+	07.Get, Set Method 
+***********************************************************************/
+/**********************************************************************
+	08.기타 Control Event  
+***********************************************************************/
+this.fn_initEditor = function()
+{
+	var sUrl = nexacro.getEnvironment().services["svcUrl"].url + "toastEditor/index.html";
+	this.wbs_prdDetail.set_url(sUrl);
+	
+};
+
+this.webEditor_onloadcompleted = function(obj:nexacro.WebBrowser,e:nexacro.WebLoadCompEventInfo)
+{
+	this.fn_search();	
+};
+
+]]></Script>
+    <Objects>
+      <Dataset id="ds_output">
+        <ColumnInfo>
+          <Column id="PRD_DTL_DESC" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="HST_SEQ" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

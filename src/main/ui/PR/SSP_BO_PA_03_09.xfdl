@@ -1,0 +1,459 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PP_03_09" width="1296" height="405" titletext="상품고시정보" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="405" width="1296">
+        <Static id="Static21_00" taborder="0" left="0" top="46" height="32" cssclass="sta_cm_box02L_tdt" text="" right="0"/>
+        <Static id="Static20_00" taborder="1" text="품목" left="0" top="46" width="250" height="32" cssclass="sta_cm_box01L_tdt"/>
+        <Static id="Static60_00" taborder="2" text="상품정보제공 고시 품목" left="0" top="21" height="16" cssclass="sta_WF_title02" width="150"/>
+        <Static id="Static60_00_00" taborder="3" text="상품정보제공 고시 상세" left="0" top="98" height="16" cssclass="sta_WF_title02" width="150"/>
+        <Grid id="grd_prdNoti" taborder="4" left="0" top="124" cssclass="grd_WF_list" binddataset="ds_noticeDetail" autofittype="none" autoenter="select" right="0" scrollbartype="none fixed" nodatatext="품목 또는 카테고리를 선택하세요" bottom="0">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="450"/>
+                <Column size="827"/>
+              </Columns>
+              <Rows>
+                <Row size="31"/>
+              </Rows>
+              <Band id="body">
+                <Cell text="bind:NOTI_ITM_DTL_NM" cssclass="sta_cm_box01L_tdt_necessary" textAlign="left" background="#ebebee" padding="0px 0px 0px 10px"/>
+                <Cell col="1" text="bind:PRD_NOTI_ITM_MAPP_CTS" displaytype="editcontrol" edittype="text"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Edit id="edt_notiItmNm" taborder="5" left="330" top="50" width="216" height="24" readonly="true"/>
+        <Button id="btn_notiPopup" taborder="6" left="550" top="50" height="24" cssclass="btn_WF_search02" width="24" text="" onclick="btn_notiPopup_onclick"/>
+        <Edit id="edt_notiItmId" taborder="7" left="260" top="50" width="65" height="24" readonly="true"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="ASIS_NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="TOBE_NOTI_ITM_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_notice"/>
+      <Dataset id="ds_noticeDetail" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="REF_PRD_ID" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_NM" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_DTL_NO" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_DTL_NM" type="STRING" size="256"/>
+          <Column id="PRD_NOTI_ITM_MAPP_CTS" type="STRING" size="256"/>
+          <Column id="DEL_YN" type="STRING" size="256"/>
+          <Column id="DataSetRowType2" type="STRING" size="256"/>
+          <Column id="UPD_RSN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_noticeDetailReturn" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="REF_PRD_ID" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_NM" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_DTL_NO" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_DTL_NM" type="STRING" size="256"/>
+          <Column id="PRD_NOTI_ITM_MAPP_CTS" type="STRING" size="256"/>
+          <Column id="DEL_YN" type="STRING" size="256"/>
+          <Column id="DataSetRowType2" type="STRING" size="256"/>
+          <Column id="UPD_RSN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 2022.03.17 조지훈
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.fCallBackFn = "";	//콜백
+this.pageMode = "edit";	//기본edit모드
+this.sSvcID = "";
+this.contextRealPath = "";
+this.coCd = "";
+this.notiItmId = "";
+this.loaded = false; //로딩여부
+this.isResize = false;
+
+this.searchNotiItmCount = 0;
+this.searchNotiItmNm = "";
+
+this.originalNotiItmId = "";
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{	
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo){
+	var objType = obj.getFocus();
+	
+	if( e.keycode == 13 && objType == "[object Edit]"){
+		var value = e.fromobject.value;
+		if(this.gfn_lengthByte(this.gfn_allTrim(value)) > 0){
+			if( e.fromobject.id == "edt_notiItmId") {
+				this.ds_search.setColumn(0, "NOTI_ITM_ID", value);
+				this.fn_popupSearch("edt_notiItmId", "/pr/prd-popup/select-product-notice-popup-list.do");
+			}
+		}
+	}
+}
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회  
+this.fn_call = function(){
+	var sSvcId = "call"; 
+	var sUrl = "/pr/prd-mng/select-product-notice-list.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_noticeDetail=noticeList";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack", false);
+};
+
+//조회  
+this.fn_regProcCall = function(){
+	var sSvcId = "call"; 
+	var sUrl = "/pr/prd-add/select-reg-proc-product-notice-list.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_noticeDetail=noticeList";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack", false);
+};
+
+//폼 엔터처리용
+this.fn_popupSearch = function (svcId, url){
+	var sSvcId = svcId;    
+	var sUrl = url;  
+	var inDs = "ds_search=ds_search";
+	var outDs = "";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");	
+};
+
+//저장
+this.fn_save = function(){
+	var sSvcId = "save"; 
+	var sUrl = "/pr/prd-mng/update-ssp-product-noti-info.do";
+	var inDs = "ds_search=ds_search ds_noticeDetail=ds_noticeDetail:U";
+	var outDs = "";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack", false);
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(errorCode != 0 && errorCode != -100){
+		trace(errorMsg);
+	}
+	
+	switch(svcID){
+		case "call":
+			var delArr = this.ds_noticeDetail.extractRowsNF("DEL_YN=='Y'");
+			this.ds_noticeDetail.deleteMultiRows(delArr);
+			
+			if(this.ds_noticeDetail.rowcount>0){
+				this.edt_notiItmId.set_value(this.ds_noticeDetail.getColumn(0, "NOTI_ITM_ID"));
+				this.edt_notiItmNm.set_value(this.ds_noticeDetail.getColumn(0, "NOTI_ITM_NM"));
+			}else{
+				this.edt_notiItmId.set_value('');
+				this.edt_notiItmNm.set_value('');
+			}
+			
+			if(!this.loaded){
+				this.originalNotiItmId = this.ds_noticeDetail.getColumn(0, "NOTI_ITM_ID");
+			}
+			this.loaded = true;
+			
+			if(this.isResize){
+				//부모 사이즈 변경호출
+				var grdSize = this.grd_prdNoti.getRealRowFullSize()+126;
+				if(grdSize<200){
+					grdSize = 200;
+				}
+				this.lookupFunc(this.fCallBackFn).call('tab_resize', 0, '', {'height':grdSize});
+			}
+			
+			break;
+			
+		case "edt_notiItmId" : 
+			if(this.searchNotiItmCount>0){
+                this.edt_notiItmNm.set_value(this.searchNotiItmNm);
+				this.fn_call();
+            }else{
+                var params = {
+					'notiItmId':this.edt_notiItmId.value,
+					'coCd':this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD")
+				};
+                this.gfn_openPopup('btn_notiPopup', "PR_POP::SSP_BO_PA_47.xfdl", params,  "fn_popupCallback", {});
+            }
+            break;
+			
+	}
+	
+	//부모창 결과리턴
+	if(!this.gfn_isNull(this.fCallBackFn)){
+		this.lookupFunc(this.fCallBackFn).call(this.sSvcID, errorCode, errorMsg, {id:this.sSvcID, status:this.loaded});
+	}
+	
+};
+
+//팝업콜백
+this.fn_popupCallback = function(svcID, args){
+    switch(svcID) {
+		case "btn_notiPopup" :
+			var jsonData = JSON.parse(args);
+			this.ds_search.setColumn(0, "CO_CD", jsonData.CO_CD);
+			this.ds_search.setColumn(0, "NOTI_ITM_ID", jsonData.NOTI_ITM_ID);
+			this.fn_call();
+			
+			//this.fn_callParentNotiItmId(jsonData.NOTI_ITM_ID);
+			
+            break;
+			
+    }
+}
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+/*
+서비스ID(콜백ID)
+파라미터맵,
+콜백펑션, 
+페이지타입 옵션 : edit:수정모드, readonly:읽기모드
+*/
+this.cfn_read = function(svcID, params, callBackFunction, pageMode, isResize){
+	this.isResize = isResize;
+	if(isResize && !this.gfn_isNull(this.fCallBackFn)){
+		//부모 사이즈 변경호출
+		var grdSize = this.grd_prdNoti.getRealRowFullSize()+126;
+		if(grdSize<200){
+			grdSize = 200;
+		}
+		this.lookupFunc(this.fCallBackFn).call('tab_resize', 0, '', {'height':grdSize});
+	}
+	if(this.fn_reloadCheck(params)){
+		if(this.fn_init(svcID, params, callBackFunction, pageMode)){
+			this.fn_call();
+		}
+	}
+}
+
+//등록처리전용(상품추가메뉴 전용)
+this.cfn_regProcRead = function(svcID, params, callBackFunction, pageMode, isResize){
+	if(this.fn_reloadCheck(params)){
+		if(this.fn_init(svcID, params, callBackFunction, pageMode, isResize)){
+			this.fn_regProcCall();
+		}
+	}
+}
+
+//데이터 적합성 체크. 이상없을시 true리턴(저장시 호출필요)
+this.cfn_valiation = function(type) {
+	var result = true;
+	if(this.gfn_isNull(type)){
+		type = 'a';
+	}
+	
+	if(this.ds_noticeDetail.rowcount<1){
+		result = false;
+	}
+	
+	if(result){
+		for(var i=0; i<this.ds_noticeDetail.rowcount; i++){
+			var CTS = this.ds_noticeDetail.getColumn(i, "PRD_NOTI_ITM_MAPP_CTS");
+			if(this.gfn_isNull(CTS)){
+				if(type=='a'){
+					alert('고시상세값을 입력해 주세요');
+					this.setFocus();
+					result = false;
+					break;
+				}else if(type=='b'){
+					result = false;
+				}
+			}
+		}
+	}
+	
+	return result;
+}
+
+
+//사이즈 조절 필요시 호출
+this.cfn_resize = function(width, height){
+	if(!this.gfn_isNull(width)){
+		this.set_width(width);
+	}
+	if(!this.gfn_isNull(height)){
+		this.set_height(height);
+	}
+}
+
+//필요값 리턴
+this.cfn_getData = function(){
+	var returnObject = {
+		'NOTI_ITM_ID' : this.ds_noticeDetail.getColumn(0, "NOTI_ITM_ID"),
+		'ASIS_NOTI_ITM_ID' : this.originalNotiItmId,
+		'TOBE_NOTI_ITM_ID' : this.ds_noticeDetail.getColumn(0, "NOTI_ITM_ID")
+	};
+	
+	return returnObject;
+};
+
+//변경사유 세팅(부모창에서 데이터셋 복사시 변경프래그 반영안됨)
+this.cfn_setData = function() {
+	this.fn_setData();
+}
+
+//저장	단독으로 저장버튼이 있을경우에만 쓰이므로 사용안함
+this.cfn_save = function() {
+	this.fn_setData();
+	
+	if(this.fn_dataCheck(this.ds_noticeDetail)){	//데이터 변경이 있을경우에만 저장
+		this.fn_save();
+	}
+}
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_init = function(svcID, params, callBackFunction, pageMode) {
+	var paramArr = [{id:'coCd', name:'회사코드'}, {id:'prdId', name:'상품ID'}];
+	for(var i = 0; i<paramArr.length; i++){
+		if(this.gfn_isNull(params[paramArr[i]['id']])){
+			alert(this.titletext+' > 필수값 오류 > '+paramArr[i]['name']);
+			return false;
+		}
+	}
+	var coCd = params.coCd;
+	var prdId = params.prdId;
+	var notiItmId = params.notiItmId;
+	
+	this.coCd = coCd;
+	this.sSvcID = svcID;
+	this.notiItmId = notiItmId;
+	this.fCallBackFn = callBackFunction;
+	
+	this.fn_setPageMode(pageMode);	//페이지모드 설정
+	
+	this.ds_search.setColumn(0, "CO_CD", coCd);
+	this.ds_search.setColumn(0, "PRD_ID", prdId);
+	if(!this.gfn_isNull(this.notiItmId)){
+		this.ds_search.setColumn(0, "NOTI_ITM_ID", notiItmId);
+	}
+	
+	return true;
+	
+};
+
+this.fn_callParentNotiItmId = function(notiItmId){
+	if(!this.gfn_isNull(this.fCallBackFn)){
+		//부모창에 고시품목 전달
+		var param = {
+			'NOTI_ITM_ID' : notiItmId
+		};
+		this.lookupFunc(this.fCallBackFn).call("sspCategorySelect", 0, '', param);
+	}
+}
+
+//페이지 모드 설정(readonly:읽기전용, edit:수정모드)
+this.fn_setPageMode = function(pageMode){
+	if(pageMode == 'readonly'){
+		this.grd_prdNoti.set_readonly(true);
+		this.btn_notiPopup.set_enable(false);
+	}else if(pageMode == 'edit'){
+		this.grd_prdNoti.set_readonly(false);
+		this.btn_notiPopup.set_enable(true);
+		this.edt_notiItmId.set_readonly(false);
+	}
+}
+
+//재조회체크
+this.fn_reloadCheck = function(params) {
+	//고시품목 변경이 없을경우엔 재조회 막기
+	if(this.notiItmId == params.notiItmId && this.loaded){
+		return false;
+	}else{
+		return true;
+	}
+};
+
+this.fn_setData = function(){
+	this.ds_search.setColumn(0, "ASIS_NOTI_ITM_ID", this.originalNotiItmId);	//변경전 고시품목
+	this.ds_search.setColumn(0, "TOBE_NOTI_ITM_ID", this.ds_noticeDetail.getColumn(0, "NOTI_ITM_ID"));	//변경후 고시품목
+	
+	this.ds_noticeDetailReturn.clearData();
+	this.ds_noticeDetailReturn.copyData(this.ds_noticeDetail, true);
+	
+	var j = 0;
+	var rowcnt = this.ds_noticeDetail.getRowCount() + this.ds_noticeDetail.getDeletedRowCount();
+	for(var i=0; i<rowcnt; i++){
+		if(i<this.ds_noticeDetail.getRowCount()){
+			var rowType = this.ds_noticeDetail.getRowType(i);
+			var newtype = rowType==1?0:rowType==2?1:rowType==4?2:rowType==8?3:0;
+			this.ds_noticeDetailReturn.setColumn(i, "DataSetRowType2", newtype);
+			
+		}else{
+			//삭제건 존재시 세팅
+			var cocd = this.ds_noticeDetail.getDeletedColumn(j, "CO_CD");
+			var notino = this.ds_noticeDetail.getDeletedColumn(j, "NOTI_ITM_ID");
+			var prdid = this.ds_noticeDetail.getDeletedColumn(j, "PRD_ID");
+			var dtlno = this.ds_noticeDetail.getDeletedColumn(j, "NOTI_ITM_DTL_NO");
+			
+			this.ds_noticeDetailReturn.insertRow(i);
+			this.ds_noticeDetailReturn.setColumn(i, "CO_CD", cocd);
+			this.ds_noticeDetailReturn.setColumn(i, "NOTI_ITM_ID", notino);
+			this.ds_noticeDetailReturn.setColumn(i, "PRD_ID", prdid);
+			this.ds_noticeDetailReturn.setColumn(i, "NOTI_ITM_DTL_NO", dtlno);
+			this.ds_noticeDetailReturn.setColumn(i, "DataSetRowType2", 3);
+			j = j+1;
+		}
+	}
+}
+
+this.fn_dataCheck = function(dataset) {
+	for(var i=0; i < dataset.rowcount; i++){
+		var sRowType = dataset.getRowType(i);
+		if( sRowType == 2 || sRowType == 4 ){
+			return true;
+		}
+	}
+	if(dataset.getDeletedRowCount() > 0){
+		return true;
+	}
+	return false;	
+}
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//고시품목 팝업
+this.btn_notiPopup_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = {coCd : this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD")};
+    var options = {};
+    this.gfn_openPopup(e.fromobject.id, "PR_POP::SSP_BO_PA_47.xfdl", params,  "fn_popupCallback", options);
+};
+]]></Script>
+  </Form>
+</FDL>

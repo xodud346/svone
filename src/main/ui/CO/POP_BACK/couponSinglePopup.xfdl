@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="CouponSinglePopup" width="560" height="580" onload="fn_onLoad" titletext="쿠폰 조회" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="580" width="560">
+        <Static id="Static00" taborder="0" text="쿠폰 번호" left="22" top="92" width="70" height="29"/>
+        <Edit id="edt_couponNo" taborder="2" left="117" top="92" width="429" height="30"/>
+        <Static id="Static00_00" taborder="7" text="쿠폰명" left="22" top="126" width="70" height="29"/>
+        <Edit id="edt_couponNm" taborder="3" left="117" top="126" width="429" height="30"/>
+        <Grid id="grd_list" taborder="6" left="20" top="207" width="526" height="353" binddataset="ds_cpn" autofittype="col" cellsizebandtype="allband" oncelldblclick="grd_list_oncelldblclick" enable="true">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="111"/>
+                <Column size="89"/>
+                <Column size="160"/>
+                <Column size="182"/>
+              </Columns>
+              <Rows>
+                <Row size="41" band="head"/>
+                <Row size="38"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="쿠폰 번호"/>
+                <Cell col="1" text="쿠폰 종류"/>
+                <Cell col="2" text="쿠폰 명"/>
+                <Cell col="3" text="할인 금액/율&#13;&#10;(최대 할인 금액)"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:CPN_MST_IDX" textAlign="center"/>
+                <Cell col="1" displaytype="combotext" edittype="combo" combodataset="ds_cpnGbn" combodatacol="CODE_NM" combocodecol="CODE" text="bind:CPN_MST_GBN"/>
+                <Cell col="2" text="bind:CPN_MST_TITLE"/>
+                <Cell col="3" textAlign="center" text="expr:CPN_MST_GBN =='A' ? CPN_MST_SAL_GBN == 'A' ? CPN_MST_SAL_PRC+&quot;%&quot; + String.fromCharCode(10) + &quot;(&quot;+CPN_MST_SAL_PRC+&quot;원)&quot; : CPN_MST_SAL_GBN == 'B' ? CPN_MST_SAL_PRC+&quot;원&quot; : &quot;&quot;  : CPN_MST_GBN == 'F' ?  '-' : ''"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_clear" taborder="4" text="초기화" left="413" top="166" width="65" height="32" onclick="btn_clear_onclick"/>
+        <Button id="btn_search" taborder="5" text="검색" left="481" top="166" width="65" height="32" onclick="btn_search_onclick"/>
+        <Static id="staticTitle" taborder="8" left="18" top="16" width="155" height="37" font="bold 14pt &quot;Arial&quot;" text="쿠폰 조회"/>
+        <Static id="Static00_01" taborder="9" text="쿠폰종류" left="22" top="58" width="70" height="29"/>
+        <Combo id="cmb_couponGbn" taborder="1" left="117" top="58" width="151" height="31" text="전체" index="0" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" value="">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="datacolumn">전체</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">A</Col>
+                <Col id="datacolumn">일반 쿠폰</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">F</Col>
+                <Col id="datacolumn">배송비 쿠폰</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Combo>
+        <Static id="sta_totcnt" taborder="10" text="총 0건" left="22" top="183" width="84" height="18"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_cpn">
+        <ColumnInfo>
+          <ConstColumn id="ConstColumn0" type="STRING" size="30"/>
+          <Column id="CPN_MST_IDX" type="STRING" size="256"/>
+          <Column id="CPN_MST_GBN" type="STRING" size="256"/>
+          <Column id="CPN_MST_TITLE" type="STRING" size="256"/>
+          <Column id="CPN_MST_SAL_PRC" type="STRING" size="256"/>
+          <Column id="CPN_MST_SAL_GBN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_cpnGbn">
+        <ColumnInfo>
+          <Column id="CODE" type="STRING" size="256"/>
+          <Column id="CODE_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CODE">A</Col>
+            <Col id="CODE_NM">일반 쿠폰</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">F</Col>
+            <Col id="CODE_NM">배송비 쿠폰</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="cPage" type="INT" size="256"/>
+          <Column id="pagingSize" type="INT" size="256"/>
+          <Column id="pageSize" type="INT" size="256"/>
+          <Column id="couponNo" type="STRING" size="256"/>
+          <Column id="couponNm" type="STRING" size="256"/>
+          <Column id="couponGbn" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : MarketA
+CREATION DATES : 
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totRowCnt = 0;
+this.pagingSize = 10;
+this.pageSize = 20;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.edt_couponNo.set_value(this.parent.cpnMstIdx);
+	this.edt_couponNm.set_value(this.parent.cpnMstTitle);
+	
+	//조회
+	this.fn_search(1);
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	var objType = obj.getFocus();
+	if( e.keycode == 13 && objType == "[object Edit]" ) {
+		//조회
+		this.fn_search(1);
+	}
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (cPage)
+{
+	var sSvcId = "couponSelect";    
+	var sUrl = "/co/popUp/couponPopupList.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_cpn=ds_output1";
+	var arg = "";
+	
+	if( undefined == cPage ) {
+		cPage = 1;
+	}
+	
+	// 페이징 정보 세팅.
+	this.ds_search.setColumn(0, "cPage", cPage);
+	this.ds_search.setColumn(0, "pagingSize", this.pagingSize);
+	this.ds_search.setColumn(0, "pageSize", this.pageSize);
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "couponSelect"){    
+		this.sta_totcnt.set_text("총 "+this.totRowCnt+"건");
+	}
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.cmb_couponGbn.set_index(0);
+	this.edt_couponNo.set_value("");
+	this.edt_couponNm.set_value("");
+};
+
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search(1);
+};
+
+this.grd_list_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var resData = {};
+	var resString = "";
+	
+	resData.CPN_MST_IDX = this.ds_cpn.getColumn(this.ds_cpn.rowposition, "CPN_MST_IDX");
+	resData.CPN_MST_TITLE = this.ds_cpn.getColumn(this.ds_cpn.rowposition, "CPN_MST_TITLE");
+	resString = JSON.stringify(resData);	
+	this.close(resString);
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="cmb_couponGbn" propid="value" datasetid="ds_search" columnid="couponGbn"/>
+      <BindItem id="item1" compid="edt_couponNo" propid="value" datasetid="ds_search" columnid="couponNo"/>
+      <BindItem id="item2" compid="edt_couponNm" propid="value" datasetid="ds_search" columnid="couponNm"/>
+    </Bind>
+  </Form>
+</FDL>

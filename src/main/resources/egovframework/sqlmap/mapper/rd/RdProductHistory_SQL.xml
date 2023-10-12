@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+******************************************************************************
+* DESC : 상품 변경이력 쿼리모음
+* 작성자 : 
+* 작성 일자 : 2022.03.10
+******************************************************************************
+-->
+<mapper namespace="RdProductHistory">
+
+    <select id="selectProductHistoryCount" parameterType="HashMap" resultType="Integer">
+        /* RdProductHistory.selectPersonHistoryCount */
+        SELECT COUNT(*) FROM (
+	        <choose>
+	            <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'person'"> <include refid="selectPersonHistory"/> </when>
+	        </choose>
+		) TB
+    </select>
+    
+    <select id="selectProductHistoryList" parameterType="HashMap" resultType="HashMap">
+        /* RdProductHistory.selectPersonHistoryList */
+        SELECT 
+	        HST_SEQ,   --seq
+	        ID,    --id
+	        COL,   --변경컬럼
+	        ASIS,  --변경전값
+	        TOBE,  --변경후값
+	        UPD_RSN,   --변경사유
+	        UPD_ID,    --변경자
+	        UPD_NAME,  --변경자명
+	        UPD_DTM    --변경일
+        FROM (
+		    <choose>
+	            <when test="HISTORY_TYPE != null and HISTORY_TYPE == 'person'"> <include refid="selectPersonHistory"/> </when>
+	        </choose>
+		    ) TB
+		ORDER BY HST_SEQ DESC
+		OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+    
+    <!-- 담당자 변경이력  -->
+    <sql id="selectPersonHistory">
+        WITH TEMP AS(
+            SELECT ROWNUM RN, TB.* FROM 
+              (SELECT
+                    HST_SEQ ,
+                    CO_CD,
+                    PRD_CLCD,
+                    DATA_CHG_TP_CD,
+                    DECODE(DATA_CHG_TP_CD, 'I', REG_DTM, UPD_DTM) UPD_DTM,
+                    DECODE(DATA_CHG_TP_CD, 'I', REGPSN_ID, UPDPSN_ID) UPDPSN_ID,
+                    UPD_RSN,
+                    PRD_CLSF_CHRPSN_ID,
+                    PRD_CLSF_CHRPSN_USEYN
+                FROM
+                    SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO_HST MST
+                WHERE MST.CO_CD = #{CO_CD}
+                    AND PRD_CLCD = #{KEY1}
+                    AND PRD_CLSF_CHRPSN_TP_CD = #{KEY4}
+                    AND MALL_SPR_CD = '20'
+                ORDER BY MST.HST_SEQ) TB)
+        SELECT  
+            HST_SEQ,
+            PRD_CLCD ID,
+            '담당자' COL,
+            (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP 
+	           WHERE OP.OPRTR_ID = DECODE(DATA_CHG_TP_CD, 'I', NULL, (SELECT PRD_CLSF_CHRPSN_ID FROM TEMP WHERE RN = A.RN -1))) ASIS,
+	        (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP 
+	           WHERE OP.OPRTR_ID = DECODE(DATA_CHG_TP_CD, 'D', NULL, PRD_CLSF_CHRPSN_ID)) TOBE,
+            UPD_RSN UPD_RSN,
+            A.UPDPSN_ID UPD_ID ,
+            (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+            A.UPD_DTM UPD_DTM,
+            A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+        FROM TEMP A
+        WHERE DECODE(DATA_CHG_TP_CD, 'I', 'Y', 'D', 'Y',DECODE(PRD_CLSF_CHRPSN_ID, (SELECT PRD_CLSF_CHRPSN_ID FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+        UNION ALL 
+        SELECT  
+            HST_SEQ,
+            PRD_CLCD ID,
+            '상태' COL,
+            DECODE(DATA_CHG_TP_CD, 'I', NULL, (SELECT DECODE(PRD_CLSF_CHRPSN_USEYN, 'Y', '사용', '삭제') FROM TEMP WHERE RN = A.RN -1)) ASIS,
+            DECODE(DATA_CHG_TP_CD, 'D', NULL, DECODE(PRD_CLSF_CHRPSN_USEYN, 'Y', '사용', '삭제')) TOBE,
+            UPD_RSN UPD_RSN,
+            A.UPDPSN_ID UPD_ID ,
+            (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OP WHERE OP.OPRTR_ID = A.UPDPSN_ID) UPD_NAME,
+            A.UPD_DTM UPD_DTM,
+            A.DATA_CHG_TP_CD DATA_CHG_TP_CD
+        FROM TEMP A
+        WHERE DECODE(DATA_CHG_TP_CD, 'I', 'Y', 'D', 'Y', DECODE(PRD_CLSF_CHRPSN_USEYN, (SELECT PRD_CLSF_CHRPSN_USEYN FROM TEMP WHERE RN = A.RN -1), 'N', 'Y')) = 'Y'
+    </sql>
+
+</mapper>

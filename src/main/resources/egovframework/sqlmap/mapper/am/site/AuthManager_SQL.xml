@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="AuthManager">
+	<!-- 관리자 > 사이트 관리 > 권한관리 목록 갯수  -->
+	<sql id="authManagerListWhere">
+		AND M.AUT_MST_USE_YN = 'Y'
+		<if test="autMstNm != null and autMstNm != ''">
+		AND M.AUT_MST_NM LIKE '%' ||#{autMstNm} || '%'
+		</if>
+		<if test="admMstErpNo != null and admMstErpNo != ''">
+		AND A.ADM_MST_ERP_NO LIKE '%' ||#{admMstErpNo} || '%'
+		</if>
+		<if test="admMstNm != null and admMstNm != ''">
+		AND A.ADM_MST_NM LIKE '%' ||#{admMstNm} || '%'
+		</if>
+	</sql>
+	<select id="selectAuthManagerListCount" parameterType="HashMap" resultType="Integer">
+		/* AuthManager.selectAuthManagerListCount */
+		SELECT
+				COUNT(M.AUT_MST_IDX)
+		FROM	T_AUT_MST M
+				LEFT JOIN TB_SB_AUT_USER U
+					ON M.AUT_MST_IDX = U.AUT_MST_IDX
+				LEFT JOIN T_ADM_MST A
+					ON  A.ADM_MST_ID = U.ADM_MST_ID
+		<where>
+			<include refid="authManagerListWhere" />
+		</where>
+	</select>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 목록  -->
+	<select id="selectAuthManagerList" parameterType="HashMap" resultType="SspMap">
+		/* AuthManager.selectAuthManagerList */
+		SELECT
+				S2.*
+			FROM
+				(
+					SELECT
+						ROWNUM AS RNUM,
+						S1.*
+					FROM
+						(
+
+						SELECT
+								M.AUT_MST_IDX
+							,	M.AUT_MST_NM
+							,	M.AUT_MST_USE_YN
+							,	M.AUT_MST_REG_DT
+							,	M.AUT_MST_REG_IP
+							,	M.AUT_MST_REG_ID
+							,	M.AUT_MST_UPD_DT
+							,	M.AUT_MST_UPD_IP
+							,	M.AUT_MST_UPD_ID
+							,	A.ADM_MST_ERP_NO
+							,	A.ADM_MST_NM
+							,	A.ADM_MST_ID
+							,	A.CO_CD
+							,	A.OPRTR_ID
+							,	A.ORG_NM
+						FROM	T_AUT_MST M
+								LEFT JOIN TB_SB_AUT_USER U
+									ON M.AUT_MST_IDX = U.AUT_MST_IDX
+								LEFT JOIN T_ADM_MST A
+									ON  A.ADM_MST_ID = U.ADM_MST_ID
+						<where>
+							<include refid="authManagerListWhere" />
+						</where>
+						ORDER BY
+							M.AUT_MST_IDX
+						,	M.AUT_MST_NM
+					)
+					S1
+			)
+			S2
+			<if test="startNum != null and startNum != '' and endNum != null and endNum != ''">
+				WHERE RNUM BETWEEN #{startNum} AND #{endNum}
+			</if>
+	</select>
+
+	<!-- 등록자 건수 -->
+	<select id="selectAuthorityCount" parameterType="hashMap" resultType="Integer">
+		SELECT
+			COUNT(DISTINCT ADM_MST_ERP_NO)
+		FROM T_ADM_MST
+		<where>
+			AND ADM_MST_STATE = 'Y'
+			<if test='admMstErpNo != null and admMstErpNo != ""'>
+				AND ADM_MST_ERP_NO LIKE '%' || #{admMstErpNo} || '%'
+			</if>
+			<if test='admMstNm != null and admMstNm != ""'>
+				AND ADM_MST_NM LIKE '%' || #{admMstNm} || '%'
+			</if>
+		</where>
+	</select>
+	<!-- 등록자 조회 -->
+	<select id="selectAuthority" parameterType="hashMap" resultType="SspMap">
+		SELECT
+			*
+		FROM (
+			SELECT	DISTINCT
+					ADM_MST_NM
+				,	ADM_MST_ID
+				,	ADM_MST_ERP_NO
+				,	CO_CD
+				,	OPRTR_ID
+				,	ORG_NM
+			FROM T_ADM_MST
+			<where>
+				AND ADM_MST_STATE = 'Y'
+				<if test='admMstErpNo != null and admMstErpNo != ""'>
+					AND ADM_MST_ERP_NO LIKE '%' || #{admMstErpNo} || '%'
+				</if>
+				<if test='admMstNm != null and admMstNm != ""'>
+					AND ADM_MST_NM LIKE '%' || #{admMstNm} || '%'
+				</if>
+			</where>
+
+		) WHERE ROWNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 권한 마스터 등록 -->
+	<insert id="insertAuthMaster" parameterType="HashMap">
+		<selectKey resultType="Integer" keyProperty="autMstIdx" order="BEFORE">
+			SELECT SEQ_AUT_MST_IDX.NEXTVAL AS AUT_MST_IDX FROM DUAL
+		</selectKey>
+		/* AuthManager.insertAuthMaster */
+		INSERT INTO
+			T_AUT_MST
+			(
+				AUT_MST_IDX,
+				AUT_MST_NM,
+				AUT_MST_REG_DT,
+				AUT_MST_REG_IP,
+				AUT_MST_REG_ID
+			)
+		VALUES
+			(
+				#{autMstIdx},
+				#{autMstNm},
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				#{regIp},
+				#{regpsnId}
+			)
+	</insert>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 권한 마스터 수정 -->
+	<update id="updateAuthMaster" parameterType="HashMap">
+		/* AuthManager.updateAuthMaster*/
+		UPDATE
+			T_AUT_MST
+		SET
+			AUT_MST_NM = #{autMstNm},
+			AUT_MST_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			AUT_MST_UPD_IP = #{regIp},
+			AUT_MST_UPD_ID = #{updpsnId}
+		WHERE
+			AUT_MST_IDX = #{autMstIdx}
+	</update>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 권한 마스터 삭제 -->
+	<update id="deleteAuthMaster" parameterType="HashMap">
+		/* AuthManager.deleteAuthMaster*/
+		UPDATE
+			T_AUT_MST
+		SET
+			AUT_MST_USE_YN = 'N',
+			AUT_MST_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			AUT_MST_UPD_IP = #{regIp},
+			AUT_MST_UPD_ID = #{updpsnId}
+		WHERE
+			AUT_MST_IDX = #{autMstIdx}
+	</update>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 > 권한메뉴 등록 -->
+	<insert id="insertAuthMenu" parameterType="HashMap">
+		/* AuthManager.insertAuthMenu */
+		INSERT ALL
+		<foreach collection="admMnuIdx1" item="admMnuIdx" separator=" ">
+			INTO
+				T_ADM_AUT
+				(
+					AUT_MST_IDX,
+					ADM_MNU_IDX
+				)
+				VALUES
+				(
+					#{admMnuIdx.autMstIdx},
+					#{admMnuIdx.admMnuIdx}
+				)
+		</foreach>
+		SELECT * FROM DUAL
+	</insert>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 > 권한메뉴 등록 -->
+	<insert id="insertAuthMenu1" parameterType="HashMap">
+		/* AuthManager.insertAuthMenu1 */
+		INSERT INTO T_ADM_AUT
+			(
+				AUT_MST_IDX,
+				ADM_MNU_IDX
+			)
+		SELECT
+			#{autMstIdx},
+			ADM_MNU_IDX
+		FROM T_ADM_MNU
+		START WITH ADM_MNU_IDX IN
+			<foreach collection="admMnuIdx2" item="item" index="index" open="(" close=")" separator=",">
+			#{item}
+			</foreach>
+		CONNECT BY PRIOR ADM_MNU_IDX = ADM_MNU_UP_IDX
+	</insert>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 메뉴 1depth 수정-->
+	<insert id="updateMnueIdx" parameterType="HashMap">
+		/* AuthManager.updateMnueIdx */
+		INSERT ALL
+			<foreach collection="admMnuIdx1" item="admMnuIdx" separator=" ">
+			INTO
+				T_ADM_AUT
+				(
+					AUT_MST_IDX,
+					ADM_MNU_IDX
+
+				)
+				VALUES
+				(
+					#{admMnuIdx.autMstIdx},
+					#{admMnuIdx.admMnuIdx}
+				)
+			</foreach>
+		SELECT * FROM DUAL
+	</insert>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 메뉴 1depth 수정-->
+	<insert id="updateMnueIdx1" parameterType="HashMap">
+		/* AuthManager.updateMnueIdx1 */
+		INSERT INTO T_ADM_AUT
+			(
+				AUT_MST_IDX,
+				ADM_MNU_IDX
+			)
+		SELECT
+			#{autMstIdx},
+			ADM_MNU_IDX
+		FROM T_ADM_MNU
+		START WITH ADM_MNU_IDX IN
+			<foreach collection="admMnuIdx2" item="item" index="index" open="(" close=")" separator=",">
+			#{item}
+			</foreach>
+		CONNECT BY PRIOR ADM_MNU_IDX = ADM_MNU_UP_IDX
+	</insert>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 > 권한 삭제 -->
+	<delete id="deleteAuthMenu" parameterType="HashMap" >
+		/* AuthManager.deleteAuthMenu */
+		DELETE FROM T_ADM_AUT WHERE AUT_MST_IDX = #{autMstIdx}
+	</delete>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 > 권한사용자 등록 -->
+	<insert id="insertAuthUser" parameterType="HashMap">
+		/* AuthManager.insertAuthUser */
+		INSERT ALL
+			<foreach collection="admMstIds" item="admMstId" separator=" ">
+			INTO
+				TB_SB_AUT_USER
+				(
+					AUT_MST_IDX,
+					ADM_MST_ID
+				)
+				VALUES
+				(
+					#{admMstId.autMstIdx},
+					#{admMstId.admMstId}
+				)
+			</foreach>
+		SELECT * FROM DUAL
+	</insert>
+
+	<insert id="updateUserIdx" parameterType="HashMap">
+		/* AuthManager.updateUserIdx */
+		INSERT ALL
+			<foreach collection="admMstIds" item="admMstId" separator=" ">
+			INTO
+				TB_SB_AUT_USER
+				(
+					AUT_MST_IDX,
+					ADM_MST_ID
+				)
+				VALUES
+				(
+					#{admMstId.autMstIdx},
+					#{admMstId.admMstId}
+				)
+			</foreach>
+		SELECT * FROM DUAL
+	</insert>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 > 권한 삭제 -->
+	<delete id="deleteAuthUser" parameterType="HashMap" >
+		/* AuthManager.deleteAuthUser */
+		DELETE FROM TB_SB_AUT_USER WHERE AUT_MST_IDX = #{autMstIdx}
+	</delete>
+
+	<!-- 관리자 > 사이트 관리 > 권한관리 상세보기  -->
+	<select id="selectAuthManagerInfo" parameterType="HashMap" resultType="SspMap">
+		/* AuthManager.selectAuthManagerInfo */
+		SELECT
+			AUT_MST_IDX,
+			AUT_MST_NM,
+			AUT_MST_USE_YN,
+			AUT_MST_REG_DT,
+			AUT_MST_REG_IP,
+			AUT_MST_REG_ID,
+			AUT_MST_UPD_DT,
+			AUT_MST_UPD_IP,
+			AUT_MST_UPD_ID
+		FROM
+			T_AUT_MST
+		WHERE
+			AUT_MST_IDX = #{autMstIdx}
+	</select>
+
+	<!-- 관리자 > 시스템 관리 > 권한관리 상세보기 -->
+	<select id="selectMenuIdx" parameterType="HashMap" resultType="SspMap">
+		/*AuthManager.selectMenuIdx */
+		SELECT *
+		FROM
+			T_ADM_AUT
+		WHERE
+		AUT_MST_IDX = #{autMstIdx}
+	</select>
+
+	<!-- 관리자 > 시스템 관리 > 권한관리 당담자 상세보기-->
+	<select id="selectMemberIdx" parameterType="HashMap" resultType="SspMap">
+		/*AuthManager.selectMemberIdx */
+		SELECT
+				M.AUT_MST_IDX
+			,	M.AUT_MST_NM
+			,	M.AUT_MST_USE_YN
+			,	A.ADM_MST_ERP_NO
+			,	A.ADM_MST_NM
+			,	A.ADM_MST_ID
+		FROM	T_AUT_MST M
+				LEFT JOIN TB_SB_AUT_USER U
+					ON M.AUT_MST_IDX = U.AUT_MST_IDX
+				LEFT JOIN T_ADM_MST A
+					ON  A.ADM_MST_ID = U.ADM_MST_ID
+		WHERE	M.AUT_MST_IDX = #{autMstIdx}
+		ORDER BY
+				A.ADM_MST_ERP_NO
+			,	A.ADM_MST_NM
+	</select>
+
+	<select id="selectMenuManagerList" parameterType="HashMap" resultType="SspMap">
+		/* MenuManager.selectMenuManagerList */
+		SELECT
+			S2.*,
+			(   SELECT
+					COUNT(ADM_MNU_IDX)
+				FROM
+					T_ADM_MNU
+				WHERE
+					ADM_MNU_UP_IDX = S2.ADM_MNU_IDX
+			)
+			AS ADM_MNU_CHILD_CNT,
+			<if test="autMstIdx != null and autMstIdx != ''">
+			(
+			SELECT
+				CASE
+					WHEN COUNT(0)  > 0 THEN 'Y'
+					ELSE 'N'
+				END
+			FROM
+				T_ADM_AUT
+			WHERE
+				AUT_MST_IDX = #{autMstIdx}
+				AND ADM_MNU_IDX = S2.ADM_MNU_IDX
+			)AS ADM_MNU_CHECK_YN,
+			</if>
+			LAG(S2.ADM_MNU_IDX , 1, -1) OVER(ORDER BY S2.RNUM ASC) AS PREV_ADM_MNU_IDX,
+			LAG(S2.ADM_MNU_LEVEL , 1, -1) OVER(ORDER BY S2.RNUM ASC) AS PREV_ADM_MNU_LEVEL,
+			LEAD(S2.ADM_MNU_LEVEL , 1, 0) OVER(ORDER BY S2.RNUM ASC) AS NEXT_ADM_MNU_LEVEL
+		FROM
+		(   SELECT
+				ROWNUM AS RNUM,
+				S1.*
+			FROM
+				(   SELECT
+						ADM_MNU_IDX,
+						ADM_MNU_NM,
+						ADM_MNU_LEVEL,
+						ADM_MNU_UP_IDX,
+						ADM_MNU_TOP_IDX,
+						ADM_MNU_URL,
+						ADM_MNU_AUTH_URL,
+						ADM_MNU_ON_YN,
+						ADM_MNU_SORT,
+						ADM_MNU_MEMEO,
+						ADM_MNU_USE_YN,
+						ADM_MNU_REG_DT,
+						ADM_MNU_REG_IP,
+						ADM_MNU_REG_ID,
+						ADM_MNU_UPD_DT,
+						ADM_MNU_UPD_IP,
+						ADM_MNU_UPD_ID
+					FROM
+						T_ADM_MNU
+					WHERE
+						ADM_MNU_USE_YN = 'Y'
+					START WITH ADM_MNU_TOP_IDX = 0
+					CONNECT BY PRIOR ADM_MNU_IDX = ADM_MNU_UP_IDX
+					ORDER SIBLINGS BY ADM_MNU_LEVEL, ADM_MNU_SORT ASC
+				)
+				S1
+		)
+		S2
+		<if test="startNum != null and startNum != '' and endNum != null and endNum != ''">
+			WHERE
+				S2.RNUM BETWEEN #{startNum} AND #{endNum}
+		</if>
+	</select>
+</mapper>

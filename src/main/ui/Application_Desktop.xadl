@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ADL version="2.0">
+  <Application id="ssp_bo" screenid="Desktop_screen" onload="Application_onload" onloadforms="Application_onloadforms">
+    <Layout>
+      <MainFrame id="mainframe" left="0" top="0" width="1596" height="936" openalign="center middle" titlebarheight="30" openstatus="maximize" showcascadetitletext="false" titletext="SSP BO">
+        <VFrameSet id="VFrameSet" separatesize="50, *">
+          <Frames>
+            <ChildFrame id="topFrame" formurl="FRAME::topFrame.xfdl" showtitlebar="false" dragmovetype="none"/>
+            <HFrameSet id="HFrameSet" separatesize="60,200, *">
+              <Frames>
+                <ChildFrame id="quickFrame" formurl="FRAME::quickFrame.xfdl" showtitlebar="false" dragmovetype="none"/>
+                <ChildFrame id="leftFrame" formurl="FRAME::leftFrame.xfdl" showtitlebar="false" dragmovetype="none"/>
+                <VFrameSet id="VWorkFrameSet" separatesize="40, 0,*">
+                  <Frames>
+                    <ChildFrame id="mdiFrame" formurl="FRAME::mdiFrame.xfdl" showtitlebar="false" dragmovetype="none"/>
+                    <FrameSet id="WorkFrameSet" color="red">
+                      <Frames/>
+                    </FrameSet>
+                    <ChildFrame id="MainFrame" formurl="FRAME::mainFrame.xfdl" showtitlebar="false" dragmovetype="none" showcascadetitletext="true"/>
+                  </Frames>
+                </VFrameSet>
+              </Frames>
+            </HFrameSet>
+          </Frames>
+        </VFrameSet>
+      </MainFrame>
+    </Layout>
+  </Application>
+  <Script type="xscript5.1"><![CDATA[/************************************************************************************************
+ * application 변수 선언 영역
+************************************************************************************************/
+	this.agv_VFrameSet   	= "";
+	this.agv_TopFrame    	= "";
+	this.agv_HFrameSet   	= "";
+	this.agv_LeftFrame   	= "";
+	this.agv_VWorkFrameSet  = "";
+	this.agv_MdiFrame    	= "";
+	this.agv_WorkFrameSet  	= "";
+	this.agv_MainFrame   	= "";
+/***********************************************************************************************
+* Application EVENT 영역(onload, onbeforeclose)
+/***********************************************************************************************/
+this.Application_onload = function(obj:nexacro.Application,e:nexacro.LoadEventInfo)
+{
+	var oApp = nexacro.getApplication();				//application object
+	
+	//서비스 URL정의
+	if(system.navigatorname != "nexacro") {	
+		var sServiceUrl = nexacro.getProjectPath();
+		sServiceUrl = sServiceUrl.replace("ui/","");
+		nexacro.getEnvironment().services["svcUrl"].url = sServiceUrl;
+	}
+
+	// Frame 변수 저장
+	this.agv_VFrameSet		= oApp.mainframe.VFrameSet;                                			// VFrameSet	
+	this.agv_TopFrame   	= oApp.mainframe.VFrameSet.topFrame;  								// Top Frame
+	this.agv_HFrameSet  	= oApp.mainframe.VFrameSet.HFrameSet;                      			// HFrame
+	this.agv_QuickFrame  	= oApp.mainframe.VFrameSet.HFrameSet.quickFrame;            		// Quick Frame	
+	this.agv_LeftFrame  	= oApp.mainframe.VFrameSet.HFrameSet.leftFrame;            			// Left Frame
+	this.agv_VWorkFrameSet	= oApp.mainframe.VFrameSet.HFrameSet.VWorkFrameSet;        			// VFrameSet1
+	this.agv_MdiFrame     	= oApp.mainframe.VFrameSet.HFrameSet.VWorkFrameSet.mdiFrame; 		// Mdi Navi Frame
+	this.agv_WorkFrameSet   = oApp.mainframe.VFrameSet.HFrameSet.VWorkFrameSet.WorkFrameSet;    // Work Form
+	this.agv_MainFrame	    = oApp.mainframe.VFrameSet.HFrameSet.VWorkFrameSet.MainFrame;		// Main Form
+};
+this.Application_onloadforms = function(obj:nexacro.Application,e:nexacro.LoadEventInfo)
+{
+    //  URL 파라미터로 전달받은 메뉴 아이디 값
+    var rtnMenuId = this.getVariable("gv_menuId");
+    // leftFrame에 메뉴 아이디 넘기기
+	this.agv_LeftFrame.form.fn_paramMenuId(rtnMenuId);
+};
+]]></Script>
+</ADL>

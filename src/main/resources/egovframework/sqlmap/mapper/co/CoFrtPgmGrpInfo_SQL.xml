@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.co.coFrtPgmGrpInfo">
+   <!--
+    ******************************************************************************
+    * SELECT : 프론트프로그램그룹관리
+    * 작성자 : 
+    * 작성 일자 : 2022.03.16
+    ******************************************************************************
+    -->
+	    
+    <sql id="frtPgmGrpWhere">
+    	<if test="coCd != null and coCd != ''">
+		AND A.CO_CD = #{coCd}
+		</if>
+		<if test="pgmGrpId != null and pgmGrpId != ''">
+		AND A.PGM_GRP_ID LIKE '%' || #{pgmGrpId} || '%'
+		</if>
+		<if test="pgmGrpNm != null and pgmGrpNm != ''">
+		AND A.PGM_GRP_NM LIKE '%' || #{pgmGrpNm} || '%'
+		</if>
+		<if test="useYn != '' and useYn != null">
+	    AND A.USE_YN = #{useYn}
+		</if>
+	</sql>
+	
+    <select id="selectFrtPgmGrpList" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.co.coFrtPgmGrpInfo.selectFrtPgmGrpList   */
+	    SELECT 0 AS CHK
+	    	, A.PGM_GRP_ID
+			, A.PGM_GRP_NM
+			, A.MALL_SPR_CD
+			, A.DEPT_ADM_USEYN
+			, A.MBR_FDS_NM
+			, A.OPR_UNIT_FDS_NM
+			, A.SRT_SO
+			, A.USE_YN
+		 FROM SSP_APP.TB_CO_FRT_PGM_GRP_INFO A 
+		<where>
+		 	<include refid="frtPgmGrpWhere" />
+		</where>
+		 
+		<choose>
+			<when test="sortColumn != null and sortColumn != ''">
+			 	ORDER BY ${sortColumn} ${sortType}
+			</when>
+			<otherwise>
+				ORDER BY A.SRT_SO 
+			</otherwise>
+		</choose>
+		
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <!-- 프론트프로그램그룹관리 갯수 -->
+	<select id="selectFrtPgmGrpListCount" parameterType="hashMap" resultType="integer">
+		/* com.ssp.bo.co.coFrtPgmGrpInfo.selectFrtPgmGrpListCount */
+		SELECT
+			COUNT(0)
+		  FROM SSP_APP.TB_CO_FRT_PGM_GRP_INFO A 
+		<where>
+			 <include refid="frtPgmGrpWhere" />
+		</where>
+	</select>
+	
+	<!--  프론트프로그램그룹관리 등록 -->
+    <insert id="insertFrtPgmGrpInfo" parameterType="HashMap">
+        /*com.ssp.bo.co.coFrtPgmGrpInfo.insertFrtPgmGrpInfo  */
+        INSERT INTO
+            SSP_APP.TB_CO_FRT_PGM_GRP_INFO
+            ( 
+                 CO_CD
+			   , PGM_GRP_ID
+			   , PGM_GRP_NM
+			   , MALL_SPR_CD
+			   , DEPT_ADM_USEYN
+			   , MBR_FDS_NM
+			   , OPR_UNIT_FDS_NM
+			   , SRT_SO
+			   , USE_YN
+			   , REG_DTM
+			   , REGPSN_ID 
+            )
+        VALUES 
+            (
+                  #{coCd}    
+                , #{pgmGrpId}
+                , #{pgmGrpNm}
+                , #{mallSprCd}
+                , #{deptAdmUseyn}
+                , #{mbrFdsNm}
+                , #{oprUnitFdsNm}
+                , #{srtSo}
+                , #{useYn}
+                , SYSDATE
+                , #{regpsnId}
+            )            
+    </insert>
+    
+    <!-- 프론트프로그램그룹관리 수정 -->
+	<update id="updateFrtPgmGrpInfo" parameterType="hashMap">
+		/* com.ssp.bo.co.coFrtPgmGrpInfo.updateFrtPgmGrpInfo */
+		UPDATE
+			SSP_APP.TB_CO_FRT_PGM_GRP_INFO
+		SET
+			PGM_GRP_NM = #{pgmGrpNm}
+			, MALL_SPR_CD = #{mallSprCd}
+			, DEPT_ADM_USEYN = #{deptAdmUseyn}
+			, MBR_FDS_NM = #{mbrFdsNm}
+			, OPR_UNIT_FDS_NM = #{oprUnitFdsNm}
+			, SRT_SO = #{srtSo}
+			, USE_YN = #{useYn}
+			, UPD_DTM = SYSDATE
+			, UPDPSN_ID = #{updpsnId}
+		WHERE CO_CD =  #{coCd}
+		  AND PGM_GRP_ID = #{pgmGrpId}
+	</update>
+    
+    <!--  프론트프로그램그룹관리 삭제 -->
+    <delete id="deleteFrtPgmGrpInfo" parameterType="hashMap">
+		/* com.ssp.bo.co.coFrtPgmGrpInfo.deleteFrtPgmGrpInfo */
+		DELETE FROM SSP_APP.TB_CO_FRT_PGM_GRP_INFO
+		 WHERE CO_CD = #{coCd}
+		   AND PGM_GRP_ID = #{pgmGrpId}
+	</delete>
+	
+	<!--  프론트프로그램그룹관리 ID 체크 -->
+	<select id="selectPgmGrpIdCheck" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.co.coFrtPgmGrpInfo.selectPgmGrpIdCheck   */
+	        SELECT 
+				 A.PGM_GRP_ID
+				,A.PGM_GRP_NM
+			 FROM SSP_APP.TB_CO_FRT_PGM_GRP_INFO A
+			<where>
+				<if test="pgmGrpIdList != null and pgmGrpIdList.size > 0">
+	                      A.PGM_GRP_ID IN
+	                    <foreach collection="pgmGrpIdList" item="pgmGrpIdList" open="(" close=")" separator=",">
+	                        #{pgmGrpIdList}
+	                    </foreach>
+	             </if>
+			</where>
+			ORDER BY A.PGM_GRP_ID
+			
+    </select>
+    
+     <select id="selectFrtPgmGrpPopupList" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.co.coFrtPgmGrpInfo.selectFrtPgmGrpPopupList   */
+	   SELECT A.PGM_GRP_ID
+			, A.PGM_GRP_NM
+			, A.MALL_SPR_CD
+			, A.DEPT_ADM_USEYN
+			, A.MBR_FDS_NM
+			, A.OPR_UNIT_FDS_NM
+			, A.SRT_SO
+			, A.USE_YN
+		 FROM SSP_APP.TB_CO_FRT_PGM_GRP_INFO A 
+		<where>
+		 	<include refid="frtPgmGrpWhere" />
+		</where>
+		 ORDER BY A.SRT_SO 
+    </select>
+    
+    
+</mapper>

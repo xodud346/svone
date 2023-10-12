@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DispStatsChgHst">
+   <!--
+    ******************************************************************************
+    * SELECT : 진열상품변경이력
+    * 작성자 : 
+    * 작성 일자 : 2022.02.15
+    ******************************************************************************
+    -->
+	    
+    <sql id="listWhere">
+		<if test="coCd != null and coCd != ''">
+		AND A.CO_CD = #{coCd}
+		</if>
+		<if test="prdId != null and prdId != ''">
+		AND A.PRD_ID = #{prdId}
+		</if>
+		<if test="srchFrDt != null and srchFrDt != ''">
+		<![CDATA[
+		AND A.REG_DTM >= TO_DATE(#{srchFrDt}||'000000','YYYYMMDDHH24MISS')
+		]]>
+		</if>
+		<if test="srchToDt != null and srchToDt != ''">
+		<![CDATA[
+		AND A.REG_DTM < TO_DATE(#{srchToDt}||'000000','YYYYMMDDHH24MISS')+1
+		]]>
+		</if>
+	</sql>
+	
+    <select id="selectList" parameterType="HashMap" resultType="HashMap">
+    	/* DispStatsChgHst.selectList   */
+WITH T1 AS
+(
+SELECT '1' EMP_ID, '홍길동' EMP_NM FROM DUAL
+)   	
+SELECT 
+TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') UPD_DTM
+,'Y' PRD_USE_YN
+,A.PURG_SPL_YN
+,B.COM_DTL_CD_NM DISP_STATS_CD
+,A.DISP_STATS_CHGRSN
+,'('||A.UPDPSN_ID||')'||C.EMP_NM UPDPSN_ID
+FROM TB_DP_PRD_DISP_STATS_INFO_HST A
+LEFT JOIN TB_CO_COM_CD_DTL B
+ON
+(
+0=0
+AND B.COM_CLSF_CD = 'DISP_STATS_CD'
+AND B.LANG_CD = 'KO'
+AND B.COM_DTL_CD = A.DISP_STATS_CD
+)
+LEFT JOIN T1 C
+ON 
+(
+0=0
+AND C.EMP_ID = A.UPDPSN_ID
+)
+WHERE 0=0
+		 	<include refid="listWhere" />
+				ORDER BY A.REG_DTM DESC
+		
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+
+    <!-- 진열상태변경이력 목록 갯수 -->
+	<select id="selectCount" parameterType="hashMap" resultType="integer">
+		/* DispStatsChgHst.selectCount */
+		SELECT
+			COUNT(0)
+		 FROM SSP_APP.TB_DP_PRD_DISP_STATS_INFO_HST A
+		 WHERE 0=0
+		 	<include refid="listWhere" />
+	</select>
+    
+</mapper>

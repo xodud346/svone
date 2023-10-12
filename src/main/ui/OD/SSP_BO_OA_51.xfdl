@@ -1,0 +1,299 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_OA_51" width="880" height="660" titletext="배송지 조회 팝업" onload="SSP_BO_OA_51_onload" onkeyup="SSP_BO_OA_51_onkeyup">
+    <Layouts>
+      <Layout height="660" width="880">
+        <Grid id="grid_list01" taborder="0" left="20" top="95" right="20" autofittype="col" nodatatext="조회된 결과가 없습니다." autoenter="select" oncelldblclick="grid_list01_oncelldblclick" height="115" onenterdown="grid_list01_onenterdown" binddataset="ds_list01" selecttype="row" font="12px/normal &quot;맑은 고딕&quot;">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="71"/>
+                <Column size="218"/>
+                <Column size="118"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="주문자 ID"/>
+                <Cell col="1" text="배송지 ID"/>
+                <Cell col="2" text="수령인 명"/>
+                <Cell col="3" text="우편번호"/>
+                <Cell col="4" text="주소"/>
+                <Cell col="5" text="상세주소"/>
+                <Cell col="6" text="전화번호"/>
+                <Cell col="7" text="휴대폰번호"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:MBR_ID"/>
+                <Cell col="1" text="bind:DLVPLC_ID"/>
+                <Cell col="2" text="bind:RCVR_NM"/>
+                <Cell col="3" text="bind:ZPCD" displaytype="normal"/>
+                <Cell col="4" text="bind:REPR_ADDR"/>
+                <Cell col="5" text="bind:DTL_ADDR"/>
+                <Cell col="6" text="bind:HP_NO"/>
+                <Cell col="7" text="bind:TEL_NO"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_search" taborder="1" text="조회" top="60" height="28" onclick="btn_search_onclick" cssclass="btn_WF_require" width="60" right="20"/>
+        <Static id="sta_totcnt" taborder="2" text="총 124건이 검색되었습니다." left="20" usedecorate="true" width="300" bottom="565" height="29" visible="false" font="12px/normal &quot;맑은 고딕&quot;"/>
+        <Grid id="grid_list02" taborder="3" left="20" top="230" right="20" autofittype="col" nodatatext="선택된 결과가 없습니다." autoenter="select" height="371" binddataset="ds_list02" oncellclick="grid_list02_oncellclick" oncelldblclick="grid_list02_oncelldblclick" selecttype="row" font="12px/normal &quot;맑은 고딕&quot;">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="53"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="71"/>
+                <Column size="218"/>
+                <Column size="118"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="선택"/>
+                <Cell col="1" text="배송지 ID"/>
+                <Cell col="2" text="수령인 명"/>
+                <Cell col="3" text="우편번호"/>
+                <Cell col="4" text="주소"/>
+                <Cell col="5" text="상세주소"/>
+                <Cell col="6" text="전화번호"/>
+                <Cell col="7" text="휴대폰번호"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:IS_SELECTED" edittype="checkbox" displaytype="checkboxcontrol" checkboxtruevalue="expr:1" checkboxfalsevalue="expr:0" combotype="dropdown"/>
+                <Cell col="1" text="bind:DLVPLC_ID"/>
+                <Cell col="2" text="bind:RCVR_NM"/>
+                <Cell col="3" text="bind:ZPCD"/>
+                <Cell col="4" text="bind:REPR_ADDR"/>
+                <Cell col="5" text="bind:DTL_ADDR"/>
+                <Cell col="6" text="bind:HP_NO"/>
+                <Cell col="7" text="bind:TEL_NO"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_select" taborder="4" text="선택" width="81" right="400" textPadding="0px" onclick="btn_select_onclick" bottom="22" height="28"/>
+        <Static id="staticTitle" taborder="5" text="배송지변경 조회" left="20" top="20" height="21" cssclass="sta_WF_title04" width="300"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="DLVPLC_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list01" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="DLVPLC_ID" type="STRING" size="256"/>
+          <Column id="RCVR_NM" type="STRING" size="256"/>
+          <Column id="ZPCD" type="STRING" size="256"/>
+          <Column id="REPR_ADDR" type="STRING" size="256"/>
+          <Column id="DTL_ADDR" type="STRING" size="256"/>
+          <Column id="HP_NO" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="BASIS_DLVPLC_YN" type="STRING" size="256"/>
+          <Column id="IS_SELECTED" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list02" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="DLVPLC_ID" type="STRING" size="256"/>
+          <Column id="RCVR_NM" type="STRING" size="256"/>
+          <Column id="ZPCD" type="STRING" size="256"/>
+          <Column id="REPR_ADDR" type="STRING" size="256"/>
+          <Column id="DTL_ADDR" type="STRING" size="256"/>
+          <Column id="HP_NO" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="BASIS_DLVPLC_YN" type="STRING" size="256"/>
+          <Column id="IS_SELECTED" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[// 플랜트 조회
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+include "OD::odUtils.xjs";
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;
+this.insertCount = 0;
+this.parentFormID = "";
+/***********************************************************************************************
+* FORM EVENT 영역
+************************************************************************************************/
+
+this.fv_mbrId ="";
+this.fv_dlvplcId ="";
+
+this.SSP_BO_OA_51_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.fv_mbrId = this.parent.pv1;
+    this.fv_dlvplcId = this.parent.pv2;
+	
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	//검색 영역 최소size 적용
+	this.resetScroll();
+	this.fn_searchMapSetting();
+	this.fn_search();
+	
+	this.fn_regShortCutMethod();
+};
+
+this.SSP_BO_OA_51_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+
+this.fn_search = function() {
+	var sSvcId = "selectDlvplcList";
+	var sUrl = "/od/odrPopup/selectDlvplcList.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_list02=ds_output2";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "selectDlvplcList"){
+		this.sta_totcnt.set_text("(총 "+ this.gfn_appendComma(this.totalCount, 0) +"건)");
+		this.sta_totcnt.set_visible(true);
+		this.fn_setDsList01();
+	}
+};
+
+/***********************************************************************************************
+* 사용자 함수 영역
+************************************************************************************************/
+this.fn_searchMapSetting = function() {
+
+	this.ds_search.setColumn(0, "CO_CD", this.fv_coCd);
+	this.ds_search.setColumn(0, "MBR_ID", this.fv_mbrId);
+	this.ds_search.setColumn(0, "DLVPLC_ID", this.fv_dlvplcId);
+	this.ds_search.setColumn(0, "ROW_COUNT", "10000");
+	this.ds_list01.clearData();
+	this.ds_list02.clearData();
+};
+
+this.fn_setDsList01 = function() {
+	
+	var selectedRow = this.ds_list02.filter("IS_SELECTED=='1'");
+	if( selectedRow == -1 )	return;
+	
+	this.ds_list01.clearData();
+	this.ds_list01.addRow();
+	this.ds_list01.copyRow(0, this.ds_list02, selectedRow);
+	this.ds_list02.filter("");
+};
+
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	this.fn_regMethodENTER("btn_search_onclick");
+	this.fn_regMethodESC("fn_esc");
+	this.fn_regMethodShiftENTER("btn_select_onclick");
+};
+
+this.fn_esc = function() {
+	this.close(0);
+};
+
+/***********************************************************************************************
+* BUTTON EVENT 영역
+************************************************************************************************/
+// 조회
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+this.btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var resData = {};
+	var selectedRow = this.ds_list02.filter("IS_SELECTED=='1'");
+	if( selectedRow == -1 )
+	{
+		alert(this.fn_getMessage("ERRS000137"));
+		return;
+	}
+	
+	resData.DLVPLC_ID = this.ds_list02.getColumn(selectedRow, "DLVPLC_ID");
+	resData.RCVR_NM = this.ds_list02.getColumn(selectedRow, "RCVR_NM");
+	resData.ZPCD = this.ds_list02.getColumn(selectedRow, "ZPCD");
+	resData.REPR_ADDR = this.ds_list02.getColumn(selectedRow, "REPR_ADDR");
+	resData.DTL_ADDR = this.ds_list02.getColumn(selectedRow, "DTL_ADDR");
+	resData.HP_NO = this.ds_list02.getColumn(selectedRow, "HP_NO");
+	resData.TEL_NO = this.ds_list02.getColumn(selectedRow, "TEL_NO");
+	
+	this.ds_list02.filter("");
+	this.close(JSON.stringify(resData));
+};
+
+this.grid_list02_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.col != 0 ) return;
+	if(e.row != -1) {
+		for(var i=0;i < this.ds_list02.getRowCount(); i++)
+		{
+			this.ds_list02.setColumn(i, "IS_SELECTED", "0");
+		}	
+		this.ds_list02.setColumn(e.row,"IS_SELECTED", "1");
+	}
+};
+
+this.grid_list02_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var resData = {};
+	var selectedRow = e.row;
+	if( selectedRow == -1 )
+		return;
+	
+	resData.DLVPLC_ID = this.ds_list02.getColumn(selectedRow, "DLVPLC_ID");
+	resData.RCVR_NM = this.ds_list02.getColumn(selectedRow, "RCVR_NM");
+	resData.ZPCD = this.ds_list02.getColumn(selectedRow, "ZPCD");
+	resData.REPR_ADDR = this.ds_list02.getColumn(selectedRow, "REPR_ADDR");
+	resData.DTL_ADDR = this.ds_list02.getColumn(selectedRow, "DTL_ADDR");
+	resData.HP_NO = this.ds_list02.getColumn(selectedRow, "HP_NO");
+	resData.TEL_NO = this.ds_list02.getColumn(selectedRow, "TEL_NO");
+	
+	this.ds_list02.filter("");
+	this.close(JSON.stringify(resData));
+};
+]]></Script>
+  </Form>
+</FDL>

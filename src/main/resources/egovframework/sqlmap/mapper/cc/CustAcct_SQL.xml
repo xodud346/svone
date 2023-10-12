@@ -1,0 +1,1516 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.cc.acct">
+	
+    <insert id="insertAcctBasis" parameterType="HashMap">
+      <selectKey keyProperty="acctId" resultType="sspMap" order="BEFORE">
+      SELECT FN_CC_BGT_ACCT_ID_CRT() ACCT_ID FROM DUAL
+      </selectKey>
+      /* 배송지 등록 - CustAcct_SQL.insertAcctBasis */
+        INSERT INTO SSP_APP.TB_CC_BGT_ACCT_BASIS
+            ( CO_CD       
+            , BZPLC_ID
+            , ACCT_ID
+            , ACCT_LVL
+            , ACCT_NM
+            , ACCT_CD
+            , USE_YN        /* 사용여부 */
+            , ACCT_TP_CD
+            , HRNK_ACCT_ID
+            , RMKS_CTS
+            , REGPSN_ID
+            , REG_DTM
+            , UPDPSN_ID
+            , UPD_DTM
+            ) VALUES
+            ( #{oprtrCoCd}
+            , #{bzplcId}
+            , #{acctId}
+            , #{acctLvl}
+            , #{acctNm}
+            , #{acctCd}
+            , 'Y'         /* 사용여부 */
+            , #{acctTpCd}
+            , #{hrnkAcctId}
+            , #{rmksCts}
+            , #{regpsnId}
+            , SYSDATE
+            , #{updpsnId}
+            , SYSDATE
+            )
+    </insert>
+    <update id="updateAcctBasis" parameterType="HashMap">
+    	/* 계정정보 조회 - CustAcct_SQL.updateAcctBasis */
+    	UPDATE TB_CC_BGT_ACCT_BASIS																				/* TB_예산계정기본 */
+    	  SET UPDPSN_ID 	= #{updpsnId}																		/* 수정자ID */
+    	    , UPD_DTM 		= SYSDATE																			/* 수정일자 */
+    	    , HRNK_ACCT_ID  = #{hrnkAcctId}
+    	      <if test="acctNm != null and !acctNm.equals('')">, ACCT_NM = #{acctNm}</if>						/* 계정명 */
+    	      <if test="acctCd != null and !acctCd.equals('')">, ACCT_CD = #{acctCd}</if>						/* 계정코드 */
+    	      <if test="acctLvl != null and !acctLvl.equals('')">, ACCT_LVL = #{acctLvl}</if>					/* 계정레벨 */
+    	      <if test="useYn != null and !useYn.equals('')">, USE_YN = #{useYn}</if>							/* 사용여부 */
+    	 WHERE CO_CD 		= #{coCd}
+    	   AND BZPLC_ID		= #{bzplcId}
+    	   AND ACCT_ID		= #{acctId}
+    </update>
+    
+    <update id="updateAcctBasis2" parameterType="HashMap">
+    	/* 계정정보 조회 - CustAcct_SQL.updateAcctBasis2 */
+    	UPDATE TB_CC_BGT_ACCT_BASIS																				/* TB_예산계정기본 */
+    	  SET UPDPSN_ID 	= #{updpsnId}																		/* 수정자ID */
+    	    , UPD_DTM 		= SYSDATE																			/* 수정일자 */
+    	    , HRNK_ACCT_ID  = #{hrnkAcctId}
+    	    , BGT_USE_HRNK_ACCT_ID = #{bgtUseHrnkAcctId}														/* 예산사용상위계정*/
+    	      <if test="acctNm != null and !acctNm.equals('')">, ACCT_NM = #{acctNm}</if>						/* 계정명 */
+    	      <if test="acctCd != null and !acctCd.equals('')">, ACCT_CD = #{acctCd}</if>						/* 계정코드 */
+    	      <if test="acctLvl != null and !acctLvl.equals('')">, ACCT_LVL = #{acctLvl}</if>					/* 계정레벨 */
+    	      <if test="useYn != null and !useYn.equals('')">, USE_YN = #{useYn}</if>							/* 사용여부 */
+    	 WHERE CO_CD 		= #{coCd}
+    	   AND BZPLC_ID		= #{bzplcId}
+    	   AND ACCT_ID		= #{acctId}
+    </update>
+    
+    
+    <!-- /* 계정 단일조회 팝업 */ -->
+    <sql id="sqlBgtAcct">
+    /* SQL.sqlBgtAcct - 예산계정 조회 */
+    SELECT TCGAB.*
+         <if test='deptId != null and !"".equals(deptId)'> 
+         , C.DEPT_ID
+         , C.DEPT_NM
+         </if>
+      FROM TB_CC_BGT_ACCT_BASIS  TCGAB
+      <if test='deptId != null and !"".equals(deptId)'>
+      JOIN TB_CC_BGT_ACCT_DEPT_MAPP  ACTD
+        ON ( TCGAB.CO_CD = ACTD.CO_CD AND TCGAB.BZPLC_ID = ACTD.BZPLC_ID AND TCGAB.ACCT_ID = ACTD.ACCT_ID AND ACTD.USE_YN = 'Y' AND ACTD.DEPT_ID = #{deptId} )
+      JOIN TB_CC_DEPT_BASIS C 
+        ON ( C.CO_CD = ACTD.CO_CD AND C.DEPT_ID = ACTD.DEPT_ID )
+      </if>
+     WHERE TCGAB.USE_YN = 'Y'
+       <if test="coCd    != null and !coCd   .equals('')">AND TCGAB.CO_CD    = #{coCd   }</if>
+       <if test="bzplcId != null and !bzplcId.equals('')">AND TCGAB.BZPLC_ID = #{bzplcId}</if>
+       <if test="acctLvl != null and !acctLvl.equals('')">AND TCGAB.ACCT_LVL = #{acctLvl}</if>
+       <if test="LVL != null and !LVL.equals('')">AND TCGAB.ACCT_LVL <![CDATA[ < ]]> 5</if>
+       <if test="acctId  != null and !acctId .equals('')">AND TCGAB.ACCT_ID  LIKE '%' || #{acctId } || '%'</if>
+       <if test="acctNm  != null and !acctNm .equals('')">AND TCGAB.ACCT_NM  LIKE '%' || #{acctNm } || '%'</if>
+       <if test="acctCd  != null and !acctCd .equals('')">AND TCGAB.ACCT_CD  LIKE '%' || #{acctCd } || '%'</if>
+       <if test="acctTpCd  != null and !acctTpCd .equals('')">AND TCGAB.ACCT_TP_CD  = #{acctTpCd }</if>
+       <if test="underAcctSearch  != null and !underAcctSearch.equals('')">AND TCGAB.ACCT_LVL <![CDATA[ < ]]> 5</if>
+       <if test="excAcctId  != null and !excAcctId .equals('')">AND TCGAB.ACCT_ID  != #{excAcctId }</if>
+    /* /SQL.sqlBgtAcct - 예산계정 조회 */
+    </sql>
+    <select id="selectAcctSinglePopupListCnt" parameterType="HashMap" resultType="Integer">
+    /* 계정 단일조회 팝업 리스트 카운트 조회- CustAcct_SQL.selectAcctSinglePopupListCnt */
+    SELECT COUNT(*)
+      FROM (
+    <include refid="sqlBgtAcct" />
+           )
+    </select>
+    <select id="selectAcctSinglePopupList" parameterType="HashMap" resultType="HashMap">
+    /* 계정 단일조회 팝업 리스트 조회- CustAcct_SQL.selectAcctSinglePopupList */
+    <include refid="sqlBgtAcct" />
+    <choose>
+        <when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+     ORDER BY TCGAB.${sortColumn} ${sortType}
+        </when>
+        <otherwise>
+     ORDER BY TCGAB.ACCT_NM ASC</otherwise>
+    </choose>
+    
+     OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>
+    
+    <select id="selectAcctSinglePopupListCnt_OLD" parameterType="HashMap" resultType="Integer">
+		/* 계정 단일조회 팝업 리스트 카운트 조회- CustAcct_SQL.selectAcctSinglePopupListCnt */
+		SELECT COUNT(*)
+		  FROM TB_CC_BGT_ACCT_BASIS TCGAB
+		 WHERE TCGAB.USE_YN = 'Y'
+		 <if test="coCd != null and !coCd.equals('')">
+		 	AND TCGAB.CO_CD = #{coCd}
+		 </if>
+		 <if test="bzplcId != null and !bzplcId.equals('')">
+		 	AND TCGAB.BZPLC_ID = #{bzplcId}
+		 </if>
+		 <if test="acctLvl != null and !acctLvl.equals('')">
+		 	AND TCGAB.ACCT_LVL = #{acctLvl}
+		 </if>
+		 <if test="acctId != null and !acctId.equals('')">
+		 	AND TCGAB.ACCT_ID = #{acctId}
+		 </if>
+		 <if test="acctNm != null and !acctNm.equals('')">
+		 	AND TCGAB.ACCT_NM = #{acctNm}
+		 </if>
+		 <if test="acctCd != null and !acctCd.equals('')">
+		 	AND TCGAB.ACCT_CD = #{acctCd}
+		 </if>
+    </select>
+    <select id="selectAcctSingleHrnkAcctPopupListCnt" parameterType="HashMap" resultType="Integer">
+		/* 계정 단일조회 팝업 리스트 카운트 조회(상위계정 대상 조회) - CustAcct_SQL.selectAcctSingleHrnkAcctPopupListCnt */
+	    SELECT
+	       COUNT(*)
+	    FROM (
+		    SELECT
+		        A.CO_CD
+		        ,A.BZPLC_ID
+		        ,A.ACCT_ID
+		        ,A.ACCT_NM
+		        ,A.HRNK_ACCT_ID
+		        ,B.ACCT_NM AS HRNK_ACCT_NM
+	            ,B.ACCT_CD AS HRNK_ACCT_CD
+		    FROM TB_CC_BGT_ACCT_BASIS A, TB_CC_BGT_ACCT_BASIS B
+		    WHERE A.CO_CD=B.CO_CD
+	        AND A.BZPLC_ID=B.BZPLC_ID
+	        AND A.HRNK_ACCT_ID=B.ACCT_ID
+	        AND A.CO_CD = #{coCd}
+		    AND A.BZPLC_ID = #{bzplcId}
+		    AND A.ACCT_ID = #{acctId}
+	    ) A    
+    </select>    
+    <select id="selectAcctSingleHrnkAcctPopupList" parameterType="HashMap" resultType="HashMap">
+		/* 계정 단일조회 팝업 리스트 조회(상위계정 대상 조회) - CustAcct_SQL.selectAcctSingleHrnkAcctPopupList */	   
+	    SELECT
+	        A.CO_CD
+	        ,A.BZPLC_ID    
+	        ,A.HRNK_ACCT_ID AS ACCT_ID
+	        ,A.HRNK_ACCT_NM AS ACCT_NM
+	        ,A.HRNK_ACCT_CD AS ACCT_CD
+	    FROM (
+		    SELECT
+		        A.CO_CD
+		        ,A.BZPLC_ID
+		        ,A.ACCT_ID
+		        ,A.ACCT_NM
+		        ,A.HRNK_ACCT_ID
+		        ,B.ACCT_NM AS HRNK_ACCT_NM
+	            ,B.ACCT_CD AS HRNK_ACCT_CD
+		    FROM TB_CC_BGT_ACCT_BASIS A, TB_CC_BGT_ACCT_BASIS B
+		    WHERE A.CO_CD=B.CO_CD
+	        AND A.BZPLC_ID=B.BZPLC_ID
+	        AND A.HRNK_ACCT_ID=B.ACCT_ID
+	        AND A.CO_CD = #{coCd}
+		    AND A.BZPLC_ID = #{bzplcId}
+		    AND A.ACCT_ID = #{acctId}
+	    ) A    	       
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>  
+    <select id="selectAcctSingleHrnkAcctPopupListCnt2" parameterType="HashMap" resultType="Integer">
+		/* 계정 단일조회 팝업 리스트 카운트 조회(상위계정 대상 조회) - CustAcct_SQL.selectAcctSingleHrnkAcctPopupListCnt2 */
+		SELECT
+		    COUNT(*)
+		FROM (
+		     SELECT
+		        A.*
+		        ,CONNECT_BY_ISLEAF AS IS_LEAF
+		     FROM TB_CC_BGT_ACCT_BASIS A
+		     WHERE CO_CD = #{coCd}
+		     AND BZPLC_ID = #{bzplcId}
+		     AND USE_YN = 'Y'
+		     <if test="acctTpCd != null and acctTpCd != ''">
+		     AND ACCT_TP_CD = #{acctTpCd}
+		     </if>
+		     START WITH HRNK_ACCT_ID IS NULL
+		     CONNECT BY PRIOR ACCT_ID = HRNK_ACCT_ID
+		) A
+		WHERE A.IS_LEAF != '1' /* 말단(1)이 아닌 건만 조회 */		  
+    </select>    
+    <select id="selectAcctSingleHrnkAcctPopupList2" parameterType="HashMap" resultType="HashMap">
+		/* 계정 단일조회 팝업 리스트 조회(상위계정 대상 조회) - CustAcct_SQL.selectAcctSingleHrnkAcctPopupList2 */	   
+		SELECT
+		    A.CO_CD
+		    ,A.BZPLC_ID
+		    ,A.ACCT_ID
+		    ,A.ACCT_NM
+		    ,A.ACCT_CD
+		    ,A.IS_LEAF		    
+		FROM (
+		     SELECT
+		        A.*
+		        ,CONNECT_BY_ISLEAF AS IS_LEAF
+		     FROM TB_CC_BGT_ACCT_BASIS A
+		     WHERE CO_CD = #{coCd}
+		     AND BZPLC_ID = #{bzplcId}
+		     AND USE_YN = 'Y'
+		     <if test="acctTpCd != null and acctTpCd != ''">
+		     AND ACCT_TP_CD = #{acctTpCd}
+		     </if>
+		     START WITH HRNK_ACCT_ID IS NULL
+		     CONNECT BY PRIOR ACCT_ID = HRNK_ACCT_ID
+		) A
+		WHERE A.IS_LEAF != '1' /* 말단(1)이 아닌 건만 조회 */		     	       
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>        
+    <select id="selectAcctMultiPopupList" parameterType="HashMap" resultType="HashMap">
+		/* 계정 단일조회 팝업 리스트 조회- CustAcct_SQL.selectAcctMultiPopupList */
+		SELECT 0 AS CHK						/* 체크박스 */
+		     , TCBAB.CO_CD                  /* 회사코드 */
+		     , TCBAB.BZPLC_ID				/* 사업장ID */
+		     , TCBAB.ACCT_ID				/* 계정ID */
+		     , TCBAB.ACCT_LVL				/* 계정레벨 */
+		     , TCBAB.ACCT_NM				/* 계정명 */
+		     , TCBAB.ACCT_CD				/* 계정코드 */
+		     , TCBAB.USE_YN					/* 사용여부 */
+		     , TCBAB.ACCT_TP_CD				/* 계정유형코드[COM_CLSF_CD:ACCT_TP_CD] */
+		     , TCBAB.HRNK_ACCT_ID			/* 상위계정ID */
+		     , (SELECT TMP.ACCT_NM FROM TB_CC_BGT_ACCT_BASIS TMP WHERE TMP.CO_CD=TCBAB.CO_CD AND TMP.BZPLC_ID=TCBAB.BZPLC_ID AND TMP.ACCT_ID=TCBAB.HRNK_ACCT_ID) AS	HRNK_ACCT_NM	/* 상위명 */		     
+		  FROM TB_CC_BGT_ACCT_BASIS TCBAB	/* TB_예산계정기본 */
+		  <if test='deptId != null and !"".equals(deptId)'>
+    INNER JOIN TB_CC_BGT_ACCT_DEPT_MAPP ACTD ON TCBAB.CO_CD = ACTD.CO_CD AND TCBAB.BZPLC_ID = ACTD.BZPLC_ID AND TCBAB.ACCT_ID = ACTD.ACCT_ID AND ACTD.DEPT_ID = #{deptId}
+    	  </if>
+		 WHERE TCBAB.USE_YN = 'Y'			                 /* 사용여부 */
+		 <if test='deptId != null and !"".equals(deptId)'>
+	       AND ACTD.DEPT_ID = #{deptId}                      /* 부서ID */
+	     </if>
+		 <if test="coCd != null and !coCd.equals('')">
+		 	AND TCBAB.CO_CD = #{coCd} 		                 /* 사업장ID */
+		 </if>
+		 <if test="bzplcId != null and !bzplcId.equals('')">
+		 	AND TCBAB.BZPLC_ID = #{bzplcId}	           	     /* 사업장ID */
+		 </if>
+		 <if test="acctId != null and !acctId.equals('')">
+		 	AND TCBAB.ACCT_ID LIKE '%' || #{acctId} || '%'	 /* 계정ID */
+		 </if>
+		 <if test="acctNm != null and !acctNm.equals('')">
+		 	AND TCBAB.ACCT_NM LIKE '%' || #{acctNm} || '%'	 /* 계정명 */
+		 </if>
+		 <if test="acctCd != null and !acctCd.equals('')">
+		 	AND TCBAB.ACCT_CD LIKE '%' || #{acctCd} || '%'	 /* 계정코드 */
+		 </if>
+		 <if test="acctTpCd != null and !acctTpCd.equals('')">
+		 	AND TCBAB.ACCT_TP_CD = #{acctTpCd}		         /* 계정구분코드 */
+		 </if>
+		 <choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY TCBAB.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY TCBAB.ACCT_NM ASC</otherwise>
+		</choose>
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>
+    <select id="selectAcctMultiPopupListCnt" parameterType="HashMap" resultType="Integer">
+    	/* 계정 단일조회 팝업 리스트 카운트 조회- CustAcct_SQL.selectAcctMultiPopupListCnt */
+		SELECT COUNT(*)
+		  FROM TB_CC_BGT_ACCT_BASIS TCBAB	                     /* TB_예산계정기본 */
+		  <if test='deptId != null and !"".equals(deptId)'>
+    INNER JOIN TB_CC_BGT_ACCT_DEPT_MAPP ACTD ON TCBAB.CO_CD = ACTD.CO_CD AND TCBAB.BZPLC_ID = ACTD.BZPLC_ID AND TCBAB.ACCT_ID = ACTD.ACCT_ID AND ACTD.DEPT_ID = #{deptId}
+    	  </if>
+		 WHERE TCBAB.USE_YN = 'Y'			                     /* 사용여부 */
+		 <if test='deptId != null and !"".equals(deptId)'>
+	        AND ACTD.DEPT_ID = #{deptId}                         /* 부서ID */
+	       </if>
+		 <if test="coCd != null and !coCd.equals('')">
+		 	AND TCBAB.CO_CD = #{coCd}		                     /* 회사코드 */
+		 </if>
+		 <if test="bzplcId != null and !bzplcId.equals('')">
+		 	AND TCBAB.BZPLC_ID = #{bzplcId}		                 /* 사업장ID */
+		 </if>
+		 <if test="acctId != null and !acctId.equals('')">
+		 	AND TCBAB.ACCT_ID LIKE '%' || #{acctId} || '%'	     /* 계정ID */
+		 </if>
+		 <if test="acctNm != null and !acctNm.equals('')">
+		 	AND TCBAB.ACCT_NM LIKE '%' || #{acctNm} || '%'		 /* 계정명 */
+		 </if>
+		 <if test="acctCd != null and !acctCd.equals('')">
+		 	AND TCBAB.ACCT_CD LIKE '%' || #{acctCd} || '%'	 /* 계정코드 */
+		 </if>
+		 <if test="acctTpCd != null and !acctTpCd.equals('')">
+		 	AND TCBAB.ACCT_TP_CD = #{acctTpCd}		             /* 계정구분코드 */
+		 </if>
+    </select>
+    <select id="selectAcctDeptMappListCnt" parameterType="HashMap" resultType="Integer">
+    	/* 계정에 매핑된 부서 리스트 카운트 조회- CustAcct_SQL.selectAcctDepthMappListCnt */
+    	SELECT COUNT(*) 
+		  FROM TB_CC_BGT_ACCT_DEPT_MAPP TCBADM
+	 LEFT JOIN TB_CC_DEPT_BASIS TCDB ON TCBADM.DEPT_ID = TCDB.DEPT_ID
+		 WHERE TCBADM.ACCT_ID = #{acctId}
+		   AND TCBADM.USE_YN = 'Y'
+    </select>
+    <select id="selectAcctDeptMappList" parameterType="HashMap" resultType="HashMap">
+    	/* 계정에 매핑된 부서 리스트 조회- CustAcct_SQL.selectAcctDeptMappList */
+    	SELECT 0 AS CHK
+		     , TCBADM.DEPT_ID
+		     , TCDB.DEPT_NM
+		     , TCDB.CCO_DEPT_CD
+		     , TCBADM.BZPLC_ID
+		     , TCBADM.CO_CD
+		     , TCBADM.ACCT_ID
+		     , TCDB.USE_YN
+		     , 'N' AS NEW_YN
+		  FROM TB_CC_BGT_ACCT_DEPT_MAPP TCBADM
+	 LEFT JOIN TB_CC_DEPT_BASIS TCDB ON TCBADM.DEPT_ID = TCDB.DEPT_ID
+		 WHERE TCBADM.ACCT_ID = #{acctId}
+		   AND TCBADM.USE_YN = 'Y'
+	   <choose>
+		   <when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+                ORDER BY TCBADM.${sortColumn} ${sortType}
+           </when>
+           <otherwise>ORDER BY TCDB.DEPT_NM ASC</otherwise>
+       </choose>
+	   OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>
+    <insert id="insertBgtAcctDeptMapp" parameterType="HashMap">
+    	/* 예산계정부서매핑 정보 등록 - CustAcct_SQL.insertBgtAcctDeptMapp */
+    	INSERT 
+		  INTO TB_CC_BGT_ACCT_DEPT_MAPP
+		     ( CO_CD
+		     , BZPLC_ID
+		     , ACCT_ID
+		     , DEPT_ID
+		     , USE_YN
+		     , REGPSN_ID
+		     , REG_DTM
+		     , UPDPSN_ID
+		     , UPD_DTM
+		     ) VALUES
+		     ( #{coCd}
+		     , #{bzplcId}
+		     , #{acctId}
+		     , #{deptId}
+		     , 'Y'
+		     , #{regpsnId}
+		     , SYSDATE
+		     , #{updpsnId}
+		     , SYSDATE
+		     )
+    </insert>
+    <delete id="deleteBgtAcctDeptMapp" parameterType="HashMap">
+    	/* 예산계정부서매핑 정보 삭제처리 - CustAcct_SQL.deleteBgtAcctDeptMapp */
+   DELETE FROM TB_CC_BGT_ACCT_DEPT_MAPP
+		 WHERE CO_CD      = #{coCd}
+		   AND BZPLC_ID   = #{bzplcId}
+		   AND ACCT_ID    = #{acctId}
+		   AND DEPT_ID    = #{deptId}
+    </delete>
+      
+    <select id="selectAcctTreeList" parameterType="HashMap" resultType="HashMap">
+        WITH ACCT_LIST AS (
+			SELECT
+			    A.CO_CD
+			    , A.BZPLC_ID
+			    , A.ACCT_ID
+			    , A.ACCT_NM AS TREE_TEXT
+			    , A.ACCT_LVL AS LVL
+                , A.HRNK_ACCT_ID
+                , A.ACCT_TP_CD
+                , A.USE_YN
+			FROM TB_CC_BGT_ACCT_BASIS A
+			WHERE A.CO_CD = #{searchCoCd}
+			AND A.BZPLC_ID = #{searchBzplcId}                            
+        ), MAPP_CNT AS (
+			SELECT 
+			    B.CO_CD
+			    ,B.BZPLC_ID
+			    ,B.ACCT_ID
+			    ,COUNT(*) AS UNDER_CNT
+			FROM TB_CC_BGT_ACCT_DEPT_MAPP B, TB_CC_DEPT_BASIS C
+			WHERE B.CO_CD = C.CO_CD
+			AND B.BZPLC_ID = C.BZPLC_ID 
+			AND B.DEPT_ID = C.DEPT_ID
+			AND B.USE_YN = 'Y'  
+			AND B.CO_CD = #{searchCoCd}
+			AND B.BZPLC_ID = #{searchBzplcId}
+        	<if test="searchOprUnitId != null and searchOprUnitId.length > 0">
+        		/* 운영단위ID */
+        		AND (0, C.OPR_UNIT_ID) IN
+				<foreach collection="searchOprUnitId" item="item" index="index"  open="(" separator="," close=")">
+					(0, #{item})
+				</foreach>
+        	</if>		    			
+			GROUP BY B.CO_CD, B.BZPLC_ID, B.ACCT_ID	        
+        )
+		SELECT 
+		    '' AS CO_CD
+		    , '' AS BZPLC_ID
+		    , '' AS ACCT_ID	
+            , '일반계정' AS TREE_TEXT
+		    , 0 AS LVL    
+		    , 0 AS UNDER_CNT   
+		FROM DUAL
+		UNION ALL            
+        SELECT
+			A.CO_CD
+            ,A.BZPLC_ID
+            ,A.ACCT_ID
+            ,A.TREE_TEXT
+            ,A.LVL
+			,NVL(B.UNDER_CNT, 0) AS UNDER_CNT
+		FROM ACCT_LIST A, MAPP_CNT B
+		WHERE A.USE_YN = 'Y'	 
+        AND A.ACCT_TP_CD = '1' /*사용-일반계정*/ 
+        AND A.CO_CD = B.CO_CD(+)
+		AND A.BZPLC_ID = B.BZPLC_ID(+)
+		AND A.ACCT_ID = B.ACCT_ID(+)
+		<choose>
+			<when test="searchAcctId != null and searchAcctId.length > 0">
+                AND (0, A.ACCT_ID) IN 
+		        	<foreach collection="searchAcctId" item="item" index="index"  open="(" separator="," close=")">
+						(0, #{item})
+					</foreach>	                                                                            		
+			 	START WITH A.LVL IN (                                                     
+	                   SELECT MIN(ACCT_LVL) AS MIN_ACCT_LVL
+	                   FROM TB_CC_BGT_ACCT_BASIS A
+	                   WHERE A.CO_CD    = #{searchCoCd}
+	                   AND A.BZPLC_ID = #{searchBzplcId}
+	                   AND A.USE_YN   = 'Y'            
+	                   START WITH (0, A.ACCT_ID) IN 
+			        	<foreach collection="searchAcctId" item="item" index="index"  open="(" separator="," close=")">
+							(0, #{item})
+						</foreach>	                                              	                   
+	                   CONNECT BY PRIOR A.ACCT_ID = A.HRNK_ACCT_ID   
+                 )   			
+			</when>
+			<otherwise>
+	        START WITH A.LVL  = '1'									 			
+			</otherwise>
+		</choose>
+	    CONNECT BY NOCYCLE PRIOR A.ACCT_ID = A.HRNK_ACCT_ID							
+        UNION ALL
+		SELECT 
+		    '' AS CO_CD
+		    , '' AS BZPLC_ID
+		    , '' AS ACCT_ID	
+            , '공통계정' AS TREE_TEXT
+		    , 0 AS LVL    
+		    , 0 AS UNDER_CNT   
+		FROM DUAL
+		UNION ALL            
+        SELECT
+			A.CO_CD
+            ,A.BZPLC_ID
+            ,A.ACCT_ID
+            ,A.TREE_TEXT
+            ,A.LVL
+			,NVL(B.UNDER_CNT, 0) AS UNDER_CNT
+		FROM ACCT_LIST A, MAPP_CNT B
+		WHERE A.USE_YN = 'Y' 
+        AND A.ACCT_TP_CD = '2' /*사용-공통계정*/ 
+        AND A.CO_CD = B.CO_CD(+)
+		AND A.BZPLC_ID = B.BZPLC_ID(+)
+		AND A.ACCT_ID = B.ACCT_ID(+)
+		<choose>
+			<when test="searchAcctId != null and searchAcctId.length > 0">
+                AND (0, A.ACCT_ID) IN 
+		        	<foreach collection="searchAcctId" item="item" index="index"  open="(" separator="," close=")">
+						(0, #{item})
+					</foreach>	                                                                            		
+			 	START WITH A.LVL IN (                                                     
+	                   SELECT MIN(ACCT_LVL) AS MIN_ACCT_LVL
+	                   FROM TB_CC_BGT_ACCT_BASIS A
+	                   WHERE A.CO_CD    = #{searchCoCd}
+	                   AND A.BZPLC_ID = #{searchBzplcId}
+	                   AND A.USE_YN   = 'Y'            
+	                   START WITH (0, A.ACCT_ID) IN 
+			        	<foreach collection="searchAcctId" item="item" index="index"  open="(" separator="," close=")">
+							(0, #{item})
+						</foreach>	                                              	                   
+	                   CONNECT BY PRIOR A.ACCT_ID = A.HRNK_ACCT_ID   
+                 )   			
+			</when>
+			<otherwise>
+	        START WITH A.LVL  = '1'									 			
+			</otherwise>
+		</choose>
+	    CONNECT BY NOCYCLE PRIOR A.ACCT_ID = A.HRNK_ACCT_ID		
+        UNION ALL
+		SELECT 
+		    '' AS CO_CD
+		    , '' AS BZPLC_ID
+		    , '' AS ACCT_ID	
+            , '미사용계정' AS TREE_TEXT
+		    , 0 AS LVL    
+		    , 0 AS UNDER_CNT   
+		FROM DUAL
+		UNION ALL            
+        SELECT
+			A.CO_CD
+            ,A.BZPLC_ID
+            ,A.ACCT_ID
+            ,A.TREE_TEXT
+            ,A.LVL
+			,NVL(B.UNDER_CNT, 0) AS UNDER_CNT
+		FROM ACCT_LIST A, MAPP_CNT B
+		WHERE A.USE_YN != 'Y' /*미사용계정*/ 
+        AND A.CO_CD = B.CO_CD(+)
+		AND A.BZPLC_ID = B.BZPLC_ID(+)
+		AND A.ACCT_ID = B.ACCT_ID(+) 
+		<choose>
+			<when test="searchAcctId != null and searchAcctId.length > 0">
+                AND (0, A.ACCT_ID)  IN 
+	        	<foreach collection="searchAcctId" item="item" index="index"  open="(" separator="," close=")">
+					(0, #{item})
+				</foreach>				
+			</when>
+		</choose>			    
+    </select>        
+        
+    <select id="selectDeptTreeList" parameterType="HashMap" resultType="HashMap">
+       WITH DEPT_LIST AS (
+		    SELECT 
+		        A.CO_CD
+		        ,A.BZPLC_ID   
+		        ,A.OPR_UNIT_ID		         
+		        ,A.DEPT_ID
+		        ,A.DEPT_NM AS TREE_TEXT
+                ,A.HRNK_DEPT_ID
+                ,A.USE_YN
+		    FROM TB_CC_DEPT_BASIS A
+		    WHERE A.CO_CD = #{searchCoCd}
+		    AND A.BZPLC_ID  = #{searchBzplcId}
+        	<if test="searchOprUnitId != null and searchOprUnitId.length > 0">
+        		/* 운영단위ID */
+        		AND (0, A.OPR_UNIT_ID) IN
+				<foreach collection="searchOprUnitId" item="item" index="index"  open="(" separator="," close=")">
+					(0, #{item})
+				</foreach>
+        	</if>		    
+	        <if test="searchDeptId != null and searchDeptId.length > 0">
+	        	/* 부서ID */
+	        	AND (0, A.DEPT_ID) IN
+	        	<foreach collection="searchDeptId" item="item" index="index"  open="(" separator="," close=")">
+					(0, #{item})
+				</foreach>
+	        </if>			    
+        ), MAPP_CNT AS (
+		    SELECT 
+		        B.CO_CD
+		        ,B.BZPLC_ID
+		        ,B.DEPT_ID	        
+		        ,COUNT(*) AS UNDER_CNT
+		    FROM TB_CC_BGT_ACCT_DEPT_MAPP B, TB_CC_DEPT_BASIS C, TB_CC_BGT_ACCT_BASIS  D
+		    WHERE B.CO_CD = C.CO_CD
+		    AND B.BZPLC_ID = C.BZPLC_ID 
+		    AND B.DEPT_ID = C.DEPT_ID
+            AND B.CO_CD = D.CO_CD
+            AND B.BZPLC_ID = D.BZPLC_ID
+            AND B.ACCT_ID = D.ACCT_ID  		    
+		    AND B.USE_YN = 'Y' 
+		    AND D.USE_YN = 'Y'      
+		    AND B.CO_CD = #{searchCoCd}
+		    AND B.BZPLC_ID  = #{searchBzplcId}
+        	<if test="searchOprUnitId != null and searchOprUnitId.length > 0">
+        		/* 운영단위ID */
+        		AND (0, C.OPR_UNIT_ID) IN
+				<foreach collection="searchOprUnitId" item="item" index="index"  open="(" separator="," close=")">
+					(0, #{item})
+				</foreach>
+        	</if>		    				
+		    GROUP BY B.CO_CD, B.BZPLC_ID, B.DEPT_ID	       
+        )
+		SELECT 
+		    '' AS CO_CD
+		    , '' AS BZPLC_ID
+		    , '' AS OPR_UNIT_ID		    
+		    , '' AS DEPT_ID
+            , '사용부서' AS TREE_TEXT
+		    , 0 AS LVL    
+		    , 0 AS UNDER_CNT   
+		FROM DUAL
+        UNION ALL
+        SELECT
+		    A.CO_CD
+		    , A.BZPLC_ID
+		    , A.OPR_UNIT_ID		    
+		    , A.DEPT_ID
+            , A.TREE_TEXT
+		    , LEVEL AS LVL    
+		    , NVL(B.UNDER_CNT, 0) AS UNDER_CNT           
+        FROM DEPT_LIST A, MAPP_CNT B
+        WHERE A.USE_YN = 'Y'
+		AND A.CO_CD = B.CO_CD(+)
+		AND A.BZPLC_ID = B.BZPLC_ID(+)
+		AND A.DEPT_ID = B.DEPT_ID(+)
+		<choose>
+			<when test="searchDeptId != null and searchDeptId.length > 0">
+	        	/* 부서ID */
+	        	START WITH  (0, A.DEPT_ID) IN
+	        	<foreach collection="searchDeptId" item="item" index="index"  open="(" separator="," close=")">
+					(0, #{item})
+				</foreach>			
+			</when>
+			<otherwise>START WITH  A.HRNK_DEPT_ID IS NULL</otherwise>
+		</choose>                   
+        CONNECT BY PRIOR A.DEPT_ID = A.HRNK_DEPT_ID
+        UNION ALL
+		SELECT 
+		    '' AS CO_CD
+		    , '' AS BZPLC_ID
+		    , '' AS OPR_UNIT_ID		    
+		    , '' AS DEPT_ID
+            , '미사용부서' AS TREE_TEXT
+		    , 0 AS LVL    
+		    , 0 AS UNDER_CNT   
+		FROM DUAL
+        UNION ALL
+        SELECT
+		    A.CO_CD
+		    , A.BZPLC_ID
+		    , A.OPR_UNIT_ID		    
+		    , A.DEPT_ID
+            , A.TREE_TEXT
+		    , LEVEL AS LVL    
+		    , NVL(B.UNDER_CNT, 0) AS UNDER_CNT           
+        FROM DEPT_LIST A, MAPP_CNT B
+        WHERE A.USE_YN != 'Y'
+		AND A.CO_CD = B.CO_CD(+)
+		AND A.BZPLC_ID = B.BZPLC_ID(+)
+		AND A.DEPT_ID = B.DEPT_ID(+)           
+		<choose>
+			<when test="searchDeptId != null and searchDeptId.length > 0">
+	        	/* 부서ID */
+	        	START WITH  (0, A.DEPT_ID) IN
+	        	<foreach collection="searchDeptId" item="item" index="index"  open="(" separator="," close=")">
+					(0, #{item})
+				</foreach>			
+			</when>
+			<otherwise>START WITH  A.HRNK_DEPT_ID IS NULL</otherwise>
+		</choose>  
+        CONNECT BY PRIOR A.DEPT_ID = A.HRNK_DEPT_ID     		      
+    </select>  
+         
+    <select id="selectAcctDtlInfo" parameterType="HashMap" resultType="HashMap">
+		SELECT
+		    A.CO_CD
+		    ,A.BZPLC_ID
+		    ,A.ACCT_ID
+		    ,A.ACCT_NM
+		    ,A.ACCT_TP_CD
+		    ,FN_COM_DTL_CDNM_NVL('KO', 'ACCT_TP_CD'   , A.ACCT_TP_CD,  '-') AS ACCT_TP_NM
+		    ,A.ACCT_CD
+		    ,A.ACCT_LVL
+		    ,A.HRNK_ACCT_ID
+		    ,(SELECT B.ACCT_NM FROM TB_CC_BGT_ACCT_BASIS B WHERE B.CO_CD=A.CO_CD AND B.BZPLC_ID=A.BZPLC_ID AND B.ACCT_ID=A.HRNK_ACCT_ID) AS HRNK_ACCT_NM
+		    ,DECODE(A.USE_YN,'Y','사용','미사용') AS USE_YN
+		    ,A.ACCT_CD AS ORG_ACCT_CD
+		    ,A.ACCT_NM AS ORG_ACCT_NM
+		FROM TB_CC_BGT_ACCT_BASIS A
+		WHERE A.CO_CD = #{coCd}
+		AND A.BZPLC_ID = #{bzplcId}
+		AND A.ACCT_ID = #{acctId}    
+		
+    </select>
+        
+    <select id="selectAcctDeptMappListByAcctId" parameterType="HashMap" resultType="HashMap">
+		<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+			SELECT
+			    A.CO_CD
+			    ,A.BZPLC_ID
+			    ,A.ACCT_ID
+			    ,A.DEPT_ID
+			    ,B.OPR_UNIT_ID
+			    ,C.OPR_UNIT_NM			    
+			    ,B.CCO_DEPT_CD			    
+			    ,B.DEPT_NM
+			    ,B.DEPT_SRT_SEQ
+			FROM TB_CC_BGT_ACCT_DEPT_MAPP A, TB_CC_DEPT_BASIS B, TB_CC_OPR_UNIT_BASIS C
+			WHERE A.CO_CD = B.CO_CD
+			AND A.BZPLC_ID = B.BZPLC_ID
+			AND A.DEPT_ID = B.DEPT_ID
+			AND A.USE_YN = 'Y'
+			AND B.CO_CD = C.CO_CD
+			AND B.BZPLC_ID = C.BZPLC_ID
+			AND B.OPR_UNIT_ID = C.OPR_UNIT_ID																				
+			AND A.CO_CD = #{coCd}
+			AND A.BZPLC_ID = #{bzplcId}
+			AND A.ACCT_ID = #{acctId}
+			<if test="oprUnitId != null and !oprUnitId.equals('')">
+			AND B.OPR_UNIT_ID = #{oprUnitId}
+			</if>				 									
+		   <choose>
+			   <when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+	                ORDER BY B.${sortColumn} ${sortType}
+	           </when>
+	           <otherwise>ORDER BY A.REG_DTM DESC, B.DEPT_ID ASC</otherwise>
+	       </choose>				
+	   <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+	   
+    </select>
+        
+    <select id="selectAcctDeptMappListByDeptId" parameterType="HashMap" resultType="HashMap">
+		<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  					    
+	       WITH ACCT_LIST AS (            
+	            SELECT
+			        A.*
+			        ,(SELECT B.ACCT_NM FROM TB_CC_BGT_ACCT_BASIS B WHERE B.CO_CD=A.CO_CD AND B.BZPLC_ID=A.BZPLC_ID AND B.ACCT_ID=A.HRNK_ACCT_ID) AS HRNK_ACCT_NM
+			        , CONNECT_BY_ROOT(ACCT_NM) AS TOP_HRNK_ACCT_NM                    
+	            FROM (
+	                SELECT
+	                    CO_CD
+	                    ,BZPLC_ID
+	                    ,ACCT_ID
+	                    ,ACCT_NM
+	                    ,ACCT_CD
+	                    ,ACCT_LVL
+	                    ,HRNK_ACCT_ID
+	                    ,ACCT_TP_CD
+	                    ,REG_DTM
+	                FROM TB_CC_BGT_ACCT_BASIS 
+	                WHERE CO_CD = #{coCd}
+	                AND BZPLC_ID = #{bzplcId}
+	                AND USE_YN = 'Y'	
+	            ) A  
+			    START WITH HRNK_ACCT_ID IS NULL
+				CONNECT BY NOCYCLE PRIOR ACCT_ID = HRNK_ACCT_ID
+	        )
+	        SELECT
+	            A.CO_CD
+	            ,A.BZPLC_ID
+	            ,A.ACCT_ID
+	            ,A.DEPT_ID
+	            ,B.ACCT_NM
+	            ,B.ACCT_LVL
+	            ,B.ACCT_CD
+	            ,B.HRNK_ACCT_ID
+	            ,B.HRNK_ACCT_NM
+	            ,B.TOP_HRNK_ACCT_NM
+	            ,FN_COM_DTL_CDNM_NVL('KO', 'ACCT_TP_CD'   , B.ACCT_TP_CD,  '-') AS ACCT_TP_NM
+	            ,A.REG_DTM		                
+	        FROM TB_CC_BGT_ACCT_DEPT_MAPP A, ACCT_LIST B, TB_CC_DEPT_BASIS C
+	        WHERE A.CO_CD = B.CO_CD
+	        AND A.BZPLC_ID = B.BZPLC_ID
+	        AND A.ACCT_ID = B.ACCT_ID
+	        AND A.CO_CD = C.CO_CD
+	        AND A.BZPLC_ID = C.BZPLC_ID
+	        AND A.DEPT_ID = C.DEPT_ID	  	        
+	        AND A.USE_YN = 'Y'
+	        AND A.CO_CD = #{coCd}
+	        AND A.BZPLC_ID = #{bzplcId}				
+	        AND A.DEPT_ID = #{deptId}  
+	        <if test="oprUnitId != null and !oprUnitId.equals('')">
+	        AND C.OPR_UNIT_ID = #{oprUnitId}	
+	        </if>  	          		    			
+		   <choose>
+			   <when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+	                ORDER BY A.${sortColumn} ${sortType}
+	           </when>
+	       </choose>				
+	   <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+	   
+    </select>
+    
+    <update id="updateBgtAcctBasis" parameterType="HashMap">
+		UPDATE TB_CC_BGT_ACCT_BASIS
+		SET ACCT_NM = #{acctNm} 
+		    ,ACCT_CD = #{acctCd}
+	        ,UPDPSN_ID = #{updpsnId}
+	        ,UPD_DTM  = SYSDATE 		     
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND ACCT_ID = #{acctId} 
+    </update>
+    
+    <update id="updateDeptBasis" parameterType="HashMap">
+		UPDATE TB_CC_DEPT_BASIS
+		SET DEPT_NM = #{deptNm}
+		    ,CCO_DEPT_CD = #{ccoDeptCd}
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND OPR_UNIT_ID = #{oprUnitId}
+		AND DEPT_ID =  #{deptId}  
+    </update>     
+     
+    <select id="selectDeptDtlInfo" parameterType="HashMap" resultType="HashMap">
+        SELECT 
+		    A.CO_CD
+		    ,A.DEPT_ID
+		    ,A.DEPT_NM
+		    ,A.DEPT_SRT_SEQ
+		    ,A.HRNK_DEPT_ID
+		    ,(SELECT C.DEPT_NM FROM TB_CC_DEPT_BASIS C WHERE C.CO_CD=A.CO_CD AND C.BZPLC_ID=A.BZPLC_ID AND C.OPR_UNIT_ID=A.OPR_UNIT_ID AND C.DEPT_ID=A.HRNK_DEPT_ID) AS HRNK_DEPT_NM
+		    ,A.CCO_DEPT_CD
+		    ,( '(' || A.ZPCD || ') ' || A.REPR_ADDR || A.DTL_ADDR ) AS ADDR
+		    ,DECODE(A.USE_YN,'Y','사용','미사용') AS USE_YN
+		    ,A.BZPLC_ID
+		    ,A.OPR_UNIT_ID 
+		    ,B.OPR_UNIT_NM
+            ,DECODE(C.BGT_OVER_AGD_YN,'Y','사용','미사용') AS BGT_OVER_AGD_YN
+            ,DECODE(C.BGT_TRNSF_AGD_YN,'Y','사용','미사용') AS BGT_TRNSF_AGD_YN
+		FROM TB_CC_DEPT_BASIS A, TB_CC_OPR_UNIT_BASIS B, TB_CC_DEPT_CTL_AUTH_INFO C
+		WHERE A.CO_CD = B.CO_CD
+		AND A.BZPLC_ID = B.BZPLC_ID
+		AND A.OPR_UNIT_ID = B.OPR_UNIT_ID
+        AND A.CO_CD = C.CO_CD
+        AND A.DEPT_ID = C.DEPT_ID
+		AND A.CO_CD = #{coCd}
+		AND A.BZPLC_ID  = #{bzplcId} 
+		AND A.OPR_UNIT_ID = #{oprUnitId}
+		AND A.DEPT_ID = #{deptId} 			
+    </select>
+             
+	<update id="updateBzplcAcctLvlInfo" parameterType="HashMap">
+		/* 계정 레벨 전체수정 쿼리 - com.ssp.bo.cc.acct.updateBzplcAcctLvlInfo */
+		MERGE INTO TB_CC_BGT_ACCT_BASIS  TRGT
+		USING ( SELECT LEVEL   N_ACCT_LVL
+		             , BZAC.*
+		          FROM (SELECT * 
+		                  FROM TB_CC_BGT_ACCT_BASIS tcbab 
+		                 WHERE CO_CD     = #{coCd}
+		                   AND BZPLC_ID  = #{bzplcId}
+		               )   BZAC
+		         START WITH HRNK_ACCT_ID IS NULL
+		               CONNECT BY NOCYCLE PRIOR ACCT_ID = HRNK_ACCT_ID
+		       )    INPT
+		    ON (    INPT.CO_CD       = TRGT.CO_CD
+		        AND INPT.BZPLC_ID    = TRGT.BZPLC_ID
+		        AND INPT.ACCT_ID     = TRGT.ACCT_ID
+		       )
+		 WHEN     MATCHED THEN
+		      UPDATE SET ACCT_LVL = INPT.N_ACCT_LVL
+	</update>
+	<select id="selectAcctUnderChk" parameterType="HashMap" resultType="Integer">
+		/* 계정 미사용 설정시 하위에 사용중인 계정이 있는지 체크 -com.ssp.bo.cc.acct. selectAcctUnderChk */
+		SELECT COUNT(*)
+		  FROM TB_CC_BGT_ACCT_BASIS TCBAB
+		 WHERE TCBAB.CO_CD        = #{coCd}
+		   AND TCBAB.BZPLC_ID     = #{bzplcId}
+		   AND TCBAB.HRNK_ACCT_ID = #{acctId}
+		   AND TCBAB.USE_YN       = 'Y'
+	</select>
+	<select id="selectBgtAcctIdDetail" parameterType="HashMap" resultType="HashMap">
+		/* 계정관리 계정 상세정보 조회 - com.ssp.bo.cc.acct.selectBgtAcctIdDetail */
+		WITH SUB_TABLE AS
+		(
+		SELECT *
+		  FROM TB_CC_BGT_ACCT_BASIS TCBAB
+		 WHERE TCBAB.CO_CD    = #{coCd}
+		   AND TCBAB.BZPLC_ID = #{bzplcId}
+		)
+         		SELECT A.CO_CD 
+         		     , A.BZPLC_ID 
+         		     , A.ACCT_ID 
+         		     , A.ACCT_NM
+         		     , A.ACCT_CD
+         		     , A.ACCT_TP_CD 
+         		     , D.COM_DTL_CD_NM AS ACCT_TP_CD_NM
+         		     , A.ACCT_LVL AS LVL
+         		     , ( SELECT MAX(ACCT_LVL)
+						   FROM SUB_TABLE TCBAB
+                          WHERE TCBAB.CO_CD    = A.CO_CD 
+                            AND TCBAB.BZPLC_ID = A.BZPLC_ID 
+                            AND TCBAB.USE_YN   = A.USE_YN 
+                     START WITH TCBAB.ACCT_ID  = A.ACCT_ID
+                CONNECT BY PRIOR TCBAB.ACCT_ID = TCBAB.HRNK_ACCT_ID ) AS CHILD_MAX_LVL
+         		     , A.HRNK_ACCT_ID 
+         		     , B.ACCT_NM AS HRNK_ACCT_NM
+         		     , A.USE_YN
+         		     , A.BGT_USE_HRNK_ACCT_ID
+         		     , C.ACCT_NM AS BGT_USE_HRNK_ACCT_NM        		              		     
+				  FROM SUB_TABLE A
+		     LEFT JOIN TB_CC_BGT_ACCT_BASIS  B
+		            ON A.CO_CD                = B.CO_CD
+		           AND A.BZPLC_ID             = B.BZPLC_ID
+		           AND A.HRNK_ACCT_ID         = B.ACCT_ID
+		     LEFT JOIN TB_CC_BGT_ACCT_BASIS  C
+		            ON A.CO_CD                = C.CO_CD
+		           AND A.BZPLC_ID             = C.BZPLC_ID
+                   AND A.BGT_USE_HRNK_ACCT_ID = C.ACCT_ID		     
+		    INNER JOIN TB_CO_COM_CD_DTL      D 
+		            ON A.ACCT_TP_CD           = D.COM_DTL_CD
+		           AND D.COM_CLSF_CD          = 'ACCT_TP_CD'
+		         WHERE A.CO_CD                = #{coCd}   
+		           AND A.BZPLC_ID             = #{bzplcId}
+		           AND A.ACCT_ID              = #{acctId}
+	</select>
+	<select id="selectBgtAcctExcelList" parameterType="HashMap" resultType="HashMap">
+		/* 계정 대용량 엑셀 다운로드 리스트 조회 - com.ssp.bo.cc.acct.selectBgtAcctExcelList */
+		<choose>
+			<when test='searchUseYn.equals("Y")' >
+				WITH ACCT_TABLE 
+                  AS (
+					     SELECT TCBAB.*
+					       FROM TB_CC_BGT_ACCT_BASIS TCBAB
+					      WHERE TCBAB.CO_CD    = #{coCd}
+					        AND TCBAB.BZPLC_ID = #{bzplcId}
+					        AND TCBAB.USE_YN   = 'Y'
+					 )
+						SELECT A.BZPLC_ID
+						     , TCBB.BZPLC_NM 
+						     , A.ACCT_TP_CD
+						     , TCCD.COM_DTL_CD_NM AS ACCT_TP_CD_NM
+						     , A.ACCT_LVL
+						     , A.ACCT_ID
+						     , A.ACCT_NM
+						     , A.ACCT_CD
+						     , A.HRNK_ACCT_ID
+						     , B.ACCT_NM AS HRNK_ACCT_NM
+						     , CONNECT_BY_ROOT(A.ACCT_ID) AS TOP_HRNK_ACCT_ID
+						     , CONNECT_BY_ROOT(A.ACCT_NM) AS TOP_HRNK_ACCT_NM
+						     , A.BGT_USE_HRNK_ACCT_ID
+						     , C.ACCT_NM AS BGT_USE_HRNK_ACCT_NM
+						     , A.USE_YN
+						  FROM ACCT_TABLE A
+			        INNER JOIN TB_CC_BZPLC_BASIS TCBB ON A.CO_CD = TCBB.CO_CD AND A.BZPLC_ID = TCBB.BZPLC_ID 
+			        INNER JOIN TB_CO_COM_CD_DTL  TCCD ON TCCD.LANG_CD = 'KO' AND TCCD.COM_CLSF_CD = 'ACCT_TP_CD' AND TCCD.COM_DTL_CD = A.ACCT_TP_CD
+			         LEFT JOIN ACCT_TABLE B ON A.CO_CD = B.CO_CD AND A.BZPLC_ID = B.BZPLC_ID AND A.HRNK_ACCT_ID = B.ACCT_ID 
+			         LEFT JOIN ACCT_TABLE C ON A.CO_CD = C.CO_CD AND A.BZPLC_ID = C.BZPLC_ID AND A.BGT_USE_HRNK_ACCT_ID = C.ACCT_ID
+					START WITH A.ACCT_LVL  = '1'
+			  CONNECT BY PRIOR A.ACCT_ID   = A.HRNK_ACCT_ID
+			</when>
+			<when test='searchUseYn.equals("N")' >
+				WITH ACCT_TABLE 
+                  AS (
+					     SELECT TCBAB.*
+					       FROM TB_CC_BGT_ACCT_BASIS TCBAB
+					      WHERE TCBAB.CO_CD    = #{coCd}
+					        AND TCBAB.BZPLC_ID = #{bzplcId}
+					        AND TCBAB.USE_YN   = 'N'
+					 )
+						SELECT A.BZPLC_ID
+						     , TCBB.BZPLC_NM 
+						     , A.ACCT_TP_CD
+						     , TCCD.COM_DTL_CD_NM AS ACCT_TP_CD_NM
+						     , A.ACCT_LVL
+						     , A.ACCT_ID
+						     , A.ACCT_NM
+						     , A.ACCT_CD
+						     , A.HRNK_ACCT_ID
+						     , B.ACCT_NM AS HRNK_ACCT_NM
+						     , CONNECT_BY_ROOT(A.ACCT_ID) AS TOP_HRNK_ACCT_ID
+						     , CONNECT_BY_ROOT(A.ACCT_NM) AS TOP_HRNK_ACCT_NM
+						     , A.BGT_USE_HRNK_ACCT_ID
+						     , C.ACCT_NM AS BGT_USE_HRNK_ACCT_NM
+						     , A.USE_YN
+						  FROM ACCT_TABLE A
+			        INNER JOIN TB_CC_BZPLC_BASIS TCBB ON A.CO_CD = TCBB.CO_CD AND A.BZPLC_ID = TCBB.BZPLC_ID 
+			        INNER JOIN TB_CO_COM_CD_DTL  TCCD ON TCCD.LANG_CD = 'KO' AND TCCD.COM_CLSF_CD = 'ACCT_TP_CD' AND TCCD.COM_DTL_CD = A.ACCT_TP_CD
+			         LEFT JOIN ACCT_TABLE B ON A.CO_CD = B.CO_CD AND A.BZPLC_ID = B.BZPLC_ID AND A.HRNK_ACCT_ID = B.ACCT_ID 
+			         LEFT JOIN ACCT_TABLE C ON A.CO_CD = C.CO_CD AND A.BZPLC_ID = C.BZPLC_ID AND A.BGT_USE_HRNK_ACCT_ID = C.ACCT_ID
+					START WITH A.ACCT_LVL  = '1'
+			  CONNECT BY PRIOR A.ACCT_ID   = A.HRNK_ACCT_ID
+			</when>
+			<when test='searchUseYn.equals("ALL")' >
+				WITH ACCT_TABLE 
+                  AS (
+					     SELECT TCBAB.*
+					       FROM TB_CC_BGT_ACCT_BASIS TCBAB
+					      WHERE TCBAB.CO_CD    = #{coCd}
+					        AND TCBAB.BZPLC_ID = #{bzplcId}
+					 )
+						SELECT A.BZPLC_ID
+						     , TCBB.BZPLC_NM 
+						     , A.ACCT_TP_CD
+						     , TCCD.COM_DTL_CD_NM AS ACCT_TP_CD_NM
+						     , A.ACCT_LVL
+						     , A.ACCT_ID
+						     , A.ACCT_NM
+						     , A.ACCT_CD
+						     , A.HRNK_ACCT_ID
+						     , B.ACCT_NM AS HRNK_ACCT_NM
+						     , CONNECT_BY_ROOT(A.ACCT_ID) AS TOP_HRNK_ACCT_ID
+						     , CONNECT_BY_ROOT(A.ACCT_NM) AS TOP_HRNK_ACCT_NM
+						     , A.BGT_USE_HRNK_ACCT_ID
+						     , C.ACCT_NM AS BGT_USE_HRNK_ACCT_NM
+						     , A.USE_YN
+						  FROM ACCT_TABLE A
+			        INNER JOIN TB_CC_BZPLC_BASIS TCBB ON A.CO_CD = TCBB.CO_CD AND A.BZPLC_ID = TCBB.BZPLC_ID 
+			        INNER JOIN TB_CO_COM_CD_DTL  TCCD ON TCCD.LANG_CD = 'KO' AND TCCD.COM_CLSF_CD = 'ACCT_TP_CD' AND TCCD.COM_DTL_CD = A.ACCT_TP_CD
+			         LEFT JOIN ACCT_TABLE B ON A.CO_CD = B.CO_CD AND A.BZPLC_ID = B.BZPLC_ID AND A.HRNK_ACCT_ID = B.ACCT_ID 
+			         LEFT JOIN ACCT_TABLE C ON A.CO_CD = C.CO_CD AND A.BZPLC_ID = C.BZPLC_ID AND A.BGT_USE_HRNK_ACCT_ID = C.ACCT_ID 
+					START WITH A.ACCT_LVL  = '1'
+			  CONNECT BY PRIOR A.ACCT_ID   = A.HRNK_ACCT_ID
+			 ORDER SIBLINGS BY A.USE_YN DESC
+			</when>
+		</choose>
+	</select>
+	<select id="selectBizplcAcctTreeList" parameterType="HashMap" resultType="HashMap">
+		/* 계정관리 계정 트리 리스트 조회 - com.ssp.bo.cc.acct.selectBizplcAcctTreeList3 */
+		<choose>
+			<when test=" searchAcctId > 0 ">
+				<choose>
+					<when test='searchUseYn.equals("Y")' >
+						<include refid="selectBgtAcctSearchNormalY"/>
+						UNION ALL
+						<include refid="selectBgtAcctSearchCommonY"/>
+					</when>
+					<when test='searchUseYn.equals("N")' >
+						<include refid="selectBgtAcctSearchN"/>
+					</when>
+					<when test='searchUseYn.equals("ALL")' >
+						<include refid="selectBgtAcctSearchNormalY"/>
+						UNION ALL
+						<include refid="selectBgtAcctSearchCommonY"/>
+						UNION ALL
+						<include refid="selectBgtAcctSearchN"/>
+					</when>
+				</choose>
+			</when>
+			<otherwise>
+				<choose>
+					<when test='searchUseYn.equals("Y")' >
+						<include refid="selectBgtAcctWithSql"/>
+						<include refid="selectBgtAcctNomal"/>
+						UNION ALL
+						<include refid="selectBgtAcctCommon"/>
+					</when>
+					<when test='searchUseYn.equals("N")' >
+						<include refid="selectBgtAcctWithSql"/>
+						<include refid="selectBgtAcctUseN"/>
+					</when>
+					<when test='searchUseYn.equals("ALL")' >
+						<include refid="selectBgtAcctWithSql"/>
+						<include refid="selectBgtAcctNomal"/>
+						UNION ALL
+						<include refid="selectBgtAcctCommon"/>
+						UNION ALL
+						<include refid="selectBgtAcctUseN"/>
+					</when>
+				</choose>
+			
+			</otherwise>
+		</choose>
+	</select>
+	<sql id="selectBgtAcctWithSql">
+	WITH ACCT_TABLE
+	  AS (
+		 SELECT TCBAB.*
+		   FROM TB_CC_BGT_ACCT_BASIS TCBAB
+		  WHERE TCBAB.CO_CD    = #{coCd}
+			AND TCBAB.BZPLC_ID = TRIM(#{searchBzplcId})
+	  ), SUB_TABLE
+	  AS (
+		 SELECT TCBAB.*
+			  , NVL(TCBHC.UNDER_CNT, 0)  UNDER_CNT
+		   FROM ACCT_TABLE TCBAB
+		      , ( SELECT CO_CD
+		               , BZPLC_ID
+		               , HRNK_ACCT_ID
+					   , COUNT(*) UNDER_CNT
+					FROM ACCT_TABLE
+				GROUP BY CO_CD, BZPLC_ID, HRNK_ACCT_ID
+				)              TCBHC
+		  WHERE TCBAB.CO_CD   =TCBHC.CO_CD       (+)
+			AND TCBAB.BZPLC_ID=TCBHC.BZPLC_ID    (+)
+			AND TCBAB.ACCT_ID =TCBHC.HRNK_ACCT_ID(+)
+	  ), ACCT_TABLE_USE_Y
+	  AS (
+	  	 SELECT TCBAB.*
+	  	   FROM SUB_TABLE TCBAB
+	  	  WHERE TCBAB.USE_YN     = 'Y'
+	  ),ACCT_TABLE_USE_N
+	  AS (
+	  	 SELECT TCBAB.*
+	  	   FROM SUB_TABLE TCBAB
+	  	  WHERE TCBAB.USE_YN     = 'N'
+	  )
+	</sql>
+	<sql id="selectBgtAcctNomal">
+			SELECT '' AS CO_CD
+				 , '' AS BZPLC_ID
+				 , '' AS ACCT_ID
+				 , '일반계정' AS ACCT_NM
+				 , '' AS ACCT_TP_CD 
+				 , '' AS ACCT_CD
+				 , 0 AS LVL
+				 , '' AS USE_YN
+				 , '' AS HRNK_ACCT_ID
+				 , 0 AS UNDER_CNT
+	          FROM DUAL
+         UNION ALL
+		    SELECT A.CO_CD
+			     , A.BZPLC_ID
+			     , A.ACCT_ID
+			     , A.ACCT_NM
+			     , A.ACCT_TP_CD
+			     , A.ACCT_CD
+			     , A.ACCT_LVL AS LVL
+			     , A.USE_YN
+			     , A.HRNK_ACCT_ID 
+			     , A.UNDER_CNT 
+			  FROM ACCT_TABLE_USE_Y A
+			 WHERE A.ACCT_TP_CD = '1'
+		START WITH A.ACCT_LVL   = '1'
+  CONNECT BY PRIOR A.CO_CD      = A.CO_CD
+         AND PRIOR A.BZPLC_ID   = A.BZPLC_ID        
+         AND PRIOR A.ACCT_ID    = A.HRNK_ACCT_ID
+	</sql>
+	<sql id="selectBgtAcctCommon">
+			SELECT '' AS CO_CD
+				 , '' AS BZPLC_ID
+				 , '' AS ACCT_ID
+				 , '공통계정' AS ACCT_NM
+				 , '' AS ACCT_TP_CD 
+				 , '' AS ACCT_CD
+				 , 0 AS LVL
+				 , '' AS USE_YN
+				 , '' AS HRNK_ACCT_ID
+				 , 0 AS UNDER_CNT
+	          FROM DUAL
+	     UNION ALL
+		    SELECT A.CO_CD
+			     , A.BZPLC_ID
+			     , A.ACCT_ID
+			     , A.ACCT_NM
+			     , A.ACCT_TP_CD
+			     , A.ACCT_CD
+			     , A.ACCT_LVL AS LVL
+			     , A.USE_YN
+			     , A.HRNK_ACCT_ID 
+			     , A.UNDER_CNT 
+			  FROM ACCT_TABLE_USE_Y A
+			 WHERE A.ACCT_TP_CD = '2'
+		START WITH A.ACCT_LVL   = '1'
+  CONNECT BY PRIOR A.CO_CD      = A.CO_CD
+         AND PRIOR A.BZPLC_ID   = A.BZPLC_ID        
+         AND PRIOR A.ACCT_ID    = A.HRNK_ACCT_ID
+	</sql>
+	<sql id="selectBgtAcctUseN">
+		SELECT '' AS CO_CD
+			 , '' AS BZPLC_ID
+			 , '' AS ACCT_ID
+			 , '미사용 계정' AS ACCT_NM
+			 , '' AS ACCT_TP_CD 
+			 , '' AS ACCT_CD
+			 , 0 AS LVL
+			 , '' AS USE_YN
+			 , '' AS HRNK_ACCT_ID
+			 , 0 AS UNDER_CNT
+          FROM DUAL
+         UNION ALL
+        SELECT TCBAB.CO_CD
+			 , TCBAB.BZPLC_ID
+			 , TCBAB.ACCT_ID
+			 , TCBAB.ACCT_NM
+			 , TCBAB.ACCT_TP_CD 
+			 , TCBAB.ACCT_CD
+			 , 1 AS LVL
+			 , TCBAB.USE_YN
+			 , TCBAB.HRNK_ACCT_ID
+			 , 0 AS UNDER_CNT
+		  FROM ACCT_TABLE_USE_N TCBAB
+	</sql>
+	<sql id="selectBgtAcctSearchNormalY">
+		   SELECT '' AS CO_CD
+				, '' AS BZPLC_ID
+				, '' AS ACCT_ID
+				, '일반 계정' AS ACCT_NM
+				, '' AS ACCT_TP_CD 
+				, '' AS ACCT_CD
+				, 0 AS LVL
+				, '' AS USE_YN
+				, '' AS HRNK_ACCT_ID
+				, 0 AS UNDER_CNT
+             FROM DUAL
+            UNION ALL
+		   SELECT A.CO_CD
+				, A.BZPLC_ID
+				, A.ACCT_ID
+				, A.ACCT_NM
+				, A.ACCT_TP_CD 
+				, A.ACCT_CD
+				, A.LVL
+				, A.USE_YN
+				, A.HRNK_ACCT_ID
+				, ( SELECT COUNT(*)
+					  FROM TB_CC_BGT_ACCT_BASIS SUB_TCBAB
+					 WHERE CO_CD = A.CO_CD
+					   AND BZPLC_ID = A.BZPLC_ID
+					   AND HRNK_ACCT_ID = A.ACCT_ID 
+					   AND USE_YN = 'Y'
+		 		  ) UNDER_CNT
+		     FROM (
+				   SELECT A.CO_CD
+						, A.BZPLC_ID
+						, A.ACCT_ID
+						, A.ACCT_NM
+						, A.ACCT_TP_CD 
+						, A.ACCT_CD
+						, A.ACCT_LVL AS LVL
+						, A.USE_YN
+						, A.HRNK_ACCT_ID
+						, 0 AS UNDER_CNT
+				     FROM (
+				          SELECT CO_CD
+				               , BZPLC_ID
+				               , ACCT_ID
+				               , ACCT_NM
+				               , ACCT_LVL
+				               , HRNK_ACCT_ID
+				               , USE_YN
+				               , ACCT_CD
+				               , ACCT_TP_CD
+				            FROM (
+				                 SELECT CO_CD
+				                      , BZPLC_ID
+				                      , ACCT_ID
+						              , ACCT_NM
+						              , ACCT_LVL
+						              , HRNK_ACCT_ID
+						              , USE_YN
+						              , ACCT_CD
+						              , ACCT_TP_CD
+				                   FROM TB_CC_BGT_ACCT_BASIS A
+							      WHERE A.CO_CD    = #{coCd}
+							        AND A.BZPLC_ID = TRIM(#{searchBzplcId})
+							        AND A.USE_YN   = 'Y'
+							        AND A.ACCT_TP_CD = '1'
+							 START WITH A.ACCT_ID IN (
+							                         SELECT COND_DATA_VAL 
+							                           FROM TB_OD_ODR_INQ_TGT_DTLS
+													  WHERE SES_ID        = #{sesId} 
+													    AND INQ_COND_DTLS = #{inqCondDtls}
+						                                AND COL_ITM       = 'SEARCH_ACCT_ID'
+						                             )
+							CONNECT BY PRIOR A.CO_CD      = A.CO_CD
+						           AND PRIOR A.BZPLC_ID   = A.BZPLC_ID        
+						           AND PRIOR A.ACCT_ID    = A.HRNK_ACCT_ID
+				        ) A
+				        GROUP BY CO_CD, BZPLC_ID, ACCT_ID, ACCT_NM, ACCT_LVL, HRNK_ACCT_ID, USE_YN, ACCT_CD, ACCT_TP_CD
+				    ) A
+		   START WITH A.ACCT_LVL IN (
+                		 			   	        SELECT MIN(ACCT_LVL) AS MIN_ACCT_LVL
+				                     FROM TB_CC_BGT_ACCT_BASIS A
+							        WHERE A.CO_CD    = #{coCd}
+							          AND A.BZPLC_ID = TRIM(#{searchBzplcId})
+							          AND A.USE_YN   = 'Y'            
+						       START WITH A.ACCT_ID IN (
+							                         SELECT COND_DATA_VAL 
+							                           FROM TB_OD_ODR_INQ_TGT_DTLS
+													  WHERE SES_ID        = #{sesId} 
+													    AND INQ_COND_DTLS = #{inqCondDtls}
+						                                AND COL_ITM       = 'SEARCH_ACCT_ID'
+					           						   )
+					           CONNECT BY PRIOR A.CO_CD    = A.CO_CD
+						              AND PRIOR A.BZPLC_ID = A.BZPLC_ID        
+						              AND PRIOR A.ACCT_ID  = A.HRNK_ACCT_ID
+						            )
+     CONNECT BY PRIOR A.CO_CD    = A.CO_CD
+            AND PRIOR A.BZPLC_ID = A.BZPLC_ID        
+            AND PRIOR A.ACCT_ID  = A.HRNK_ACCT_ID
+	ORDER SIBLINGS BY A.HRNK_ACCT_ID ASC, A.ACCT_ID ASC ) A
+	</sql>
+	<sql id="selectBgtAcctSearchCommonY">
+		   SELECT '' AS CO_CD
+				, '' AS BZPLC_ID
+				, '' AS ACCT_ID
+				, '공통 계정' AS ACCT_NM
+				, '' AS ACCT_TP_CD 
+				, '' AS ACCT_CD
+				, 0 AS LVL
+				, '' AS USE_YN
+				, '' AS HRNK_ACCT_ID
+				, 0 AS UNDER_CNT
+             FROM DUAL
+            UNION ALL
+		   SELECT A.CO_CD
+				, A.BZPLC_ID
+				, A.ACCT_ID
+				, A.ACCT_NM
+				, A.ACCT_TP_CD 
+				, A.ACCT_CD
+				, A.LVL
+				, A.USE_YN
+				, A.HRNK_ACCT_ID
+				, ( SELECT COUNT(*)
+					  FROM TB_CC_BGT_ACCT_BASIS SUB_TCBAB
+					 WHERE CO_CD = A.CO_CD
+					   AND BZPLC_ID = A.BZPLC_ID
+					   AND HRNK_ACCT_ID = A.ACCT_ID 
+					   AND USE_YN = 'Y'
+		 		  ) UNDER_CNT
+		     FROM (
+				   SELECT A.CO_CD
+						, A.BZPLC_ID
+						, A.ACCT_ID
+						, A.ACCT_NM
+						, A.ACCT_TP_CD 
+						, A.ACCT_CD
+						, A.ACCT_LVL AS LVL
+						, A.USE_YN
+						, A.HRNK_ACCT_ID
+						, 0 AS UNDER_CNT
+				     FROM (
+				          SELECT CO_CD
+				               , BZPLC_ID
+				               , ACCT_ID
+				               , ACCT_NM
+				               , ACCT_LVL
+				               , HRNK_ACCT_ID
+				               , USE_YN
+				               , ACCT_CD
+				               , ACCT_TP_CD
+				            FROM (
+				                 SELECT CO_CD
+				                      , BZPLC_ID
+				                      , ACCT_ID
+						              , ACCT_NM
+						              , ACCT_LVL
+						              , HRNK_ACCT_ID
+						              , USE_YN
+						              , ACCT_CD
+						              , ACCT_TP_CD
+				                   FROM TB_CC_BGT_ACCT_BASIS A
+							      WHERE A.CO_CD    = #{coCd}
+							        AND A.BZPLC_ID = TRIM(#{searchBzplcId})
+							        AND A.USE_YN   = 'Y'
+							        AND A.ACCT_TP_CD = '2'
+							 START WITH A.ACCT_ID IN (
+							                         SELECT COND_DATA_VAL 
+							                           FROM TB_OD_ODR_INQ_TGT_DTLS
+													  WHERE SES_ID        = #{sesId} 
+													    AND INQ_COND_DTLS = #{inqCondDtls}
+						                                AND COL_ITM       = 'SEARCH_ACCT_ID'
+						                             )
+							CONNECT BY PRIOR A.CO_CD     = A.CO_CD
+						            AND PRIOR A.BZPLC_ID = A.BZPLC_ID        
+						            AND PRIOR A.ACCT_ID  = A.HRNK_ACCT_ID
+				        ) A
+				        GROUP BY CO_CD, BZPLC_ID, ACCT_ID, ACCT_NM, ACCT_LVL, HRNK_ACCT_ID, USE_YN, ACCT_CD, ACCT_TP_CD
+				    ) A
+		   START WITH A.ACCT_LVL IN (
+                		 			   	        SELECT MIN(ACCT_LVL) AS MIN_ACCT_LVL
+				                     FROM TB_CC_BGT_ACCT_BASIS A
+							        WHERE A.CO_CD    = #{coCd}
+							          AND A.BZPLC_ID = TRIM(#{searchBzplcId})
+							          AND A.USE_YN   = 'Y'            
+						       START WITH A.ACCT_ID IN (
+							                         SELECT COND_DATA_VAL 
+							                           FROM TB_OD_ODR_INQ_TGT_DTLS
+													  WHERE SES_ID        = #{sesId} 
+													    AND INQ_COND_DTLS = #{inqCondDtls}
+						                                AND COL_ITM       = 'SEARCH_ACCT_ID'
+					                                   )
+					           CONNECT BY PRIOR A.CO_CD    = A.CO_CD
+						              AND PRIOR A.BZPLC_ID = A.BZPLC_ID        
+						              AND PRIOR A.ACCT_ID  = A.HRNK_ACCT_ID
+						            )
+     CONNECT BY PRIOR A.ACCT_ID = A.HRNK_ACCT_ID
+	ORDER SIBLINGS BY A.HRNK_ACCT_ID ASC, A.ACCT_ID ASC ) A
+	</sql>
+	<sql id="selectBgtAcctSearchN">
+	   SELECT '' AS CO_CD
+			, '' AS BZPLC_ID
+			, '' AS ACCT_ID
+			, '미 사용 계정' AS ACCT_NM
+			, '' AS ACCT_TP_CD 
+			, '' AS ACCT_CD
+			, 0 AS LVL
+			, '' AS USE_YN
+			, '' AS HRNK_ACCT_ID
+			, 0 AS UNDER_CNT
+         FROM DUAL
+	    UNION ALL
+	   SELECT TCBAB.CO_CD
+			, TCBAB.BZPLC_ID
+			, TCBAB.ACCT_ID
+			, TCBAB.ACCT_NM
+			, TCBAB.ACCT_TP_CD 
+			, TCBAB.ACCT_CD
+			, 1 AS LVL
+			, TCBAB.USE_YN
+			, TCBAB.HRNK_ACCT_ID
+			, 0 AS UNDER_CNT
+		 FROM TB_CC_BGT_ACCT_BASIS TCBAB
+		WHERE TCBAB.CO_CD    = #{coCd}
+	      AND TCBAB.BZPLC_ID = TRIM(#{searchBzplcId})
+	      AND TCBAB.USE_YN   = 'N'
+	      AND TCBAB.ACCT_ID IN (
+	      					   SELECT COND_DATA_VAL 
+		                         FROM TB_OD_ODR_INQ_TGT_DTLS
+								WHERE SES_ID        = #{sesId} 
+								  AND INQ_COND_DTLS = #{inqCondDtls}
+	                              AND COL_ITM       = 'SEARCH_ACCT_ID'
+	                           )
+	</sql>
+	<select id="selectBzplcIdChk" parameterType="HashMap" resultType="Integer">
+		/* 계정 미사용 설정시 하위에 사용중인 계정이 있는지 체크 -com.ssp.bo.cc.acct.selectBzplcIdChk */
+		SELECT COUNT(*) 
+		  FROM TB_CC_BZPLC_BASIS
+		 WHERE CO_CD    = #{coCd}
+		   AND BZPLC_ID = TRIM(#{searchBzplcId})
+	</select>
+	
+    <select id="selectCheckHrnkAcct" parameterType="HashMap" resultType="HashMap">
+		/* 선택한 계정 하위에 존재하는 계정 선택여부 조회 - CustAcct_SQL.selectCheckHrnkAcct */
+         SELECT
+            COUNT(*) AS CNT
+         FROM (
+		     SELECT
+		        A.CO_CD
+                ,A.BZPLC_ID
+                ,A.ACCT_ID
+                ,A.ACCT_NM
+		     FROM TB_CC_BGT_ACCT_BASIS A
+		     WHERE A.CO_CD = #{coCd}
+		     AND A.BZPLC_ID = #{bzplcId}                                               
+             START WITH A.ACCT_ID = #{acctId}
+		     CONNECT BY PRIOR A.ACCT_ID = A.HRNK_ACCT_ID   
+        ) A
+        WHERE A.ACCT_ID = #{hrnkAcctId}
+    </select>
+    
+    <select id="selectComCostTrnsfDeptList" parameterType="HashMap" resultType="HashMap">
+    	/* 참조코드 단일조회 팝업 리스트 조회- CustAcct_SQL.selectRefSinglePopupList */
+    	SELECT TCDB.DEPT_ID                                                         /* 부서ID */
+             , TCDB.DEPT_NM                                                         /* 부서명 */
+          FROM TB_CC_OPR_UNIT_BASIS TCOUB                                           /* TB_운영단위기본 */
+    INNER JOIN TB_CC_DEPT_BASIS TCDB ON TCOUB.OPR_UNIT_ID = TCDB.OPR_UNIT_ID        /* TB_부서기본 */
+    INNER JOIN TB_CC_DEPT_CTL_AUTH_INFO TCDCAI ON TCDB.DEPT_ID = TCDCAI.DEPT_ID     /* TB_부서제어권한정보 */
+         WHERE TCDCAI.BGT_TRNSF_AGD_YN  = 'Y'                                       /* 예산이체허용여부 */
+           AND TCOUB.OPR_UNIT_ID        = #{oprUnitId}                              /* 운영단위ID */
+    UNION ALL
+    SELECT
+        B.DEPT_ID
+      , B.DEPT_NM
+    FROM
+      TB_CC_MBR_BASIS A
+      JOIN TB_CC_DEPT_BASIS B ON B.CO_CD = A.CO_CD AND B.DEPT_ID = A.DEPT_ID
+    WHERE
+      A.CO_CD = #{coCd}
+      AND A.MBR_ID = #{mbrId}
+      AND NOT EXISTS (
+        SELECT 1 
+        FROM
+            TB_CC_DEPT_CTL_AUTH_INFO C
+        WHERE
+            C.CO_CD = A.CO_CD AND C.DEPT_ID = A.DEPT_ID AND C.BGT_TRNSF_AGD_YN = 'Y'
+      )
+    </select>
+    
+    <!-- /* 참조코드 단일조회 팝업 */ -->
+    <sql id="sqlRef">
+    /* SQL.sqlRef - 참조코드 조회 */
+    SELECT A.CO_CD
+         , A.BZPLC_ID
+         , A.OPR_UNIT_ID
+         , B.DEPT_OPR_UNIT_SPR_CD
+         , B.REF_CD_SEQ
+         , A.REF_CD_GRP_NM
+         , B.REF_CD
+         , B.REF_CD_NM
+      FROM TB_CC_CCO_REF_CD_INFO A
+      JOIN TB_CC_CCO_REF_CD_DTL B
+        ON ( A.CO_CD = B.CO_CD AND A.BZPLC_ID = B.BZPLC_ID AND A.OPR_UNIT_ID = B.OPR_UNIT_ID AND A.REF_CD_GRP_SEQ = B.REF_CD_GRP_SEQ)
+     WHERE 1=1 
+       AND A.CO_CD = #{coCd}
+       AND A.BZPLC_ID = #{bzplcId} 
+       AND A.OPR_UNIT_ID = #{oprUnitId}
+       AND A.REF_CD_GRP_SEQ = #{refCdGrpSeq}
+       AND A.USE_YN = 'Y'
+       AND B.USE_YN = 'Y'
+       <if test='deptOprUnitSprCd != null and !"".equals(deptOprUnitSprCd)'>
+           AND B.DEPT_OPR_UNIT_SPR_CD = #{deptOprUnitSprCd}
+       </if>
+       <if test='refCd != null and !"".equals(refCd)'>
+       	   AND B.REF_CD LIKE '%' || TRIM(#{refCd}) || '%'
+       </if>
+       <if test='refCdNm != null and !"".equals(refCdNm)'>
+           AND B.REF_CD_NM LIKE '%' || TRIM(#{refCdNm}) || '%'
+       </if>
+    </sql>
+    
+    <select id="selectRefSinglePopupListCnt" parameterType="HashMap" resultType="Integer">
+    	/* 참조코드 단일조회 팝업 리스트 카운트 조회- CustAcct_SQL.selectRefSinglePopupListCnt */
+    	SELECT COUNT(*)
+      	  FROM (
+              <include refid="sqlRef" />
+          )
+    </select>
+    
+    <select id="selectRefSinglePopupList" parameterType="HashMap" resultType="HashMap">
+    	/* 참조코드 단일조회 팝업 리스트 조회- CustAcct_SQL.selectRefSinglePopupList */
+    	<include refid="sqlRef" />
+    	ORDER BY B.REF_CD_GRP_SEQ
+        	   , B.REF_CD_SEQ DESC
+    	OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>
+    
+</mapper>

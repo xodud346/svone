@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CprtcpPoolMng">
+	<select id="selectCprtcpPoolMng" parameterType="HashMap" resultType="HashMap">
+		/* CprtcpPoolMng.selectCprtcpPoolMng | 협력서 견적 POOL 목록 조회 */
+			SELECT
+				(
+					SELECT A.DATA_CHG_TP_CD FROM (
+						SELECT TRESCICH.DATA_CHG_TP_CD FROM TB_RD_ESTM_STB_CPRTCP_INFO_CHG_HST TRESCICH
+						WHERE TRESCI.CO_CD = TRESCICH.CO_CD AND TRESCI.CPRTCP_TP_CD = TRESCICH.CPRTCP_TP_CD AND TRESCI.CPRTCP_ID = TRESCICH.CPRTCP_ID
+						AND TRESCI.ESTM_STB_TP_CD = TRESCICH.ESTM_STB_TP_CD AND NVL(TRESCI.MNFR_NO, 'N') = NVL(TRESCICH.MNFR_NO, 'N')
+						AND  NVL(TRESCI.PRD_CLCD, 'N') = NVL(TRESCICH.PRD_CLCD, 'N') AND  NVL(TRESCI.OPR_UNIT_ID, 'N') = NVL(TRESCICH.OPR_UNIT_ID, 'N')
+						ORDER BY TRESCICH.UPD_DTM DESC
+					) A
+					WHERE ROWNUM = 1
+				) AS STATE, 	/* 상태 */
+				TRESCI.CPRTCP_TP_CD,					/* 협력사 유형 */
+				TCCCD.COM_DTL_CD_NM AS CPRTCP_TP_NM,	/* 협력사 유형명 */
+				TRESCI.ESTM_STB_TP_CD,					/* 견적대기 유형 */
+				TCCCD2.COM_DTL_CD_NM AS ESTM_STB_TP_NM,	/* 견적대기 유형명 */
+				TRESCI.MNFR_NO,							/* 제조사ID */
+				TPMI.MRO_MNFR_NM,						/* 제조원명 */
+				TRESCI.PRD_CLCD,						/* 상품군ID */
+				TPRCI.PRD_CLSF_NM,						/* 상품군명 */
+				TRESCI.OPR_UNIT_ID,						/* 운영단위ID */
+				TCOUB.OPR_UNIT_NM,						/* 운영단위명 */
+				TRESCI.CPRTCP_ID,						/* 협력사ID */
+				TCCB.CPRTCP_KOR_NM,						/* 협력사명 */
+				TRESCI.AUTO_ESTM_YN,					/* 자동견적여부 */
+				TRESCI.PURG_CHRPSN_ID,					/* 구매담당자ID */
+				TCMOI.OPRTR_NM,							/* 구매담당자명 */
+				TO_CHAR(TRESCI.REG_DTM, 'YYYY-MM-DD HH24:MI:ss') AS REG_DTM, /* 등록일자 */
+				TRESCI.REGPSN_ID,						/* 등록자ID */
+				TRESCI.UPDPSN_ID,						/* 최종처리자ID */
+				TCMOI2.OPRTR_NM AS UPDPSN_NM,			/* 최종처리자명 */
+				TO_CHAR(TRESCI.UPD_DTM, 'YYYY-MM-DD HH24:MI:ss') AS UPD_DTM, /* 최종수정일 */
+				TRESCI.RMKS,							/* 참고사항 */
+				TRESCI.CHG_RSN							/* 사유 */
+			FROM TB_RD_ESTM_STB_CPRTCP_INFO TRESCI
+			LEFT OUTER JOIN TB_PR_MNFR_INFO TPMI
+				ON TRESCI.CO_CD = TPMI.CO_CD AND TRESCI.MNFR_NO = TPMI.MNFR_NO
+			LEFT OUTER JOIN TB_PR_PRD_CLSF_INFO TPRCI
+				ON TRESCI.CO_CD = TPRCI.CO_CD AND TRESCI.PRD_CLCD = TPRCI.PRD_CLCD
+			LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS TCOUB
+				ON TRESCI.CO_CD = TCOUB.CO_CD AND TRESCI.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID
+			LEFT OUTER JOIN TB_CP_CPRTCP_BASIS TCCB
+				ON TRESCI.CO_CD = TCCB.CO_CD AND TRESCI.CPRTCP_ID = TCCB.CPRTCP_ID
+			LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO  TCMOI
+				ON TRESCI.CO_CD = TCMOI.CO_CD AND TRESCI.PURG_CHRPSN_ID = TCMOI.OPRTR_ID
+			LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO  TCMOI2
+				ON TRESCI.CO_CD = TCMOI.CO_CD AND TCMOI2.OPRTR_ID = TRESCI.UPDPSN_ID
+			LEFT JOIN TB_CO_COM_CD_DTL TCCCD 
+				ON TCCCD.COM_CLSF_CD = 'ESTM_STB_TP_CD' AND TCCCD.COM_DTL_CD = TRESCI.ESTM_STB_TP_CD
+			LEFT JOIN TB_CO_COM_CD_DTL TCCCD2 
+				ON TCCCD2.COM_CLSF_CD = 'CPRTCP_TP_CD' AND TCCCD2.COM_DTL_CD = TRESCI.CPRTCP_TP_CD
+			WHERE
+				TRESCI.USE_YN = 'Y' 
+			<if test="CPRTCP_ID != null and CPRTCP_ID != ''">
+				AND TRESCI.CPRTCP_ID = #{CPRTCP_ID}  
+			</if>
+			<if test="MNFR_NO != null and MNFR_NO != ''">
+				AND TRESCI.MNFR_NO = #{MNFR_NO}
+			</if>
+			<if test="PRD_CLCD != null and PRD_CLCD != ''">
+				AND TRESCI.PRD_CLCD = #{PRD_CLCD} 
+			</if>
+			<if test="BZPLC_OPR_UNIT_CD != null and BZPLC_OPR_UNIT_CD != ''">
+				AND TRESCI.OPR_UNIT_ID = #{BZPLC_OPR_UNIT_CD} 
+			</if>
+			<if test="PSN_ID != null and PSN_ID != ''">
+				AND TRESCI.PURG_CHRPSN_ID = #{PSN_ID} 
+			</if>
+			<if test='(DATE_FR_DT != null and DATE_FR_DT != "") and (DATE_TO_DT != null and DATE_TO_DT != "")'>
+				AND TRESCI.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+				AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+			</if>
+			<if test="ESTM_STB_TP_CD != null and ESTM_STB_TP_CD != ''">
+				AND TRESCI.ESTM_STB_TP_CD = #{ESTM_STB_TP_CD} 
+			</if>
+			<if test="CPRTCP_TP_CD_LIST != null and CPRTCP_TP_CD_LIST.size() != 0">
+				AND TRESCI.CPRTCP_TP_CD IN
+				<foreach collection="CPRTCP_TP_CD_LIST" item="CPRTCP_TP_CD" index="index" separator="," open="(" close=")">
+					#{CPRTCP_TP_CD}
+				</foreach>
+			</if>
+			ORDER BY ESTM_STB_TP_CD, UPD_DTM DESC 
+			OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+	</select>
+	<select id="selectCprtcpPoolMngCount" parameterType="HashMap" resultType="Integer">
+	 /* CprtcpPoolMng.selectCprtcpPoolMngCount | 협력서 견정 POOL 카운트 조회 */
+	 			SELECT COUNT(1) AS CNT
+	 			FROM TB_RD_ESTM_STB_CPRTCP_INFO TRESCI
+				WHERE
+				TRESCI.USE_YN = 'Y' 
+			<if test="CPRTCP_ID != null and CPRTCP_ID != ''">
+				AND TRESCI.CPRTCP_ID = #{CPRTCP_ID}  
+			</if>
+			<if test="MNFR_NO != null and MNFR_NO != ''">
+				AND TRESCI.MNFR_NO = #{MNFR_NO}
+			</if>
+			<if test="PRD_CLCD != null and PRD_CLCD != ''">
+				AND TRESCI.PRD_CLCD = #{PRD_CLCD} 
+			</if>
+			<if test="BZPLC_OPR_UNIT_CD != null and BZPLC_OPR_UNIT_CD != ''">
+				AND TRESCI.OPR_UNIT_ID = #{BZPLC_OPR_UNIT_CD} 
+			</if>
+			<if test="PSN_ID != null and PSN_ID != ''">
+				AND TRESCI.PURG_CHRPSN_ID = #{PSN_ID} 
+			</if>
+			<if test='(DATE_FR_DT != null and DATE_FR_DT != "") and (DATE_TO_DT != null and DATE_TO_DT != "")'>
+				AND TRESCI.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+				AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+			</if>
+			<if test="ESTM_STB_TP_CD != null and ESTM_STB_TP_CD != ''">
+				AND TRESCI.ESTM_STB_TP_CD = #{ESTM_STB_TP_CD} 
+			</if>
+			<if test="CPRTCP_TP_CD_LIST != null and CPRTCP_TP_CD_LIST.size() != 0">
+				AND TRESCI.CPRTCP_TP_CD IN
+				<foreach collection="CPRTCP_TP_CD_LIST" item="CPRTCP_TP_CD" index="index" separator="," open="(" close=")">
+					#{CPRTCP_TP_CD}
+				</foreach>
+			</if>
+	</select>
+	<select id="selectCprtcpPoolMngHstr" parameterType="HashMap" resultType="HashMap">
+	/* CprtcpPoolMng.selectCprtcpPoolMngHstr | 협력서 견정 POOL 이력서 목록 조회 */
+		SELECT
+				TRESCI.HST_SEQ,							/* 일련번호 */
+				TRESCI.DATA_CHG_TP_CD AS STATE, 		/* 상태 */
+				TRESCI.CPRTCP_TP_CD,					/* 협력사 유형 */
+				TCCCD.COM_DTL_CD_NM AS CPRTCP_TP_NM,	/* 협력사 유형명 */
+				TRESCI.ESTM_STB_TP_CD,					/* 견적대기 유형 */
+				TCCCD2.COM_DTL_CD_NM AS ESTM_STB_TP_NM,	/* 견적대기 유형명 */
+				TRESCI.MNFR_NO,							/* 제조사ID */
+				TPMI.MRO_MNFR_NM,						/* 제조원명 */
+				TRESCI.PRD_CLCD,						/* 상품군ID */
+				TPRCI.PRD_CLSF_NM,						/* 상품군명 */
+				TRESCI.OPR_UNIT_ID,						/* 운영단위ID */
+				TCOUB.OPR_UNIT_NM,						/* 운영단위명 */
+				TRESCI.CPRTCP_ID,						/* 협력사ID */
+				TCCB.CPRTCP_KOR_NM,						/* 협력사명 */
+				TRESCI.AUTO_ESTM_YN,					/* 자동견적여부 */
+				TRESCI.PURG_CHRPSN_ID,					/* 구매담당자ID */
+				TCMOI.OPRTR_NM,							/* 구매담당자명 */
+				TO_CHAR(TRESCI.REG_DTM, 'YYYY-MM-DD HH24:MI:ss') AS REG_DTM, /* 등록일자 */
+				TRESCI.REGPSN_ID,						/* 등록자ID */
+				TRESCI.UPDPSN_ID,						/* 최종처리자ID */
+				TCMOI2.OPRTR_NM AS UPDPSN_NM,			/* 최종처리자명 */
+				TO_CHAR(TRESCI.UPD_DTM, 'YYYY-MM-DD HH24:MI:ss') AS UPD_DTM, /* 최종수정일 */
+				TRESCI.RMKS,							/* 참고사항 */
+				TRESCI.CHG_RSN							/* 사유 */
+			FROM TB_RD_ESTM_STB_CPRTCP_INFO_CHG_HST TRESCI
+			LEFT OUTER JOIN TB_PR_MNFR_INFO TPMI
+				ON TRESCI.CO_CD = TPMI.CO_CD AND TRESCI.MNFR_NO = TPMI.MNFR_NO
+			LEFT OUTER JOIN TB_PR_PRD_CLSF_INFO TPRCI
+				ON TRESCI.CO_CD = TPRCI.CO_CD AND TRESCI.PRD_CLCD = TPRCI.PRD_CLCD
+			LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS TCOUB
+				ON TRESCI.CO_CD = TCOUB.CO_CD AND TRESCI.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID
+			LEFT OUTER JOIN TB_CP_CPRTCP_BASIS TCCB
+				ON TRESCI.CO_CD = TCCB.CO_CD AND TRESCI.CPRTCP_ID = TCCB.CPRTCP_ID
+			LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO  TCMOI
+				ON TRESCI.CO_CD = TCMOI.CO_CD AND TRESCI.PURG_CHRPSN_ID = TCMOI.OPRTR_ID
+			LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO  TCMOI2
+				ON TRESCI.CO_CD = TCMOI.CO_CD AND TCMOI2.OPRTR_ID = TRESCI.UPDPSN_ID
+			LEFT JOIN TB_CO_COM_CD_DTL TCCCD 
+				ON TCCCD.COM_CLSF_CD = 'ESTM_STB_TP_CD' AND TCCCD.COM_DTL_CD = TRESCI.ESTM_STB_TP_CD
+			LEFT JOIN TB_CO_COM_CD_DTL TCCCD2 
+				ON TCCCD2.COM_CLSF_CD = 'CPRTCP_TP_CD' AND TCCCD2.COM_DTL_CD = TRESCI.CPRTCP_TP_CD
+			WHERE 
+				1=1 
+			<if test="CPRTCP_ID != null and CPRTCP_ID != ''">
+				AND TRESCI.CPRTCP_ID = #{CPRTCP_ID}  
+			</if>
+			<if test="MNFR_NO != null and MNFR_NO != ''">
+				AND TRESCI.MNFR_NO = #{MNFR_NO}
+			</if>
+			<if test="PRD_CLCD != null and PRD_CLCD != ''">
+				AND TRESCI.PRD_CLCD = #{PRD_CLCD} 
+			</if>
+			<if test="BZPLC_OPR_UNIT_CD != null and BZPLC_OPR_UNIT_CD != ''">
+				AND TRESCI.OPR_UNIT_ID = #{BZPLC_OPR_UNIT_CD} 
+			</if>
+			<if test="PSN_ID != null and PSN_ID != ''">
+				AND TRESCI.PURG_CHRPSN_ID = #{PSN_ID} 
+			</if>
+			<if test='(DATE_FR_DT != null and DATE_FR_DT != "") and (DATE_TO_DT != null and DATE_TO_DT != "")'>
+				AND TRESCI.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+				AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+			</if>
+			<if test="ESTM_STB_TP_CD != null and ESTM_STB_TP_CD != ''">
+				AND TRESCI.ESTM_STB_TP_CD = #{ESTM_STB_TP_CD} 
+			</if>
+			<if test="CPRTCP_TP_CD_LIST != null and CPRTCP_TP_CD_LIST.size() != 0">
+				AND TRESCI.CPRTCP_TP_CD IN
+				<foreach collection="CPRTCP_TP_CD_LIST" item="CPRTCP_TP_CD" index="index" separator="," open="(" close=")">
+					#{CPRTCP_TP_CD}
+				</foreach>
+			</if>
+			ORDER BY HST_SEQ DESC
+			OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+	</select>
+	<select id="selectCprtcpPoolHstrCount" parameterType="HashMap" resultType="Integer">
+	/* CprtcpPoolMng.selectCprtcpPoolHstrCount | 협력서 견정 POOL 이력서 목록 카운트 */
+				SELECT COUNT(1) AS CNT
+	 			FROM TB_RD_ESTM_STB_CPRTCP_INFO_CHG_HST TRESCI
+				WHERE 
+				1=1
+			<if test="CPRTCP_ID != null and CPRTCP_ID != ''">
+				AND TRESCI.CPRTCP_ID = #{CPRTCP_ID}  
+			</if>
+			<if test="MNFR_NO != null and MNFR_NO != ''">
+				AND TRESCI.MNFR_NO = #{MNFR_NO}
+			</if>
+			<if test="PRD_CLCD != null and PRD_CLCD != ''">
+				AND TRESCI.PRD_CLCD = #{PRD_CLCD} 
+			</if>
+			<if test="BZPLC_OPR_UNIT_CD != null and BZPLC_OPR_UNIT_CD != ''">
+				AND TRESCI.OPR_UNIT_ID = #{BZPLC_OPR_UNIT_CD} 
+			</if>
+			<if test="PSN_ID != null and PSN_ID != ''">
+				AND TRESCI.PURG_CHRPSN_ID = #{PSN_ID} 
+			</if>
+			<if test='(DATE_FR_DT != null and DATE_FR_DT != "") and (DATE_TO_DT != null and DATE_TO_DT != "")'>
+				AND TRESCI.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+				AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+			</if>
+			<if test="ESTM_STB_TP_CD != null and ESTM_STB_TP_CD != ''">
+				AND TRESCI.ESTM_STB_TP_CD = #{ESTM_STB_TP_CD} 
+			</if>
+			<if test="CPRTCP_TP_CD_LIST != null and CPRTCP_TP_CD_LIST.size() != 0">
+				AND TRESCI.CPRTCP_TP_CD IN
+				<foreach collection="CPRTCP_TP_CD_LIST" item="CPRTCP_TP_CD" index="index" separator="," open="(" close=")">
+					#{CPRTCP_TP_CD}
+				</foreach>
+			</if>
+	</select>
+</mapper>

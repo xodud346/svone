@@ -1,0 +1,200 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="CommonCodeMultiPopup" width="560" height="580" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="580" width="560">
+        <Static id="staCode" taborder="0" text="코드" left="22" top="65" height="29" width="88"/>
+        <Edit id="edt_dtlCd" taborder="1" left="110" top="65" width="436" height="30"/>
+        <Static id="staCodeNm" taborder="2" text="코드명" left="22" top="97" width="88" height="29"/>
+        <Edit id="edt_dtlCdNm" taborder="3" left="110" top="97" width="436" height="30"/>
+        <Grid id="grd_list" taborder="4" left="20" top="182" width="526" height="270" binddataset="ds_comCdDtl" autofittype="col" cellsizebandtype="allband" oncellclick="grd_list_oncellclick">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="48"/>
+                <Column size="158"/>
+                <Column size="288"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="선택"/>
+                <Cell col="1" text="코드"/>
+                <Cell col="2" text="코드명"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox" text="bind:CHK_COL"/>
+                <Cell col="1" text="bind:DTL_CD" textAlign="center"/>
+                <Cell col="2" text="bind:DTL_CD_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_clear" taborder="5" text="초기화" left="413" top="139" width="65" height="32" onclick="btn_clear_onclick"/>
+        <Button id="btn_search" taborder="6" text="검색" left="481" top="139" width="65" height="32" onclick="btn_search_onclick"/>
+        <Button id="btn_cancel" taborder="7" text="취소" left="208" top="504" width="65" height="32" onclick="btn_cancel_onclick"/>
+        <Button id="btn_confirm" taborder="8" text="확인" left="276" top="504" width="65" height="32" onclick="btn_confirm_onclick"/>
+        <Div id="Div00" taborder="9" left="20" top="456" width="530" height="40" background="url('Images::paging.png') no-repeat center bottom"/>
+        <Static id="sta_Title" taborder="10" left="18" top="16" width="528" height="37" font="bold 14pt &quot;Arial&quot;"/>
+        <Static id="sta_totcnt" taborder="11" text="총 0건" left="22" top="153" width="84" height="18"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_comCdDtl">
+        <ColumnInfo>
+          <Column id="DTL_CD" type="STRING" size="256"/>
+          <Column id="DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="cPage" type="INT" size="256"/>
+          <Column id="pagingSize" type="INT" size="256"/>
+          <Column id="pageSize" type="INT" size="256"/>
+          <Column id="codeNm" type="STRING" size="256"/>
+          <Column id="clsCd" type="STRING" size="256"/>
+          <Column id="dtlCd" type="STRING" size="256"/>
+          <Column id="dtlCdNm" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_comCls">
+        <ColumnInfo>
+          <Column id="CLS_CD_NM" type="STRING" size="256"/>
+          <Column id="CLS_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : MarketA
+CREATION DATES : 2021.01.19
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totRowCnt = 0;
+this.pagingSize = 10;
+this.pageSize = 20;
+this.sParam = "";
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.sParam = this.parent.clsCd;
+	//조회
+	this.fn_search(1);
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	var objType = obj.getFocus();
+	if( e.keycode == 13 && objType == "[object Edit]" ) {
+		//조회
+		this.fn_search(1);
+	}
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (cPage)
+{
+	var sSvcId = "commonCodeSearch";  
+	var sUrl = "/co/popUp/commonCodePopupList.do";
+	var inDs = "ds_search=ds_search"
+	var outDs = "ds_comCdDtl=ds_output1 ds_comCls=ds_output2";
+	var arg;
+
+	if( undefined == cPage ) {
+		cPage = 1;
+	}
+	
+	// 페이징 정보 세팅.
+	this.ds_search.setColumn(0, "cPage", cPage);
+	this.ds_search.setColumn(0, "pagingSize", this.pagingSize);
+	this.ds_search.setColumn(0, "pageSize", this.pageSize);
+	
+	this.ds_search.setColumn(0, "clsCd", this.sParam);
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "commonCodeSearch"){    
+		this.ds_comCdDtl.addColumn("CHK_COL","String");
+		this.sta_totcnt.set_text("총 "+this.totRowCnt+"건");
+		this.sta_Title.set_text(this.ds_comCls.getColumn(0,"CLS_CD_NM") + " 조회");
+	}
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.edt_dtlCd.set_value("");
+	this.edt_dtlCdNm.set_value("");
+};
+
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search(1);
+};
+
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+this.btn_confirm_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var resData = {};
+	var resList = [];
+	
+	//TODO extractRows or for문
+	var rowArr = this.ds_comCdDtl.extractRows("CHK_COL == 1");
+	
+	for(var i=0; i<rowArr.length; i++){
+		resData.DTL_CD= this.ds_comCdDtl.getColumn(rowArr[i], "DTL_CD");
+		resData.DTL_CD_NM= this.ds_comCdDtl.getColumn(rowArr[i], "DTL_CD_NM");
+		resList.push(JSON.stringify(resData));
+	}
+	
+	if(rowArr.length != 0){
+		this.close(JSON.stringify(resList));
+	}else{
+		alert("데이터를 선택해주세요.");
+	}
+};
+
+// 그리드 클릭시 체크박스 체크되도록
+this.grd_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var dataSet = obj.getBindDataset();
+	var chkValue = obj.getCellText(e.row, 0);
+	
+	if( e.col != 0 ) {
+		chkValue = (chkValue == "1" ? "0" : "1");
+	}
+	
+	dataSet.setColumn(e.row, "CHK_COL", chkValue);
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="edt_dtlCd" propid="value" datasetid="ds_search" columnid="dtlCd"/>
+      <BindItem id="item1" compid="edt_dtlCdNm" propid="value" datasetid="ds_search" columnid="dtlCdNm"/>
+    </Bind>
+  </Form>
+</FDL>

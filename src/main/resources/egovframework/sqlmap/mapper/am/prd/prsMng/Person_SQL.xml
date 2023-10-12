@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Person">
+
+	<!-- 목록리스트 갯수 -->
+	<select id="selectTotalCount" parameterType="hashMap" resultType="integer">
+		/* Person.selectTotalCount */
+		SELECT 
+			COUNT(0)
+		FROM
+			TB_SG_PRD_USER_MAPP PUM,
+			(
+				SELECT 
+				    PRD_CLS_CD,
+				    SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM         
+				FROM 
+				    TB_SG_PRD_CLS
+				WHERE
+					USE_YN = 'Y'
+				AND
+					DEL_YN = 'N'
+				AND
+					LWST_YN = 'Y'
+				START WITH PRD_CLS_LVL = 1
+				CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+				ORDER SIBLINGS BY SEQ ASC
+			) SPC
+		WHERE 
+			SPC.PRD_CLS_CD = PUM.PRD_CLS_CD(+)
+		<choose>
+			<when test="(boss != null and boss != '') or (load != null and load != '')">
+				<if test="boss != null and boss != ''">
+					AND 
+						CHRPSN_SPR_CD IS NULL
+				</if>
+				<if test="load != null and load != ''">
+					AND 
+						CHRPSN_SPR_CD <![CDATA[<>]]> '1'
+				</if>
+			</when>
+			<otherwise>
+				AND 
+					CHRPSN_SPR_CD IS NOT NULL
+				<!-- 상품군 검색조건 -->
+				<if test="prdClsCd != null and prdClsCd != ''">
+					AND 
+						PUM.PRD_CLS_CD = #{prdClsCd}
+				</if>
+				<!-- 담당자상태 검색조건 -->
+				<if test="searchUseYn != null and searchUseYn != ''">
+					AND 
+						PUM.CHRPSN_USE_YN = #{searchUseYn}
+				</if>
+				<!-- 담당자 검색조건 -->
+				<if test="searchChrpsnId != null and searchChrpsnId != ''">
+					<if test="personId == 'productId'.toString()">
+						AND 
+							PUM.CHRPSN_ID = #{searchChrpsnId}
+					</if>
+					<if test="personId == 'regpsnId'.toString()">
+						AND 
+							PUM.REGPSN_ID = #{searchChrpsnId}
+					</if>
+					<if test="personId == 'updpsnId'.toString()">
+						AND 
+							PUM.UPDPSN_ID = #{searchChrpsnId}
+					</if>
+				</if>
+				<!-- 담당자 구분 조건 -->
+				<if test="chrpsnSprCd != null and chrpsnSprCd != ''">
+					AND 
+						PUM.CHRPSN_SPR_CD = #{chrpsnSprCd}
+				</if>
+				<!-- 일자 검색조건 -->
+				<if test="searchStartDate != null and searchStartDate != '' and searchEndDate != null and searchEndDate != ''">
+					<if test="dateType == 'searchRegDate'.toString()">
+						AND TO_CHAR(PUM.REG_DTM, 'YYYY-MM-DD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+					</if>
+					<if test="dateType == 'searchUpdateDate'.toString()">
+						AND TO_CHAR(PUM.UPD_DTM, 'YYYY-MM-DD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+					</if>
+				</if>
+			</otherwise>
+		</choose>    
+	</select>
+	
+	<!-- 목록리스트 조회 -->
+	<select id="selectPersonList" parameterType="hashMap" resultType="SspMap">
+		/* Person.selectPersonList */
+			SELECT
+			     S2.*            
+			 FROM
+			     (   SELECT
+			             ROWNUM AS RNUM,
+			             S1.* 
+			         FROM
+			             (SELECT 
+								SPC.PRD_CLS_CD
+								,PUM.CHRPSN_SEQ
+								,PUM.CHRPSN_ID
+						  		,PUM.CHRPSN_NM
+						  		,DECODE(PUM.CHRPSN_ID,NULL,'',DECODE(PUM.CHRPSN_SPR_CD,'0','정','부')) AS CHRPSN_SPR_CD
+						  		,DECODE(PUM.CHRPSN_USE_YN,'Y','사용','삭제') AS CHRPSN_USE_YN
+								,TO_CHAR(PUM.REG_DTM,'YYYY-MM-DD HH24:mi:ss') AS REG_DTM
+						  		,TO_CHAR(PUM.UPD_DTM,'YYYY-MM-DD HH24:mi:ss') AS UPD_DTM
+						  		,DECODE(PUM.REGPSN_ID,NULL,'','('||PUM.REGPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = PUM.REGPSN_ID)) AS REGPSN
+						  		,DECODE(PUM.UPDPSN_ID,NULL,'','('||PUM.UPDPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = PUM.UPDPSN_ID)) AS UPDPSN
+						  		,SPC.PRD_CLS_LVL_NM AS PRD_CTG
+							FROM
+								TB_SG_PRD_USER_MAPP PUM,
+								(
+									SELECT 
+									    PRD_CLS_CD,
+									    SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM         
+									FROM 
+									    TB_SG_PRD_CLS
+									WHERE
+										USE_YN = 'Y'
+									AND
+										DEL_YN = 'N'
+									AND
+										LWST_YN = 'Y'
+									START WITH PRD_CLS_LVL = 1
+									CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+									ORDER SIBLINGS BY SEQ ASC
+								) SPC
+						WHERE 
+							SPC.PRD_CLS_CD = PUM.PRD_CLS_CD(+)
+						<choose>
+							<when test="(boss != null and boss != '') or (load != null and load != '')">
+								<if test="boss != null and boss != ''">
+									AND 
+										CHRPSN_SPR_CD IS NULL
+								</if>
+								<if test="load != null and load != ''">
+									AND 
+										CHRPSN_SPR_CD <![CDATA[<>]]> '1'
+								</if>
+							</when>
+							<otherwise>
+								AND 
+									CHRPSN_SPR_CD IS NOT NULL
+								<!-- 상품군 검색조건 -->
+								<if test="prdClsCd != null and prdClsCd != ''">
+									AND 
+										PUM.PRD_CLS_CD = #{prdClsCd}
+								</if>
+								<!-- 담당자상태 검색조건 -->
+								<if test="searchUseYn != null and searchUseYn != ''">
+									AND 
+										PUM.CHRPSN_USE_YN = #{searchUseYn}
+								</if>
+								<!-- 담당자 검색조건 -->
+								<if test="searchChrpsnId != null and searchChrpsnId != ''">
+									<if test="personId == 'productId'.toString()">
+										AND 
+											PUM.CHRPSN_ID = #{searchChrpsnId}
+									</if>
+									<if test="personId == 'regpsnId'.toString()">
+										AND 
+											PUM.REGPSN_ID = #{searchChrpsnId}
+									</if>
+									<if test="personId == 'updpsnId'.toString()">
+										AND 
+											PUM.UPDPSN_ID = #{searchChrpsnId}
+									</if>
+								</if>
+								<!-- 담당자 구분 조건 -->
+								<if test="chrpsnSprCd != null and chrpsnSprCd != ''">
+									AND 
+										PUM.CHRPSN_SPR_CD = #{chrpsnSprCd}
+								</if>
+								<!-- 일자 검색조건 -->
+								<if test="searchStartDate != null and searchStartDate != '' and searchEndDate != null and searchEndDate != ''">
+									<if test="dateType == 'searchRegDate'.toString()">
+										AND TO_CHAR(PUM.REG_DTM, 'YYYY-MM-DD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+									</if>
+									<if test="dateType == 'searchUpdateDate'.toString()">
+										AND TO_CHAR(PUM.UPD_DTM, 'YYYY-MM-DD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+									</if>
+								</if>
+							</otherwise>
+						</choose>
+						<if test="sort != null and sort != ''">
+					       	ORDER BY 
+					       	<choose>
+					       		<when test="'PRD_CLS_CD' eq sort">PUM.PRD_CLS_CD <if test="'DESC' eq sortType">DESC</if></when>
+					       		<when test="'REG_DTM' eq sort">PUM.REG_DTM <if test="'DESC' eq sortType">DESC</if></when>
+					       		<when test="'UPD_DTM' eq sort">PUM.UPD_DTM <if test="'DESC' eq sortType">DESC</if></when>
+					       		<otherwise>PUM.PRD_CLS_CD ASC</otherwise>
+					      	</choose>
+						</if>
+			             )
+			             S1 
+				     )
+				     S2 
+				 WHERE
+				     S2.RNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+	
+	<!-- 엑셀 다운로드 -->
+	<select id="selectPersonListExcel" parameterType="hashMap" resultType="hashMap">
+	/* Person.selectPersonListExcel */
+		SELECT 
+			SPC.PRD_CLS_CD
+			,PUM.CHRPSN_SEQ
+			,PUM.CHRPSN_ID
+	  		,PUM.CHRPSN_NM
+	  		,DECODE(PUM.CHRPSN_ID,NULL,'',DECODE(PUM.CHRPSN_SPR_CD,'0','정','부')) AS CHRPSN_SPR_CD
+	  		,DECODE(PUM.CHRPSN_USE_YN,'Y','사용','삭제') AS CHRPSN_USE_YN
+			,TO_CHAR(PUM.REG_DTM,'YYYY-MM-DD HH24:mi:ss') AS REG_DTM
+	  		,TO_CHAR(PUM.UPD_DTM,'YYYY-MM-DD HH24:mi:ss') AS UPD_DTM
+	  		,DECODE(PUM.REGPSN_ID,NULL,'','('||PUM.REGPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = PUM.REGPSN_ID)) AS REGPSN
+	  		,DECODE(PUM.UPDPSN_ID,NULL,'','('||PUM.UPDPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = PUM.UPDPSN_ID)) AS UPDPSN
+	  		,SPC.PRD_CLS_LVL_NM AS PRD_CTG
+		FROM
+			TB_SG_PRD_USER_MAPP PUM,
+			(
+				SELECT 
+				    PRD_CLS_CD,
+				    SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM         
+				FROM 
+				    TB_SG_PRD_CLS
+				WHERE
+					USE_YN = 'Y'
+				AND
+					DEL_YN = 'N'
+				AND
+					LWST_YN = 'Y'
+				START WITH PRD_CLS_LVL = 1
+				CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+				ORDER SIBLINGS BY SEQ ASC
+			) SPC
+		WHERE 
+			SPC.PRD_CLS_CD = PUM.PRD_CLS_CD(+)
+		<if test="sort != null and sort != ''">
+	       	ORDER BY 
+	       	<choose>
+	       		<when test="'PRD_CLS_CD' eq sort">PUM.PRD_CLS_CD <if test="'DESC' eq sortType">DESC</if></when>
+	       		<when test="'REG_DTM' eq sort">PUM.REG_DTM <if test="'DESC' eq sortType">DESC</if></when>
+	       		<when test="'UPD_DTM' eq sort">PUM.UPD_DTM <if test="'DESC' eq sortType">DESC</if></when>
+	       		<otherwise>PUM.PRD_CLS_CD ASC</otherwise>
+	      	</choose>
+	      </if>
+	</select>
+	
+	
+	<!-- 팝업 상세보기 -->
+	<select id="selectPersonDetail" parameterType="hashMap" resultType="SspMap">
+		/* Person.selectPersonDetail */
+		SELECT 
+			PUM.CHRPSN_SEQ
+			,PUM.PRD_CLS_CD
+			,PUM.CHRPSN_ID
+	  		,PUM.CHRPSN_NM
+	  		,PUM.CHRPSN_SPR_CD
+	  		,DECODE(PUM.CHRPSN_SPR_CD,'0','정','1','부','') CHRPSN_SPR
+	  		,PUM.CHRPSN_USE_YN
+			,PUM.UPD_RSN
+	  		,DECODE(PUM.REGPSN_ID,NULL,'','('||PUM.REGPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = PUM.REGPSN_ID)) AS REGPSN
+	  		,TO_CHAR(PUM.REG_DTM,'YYYY-MM-DD HH24:mi:ss') AS REG_DTM
+			,DECODE(PUM.UPDPSN_ID,NULL,'','('||PUM.UPDPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = PUM.UPDPSN_ID)) AS UPDPSN
+			,TO_CHAR(PUM.UPD_DTM,'YYYY-MM-DD HH24:mi:ss') AS UPD_DTM
+	  		,SPC.PRD_CLS_LVL_NM as PRD_CTG
+		FROM
+			TB_SG_PRD_USER_MAPP PUM
+		LEFT JOIN (SELECT 
+				    PRD_CLS_CD,
+				    SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM         
+				FROM 
+				    TB_SG_PRD_CLS
+				WHERE
+					USE_YN = 'Y'
+				START WITH PRD_CLS_LVL = 1
+				CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+				ORDER SIBLINGS BY SEQ ASC) SPC
+				ON SPC.PRD_CLS_CD = PUM.PRD_CLS_CD
+				
+		WHERE 
+			PUM.CHRPSN_SEQ = #{chrpsnSeq}
+		AND
+			PUM.CHRPSN_ID = #{chrpsnId}
+	</select>
+	
+	<!-- 등록 -->
+	<insert id="insertPerson" parameterType="hashMap">
+	/* Person.insertPerson*/
+	<selectKey keyProperty="chrpsnSeq" resultType="Integer" order="BEFORE">
+		SELECT SQ_SG_PRD_USER_MAPP.NEXTVAL FROM DUAL
+	</selectKey>
+	INSERT INTO TB_SG_PRD_USER_MAPP 
+		(
+			CHRPSN_SEQ,
+			PRD_CLS_CD,
+			CHRPSN_ID,
+			CHRPSN_NM,
+			CHRPSN_SPR_CD,
+			CHRPSN_USE_YN,
+			REGPSN_ID,
+			REG_DTM
+		)
+		VALUES 
+		(
+			#{chrpsnSeq},
+			#{prdClsCd},
+			#{chrpsnId},
+			#{chrpsnNm},
+			#{chrpsnSprCd},
+			'Y',
+			#{regpsnId},
+			SYSDATE
+		)
+	</insert>
+	
+	<!-- 상세 수정 -->
+	<update id="updatePerson" parameterType="hashMap">
+	/* Person.updatePerson*/
+	UPDATE
+		TB_SG_PRD_USER_MAPP
+	SET
+		CHRPSN_USE_YN = #{chrpsnUseYn}		/* 사용여부 */
+		<if test="chrpsnId != null and chrpsnId != ''">
+			,CHRPSN_ID = #{chrpsnId}			/* 담당자ID */
+		</if>
+		<if test="chrpsnNm != null and chrpsnNm != ''">
+			,CHRPSN_NM =#{chrpsnNm}				/* 담당자명 */
+		</if>
+		,UPD_RSN = #{updRsn}				/* 변경사유 */
+		,UPDPSN_ID = #{updpsnId}			/* 수정자ID */
+		,UPD_DTM = SYSDATE					/* 수정일시 */
+	WHERE
+		CHRPSN_SEQ = #{chrpsnSeq}
+	AND
+		CHRPSN_ID = #{oldChrpsnId}
+	</update>
+	
+	<!-- 목록리스트 갯수 -->
+	<select id="selectPersonCount" parameterType="hashMap" resultType="integer">
+		/* Person.selectPersonCount */
+		SELECT 
+			COUNT(0)
+		FROM 
+			TB_SG_PRD_USER_MAPP
+		WHERE 
+			CHRPSN_USE_YN = 'Y'
+		<if test="type != null and type != ''">
+			AND 
+				CHRPSN_SPR_CD = '0'
+		</if>
+		<if test="prdClsCd != null and prdClsCd != ''">
+			AND 
+				PRD_CLS_CD = #{prdClsCd}
+		</if>
+		<if test="chrpsnId != null and chrpsnId != ''">
+			AND 
+				CHRPSN_ID = #{chrpsnId}
+		</if>
+	</select>
+
+</mapper>

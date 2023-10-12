@@ -1,0 +1,244 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_CN_26" width="560" height="600" titletext="등록자 조회" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="600" mobileorientation="landscape" width="560">
+        <Grid id="grd_memOprInfo" taborder="0" left="20" top="220" width="520" height="320" binddataset="ds_list" autofittype="col" oncelldblclick="grd_memOprInfo_oncelldblclick">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="80"/>
+                <Column size="298"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="사번"/>
+                <Cell col="1" text="이름"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:EMP_NO"/>
+                <Cell col="1" text="bind:OPRTR_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="totalPageCount" taborder="1" text="(총 0건 1/1)" left="20" top="197" width="300" height="14" usedecorate="true"/>
+        <Div id="div_paging" taborder="2" left="20" height="38" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="grd_memOprInfo:10" text="" right="20"/>
+        <Div id="div_search" taborder="3" text="Div00" left="0" top="0" height="180" cssclass="div_WF_SearchArea" width="560">
+          <Layouts>
+            <Layout>
+              <Static id="Static00" taborder="0" text="사번" left="20" top="60" width="115" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static00_01" taborder="1" text="" left="134" top="60" height="32" cssclass="sta_cm_box02L_tdt" right="25"/>
+              <Edit id="edt_bzplcId" taborder="2" left="144" top="64" width="382" height="24"/>
+              <Static id="Static00_00" taborder="3" text="이름" left="20" top="91" width="115" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static00_01_00" taborder="4" text="" left="134" top="91" height="32" cssclass="sta_cm_box02L" right="25"/>
+              <Edit id="edt_bzplcId00" taborder="5" left="144" top="95" width="382" height="24"/>
+              <Button id="btnSearch" taborder="6" text="조회" top="134" width="60" height="26" cssclass="btn_WF_select" right="24" onclick="Button58_onclick"/>
+              <Button id="btnClear" taborder="7" text="초기화" top="134" width="65" height="26" right="88" onclick="div_search_btnClear_onclick"/>
+              <Static id="Static01" taborder="8" text="등록자 조회" left="22" top="16" width="155" height="37" font="bold 14pt &quot;Arial&quot;"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_copy">
+        <ColumnInfo>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_CN_26
+/* 작 성 일 자 : 2022/02/15
+/* 작  성   자 : 이성민
+/* 설       명 : 등록자 조회 팝업
+/***********************************************************/
+
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;	//전체 카운트
+
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//조회
+	this.fn_search(0);
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회
+this.fn_search = function(page) {
+	 var sSvcId = "selectMbrOprtrInfoList";  
+     var sUrl = "/co/popUp/selectMbrOprtrInfoList.do";
+	 var inDs = "ds_search=ds_search"
+     var outDs = "ds_list=ds_output1";
+     var arg; 
+     var callback = "fn_callBack";
+	 
+	 // 조회버튼 클릭시 페이징 초기화 시킨다.
+	 if( page == 0 ) {
+
+		this.div_paging.uPage=1;
+		this.div_paging.uPageNum=0;
+		this.ds_search.setColumn(0,"START_NUM", 0);
+		this.ds_search.setColumn(0,"ROW_COUNT",this.fv_oApp.gv_pageViewCnt);
+		
+		oSortInfo = this.grd_memOprInfo.uaSortInfo;
+		this.ds_search.setColumn(0,"SORT_COLUMN", "");
+		this.ds_search.setColumn(0,"SORT_TYPE", "");
+	 }
+	 
+	 this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+//콜백이벤트
+this.fn_callBack = function(svcID, errorCode, errorMsg){
+	if(svcID == "selectMbrOprtrInfoList"){    
+		//trace(this.ds_sampleList.saveXML());
+
+		// 조회 카운트가 없으면 데이터셋이 날라감으로 강제 설정
+		if( this.ds_list.rowcount == 0 ) {
+			this.ds_list.copyData(this.ds_list_copy);			
+		}
+
+		//paging 처리 
+		this.div_paging.form.cfn_createPage(this.div_paging, this.totalCount, this.fv_oApp.gv_pageViewCnt, "fn_pageCallback");
+	} 
+}
+
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;
+
+	if(sFlag){
+		//this.ds_search.setColumn(0,"START_NUM", (oPaging.uPageNum == 0 || oPaging.uPageNum == 1 ? 0 : ( oPaging.uPageNum -1 ) * 10));
+		this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.ds_search.setColumn(0,"ROW_COUNT", this.fv_oApp.gv_pageViewCnt);	
+		this.fn_search();
+	}	
+	
+	var sTotText = "(<b v='true'>총 "+ oPaging.uTotCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+	this.totalPageCount.set_text(sTotText);
+}
+
+//정렬 콜백
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_memOprInfo"){
+		oSortInfo = this.grd_memOprInfo.uaSortInfo;
+		
+		this.ds_search.setColumn(0,"SORT_COLUMN", oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE", oSortInfo.status);
+		
+		this.fn_search();
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+
+	//grid 초기 설정
+	this.grd_memOprInfo.uSortFlag = "false";
+	this.grd_memOprInfo.uServerSortFlag = "true";
+	this.grd_memOprInfo.uSortCallback = "fn_sortCallback";
+	
+	this.grd_memOprInfo.uCellSizeType = "true";
+	
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 10;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;
+}
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_resData = function() {
+
+	var resData = {};
+	var resString = "";
+	
+	resData.OPRTR_ID = this.ds_list.getColumn(this.ds_list.rowposition, "OPRTR_ID");
+	resData.OPRTR_NM = this.ds_list.getColumn(this.ds_list.rowposition, "OPRTR_NM");
+	resData.EMP_NO = this.ds_list.getColumn(this.ds_list.rowposition, "EMP_NO");
+	
+	//json string 변경
+	resString = JSON.stringify(resData);	
+	
+	//return
+	this.close(resString);
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//조회버튼
+this.Button58_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search(0);
+};
+
+// 조회데이터셋 리셋
+this.div_search_btnClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.reset();
+};
+
+//그리드 더블클릭 이벤트
+this.grd_memOprInfo_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	this.fn_resData();
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="div_search.form.edt_bzplcId" propid="value" datasetid="ds_search" columnid="EMP_NO"/>
+      <BindItem id="item1" compid="div_search.form.edt_bzplcId00" propid="value" datasetid="ds_search" columnid="OPRTR_NM"/>
+    </Bind>
+  </Form>
+</FDL>

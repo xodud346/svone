@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_MA_17" width="540" height="380" titletext="PW 초기화" onload="form_onLoad">
+    <Layouts>
+      <Layout height="380" width="540">
+        <Div id="Div00" taborder="0" text="Div00" left="17" top="31" width="510" bottom="30" positionstep="0" tabstop="false">
+          <Layouts>
+            <Layout>
+              <Static id="Static60_00" taborder="0" text="임시 비밀번호 수신 매체를 선택해주세요" left="0" top="0" height="21" cssclass="sta_WF_title04" width="410" onclick="Div00_Static60_00_onclick" font="normal 700 16px/normal &quot;Arial&quot;"/>
+              <Button id="btn_select" taborder="1" text="발송" left="230" top="260" width="60" height="30" onclick="btn_select_onclick" cssclass="btn_WF_select" positionstep="0"/>
+              <Static id="sta_totcnt" taborder="2" text="※회원 비밀번호가 난수로 초기화 됩니다." left="5" top="27" width="245" height="25" usedecorate="true" onclick="Div00_sta_totcnt_onclick" color="#ff0000"/>
+              <Radio id="Radio00" taborder="3" left="5" top="52" width="366" height="158" onitemchanged="Div00_Radio00_onitemchanged" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" font="normal 700 15px/normal &quot;Arial&quot;" padding="0px" columncount="1" index="0" text="회원 E-mail" value="1">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">1</Col>
+                      <Col id="datacolumn">회원 E-mail</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">2</Col>
+                      <Col id="datacolumn">회원 SMS</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Radio>
+              <Edit id="Edit00" taborder="4" left="8" top="108" width="442" height="30" enable="true" readonly="true"/>
+              <Edit id="Edit00_00" taborder="5" left="8" top="200" width="442" height="30" readonly="true"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_dtl">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="MBR_ID" type="STRING" size="256"/>
+          <Column id="MBR_NM" type="STRING" size="256"/>
+          <Column id="LOGN_ID" type="STRING" size="256"/>
+          <Column id="EMAIL_ADDR" type="STRING" size="256"/>
+          <Column id="HP_NO" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_resMap">
+        <ColumnInfo>
+          <Column id="UPDPSN_NM" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.resultcnt = 0;
+this.btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var mbrId = this.opener.ds_dtl.getColumn(0, "MBR_ID");
+	var mbrNm = this.opener.ds_dtl.getColumn(0, "MBR_NM");
+	var loginId = this.opener.ds_dtl.getColumn(0, "LOGN_ID");
+	var cocd = this.opener.ds_dtl.getColumn(0, "CO_CD");
+	var emailAddr = this.opener.ds_dtl.getColumn(0, "EMAIL_ADDR");
+	var sendSMS = this.opener.ds_dtl.getColumn(0, "HP_NO");
+	
+	
+	this.ds_dtl.clearData();
+	var nRow = this.ds_dtl.addRow();
+	
+	this.ds_dtl.setColumn(nRow,"CO_CD", cocd);
+	this.ds_dtl.setColumn(nRow,"MBR_ID", mbrId);
+	this.ds_dtl.setColumn(nRow,"MBR_NM", mbrNm);
+	this.ds_dtl.setColumn(nRow,"LOGN_ID", loginId);
+	this.ds_dtl.setColumn(nRow,"EMAIL_ADDR", emailAddr);
+	this.ds_dtl.setColumn(nRow,"HP_NO", sendSMS);
+	trace("인덱스1: "+this.Div00.form.Radio00.index);
+	
+	if(this.Div00.form.Radio00.index < 1){
+		trace("email");
+		var sSvcId = "changepwemail";  
+		var sUrl = "/bo/cust/mbr/pw-send-mail.do";
+		var inDs = "ds_dtl=ds_dtl";
+		var outDs = "ds_resMap=ds_resMap";
+		var arg;	
+	
+	}
+	else{	
+		trace("sms");
+		var sSvcId = "changepwsms";  
+		var sUrl = "/bo/cust/mbr/pw-send-sms.do";
+		var inDs = "ds_dtl=ds_dtl";
+		var outDs = "ds_resMap=ds_resMap";
+		var arg;	
+	}
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+
+};
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(sSvcId, outDs)
+{
+trace("세희 "+this.resultcnt);
+	if(this.resultcnt >0){
+		//email
+		if(sSvcId == "changepwemail"){
+		trace("email1");
+			alert("고객의 임시비밀번호를 EMAIL로 전송하였습니다.");
+		}
+	
+		//sms
+		if(sSvcId == "changepwsms"){
+		trace("sms1");
+			alert("고객의 임시비밀번호를 SMS로 전송하였습니다.");
+		}
+		trace("UPDPSN_NM "+this.ds_resMap.saveXML());
+		var resData = {};
+		var resString = "";
+		resData.UPDPSN_NM = this.ds_resMap.getColumn(0, "UPDPSN_NM");
+		resData.UPD_DTM =this.ds_resMap.getColumn(0, "UPD_DTM");
+		resString = JSON.stringify(resData);	
+		this.close(resString);
+	}else{
+		alert("비밀번호 변경에 실패하였습니다.");
+		this.close();
+	}
+	
+
+}
+
+this.form_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	var email_value = this.opener.ds_dtl.getColumn(0,"EMAIL_ADDR");
+	var sms_value = this.opener.ds_dtl.getColumn(0,"HP_NO");
+	
+	this.Div00.form.Edit00.set_value(email_value);
+	this.Div00.form.Edit00_00.set_value(sms_value);
+};
+]]></Script>
+  </Form>
+</FDL>

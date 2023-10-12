@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_CN_24" width="570" height="450" titletext="엑셀업로드 양식 등록">
+    <Layouts>
+      <Layout height="450" mobileorientation="landscape" width="570">
+        <Div id="Div_save" taborder="0" text="Div01" left="20" top="20" height="371" border="0px solid darkblue" width="540">
+          <Layouts>
+            <Layout>
+              <Static id="Static60_00" taborder="0" text="비밀번호 설정 및 다운로드 사유 입력" left="0" top="0" height="30" cssclass="sta_WF_title02" width="300" onclick="Div_save_Static60_00_onclick"/>
+              <Static id="Static03" taborder="2" left="0" top="36" height="32" cssclass="sta_cm_box02L_tdt" right="10" text=""/>
+              <Static id="Static02_00" taborder="3" text="비밀번호" left="0" top="36" width="130" height="32" cssclass="sta_cm_box01L_tdt_necessary" onclick="Div_save_Static02_00_onclick"/>
+              <Edit id="pwd" taborder="1" left="140" top="40" width="381" height="24" enable="true" onchanged="Div_save_pwd_onchanged" password="true"/>
+              <Static id="Static07" taborder="2" left="0" top="67" height="32" cssclass="sta_cm_box02L" right="10" text=""/>
+              <Static id="Static06" taborder="3" text="다운로드 사유" left="0" top="67" width="130" height="32" cssclass="sta_cm_box01L_necessary"/>
+              <Static id="totalPageCount" taborder="4" text="이용안내 &#13;&#10;- 엑셀에 사용할 암호를 설정하는 화면입니다. &#13;&#10;- 엑셀을 열어보실 때 현재 입력하는 암호를 입력해야 합니다.  &#13;&#10;- 개인정보 다운로드 사유를 입력해야 합니다." left="0" width="380" usedecorate="true" bottom="6" height="135"/>
+              <Edit id="downRsn" taborder="7" left="140" top="71" width="266" height="24" enable="true" onkeyup="Div_save_downRsn_onkeyup"/>
+            </Layout>
+          </Layouts>
+          <Objects>
+            <Dataset id="ds_pwdChk">
+              <ColumnInfo>
+                <Column id="pwd" type="STRING" size="256"/>
+              </ColumnInfo>
+            </Dataset>
+          </Objects>
+        </Div>
+        <Button id="btn_cancel" taborder="1" text="취소" top="Div_save:10" width="70" height="30" onclick="btn_cancel_onclick" left="220"/>
+        <Button id="btn_save" taborder="2" text="확인" top="Div_save:10" width="70" height="30" cssclass="btn_WF_select" onclick="btn_save_onclick" left="btn_cancel:4"/>
+        <Static id="sta_downRsnSize" taborder="3" text="(0 / 1000 Byte)" left="436" top="91" height="24" textAlign="right" width="104" usedecorate="true"/>
+      </Layout>
+    </Layouts>
+    <Bind>
+      <BindItem id="item8" compid="Div_save.form.pwd" propid="value" datasetid="ds_pwdChk" columnid="pwd"/>
+      <BindItem id="item0" compid="Div_save.form.downRsn" propid="value" datasetid="ds_pwdChk" columnid="downRsn"/>
+    </Bind>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 
+*******************************************************/
+include "CO::coUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+ 
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+ 
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+//저장 유효성 체크
+this.fn_validationCheck = function(){ 
+	var pwd = this.Div_save.form.pwd.value; 
+	var downRsn = this.Div_save.form.downRsn.value; 
+	
+	if (pwd == '' || pwd == null) {
+		alert("비밀번호를 입력해주세요");
+		return false; 
+	}
+	
+	if (downRsn == '' || downRsn == null) {
+		alert("다운로드 사유를 입력해주세요");
+		return false;
+	}
+	 
+	return true;
+};
+
+// 글자 byte 체크 함수
+this.fn_setLenByte = function(sVal, maxByte, sGubun)
+{
+	var count = nexacro._getUtf8Length(sVal);
+	var expsText = "";
+
+	if (count < 0) {
+		count = 0;
+	}
+
+	if(count <= maxByte) {
+		expsText = "(<fc v='red'>" + count + "</fc> / " + maxByte + " Byte)";
+
+		if (sGubun == "downRsn") {
+			this.sta_downRsnSize.set_text(expsText);
+		}
+		return;
+	}
+
+	var tempVal = "";
+
+	tempVal = nexacro._substrByUtf8(sVal, 0, maxByte);
+	count = nexacro._getUtf8Length(tempVal);
+
+	expsText = "(<fc v='red'>" + count + "</fc> / " + maxByte + " Byte)";
+
+	if (sGubun == "downRsn") {
+		this.Div_save.form.downRsn.set_value("");
+		this.Div_save.form.downRsn.set_value(tempVal);
+		this.sta_downRsnSize.set_text(expsText);
+	}
+};
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//확인 버튼 클릭
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.fn_validationCheck()){ 
+		this.close(this.Div_save.form.pwd.value + "||||" + this.Div_save.form.downRsn.value);
+	}	
+};
+
+//취소 버튼 클릭
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+// 다운로드 사유 키업 이벤트
+this.Div_save_downRsn_onkeyup = function(obj:nexacro.Edit,e:nexacro.KeyEventInfo)
+{
+	this.fn_setLenByte(obj.value, 1000, "downRsn");
+};
+]]></Script>
+  </Form>
+</FDL>

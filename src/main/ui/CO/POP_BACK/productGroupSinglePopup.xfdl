@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="ProductGroupSinglePopup" width="560" height="540" onload="fn_onLoad" titletext="상품군 조회" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="540" width="560">
+        <Static id="Static00" taborder="0" text="상품군ID" left="22" top="65" width="70" height="29"/>
+        <Edit id="edt_prdClsCd" taborder="1" left="117" top="65" width="429" height="30"/>
+        <Static id="Static00_00" taborder="6" text="상품군명" left="22" top="97" width="70" height="29"/>
+        <Edit id="edt_prdClsNm" taborder="2" left="117" top="97" width="429" height="30"/>
+        <Grid id="grd_list" taborder="5" left="20" top="177" width="526" height="303" binddataset="ds_prdCls" autofittype="col" cellsizebandtype="allband" oncelldblclick="grd_list_oncelldblclick">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="131"/>
+                <Column size="276"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="상품군ID"/>
+                <Cell col="1" text="상품군명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:PRD_CLS_CD" textAlign="center"/>
+                <Cell col="1" text="bind:PRD_CLS_NM" textAlign="left"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_clear" taborder="3" text="초기화" left="413" top="136" width="65" height="32" onclick="btn_clear_onclick"/>
+        <Button id="btn_search" taborder="4" text="검색" left="481" top="136" width="65" height="32" onclick="btn_search_onclick"/>
+        <Static id="staticTitle" taborder="7" left="18" top="16" width="155" height="37" font="bold 14pt &quot;Arial&quot;" text="상품군 조회"/>
+        <Static id="sta_totcnt" taborder="8" text="총 0건" left="22" top="153" width="84" height="18"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_prdCls">
+        <ColumnInfo>
+          <Column id="PRD_CLS_CD" type="STRING" size="256"/>
+          <Column id="PRD_CLS_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="prdClsCd" type="STRING" size="256"/>
+          <Column id="prdClsLvlNm" type="STRING" size="256"/>
+          <Column id="cPage" type="INT" size="256"/>
+          <Column id="pagingSize" type="INT" size="256"/>
+          <Column id="pageSize" type="INT" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : MarketA
+CREATION DATES : 
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totRowCnt = 0;
+this.pagingSize = 10;
+this.pageSize = 20;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.edt_prdClsCd.set_value(this.parent.prdClsCd);
+	this.edt_prdClsNm.set_value(this.parent.prdClsNm);
+	
+	//조회
+	this.fn_search(1);
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	var objType = obj.getFocus();
+	if( e.keycode == 13 && objType == "[object Edit]" ) {
+		//조회
+		this.fn_search(1);
+	}
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (cPage)
+{
+	var sSvcId = "productGroupSelect";    
+	var sUrl = "/co/popUp/productGroupPopupList.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_prdCls=ds_output1";
+	var arg = "";
+	
+	if( undefined == cPage ) {
+		cPage = 1;
+	}
+	
+	// 페이징 정보 세팅.
+	this.ds_search.setColumn(0, "cPage", cPage);
+	this.ds_search.setColumn(0, "pagingSize", this.pagingSize);
+	this.ds_search.setColumn(0, "pageSize", this.pageSize);
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "productGroupSelect"){    
+		this.sta_totcnt.set_text("총 "+this.totRowCnt+"건");
+	}
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.edt_prdClsCd.set_value("");
+	this.edt_prdClsNm.set_value("");
+};
+
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search(1);
+};
+
+this.grd_list_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var resData = {};
+	var resString = "";
+	
+	resData.PRD_CLS_CD = this.ds_prdCls.getColumn(this.ds_prdCls.rowposition, "PRD_CLS_CD");
+	resData.PRD_CLS_NM = this.ds_prdCls.getColumn(this.ds_prdCls.rowposition, "PRD_CLS_NM");
+	resString = JSON.stringify(resData);	
+	this.close(resString);
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="edt_prdClsCd" propid="value" datasetid="ds_search" columnid="prdClsCd"/>
+      <BindItem id="item1" compid="edt_prdClsNm" propid="value" datasetid="ds_search" columnid="prdClsLvlNm"/>
+    </Bind>
+  </Form>
+</FDL>

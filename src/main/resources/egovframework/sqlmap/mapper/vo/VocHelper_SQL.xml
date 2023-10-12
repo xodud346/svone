@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssp.bo.vo.helper">
+
+<select id="selectListVocHelper" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.vo.helper.selectListVocHelper */
+<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />
+SELECT LIST.*
+FROM (
+	SELECT OPCH.CO_CD
+	
+	     , OPCH.BZPLC_ID
+	     , BZPB.BZPLC_NM
+	     
+	     ,                                                          NVL(OPCH.CUST_HELPER_SPR_CD, DECODE(OPRU.CUST_SPR_CD, '20', '4', '3'))                    CUST_HELPER_SPR_CD
+	     , (SELECT FN_COM_DTL_CDNM_NVL('KO', 'CUST_HELPER_SPR_CD' , NVL(OPCH.CUST_HELPER_SPR_CD, DECODE(OPRU.CUST_SPR_CD, '20', '4', '3')) , '-') FROM DUAL)  CUST_HELPER_SPR_CD_NM
+	     
+	<!--      , OPRU.CUST_SPR_CD  , (SELECT FN_COM_DTL_CDNM_NVL('KO', 'CUST_SPR_CD' , OPRU.CUST_SPR_CD , '-') FROM DUAL)  CUST_SPR_NM -->
+	     , NVL(OPRU.CUST_SPR_CD, BZPB.CUST_SPR_CD) CUST_SPR_CD , (SELECT FN_COM_DTL_CDNM_NVL('KO', 'CUST_SPR_CD' , NVL(OPRU.CUST_SPR_CD, BZPB.CUST_SPR_CD) , '-') FROM DUAL)  CUST_SPR_NM
+	     , OPCH.USE_YN       , (SELECT FN_COM_DTL_CDNM_NVL('KO', 'USE_YN'      , OPCH.USE_YN      , '-') FROM DUAL)  USE_YN_NM
+	     
+	     , OPCH.OPR_UNIT_ID
+	     , OPRU.OPR_UNIT_NM
+	     , OPRU.SVC_TEAM_CD
+	     , OPRU.SVC_CHRPSN_ID, NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=OPRU.CO_CD AND OPRTR_ID=OPRU.SVC_CHRPSN_ID), OPRU.SVC_CHRPSN_ID)  SVC_CHRPSN_NM
+	     
+	     , OPCH.CUST_HELPER_CADDR_REG_NO
+	     , CADR.CADDR_SPR_CD , (SELECT FN_COM_DTL_CDNM_NVL('KO', 'CADDR_SPR_CD', CADR.CADDR_SPR_CD, '-') FROM DUAL)  CADDR_SPR_NM
+	     , CADR.CADDR_DISP_NM
+	     , CADR.CUST_HELPER_CADDR
+	--     , CADR.CADDR_CHN_SPR_CD
+	--     , CADR.EMAIL_ADDR
+	     , ZNDS.ZENDESK_GRP_ID
+	     , ZNDS.ZENDESK_GRP_NM
+	     , ZNDS.CHAT_URL
+	     , ZNDS.ZENDESK_CHRPSN_IDS
+	     , ZNDS.ZENDESK_CHRPSN_NMS
+	--     , ZNDS.FINAL_LOGN_HR
+	--     , ZNDS.USE_YN
+	
+	  FROM TB_VO_OPR_UNIT_CUST_HELPER_INFO                   OPCH
+	     , TB_CC_BZPLC_BASIS                                 BZPB
+	     , TB_CC_OPR_UNIT_BASIS                              OPRU
+	     , (SELECT OPZN.CO_CD
+	             , OPZN.BZPLC_ID
+	             , OPZN.OPR_UNIT_ID
+	             
+	             , ZNBS.ZENDESK_GRP_ID
+	             , ZNBS.ZENDESK_GRP_NM
+	             , ZNBS.CHAT_URL
+	             , ZNBS.ZENDESK_CHRPSN_IDS
+	             , ZNBS.ZENDESK_CHRPSN_NMS
+	             
+	          FROM TB_VO_OPR_UNIT_ZENDESK_INFO                       OPZN
+	             , (SELECT ZDBS.*
+	                     , ZENDESK_CHRPSN_IDS
+	                     , ZENDESK_CHRPSN_NMS
+	                  FROM TB_VO_ZENDESK_BASIS          ZDBS
+	                     , (SELECT CO_CD
+	                             , ZENDESK_GRP_ID
+	                             , LISTAGG(DISTINCT ZENDESK_CHRPSN_ID, ',') WITHIN GROUP(ORDER BY CO_CD, ZENDESK_GRP_ID, ZENDESK_CHRPSN_ID)  ZENDESK_CHRPSN_IDS
+	                             , LISTAGG(DISTINCT ZENDESK_CHRPSN_NM, ',') WITHIN GROUP(ORDER BY CO_CD, ZENDESK_GRP_ID, ZENDESK_CHRPSN_ID)  ZENDESK_CHRPSN_NMS
+	                          FROM TB_VO_ZENDESK_CHRPSN_INFO
+	                         WHERE CO_CD  = '1000'
+	                           AND USE_YN = 'Y'
+	                         GROUP BY
+	                               CO_CD
+	                             , ZENDESK_GRP_ID
+	                       )    ZDPI
+	                 WHERE ZDBS.CO_CD = ZDPI.CO_CD(+) AND ZDBS.ZENDESK_GRP_ID = ZDPI.ZENDESK_GRP_ID(+)
+	                   AND ZDBS.CO_CD = '1000'
+	               )   ZNBS
+	         WHERE OPZN.CO_CD = ZNBS.CO_CD    AND OPZN.ZENDESK_GRP_ID = ZNBS.ZENDESK_GRP_ID
+	       )       ZNDS
+	<!-- 
+	     , (SELECT CHMS.CO_CD
+	             , CHMS.CUST_HELPER_CADDR_REG_NO
+	             , CHMS.CADDR_SPR_CD
+	             , CHMS.CADDR_DISP_NM
+	             , CHMS.CUST_HELPER_CADDR
+	- -             , CHDT.CADDR_CHN_SPR_CD
+	- -             , CHDT.EMAIL_ADDR
+	             , CHMS.USE_YN
+	          FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_MST              CHMS
+	- -             , TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL              CHDT
+	- -         WHERE CHMS.CO_CD = CHDT.CO_CD(+) AND CHMS.CUST_HELPER_CADDR_REG_NO = CHDT.CUST_HELPER_CADDR_REG_NO(+)
+	       )       CADR
+	-->
+	     , TB_VO_OPR_UNIT_CUST_HELPER_CADDR_MST  CADR
+	 WHERE ROWNUM > 0
+	   AND OPCH.CO_CD = BZPB.CO_CD(+) AND OPCH.BZPLC_ID = BZPB.BZPLC_ID(+)
+	   AND OPCH.CO_CD = OPRU.CO_CD(+) AND OPCH.BZPLC_ID = OPRU.BZPLC_ID(+) AND OPCH.OPR_UNIT_ID = OPRU.OPR_UNIT_ID(+)
+	   AND OPCH.CO_CD = ZNDS.CO_CD(+) AND OPCH.BZPLC_ID = ZNDS.BZPLC_ID(+) AND OPCH.OPR_UNIT_ID = ZNDS.OPR_UNIT_ID(+)
+	   AND OPCH.CO_CD = CADR.CO_CD(+) AND OPCH.CUST_HELPER_CADDR_REG_NO = CADR.CUST_HELPER_CADDR_REG_NO(+)
+	   
+	   AND OPCH.CO_CD = NVL(#{coCd     }, '1000')
+	   <if test='bzplcId      != null and !"".equals(bzplcId     )'>AND OPCH.BZPLC_ID         =       #{bzplcId    }      </if>  <!-- 사업장ID     -->
+	   <if test='oprUnitId    != null and !"".equals(oprUnitId   )'>AND OPCH.OPR_UNIT_ID      =       #{oprUnitId  }      </if>  <!-- 운영단위ID   -->
+	   <if test='oprUnitIds   != null and oprUnitIds     .size > 0'>AND OPCH.OPR_UNIT_ID     IN (<foreach collection="oprUnitIds"  item="item" separator=",">#{item}</foreach>)</if>
+	   <if test='csChrPsnIds  != null and csChrPsnIds    .size > 0'>AND OPRU.SVC_CHRPSN_ID   IN (<foreach collection="csChrPsnIds" item="item" separator=",">#{item}</foreach>)</if>
+	   
+	   <if test='caddrDispNm  != null and !"".equals(caddrDispNm )'>AND CADR.CADDR_DISP_NM LIKE '%'|| #{caddrDispNm} ||'%'</if>  <!-- 연락처표시명 -->
+	   
+	   <!-- 
+	   <if test='caddrDispNms != null and caddrDispNms   .size > 0'>
+	   AND (<trim prefixOverrides="AND|OR|UNION ALL|," prefix="">
+	        <foreach collection="caddrDispNms" item="item" separator="">OR CADR.CADDR_DISP_NM LIKE '%'|| #{item} ||'%'
+	        </foreach>
+	        </trim>)
+	   </if>
+	    -->
+	   <if test='caddrDispNms    != null and !"".equals(caddrDispNms)    '>AND CADR.CADDR_DISP_NM    LIKE '%'|| #{caddrDispNms} ||'%'</if>
+	   
+	   <if test='useYn           != null and !"".equals(useYn       )    '>AND OPCH.USE_YN              =       #{useYn           }      </if>  <!-- 사용여부     -->
+	   <if test='caddrSprCd      != null and !"".equals(caddrSprCd  )    '>AND CADR.CADDR_SPR_CD        =       #{caddrSprCd      }      </if>  <!-- 연락처 구분  -->
+	   <if test='custHelperSprCd != null and !"".equals(custHelperSprCd) '>AND OPCH.CUST_HELPER_SPR_CD  =       #{custHelperSprCd }      </if>  <!-- 고객도우미구분코드 -->
+	
+	 <if test="sortColumn == null or sortColumn == ''">
+	 ORDER BY
+	       OPCH.CUST_HELPER_SPR_CD
+	     , OPCH.USE_YN  DESC
+	     , OPCH.CO_CD
+	     , OPCH.BZPLC_ID
+	     , OPCH.OPR_UNIT_ID
+     </if>
+) LIST
+<if test="sortColumn != null and sortColumn != ''"> 
+ORDER BY ${sortColumn} ${sortType} 
+</if> 
+<include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+/* /com.ssp.bo.vo.helper.selectListVocHelper */
+</select>
+
+</mapper>

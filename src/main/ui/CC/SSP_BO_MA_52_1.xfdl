@@ -1,0 +1,477 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_MA_52_1" width="360" height="440" titletext="패키지 설정" onload="fn_onLoad">
+    <Layouts>
+      <Layout eight="540" width="490" stepcount="0">
+        <Static id="Static23_01" taborder="1" left="12" top="74" height="36" cssclass="sta_cm_box02L" right="20" text=""/>
+        <Static id="Static00" taborder="12" left="11" top="74" height="36" text="노출여부" width="112" cssclass="sta_cm_box01L_necessary" onclick="Static00_onclick"/>
+        <Edit id="edt_expsYn" taborder="1" left="120" top="108" width="220" height="36" inputtype="number" textAlign="center" maxlength="3"/>
+        <Static id="Static01" taborder="4" left="11" top="108" height="36" text="노출순서" width="112" cssclass="sta_cm_box01L_necessary"/>
+        <Radio id="radio_expsSo" taborder="2" columncount="2" index="1" codecolumn="codecolumn" datacolumn="datacolumn" value="N" left="156" top="74" width="158" height="36" innerdataset="innerdataset" text="N">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">Y</Col>
+                <Col id="datacolumn">Y</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">N</Col>
+                <Col id="datacolumn">N</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Radio>
+        <Static id="Static03" taborder="12" left="11" top="154" height="38" text="아이콘 이미지(ON)" width="139" cssclass="sta_cm_box01L_tdt_necessary3"/>
+        <Edit id="edt_iconOnPcDocRegIdNm" taborder="9" left="11" top="192" height="27" width="189" readonly="true" enable="false" enableevent="false"/>
+        <Button id="btn_iconOnPcDocRegId" taborder="10" text="파일첨부" top="195" width="80" height="24" left="226" onclick="Div00_btn_iconOnPcDocRegId_onclick"/>
+        <Button id="btn_iconOnPcDocRegIdClear" taborder="11" left="316" top="195" height="24" text="X" visible="true" width="24" onclick="Div00_btn_iconOnPcDocRegIdClear_onclick"/>
+        <Div id="div_bottomBtn" taborder="0" text="Div00" left="53" top="365" width="220" height="60">
+          <Layouts>
+            <Layout>
+              <Button id="btn_cancel" taborder="0" text="취소" top="5" width="60" height="30" onclick="btn_cancel_onclick" left="33"/>
+              <Button id="btn_save" taborder="1" text="저장" left="133" top="5" width="70" height="30" cssclass="btn_WF_select" onclick="btn_save_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Static id="Static04" taborder="9" left="11" top="229" height="35" text="아이콘 이미지(OFF)" width="139" cssclass="sta_cm_box01L_tdt_necessary3"/>
+        <Edit id="edt_iconOffPcDocRegIdNm" taborder="10" left="11" top="265" height="27" width="189" readonly="true" enable="false" enableevent="false"/>
+        <Button id="btn_iconOffPcDocRegId" taborder="11" text="파일첨부" top="268" width="80" height="24" left="226" onclick="Div00_btn_iconOffPcDocRegId_onclick"/>
+        <Button id="btn_iconOffPcDocRegIdClear" taborder="12" left="316" top="268" height="24" text="X" visible="true" width="24" onclick="Div00_btn_iconOffPcDocRegIdClear_onclick"/>
+        <Static id="Static05" taborder="14" left="11" top="318" height="36" text="MRO 코드" width="112" onclick="Static00_02_01_01_00_00_onclick" cssclass="sta_cm_box01L_necessary"/>
+        <Edit id="edt_mroIddtId" taborder="13" left="120" top="318" width="220" height="36" textAlign="center"/>
+        <Edit id="edt_iddtId" taborder="16" left="120" top="40" width="220" height="36" inputtype="number" textAlign="center" maxlength="3" enable="false"/>
+        <Static id="Static06" taborder="17" left="11" top="40" height="36" width="112" onclick="Static01_00_onclick" cssclass="sta_cm_box01L" text="산업군 ID"/>
+      </Layout>
+    </Layouts>
+    <Bind>
+      <BindItem id="item0" compid="rdo_joinPathCd" propid="value" datasetid="ds_dtl" columnid="JOIN_PATH_CD"/>
+      <BindItem id="item1" compid="edt_iconOnPcDocRegIdNm" propid="value" datasetid="ds_iddtMktgInfo" columnid="ICON_ON_PC_DOC_REG_ID_NM"/>
+      <BindItem id="item2" compid="edt_iconOffPcDocRegIdNm" propid="value" datasetid="ds_iddtMktgInfo" columnid="ICON_OFF_PC_DOC_REG_ID_NM"/>
+      <BindItem id="item3" compid="radio_expsSo" propid="value" datasetid="ds_iddtMktgInfo" columnid="EXPS_YN"/>
+      <BindItem id="item4" compid="edt_expsYn" propid="value" datasetid="ds_iddtMktgInfo" columnid="EXPS_SO"/>
+      <BindItem id="item5" compid="edt_mroIddtId" propid="value" datasetid="ds_iddtMktgInfo" columnid="MRO_IDDT_ID"/>
+      <BindItem id="item6" compid="edt_iddtId" propid="value" datasetid="ds_iddtMktgInfo" columnid="IDDT_ID"/>
+    </Bind>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 
+*******************************************************/
+include "CC::CcUtils.xjs";
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.gfn_formOnLoad(this);
+	this.ds_iddtMktgInfo.clearData();
+	var nRow = this.ds_iddtMktgInfo.addRow();
+	this.fn_paramSetting(this.parent);
+	this.fnLoadIddtMktgInfoSelect();
+
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "",
+		SHIFT_ENTER : "",
+		SHIFT_S : "",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+	
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fnLoadIddtMktgInfoSelect = function() {
+	var sSvcId = 'loadIddtMktgInfoSelect';
+	var sUrl   = '/bo/cust/iddt/select-IddtMktgInfo.do';
+	var inDs   = 'ds_search=ds_iddtMktgInfo';
+	var outDs  = 'ds_iddtMktgInfo=ds_output1';
+	var arg    = '';
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, 'fn_callBack');
+}
+
+this.fnSaveIddtMktgInfo = function() {
+	var sSvcId = 'saveIddtMktgInfo';
+	var sUrl   = '/bo/cust/iddt/save-IddtMktgInfo.do';
+	var inDs   = 'ds_iddtMktgInfo=ds_iddtMktgInfo';
+	var outDs  = '';
+	var arg    = '';
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, 'fn_callBack');
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+	this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+		if(svcID == "loadIddtMktgInfoSelect"){
+			
+		}
+	}
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_paramSetting = function (param){
+	this.ds_iddtMktgInfo.setColumn(0,"IDDT_ID",param.iddtId);
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+/**
+ * 아이콘 ON PC 파일 첨부 이벤트  
+ */
+this.Div00_btn_iconOnPcDocRegId_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.curImgBtnName = e.fromobject.id;
+	
+	this.FileDialog00.set_accept(".png, .jpg, .gif");
+	this.FileDialog00.open('nexacro17', FileDialog.MULTILOAD);	
+};
+/**
+ * 아이콘 OFF PC 파일 첨부 이벤트  
+ */
+ 
+this.Div00_btn_iconOffPcDocRegId_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.curImgBtnName = e.fromobject.id;
+	
+	this.FileDialog00.set_accept(".png, .jpg, .gif");
+	this.FileDialog00.open('nexacro17', FileDialog.MULTILOAD);	
+};
+
+/**
+ * 파일 DIALOG CLOSE 이벤트
+ */
+
+this.FileDialog00_onclose = function(obj:nexacro.FileDialog,e:nexacro.FileDialogEventInfo)
+{
+	if(this.gfn_isNull(e.virtualfiles))
+	{
+		return;
+	}
+	var vFile = e.virtualfiles[0];
+	
+	//VirtualFile 이벤트 생성
+	vFile.addEventHandler("onsuccess", this.fileList_onsuccess, this);
+	vFile.addEventHandler("onerror", this.fileList_onerror, this);
+	vFile.open(null, 1);
+};
+
+
+/**
+ * 업로드용 Virtual 파일 onsuccess 이벤트
+ */
+this.fileList_onsuccess = function
+(obj:nexacro.VirtualFile, e:nexacro.VirtualFileEventInfo)
+{
+	if (e.reason == 1)
+	{
+		// 파일사이즈 체크
+		
+		obj.getFileSize();
+	}
+	
+	if (e.reason == 9) 
+	{
+		if( !this.fn_fileSizeCheck(obj, e.filesize) )
+		{
+			return false;
+		}
+		
+
+		if(this.curImgBtnName == "btn_iconOnPcDocRegId")
+		{
+			this.FileUpTransfer00.removeFile("iconOnPcDocRegId");
+			
+			var nRowIdx = this.ds_file.addRow();
+			
+			this.ds_file.setColumn(nRowIdx, "ATFL_NM", obj.filename);
+			this.ds_file.setColumn(nRowIdx, "IMG_TYPE", "iconOnPcDocRegId");
+			
+			this.ds_iddtMktgInfo.setColumn(0,"ICON_ON_PC_DOC_REG_ID_NM",obj.filename);
+			
+			this.FileUpTransfer00.addFile("iconOnPcDocRegId", obj)
+		}
+		else if(this.curImgBtnName == "btn_iconOffPcDocRegId")
+		{
+			this.FileUpTransfer00.removeFile("iconOffPcDocRegId");
+			
+			var nRowIdx = this.ds_file.addRow();
+			
+			this.ds_file.setColumn(nRowIdx, "ATFL_NM", obj.filename);
+			this.ds_file.setColumn(nRowIdx, "IMG_TYPE", "iconOffPcDocRegId");
+			
+			this.ds_iddtMktgInfo.setColumn(0,"ICON_OFF_PC_DOC_REG_ID_NM",obj.filename);
+			
+			this.FileUpTransfer00.addFile("iconOffPcDocRegId", obj)
+		}
+	}
+};
+
+/**
+ * 업로드용 Virtual 파일 oneroor 이벤트
+ */
+this.fileList_onerror = function(obj:nexacro.VirtualFile, e:nexacro.VirtualFileErrorEventInfo)
+{
+	var msg = ">>>>>>>>> VirtualFile event ERROR >>>>>>>>\n";
+	msg += "errortype : " + e.errortype + "\n";
+	msg += "errormsg : " + e.errormsg + "\n";
+	msg += "statuscode : " + e.statuscode;
+	
+	alert(msg);
+	
+	this.nRow = -1;
+};
+
+
+/**
+ * 파일 확장자 검증
+ */
+this.fn_fileSizeCheck = function(obj, fileSize)
+{
+	var fileName = obj.filename;
+	var extNm  = fileName.substr(fileName.lastIndexOf(".") + 1);	// 맨 뒤 확장자만 자르기
+	var fileGbn = ".jpg, .png, .gif";
+
+	extNm = extNm.toLowerCase();
+	
+	//10485760 - 10메가
+	//메가바이트 변환
+	var mbSize = fileSize / 1024 / 1024;
+	
+	if( this.maxFileSize < mbSize )
+	{
+		alert(this.fn_getMessage("ERRN000039", extNm)); // &1 파일은 10MB 이상으로 첨부하실 수 없습니다.
+		return false;
+	}
+	
+	if( fileGbn.indexOf(extNm) == -1 )
+	{
+		//alert(this.fn_getMessage("ERRN000040", extNm)); // &1 파일은 허용되지 않는 파일 타입입니다.
+		alert(this.fn_getMessage("ERRC000287"));  //올바른 이미지 파일을 업로드 해주세요.
+		return false;
+	}
+	
+	return true;
+};
+
+
+/**
+ * 아이콘 ON PC X 이벤트  
+ */
+this.Div00_btn_iconOnPcDocRegIdClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_iddtMktgInfo.setColumn(0,"ICON_ON_PC_DOC_REG_ID_NM","");
+	
+	this.FileUpTransfer00.removeFile("iconOnPcDocRegId");
+	
+	var findRow = this.ds_file.findRowExpr("IMG_TYPE == 'iconOnPcDocRegId'");
+	
+	if (findRow >= 0)
+	{
+		this.ds_file.deleteRow(findRow);
+	}	
+};
+/**
+ * 아이콘 OFF PC X 이벤트  
+ */
+this.Div00_btn_iconOffPcDocRegIdClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_iddtMktgInfo.setColumn(0,"ICON_OFF_PC_DOC_REG_ID_NM","");
+	
+	this.FileUpTransfer00.removeFile("iconOffPcMblDocRegId");
+	
+	var findRow = this.ds_file.findRowExpr("IMG_TYPE == 'iconOffPcMblDocRegId'");
+	
+	if (findRow >= 0)
+	{
+		this.ds_file.deleteRow(findRow);
+	}	
+};
+
+
+
+this.fn_dataCheck = function(dataset) {
+	/*
+	getRowType = 2 : 데이터셋 추가/수정
+	*/
+	for(var i=0; i < dataset.rowcount; i++){
+		var sRowType = dataset.getRowType(i);
+
+		if( sRowType == 2 || sRowType == 4 ){
+			//if( dataset._rawRecords[i]._orgidx == undefined ) return false;
+			return true;
+		}
+	}
+	
+	// 삭제된 데이터 셋
+	if(dataset.getDeletedRowCount() > 0){
+		return true;
+	}
+
+	return false;	
+}
+
+this.fileUpTrans_onsuccess = function(obj:nexacro.FileUpTransfer,e:nexacro.FileUpTransferEventInfo)
+{
+	var objCallDs = e.datasets[0];
+	
+	if(objCallDs.rowcount  == 0 )
+	{
+		alert(this.fn_getMessage("ERRN000041")); // 파일 업로드 오류입니다.
+	}
+	
+	for(var i = 0 ; i < objCallDs.rowcount ; i++)
+	{
+		/*
+		if(objCallDs.getColumn(i, "result") == "none")
+		{
+			alert("파일이 없습니다.");
+			return;
+		}
+		*/
+		
+		if(objCallDs.getColumn(i, "imgType") == "iconOnPcDocRegId")
+		{
+			this.ds_iddtMktgInfo.setColumn(0, "ICON_ON_PC_DOC_REG_ID", objCallDs.getColumn(i, "docRegId"));
+		}
+		else if(objCallDs.getColumn(i, "imgType") == "iconOffPcDocRegId")
+		{
+			this.ds_iddtMktgInfo.setColumn(0, "ICON_OFF_PC_DOC_REG_ID", objCallDs.getColumn(i, "docRegId"));
+		}
+	}
+	this.ds_file.clearData();			// 업로드 완료 후 ds_file 클리어
+	this.FileUpTransfer00.clearFileList();	
+	// 신규 데이터 등록
+	this.fnSaveIddtMktgInfo();
+};
+
+/**
+ * 파일전송 실패
+ */
+this.fileUpTrans_onerror = function(obj:nexacro.FileUpTransfer,e:nexacro.FileUpTransferErrorEventInfo)
+{
+	alert(e.errormsg);
+};
+
+/**
+ * 취소버튼 클릭 시
+ */
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(!confirm(this.fn_getMessage("ERRC000087"))) return;
+
+	this.close();
+};
+
+/**
+ * 저장버튼 클릭 시
+ */
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var expsSo = this.ds_iddtMktgInfo.getColumn(0,"EXPS_SO");
+	var iconOnPcDocRegIdNm = this.ds_iddtMktgInfo.getColumn(0,"ICON_ON_PC_DOC_REG_ID_NM");
+	var iconOffPcDocRegIdNm = this.ds_iddtMktgInfo.getColumn(0,"ICON_OFF_PC_DOC_REG_ID_NM");
+	var mroIddtId = this.ds_iddtMktgInfo.getColumn(0,"MRO_IDDT_ID");
+
+	if(!expsSo || !iconOnPcDocRegIdNm || !iconOffPcDocRegIdNm || !mroIddtId){
+		alert(this.fn_getMessage("ERRC000286")); //필수 등록 값을 입력해주세요.
+		return;
+	}
+		if( this.ds_file.rowcount > 0 )
+	{
+		if(this.fn_dataCheck(this.ds_file) )
+		{
+			var jsonArray = new Array();
+			
+			for(var i=0; i<this.ds_file.rowcount; i++)
+			{
+				var imgType = this.ds_file.getColumn(i, "IMG_TYPE") == undefined ? "" : this.ds_file.getColumn(i, "IMG_TYPE");
+				
+				var jsonObj = new Object();
+				if(this.ds_file.getColumn(i, "IMG_TYPE") == "iconOnPcDocRegId")
+				{
+					jsonObj.IMG_TYPE = imgType;
+					jsonObj.DOC_REG_ID = this.ds_iddtMktgInfo.getColumn(0, "ICON_ON_PC_DOC_REG_ID") == undefined ? "" : this.ds_iddtMktgInfo.getColumn(0, "ICON_ON_PC_DOC_REG_ID");
+					jsonObj.ATFL_NM = this.ds_iddtMktgInfo.getColumn(0, "ICON_ON_PC_DOC_REG_ID_NM") == undefined ? "" : this.ds_iddtMktgInfo.getColumn(0, "ICON_ON_PC_DOC_REG_ID_NM");
+					jsonObj.DOC_REG_SEQ = this.ds_iddtMktgInfo.getColumn(0, "ICON_ON_PC_DOC_REG_ID_REG_SEQ") == undefined ? 1 : this.ds_iddtMktgInfo.getColumn(0, "ICON_ON_PC_DOC_REG_ID_REG_SEQ").toString();
+					jsonObj.ATFL_STOR_PATH = this.ds_iddtMktgInfo.getColumn(0, "ICON_ON_PC_DOC_REG_ID_ATFL_STOR_PATH") == undefined ? "" : this.ds_iddtMktgInfo.getColumn(0, "ICON_ON_PC_DOC_REG_ID_ATFL_STOR_PATH");
+					jsonObj.ORI_ATFL_NM = this.ds_iddtMktgInfo.getColumn(0, "ICON_ON_PC_DOC_REG_ID_ORI_ATFL_NM") == undefined ? "" : this.ds_iddtMktgInfo.getColumn(0, "ICON_ON_PC_DOC_REG_ID_ORI_ATFL_NM");
+				}
+				else if(this.ds_file.getColumn(i, "IMG_TYPE") == "iconOffPcDocRegId")
+				{
+					jsonObj.IMG_TYPE = imgType;
+					jsonObj.DOC_REG_ID = this.ds_iddtMktgInfo.getColumn(0, "ICON_OFF_PC_DOC_REG_ID") == undefined ? "" : this.ds_iddtMktgInfo.getColumn(0, "ICON_OFF_PC_DOC_REG_ID");
+					jsonObj.ATFL_NM = this.ds_iddtMktgInfo.getColumn(0, "ICON_OFF_PC_DOC_REG_ID_NM") == undefined ? "" : this.ds_iddtMktgInfo.getColumn(0, "ICON_OFF_PC_DOC_REG_ID_NM");
+					jsonObj.DOC_REG_SEQ = this.ds_iddtMktgInfo.getColumn(0, "ICON_OFF_PC_DOC_REG_ID_REG_SEQ") == undefined ? 1 : this.ds_iddtMktgInfo.getColumn(0, "ICON_OFF_PC_DOC_REG_ID_REG_SEQ").toString();
+					jsonObj.ATFL_STOR_PATH = this.ds_iddtMktgInfo.getColumn(0, "ICON_OFF_PC_DOC_REG_ID_ATFL_STOR_PATH") == undefined ? "" : this.ds_iddtMktgInfo.getColumn(0, "ICON_OFF_PC_DOC_REG_ID_ATFL_STOR_PATH");
+					jsonObj.ORI_ATFL_NM = this.ds_iddtMktgInfo.getColumn(0, "ICON_OFF_PC_DOC_REG_ID_ORI_ATFL_NM") == undefined ? "" : this.ds_iddtMktgInfo.getColumn(0, "ICON_OFF_PC_DOC_REG_ID_ORI_ATFL_NM");
+				}
+				jsonArray.push(jsonObj);
+			}
+
+			this.FileUpTransfer00.setPostData("resList", JSON.stringify(jsonArray));
+			this.FileUpTransfer00.upload("/bo/cust/iddt/iddtIcon-fileUpload.do");
+		}else{
+			this.fnSaveIddtMktgInfo();			
+		} 
+	}else{
+		this.fnSaveIddtMktgInfo();
+	}
+};
+
+]]></Script>
+    <Objects>
+      <FileUpTransfer id="FileUpTransfer00" onsuccess="fileUpTrans_onsuccess" onerror="fileUpTrans_onerror"/>
+      <FileDownTransfer id="FileDownTransfer00"/>
+      <FileDialog id="FileDialog00" onclose="FileDialog00_onclose"/>
+      <Dataset id="ds_file">
+        <ColumnInfo>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="DOC_REG_SEQ" type="STRING" size="256"/>
+          <Column id="ATFL_NM" type="STRING" size="256"/>
+          <Column id="ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="IMG_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_iddtMktgInfo">
+        <ColumnInfo>
+          <Column id="IDDT_ID" type="STRING" size="256"/>
+          <Column id="EXPS_YN" type="STRING" size="256"/>
+          <Column id="EXPS_SO" type="STRING" size="256"/>
+          <Column id="ICON_ON_PC_DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="ICON_ON_PC_DOC_REG_ID_NM" type="STRING" size="256"/>
+          <Column id="ICON_ON_PC_DOC_REG_ID_REG_SEQ" type="STRING" size="256"/>
+          <Column id="ICON_ON_PC_DOC_REG_ID_ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="ICON_ON_PC_DOC_REG_ID_ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="ICON_OFF_PC_DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="ICON_OFF_PC_DOC_REG_ID_NM" type="STRING" size="256"/>
+          <Column id="ICON_OFF_PC_DOC_REG_ID_REG_SEQ" type="STRING" size="256"/>
+          <Column id="ICON_OFF_PC_DOC_REG_ID_ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="ICON_OFF_PC_DOC_REG_ID_ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="MRO_IDDT_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

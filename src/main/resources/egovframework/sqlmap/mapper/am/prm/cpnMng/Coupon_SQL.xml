@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Coupon">
+
+	<!-- 관리자 > 마케팅 관리 > 온라인쿠폰목록 조건절 -->
+    <sql id="ecouponWhere">
+        <if test="searchCpnMstGbn != null and searchCpnMstGbn != ''">
+            AND CPN.CPN_MST_GBN = #{searchCpnMstGbn}
+        </if>
+        <if test="searchCpnMstTitle != null and searchCpnMstTitle != ''">
+            AND CPN.CPN_MST_TITLE LIKE '%' || #{searchCpnMstTitle} || '%'
+        </if>
+        <if test="searchCpnMstIdx != null and searchCpnMstIdx != ''">
+            AND CPN.CPN_MST_IDX = #{searchCpnMstIdx}
+        </if>
+        <if test="searchCpnMstIsuGbn != null and searchCpnMstIsuGbn != ''">
+            AND CPN.CPN_MST_ISU_GBN = #{searchCpnMstIsuGbn}
+        </if>
+        <if test="searchCpnMstShopType != null and searchCpnMstShopType != ''">
+            <choose>
+                <when test="searchCpnMstShopType.equals('PC'.toString())">
+                    AND CPN.CPN_MST_PC_YN = 'Y'
+                </when>
+                <when test="searchCpnMstShopType.equals('MOBILE'.toString())">
+                    AND CPN.CPN_MST_MB_YN = 'Y' 
+                </when>
+            </choose>
+        </if>
+        <if test="searchCpnMstUseYn != null and searchCpnMstUseYn != ''">
+            AND CPN.CPN_MST_YN = #{searchCpnMstUseYn}
+        </if>
+        <if test="searchCpnMstStDt != null and searchCpnMstStDt != '' and searchCpnMstEdDt != null and searchCpnMstEdDt != ''">
+            <choose>
+                <when test="searchCpnMstSeDt != null and searchCpnMstSeDt.equals('A'.toString())">
+                    <![CDATA[
+                        AND 
+                        (
+                            (CPN.CPN_MST_REG_DT BETWEEN (REPLACE(#{searchCpnMstStDt}, '-', '')||'000000') AND (REPLACE(#{searchCpnMstEdDt}, '-', ''))||'235959')
+                        )
+                    ]]>
+                </when>
+                <when test="searchCpnMstSeDt != null and searchCpnMstSeDt.equals('B'.toString())">
+                    <![CDATA[
+                        AND 
+                        (
+                            (CPN.CPN_MST_ISU_ST_DT BETWEEN REPLACE(#{searchCpnMstStDt}, '-', '') AND REPLACE(#{searchCpnMstEdDt}, '-', ''))
+                            OR
+                            (CPN.CPN_MST_ISU_ED_DT BETWEEN REPLACE(#{searchCpnMstStDt}, '-', '') AND REPLACE(#{searchCpnMstEdDt}, '-', ''))
+                        )
+                    ]]>
+                </when>
+            </choose>
+        </if>
+        <if test="searchMemMstMemGrd != null and searchMemMstMemGrd != ''">
+            AND MEM_MST_MEM_GRD = #{searchMemMstMemGrd}
+        </if>
+    </sql>
+
+ 	<!-- 관리자 > 마케팅 관리 > 온라인쿠폰목록 갯수 -->
+    <select id="selectOnlineCouponListCount" parameterType="HashMap" resultType="Integer">
+        /*Coupon.selectOnlineCouponListCount*/
+        SELECT
+            COUNT(CPN.CPN_MST_IDX)
+        FROM
+            T_CPN_MST CPN,
+            T_ADM_MST ADM
+        WHERE
+            CPN.CPN_MST_REG_ID = ADM.ADM_MST_ID
+            <include refid="ecouponWhere"/>
+    </select>
+    
+    <!-- 관리자 > 마케팅 관리 > 온라인쿠폰목록 목록 -->
+    <select id="selectOnlineCouponList" parameterType="HashMap" resultType="HashMap">
+        /* Coupon.selectOnlineCouponList */
+        SELECT
+            S2.*            
+        FROM
+            (   SELECT
+                    ROWNUM AS RNUM,
+                    S1.* 
+                FROM
+                    (
+                    SELECT
+		                CPN.CPN_MST_IDX,
+						CPN.CPN_MST_GBN,
+						CPN.CPN_MST_TITLE,
+						CPN.CPN_MST_ADM_TXT,
+						CPN.CPN_MST_SAL_GBN,
+						CPN.CPN_MST_SAL_PRC,
+						CPN.CPN_MST_SML_PRC,
+						CPN.CPN_MST_MXM_PRC,
+						CPN.CPN_MST_ISU_ST_DT,
+						CPN.CPN_MST_ISU_ST_HH,
+						CPN.CPN_MST_ISU_ST_MM,
+						CPN.CPN_MST_ISU_ED_DT,
+						CPN.CPN_MST_ISU_ED_HH,
+						CPN.CPN_MST_ISU_ED_MM,
+						CPN.CPN_MST_ISU_CNT,
+						CPN.CPN_MST_LMT_YN,
+						CPN.CPN_MST_ISU_GBN,
+						CPN.CPN_MST_ISU_DAY_GBN,
+						CPN.CPN_MST_USE_ST_DT,
+						CPN.CPN_MST_USE_ED_DT,
+						CPN.CPN_MST_USE_DAY,
+						CPN.CPN_MST_YN,
+						CPN.CPN_MST_PC_YN,
+						CPN.CPN_MST_MB_YN,
+						CPN.CPN_MST_MBR_GBN,
+						CPN.CPN_MST_NML_YN,
+						CPN.CPN_MST_MEM_GRD,
+						CPN.CPN_MST_SMP_YN,
+						CPN.CPN_MST_TGT_GBN,
+						CPN.CPN_MST_ETC_GBN,
+						CPN.CPN_MST_REG_DT,
+						CPN.CPN_MST_REG_IP,
+						CPN.CPN_MST_REG_ID,
+						CPN.CPN_MST_UPD_DT,
+						CPN.CPN_MST_UPD_IP,
+						CPN.CPN_MST_UPD_ID,
+						ADM.ADM_MST_NM,
+						CPN.CPN_MST_PTN_SHP_RND,
+						CPN_MST_EXPS_YN,
+						CPN_MST_CATE_GBN
+		        FROM
+		            T_CPN_MST CPN,
+		            T_ADM_MST ADM
+		        WHERE
+		            CPN.CPN_MST_REG_ID = ADM.ADM_MST_ID
+		            <include refid="ecouponWhere"/>
+		            ORDER BY CPN_MST_REG_DT DESC 
+		             )
+                    S1 
+            )
+            S2 
+        WHERE
+            S2.RNUM BETWEEN #{startNum} AND #{endNum}
+    </select>
+    
+    <!-- 관리자 > 마케팅 관리 > 온라인쿠폰 상세정보-->
+    <select id="selectOnlineCouponListInfo" parameterType="HashMap" resultType="HashMap">
+        /* Ecoupon.selectOnlineCouponListInfo */
+        SELECT
+                CPN.CPN_MST_IDX,
+				CPN.CPN_MST_GBN,
+				CPN.CPN_MST_TITLE,
+				CPN.CPN_MST_ADM_TXT,
+				CPN.CPN_MST_SAL_GBN,
+				CPN.CPN_MST_SAL_PRC,
+				CPN.CPN_MST_SML_PRC,
+				CPN.CPN_MST_MXM_PRC,
+				CPN.CPN_MST_ISU_ST_DT,
+				CPN.CPN_MST_ISU_ST_HH,
+				CPN.CPN_MST_ISU_ST_MM,
+				CPN.CPN_MST_ISU_ED_DT,
+				CPN.CPN_MST_ISU_ED_HH,
+				CPN.CPN_MST_ISU_ED_MM,
+				NVL(CPN.CPN_MST_ISU_CNT, 0) CPN_MST_ISU_CNT,
+				NVL(CPN.CPN_MST_LMT_YN, 'N') CPN_MST_LMT_YN, 
+				CPN.CPN_MST_ISU_GBN,
+				CPN.CPN_MST_ISU_DAY_GBN,
+				CPN.CPN_MST_USE_ST_DT,
+				CPN.CPN_MST_USE_ED_DT,
+				CPN.CPN_MST_USE_DAY,
+				CPN.CPN_MST_YN,
+				CPN.CPN_MST_PC_YN,
+				CPN.CPN_MST_MB_YN,
+				CPN.CPN_MST_MBR_GBN,
+				CPN.CPN_MST_NML_YN,
+				CPN.CPN_MST_MEM_GRD,
+				CPN.CPN_MST_SMP_YN,
+				CPN.CPN_MST_TGT_GBN,
+				CPN.CPN_MST_ETC_GBN,
+				CPN.CPN_MST_REG_DT,
+				CPN.CPN_MST_REG_IP,
+				CPN.CPN_MST_REG_ID,
+				CPN.CPN_MST_UPD_DT,
+				CPN.CPN_MST_UPD_IP,
+				CPN.CPN_MST_UPD_ID,
+				ADM.ADM_MST_NM,
+				CPN_MST_PTN_SHP_GBN,
+				CPN_MST_PTN_SHP_RND,
+				CPN_MST_PTN_SHP_YN,
+				CPN_MST_EXPS_YN,
+				CPN_MST_CATE_GBN
+        FROM
+            T_CPN_MST CPN,
+            T_ADM_MST ADM
+        WHERE
+            CPN.CPN_MST_REG_ID = ADM.ADM_MST_ID
+            AND CPN.CPN_MST_IDX = #{CPN_MST_IDX}
+    </select>
+    
+    <!-- 관리자 > 마케팅 관리 > 온라인쿠폰번호 -->
+    <select id="selectOnlineCouponNO" parameterType="HashMap" resultType="String">
+        /*Coupon.selectOnlineCouponNO*/
+        SELECT 'ETL'||DBMS_RANDOM.STRING('U', 3)||SEQ_CPN_MST_IDX.NEXTVAL AS CPN_MST_IDX FROM DUAL
+    </select>
+    
+    <!-- 관리자 > 마케팅 관리 > 온라인쿠폰생성 -->
+    <insert id="insertOnlineCoupon" parameterType="HashMap">      
+        /* Coupon.insertOnlineCoupon */
+        INSERT INTO
+            T_CPN_MST
+            (
+                CPN_MST_IDX,
+				CPN_MST_GBN,
+				CPN_MST_TITLE,
+				CPN_MST_ADM_TXT,
+				CPN_MST_SAL_GBN,
+				CPN_MST_SAL_PRC,
+				CPN_MST_SML_PRC,
+				CPN_MST_MXM_PRC,
+				CPN_MST_ISU_ST_DT,
+				CPN_MST_ISU_ST_HH,
+				CPN_MST_ISU_ST_MM,
+				CPN_MST_ISU_ED_DT,
+				CPN_MST_ISU_ED_HH,
+				CPN_MST_ISU_ED_MM,
+				CPN_MST_ISU_CNT,
+				CPN_MST_LMT_YN,
+				CPN_MST_ISU_GBN,
+				CPN_MST_ISU_DAY_GBN,
+				CPN_MST_USE_ST_DT,
+				CPN_MST_USE_ED_DT,
+				CPN_MST_USE_DAY,
+				CPN_MST_YN,
+				CPN_MST_PC_YN,
+				CPN_MST_MB_YN,
+				CPN_MST_MBR_GBN,
+				CPN_MST_NML_YN,
+				CPN_MST_MEM_GRD,
+				CPN_MST_SMP_YN,
+				CPN_MST_TGT_GBN,
+				CPN_MST_ETC_GBN,
+				CPN_MST_REG_DT,
+				CPN_MST_REG_IP,
+				CPN_MST_REG_ID,
+				CPN_MST_UPD_DT,
+				CPN_MST_UPD_IP,
+				CPN_MST_UPD_ID,
+				CPN_MST_PTN_SHP_GBN,
+				CPN_MST_PTN_SHP_RND,
+				CPN_MST_PTN_SHP_YN,
+				CPN_MST_EXPS_YN,
+				CPN_MST_CATE_GBN
+            )
+        VALUES
+            (
+                #{CPN_MST_IDX},
+				#{CPN_MST_GBN},
+				#{CPN_MST_TITLE},
+				#{CPN_MST_ADM_TXT},
+				#{CPN_MST_SAL_GBN},
+				#{CPN_MST_SAL_PRC},
+				#{CPN_MST_SML_PRC},
+				#{CPN_MST_MXM_PRC},
+				REPLACE(#{CPN_MST_ISU_ST_DT}, '-', ''),
+				#{CPN_MST_ISU_ST_HH},
+				#{CPN_MST_ISU_ST_MM},
+				REPLACE(#{CPN_MST_ISU_ED_DT_ON}, '-', ''),
+				#{CPN_MST_ISU_ED_HH_ON},
+				#{CPN_MST_ISU_ED_MM_ON},
+				#{CPN_MST_ISU_CNT},
+				#{CPN_MST_LMT_YN},
+				#{CPN_MST_ISU_GBN},
+				#{CPN_MST_ISU_DAY_GBN},
+				CASE WHEN #{CPN_MST_ISU_DAY_GBN} = 'M' THEN REPLACE(#{CPN_MST_ISU_ST_DT}, '-', '')
+				ELSE REPLACE(#{CPN_MST_USE_ST_DT}, '-', '')
+				END,
+				CASE WHEN #{CPN_MST_ISU_DAY_GBN} = 'M' THEN TO_CHAR(LAST_DAY(TO_DATE(REPLACE(#{CPN_MST_ISU_ED_DT_ON}, '-', ''), 'YYYYMMDD')),'YYYYMMDD')
+				ELSE REPLACE(#{CPN_MST_USE_ED_DT}, '-', '')
+				END,
+				#{CPN_MST_USE_DAY},
+				#{CPN_MST_YN},
+				#{CPN_MST_PC_YN},
+				#{CPN_MST_MB_YN},
+				#{CPN_MST_MBR_GBN},
+				#{CPN_MST_NML_YN},
+				#{CPN_MST_MEM_GRD},
+				#{CPN_MST_SMP_YN},
+				#{CPN_MST_TGT_GBN},
+				#{CPN_MST_ETC_GBN},
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				#{CPN_MST_REG_IP},
+				#{CPN_MST_REG_ID},
+				#{CPN_MST_UPD_DT},
+				#{CPN_MST_UPD_IP},
+				#{CPN_MST_UPD_ID},
+				#{CPN_MST_PTN_SHP_GBN},
+				#{CPN_MST_PTN_SHP_RND},
+				#{CPN_MST_PTN_SHP_YN},
+				#{CPN_MST_EXPS_YN},
+				#{CPN_MST_CATE_GBN}
+            )
+    </insert>
+    
+    <!-- 관리자 > 마케팅 관리 > 온라인쿠폰생성 > 사은품관리 적용상품 등록  -->
+    <insert id="insertProduct" parameterType="hashmap" >
+        /* Coupon.insertProduct */
+        INSERT INTO T_CPN_TGT (
+	   		CPN_TGT_IDX, CPN_MST_IDX, CPN_TGT_GBN, CPN_TGT_CD
+		)VALUES (
+			SEQ_CPN_TGT_IDX.NEXTVAL, #{CPN_MST_IDX}, #{CPN_MST_TGT_GBN} ,#{PRD_PRD_MST_CD}
+		)     
+    </insert>
+    
+    <!-- 관리자 > 마케팅 관리 > 온라인쿠폰생성 > 사은품관리 적용상품 등록  -->
+    <insert id="insertProductEx" parameterType="hashmap" >
+        /* Coupon.insertProductEx */
+        INSERT INTO T_CPN_ETC (
+	   		CPN_ETC_IDX, CPN_MST_IDX, CPN_ETC_GBN, CPN_ETC_CD
+		)VALUES (
+			SEQ_CPN_TGT_IDX.NEXTVAL, #{CPN_MST_IDX}, #{CPN_MST_ETC_GBN} ,#{PRD_PRD_MST_CD}
+		)
+    </insert>
+
+    <!-- 관리자 > 마케팅 관리 > 온라인쿠폰생성 > 사은품관리 적용회원 등록  -->
+    <insert id="insertCouponMember" parameterType="hashmap" >
+        /* Coupon.insertCouponMember */
+        INSERT INTO T_CPN_MEM (
+	   		CPN_MEM_IDX, CPN_MST_IDX, CPN_MEM_ID, CPN_MEM_ISU_DT, CPN_MEM_USE_DT, CPN_MEM_USE_YN, CPN_MEM_ADM_YN
+		)VALUES (
+			SEQ_CPN_MEM_IDX.NEXTVAL, #{CPN_MST_IDX}, #{MEM_MST_MEM_ID} ,TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), NULL, 'N', 'Y'
+		)     			
+    </insert>
+    
+    <!-- 발행내역 조회 카운트-->
+	<select id="selectCouponMemberCount" parameterType="hashMap" resultType="integer">
+		/* Coupon.selectCouponMemberCount */
+		SELECT COUNT(*) 
+		FROM
+			T_CPN_MST CMS
+		INNER JOIN T_CPN_MEM CME ON
+			CMS.CPN_MST_IDX = CME.CPN_MST_IDX
+		INNER JOIN TB_FC_MEM_BASIS FMB ON
+			FMB.MEM_ID = CME.CPN_MEM_ID
+		INNER JOIN TB_FC_MEM_LOGIN_INFO FML ON
+			FML.CO_CD = FMB.CO_CD
+			AND FML.BZPLC_ID = FMB.BZPLC_ID
+			AND FML.MEM_ID = FMB.MEM_ID
+		INNER JOIN TB_FC_BZPLC_BASIS FBB
+			ON FBB.BZPLC_ID = FMB.BZPLC_ID
+			AND FBB.CO_CD = FMB.CO_CD
+		INNER JOIN TB_FC_DEPT_BASIS FDB ON
+			FDB.CO_CD = FMB.CO_CD
+			AND FDB.BZPLC_ID = FMB.BZPLC_ID
+			AND FDB.DEPT_ID = FMB.DEPT_ID 
+		INNER JOIN TB_FC_BZPLC_OPR_UNT FBOU ON
+			FBOU.CO_CD = FMB.CO_CD
+			AND FBOU.BZPLC_ID = FMB.BZPLC_ID
+			AND FBOU.OPR_UNT_ID = FDB.OPR_UNT_ID
+		WHERE CMS.CPN_MST_IDX = #{CPN_MST_IDX}
+	</select>
+
+	<!-- 발행내역 조회 -->
+	<select id="selectCouponMemberList" parameterType="hashMap" resultType="sspMap">
+		/* Coupon.selectCouponMemberList */
+		SELECT
+            S2.*            
+        FROM
+            (   
+            	SELECT
+                    ROWNUM AS RNUM,
+                    S1.* 
+                FROM
+                    ( 
+						SELECT FMB.MEM_ID,
+								FMB.MEM_NM,
+								'계약' AS MEM_SPR_NM,
+								FMB.MEM_SPR,
+								FML.LOGIN_ID,
+								FBOU.OPR_UNT_ID,
+								FBOU.OPR_UNT_NM,
+								CME.CPN_MEM_USE_YN,
+								CME.CPN_MEM_USE_DT,
+								FBB.BZPLC_ID,
+								FBB.BZPLC_NM,
+								FDB.DEPT_ID,
+								FDB.DEPT_NM,
+								CME.CPN_MEM_IDX
+						FROM 
+							T_CPN_MST CMS
+						INNER JOIN T_CPN_MEM CME ON
+							CMS.CPN_MST_IDX = CME.CPN_MST_IDX
+						INNER JOIN TB_FC_MEM_BASIS FMB ON
+							FMB.MEM_ID = CME.CPN_MEM_ID
+						INNER JOIN TB_FC_MEM_LOGIN_INFO FML ON
+							FML.CO_CD = FMB.CO_CD
+							AND FML.BZPLC_ID = FMB.BZPLC_ID
+							AND FML.MEM_ID = FMB.MEM_ID
+						INNER JOIN TB_FC_BZPLC_BASIS FBB
+							ON FBB.BZPLC_ID = FMB.BZPLC_ID
+							AND FBB.CO_CD = FMB.CO_CD
+						INNER JOIN TB_FC_DEPT_BASIS FDB ON
+							FDB.CO_CD = FMB.CO_CD
+							AND FDB.BZPLC_ID = FMB.BZPLC_ID
+							AND FDB.DEPT_ID = FMB.DEPT_ID 
+						INNER JOIN TB_FC_BZPLC_OPR_UNT FBOU ON
+							FBOU.CO_CD = FMB.CO_CD
+							AND FBOU.BZPLC_ID = FMB.BZPLC_ID
+							AND FBOU.OPR_UNT_ID = FDB.OPR_UNT_ID
+						WHERE CMS.CPN_MST_IDX = #{CPN_MST_IDX}
+						<if test="cpnMemAdmYn != null and cpnMemAdmYn != ''">
+				            AND CME.CPN_MEM_ADM_YN = #{cpnMemAdmYn}
+				        </if>
+					)
+                    S1 
+            )
+            S2 
+		WHERE 1=1
+		<if test="excelDown == null or !excelDown.equals('Y'.toString())">
+            AND S2.RNUM BETWEEN #{startNum} AND #{endNum}
+        </if>
+	</select>
+	
+	<!-- 쿠폰 적용 상품 -->
+	<select id="selectCouponTgtProductList" parameterType="hashMap" resultType="sspMap">
+		/* Coupon.selectCouponTgtProductList */
+		SELECT * 
+		FROM T_CPN_TGT CT
+		INNER JOIN TB_FV_PRD FP
+		ON FP.PRD_ID = CT.CPN_TGT_CD
+		WHERE CPN_MST_IDX = #{CPN_MST_IDX}
+	</select>
+	
+	<!-- 쿠폰 적용 상품 -->
+	<select id="selectCouponTgtCategoryList" parameterType="hashMap" resultType="sspMap">
+		/* Coupon.selectCouponTgtProductList */
+		SELECT CT.*,
+				SPC.*,
+				PRD_LVL_NM
+		FROM T_CPN_TGT CT
+		INNER JOIN TB_SG_PRD_CLS SPC
+			ON SPC.PRD_CLS_CD = CT.CPN_TGT_CD
+		LEFT JOIN (SELECT 
+					    PRD_CLS_CD,
+					    SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_LVL_NM         
+					FROM 
+					    TB_SG_PRD_CLS
+					WHERE
+						USE_YN = 'Y'
+					START WITH PRD_CLS_LVL = 1
+					CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+					ORDER SIBLINGS BY SEQ ASC) TSPC
+			ON SPC.PRD_CLS_CD = TSPC.PRD_CLS_CD
+		WHERE CPN_MST_IDX = #{CPN_MST_IDX}
+	</select>
+	
+	<!-- 쿠폰 제외 상품 -->
+	<select id="selectCouponEtcProductList" parameterType="hashMap" resultType="sspMap">
+		/* Coupon.selectCouponTgtProductList */
+		SELECT * 
+		FROM T_CPN_ETC CT
+		INNER JOIN TB_FV_PRD FP
+		ON FP.PRD_ID = CT.CPN_ETC_CD
+		WHERE CPN_MST_IDX = #{CPN_MST_IDX}
+	</select>
+	
+	<!-- 쿠폰 제외 카테고리 -->
+	<select id="selectCouponEtcCategoryList" parameterType="hashMap" resultType="sspMap">
+		/* Coupon.selectCouponTgtProductList */
+		SELECT CT.*,
+				SPC.*,
+				PRD_LVL_NM
+		FROM T_CPN_ETC CT
+		INNER JOIN TB_SG_PRD_CLS SPC
+			ON SPC.PRD_CLS_CD = CT.CPN_ETC_CD
+		LEFT JOIN (SELECT 
+					    PRD_CLS_CD,
+					    SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_LVL_NM         
+					FROM 
+					    TB_SG_PRD_CLS
+					WHERE
+						USE_YN = 'Y'
+					START WITH PRD_CLS_LVL = 1
+					CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+					ORDER SIBLINGS BY SEQ ASC) TSPC
+			ON SPC.PRD_CLS_CD = TSPC.PRD_CLS_CD
+		WHERE CPN_MST_IDX = #{CPN_MST_IDX}
+	</select>
+	
+	<!-- 관리자 > 마케팅 관리 > 온라인쿠폰 수정 -->
+    <update id="updateOnlineCoupon" parameterType="HashMap">
+        /* Coupon.updateOnlineCoupon */
+        UPDATE
+            T_CPN_MST CPN 
+        SET            
+            CPN_MST_TITLE = #{CPN_MST_TITLE},
+            CPN_MST_ADM_TXT = #{CPN_MST_ADM_TXT},   
+            CPN_MST_YN = #{CPN_MST_YN},   
+            CPN_MST_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),            
+            CPN_MST_UPD_IP = #{CPN_MST_UPD_IP},
+            CPN_MST_UPD_ID = #{CPN_MST_UPD_ID},
+            CPN_MST_USE_ST_DT = CASE WHEN #{CPN_MST_ISU_DAY_GBN} = 'M' THEN REPLACE(#{CPN_MST_ISU_ST_DT}, '-', '')
+									ELSE REPLACE(#{CPN_MST_USE_ST_DT}, '-', '') END,
+			CPN_MST_USE_ED_DT = CASE WHEN #{CPN_MST_ISU_DAY_GBN} = 'M' THEN TO_CHAR(LAST_DAY(TO_DATE(REPLACE(#{CPN_MST_ISU_ED_DT_ON}, '-', ''), 'YYYYMMDD')),'YYYYMMDD')
+									ELSE REPLACE(#{CPN_MST_USE_ED_DT}, '-', '') END				
+             <if test="CPN_MST_SAL_PRC != null and CPN_MST_SAL_PRC != ''">
+	            ,CPN_MST_SAL_PRC = #{CPN_MST_SAL_PRC}
+	        </if>
+             <if test="CPN_MST_SML_PRC != null and CPN_MST_SML_PRC != ''">
+	            ,CPN_MST_SML_PRC = #{CPN_MST_SML_PRC}
+	        </if>
+             <if test="CPN_MST_MXM_PRC != null and CPN_MST_MXM_PRC != ''">
+	            ,CPN_MST_MXM_PRC = #{CPN_MST_MXM_PRC}
+	        </if>
+             <if test="CPN_MST_ISU_ST_DT != null and CPN_MST_ISU_ST_DT != ''">
+	            ,CPN_MST_ISU_ST_DT = REPLACE(#{CPN_MST_ISU_ST_DT}, '-', '')
+	        </if>
+             <if test="CPN_MST_ISU_ED_DT_ON != null and CPN_MST_ISU_ED_DT_ON != ''">
+	            ,CPN_MST_ISU_ED_DT = REPLACE(#{CPN_MST_ISU_ED_DT_ON}, '-', '')
+	        </if>
+             <if test="CPN_MST_LMT_YN != null and CPN_MST_LMT_YN != ''">
+	            ,CPN_MST_LMT_YN = #{CPN_MST_LMT_YN}
+	        </if>
+             <if test="CPN_MST_ISU_CNT != null and CPN_MST_ISU_CNT != ''">
+	            ,CPN_MST_ISU_CNT = #{CPN_MST_ISU_CNT}
+	        </if>
+             <if test="CPN_MST_EXPS_YN != null and CPN_MST_EXPS_YN != ''">
+	            ,CPN_MST_EXPS_YN = #{CPN_MST_EXPS_YN}
+	        </if>
+             <if test="CPN_MST_ISU_DAY_GBN != null and CPN_MST_ISU_DAY_GBN != ''">
+	            ,CPN_MST_ISU_DAY_GBN = #{CPN_MST_ISU_DAY_GBN}
+	        </if>
+             <if test="CPN_MST_USE_DAY != null and CPN_MST_USE_DAY != ''">
+	            ,CPN_MST_USE_DAY = #{CPN_MST_USE_DAY}
+	        </if>
+        WHERE
+            CPN_MST_IDX = #{CPN_MST_IDX}  
+    </update>
+    
+    
+	<delete id="deleteCouponMember" parameterType="HashMap">
+        /* Coupon.deleteCouponMember */
+        DELETE FROM T_CPN_MEM WHERE CPN_MEM_IDX = #{CPN_MEM_IDX}
+	</delete>
+	
+	<delete id="deleteCouponTgt" parameterType="HashMap">
+        /* Coupon.deleteCouponTgt */
+        DELETE FROM T_CPN_TGT WHERE CPN_TGT_IDX = #{CPN_TGT_IDX}
+	</delete>
+	
+	<delete id="deleteCouponEtc" parameterType="HashMap">
+        /* Coupon.deleteCouponEtc */
+        DELETE FROM T_CPN_ETC WHERE CPN_ETC_IDX = #{CPN_ETC_IDX}
+	</delete>
+    
+</mapper>

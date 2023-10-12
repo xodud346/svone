@@ -1,0 +1,581 @@
+(function()
+{
+    return function()
+    {
+        if (!this._is_form)
+            return;
+        
+        var obj = null;
+        
+        this.on_create = function()
+        {
+            this.set_name("SSP_BO_CN_02");
+            this.set_titletext("약관 관리 상세");
+            if (Form == this.constructor)
+            {
+                this._setFormPosition(1280,860);
+            }
+            
+            // Object(Dataset, ExcelExportObject) Initialize
+            obj = new Dataset("ds_search", this);
+            obj._setContents("<ColumnInfo><Column id=\"LANG_CD\" type=\"STRING\" size=\"256\"/><Column id=\"CODE_LIST\" type=\"STRING\" size=\"256\"/><Column id=\"UT_CLAUS_SEQ\" type=\"STRING\" size=\"256\"/></ColumnInfo><Rows><Row/></Rows>");
+            this.addChild(obj.name, obj);
+
+
+            obj = new Dataset("ds_utClausDetail", this);
+            obj._setContents("<ColumnInfo><Column id=\"UT_CLAUS_TTL\" type=\"STRING\" size=\"256\"/><Column id=\"CLAUS_STR_DT\" type=\"STRING\" size=\"256\"/><Column id=\"CLAUS_END_DT\" type=\"STRING\" size=\"256\"/><Column id=\"UT_CLAUS_SPR_CD\" type=\"STRING\" size=\"256\"/><Column id=\"UT_CLAUS_CTS\" type=\"STRING\" size=\"256\"/><Column id=\"USE_YN\" type=\"STRING\" size=\"256\"/></ColumnInfo>");
+            this.addChild(obj.name, obj);
+
+
+            obj = new Dataset("ds_utClausSprCd", this);
+            obj._setContents("<ColumnInfo><Column id=\"COM_DTL_CD\" type=\"STRING\" size=\"256\"/><Column id=\"COM_DTL_CD_NM\" type=\"STRING\" size=\"256\"/></ColumnInfo>");
+            this.addChild(obj.name, obj);
+            
+            // UI Components Initialize
+            obj = new Div("div_save","20","0",null,"800","20",null,null,null,null,null,this);
+            obj.set_taborder("0");
+            obj.set_text("Div01");
+            obj.set_border("0px solid darkblue");
+            this.addChild(obj.name, obj);
+
+            obj = new TextArea("edt_utClausCts","140","180",null,"540","10",null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("3");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static65","0","175",null,"550","0",null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("9");
+            obj.set_cssclass("sta_cm_box02L");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static07","0","84",null,"32","0",null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("7");
+            obj.set_cssclass("sta_cm_box02L");
+            obj.set_text("");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static03","0","53",null,"32","0",null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("5");
+            obj.set_cssclass("sta_cm_box02L_tdt");
+            obj.set_text("");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static00","0","22","300","30",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("0");
+            obj.set_text("이용 약관");
+            obj.set_cssclass("sta_WF_title01");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static02","0","53","130","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("4");
+            obj.set_text("유형");
+            obj.set_cssclass("sta_cm_box01L_tdt_necessary");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static06","0","84","130","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("6");
+            obj.set_text("상태");
+            obj.set_cssclass("sta_cm_box01L");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static10","0","175","130","550",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("8");
+            obj.set_text("내용");
+            obj.set_cssclass("sta_cm_box01L_necessary");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Combo("cmb_utClausSprCd","140","58","296","24",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("1");
+            obj.set_innerdataset("ds_utClausSprCd");
+            obj.set_datacolumn("COM_DTL_CD_NM");
+            obj.set_codecolumn("COM_DTL_CD");
+            obj.set_index("-1");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static07_00","0","114",null,"32","0",null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("10");
+            obj.set_cssclass("sta_cm_box02L");
+            obj.set_text("");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static07_00_00","0","144",null,"32","0",null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("11");
+            obj.set_cssclass("sta_cm_box02L");
+            obj.set_text("");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static06_01","0","114","130","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("12");
+            obj.set_text("게시 일자");
+            obj.set_cssclass("sta_cm_box01L_necessary");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static06_02","0","144","130","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("13");
+            obj.set_text("개정 이력");
+            obj.set_cssclass("sta_cm_box01L_necessary");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Edit("edt_qstTtl","140","148",null,"24","10",null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("2");
+            obj.set_maxlength("40");
+            obj.set_displaynulltext("최대 40자 까지 입력하실 수 있습니다.");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Radio("rdo_useYn","140","88","285","24",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("14");
+            obj.set_codecolumn("codecolumn");
+            obj.set_datacolumn("datacolumn");
+            obj.set_direction("vertical");
+            var div_save_form_rdo_useYn_innerdataset = new nexacro.NormalDataset("div_save_form_rdo_useYn_innerdataset", obj);
+            div_save_form_rdo_useYn_innerdataset._setContents("<ColumnInfo><Column id=\"codecolumn\" size=\"256\"/><Column id=\"datacolumn\" size=\"256\"/></ColumnInfo><Rows><Row><Col id=\"codecolumn\">Y</Col><Col id=\"datacolumn\">사용</Col></Row><Row><Col id=\"codecolumn\">N</Col><Col id=\"datacolumn\">미사용</Col></Row></Rows>");
+            obj.set_innerdataset(div_save_form_rdo_useYn_innerdataset);
+            obj.set_text("전체");
+            obj.set_value("");
+            obj.set_index("0");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Calendar("cal_regStartDate","139","118","140","24",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("15");
+            obj.set_cssclass("cal_WF_calendar");
+            obj.set_dateformat("yyyy.MM.dd");
+            obj.set_editformat("yyyy.MM.dd");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static59","283","118","9","24",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("16");
+            obj.set_text("~");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Calendar("cal_regEndDate","296","118","140","24",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("17");
+            obj.set_cssclass("cal_WF_calendar");
+            obj.set_dateformat("yyyy.MM.dd");
+            obj.set_editformat("yyyy.MM.dd");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new CheckBox("chk_noEndDt","448","118","109","24",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("18");
+            obj.set_text("종료일 없음");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static07_00_01","0","724",null,"32","0",null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("21");
+            obj.set_cssclass("sta_cm_box02L");
+            obj.set_text("");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static16_01_00_00_00","51.29%","724","130","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("22");
+            obj.set_text("등록 일시");
+            obj.set_cssclass("sta_cm_box01L");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("sta_regDtm","773","724","303","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("23");
+            obj.set_cssclass("sta_cm_box02L_txt");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static07_00_00_00","0","755",null,"32","0",null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("26");
+            obj.set_cssclass("sta_cm_box02L");
+            obj.set_text("");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static16_01_00","0","755","130","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("27");
+            obj.set_text("최종 수정");
+            obj.set_cssclass("sta_cm_box01L");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static16_01","0","724","130","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("19");
+            obj.set_text("최초 등록");
+            obj.set_cssclass("sta_cm_box01L");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("sta_regPsnId","130","724","303","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("20");
+            obj.set_cssclass("sta_cm_box02L_txt");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("sta_updpsnId","130","755","303","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("28");
+            obj.set_cssclass("sta_cm_box02L_txt");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("Static16_01_00_00","51.29%","755","130","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("25");
+            obj.set_text("수정 일시");
+            obj.set_cssclass("sta_cm_box01L");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Static("sta_updDtm","773","755","303","32",null,null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("24");
+            obj.set_cssclass("sta_cm_box02L_txt");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new WebBrowser("wbs_utClausCts","140","180",null,"540","10",null,null,null,null,null,this.div_save.form);
+            obj.set_taborder("29");
+            this.div_save.addChild(obj.name, obj);
+
+            obj = new Button("btn_cancel","555","815","70","30",null,null,null,null,null,null,this);
+            obj.set_taborder("1");
+            obj.set_text("취소");
+            this.addChild(obj.name, obj);
+
+            obj = new Button("btn_delete","629","815","70","30",null,null,null,null,null,null,this);
+            obj.set_taborder("2");
+            obj.set_text("삭제");
+            this.addChild(obj.name, obj);
+
+            obj = new Button("btn_save","703","815","70","30",null,null,null,null,null,null,this);
+            obj.set_taborder("3");
+            obj.set_text("저장");
+            obj.set_cssclass("btn_WF_select");
+            this.addChild(obj.name, obj);
+            // Layout Functions
+            //-- Default Layout : this
+            obj = new Layout("default","",1280,860,this,function(p){});
+            obj.set_mobileorientation("landscape");
+            this.addLayout(obj.name, obj);
+            
+            // BindItem Information
+            obj = new BindItem("item7","div_save.form.edt_qstTtl","value","ds_utClausDetail","UT_CLAUS_TTL");
+            this.addChild(obj.name, obj);
+            obj.bind();
+
+            obj = new BindItem("item0","div_save.form.edt_utClausCts","value","ds_utClausDetail","UT_CLAUS_CTS");
+            this.addChild(obj.name, obj);
+            obj.bind();
+
+            obj = new BindItem("item1","div_save.form.cmb_utClausSprCd","value","ds_utClausDetail","UT_CLAUS_SPR_CD");
+            this.addChild(obj.name, obj);
+            obj.bind();
+
+            obj = new BindItem("item2","div_save.form.rdo_useYn","value","ds_utClausDetail","USE_YN");
+            this.addChild(obj.name, obj);
+            obj.bind();
+
+            obj = new BindItem("item3","div_save.form.cal_regStartDate","value","ds_utClausDetail","CLAUS_STR_DT");
+            this.addChild(obj.name, obj);
+            obj.bind();
+
+            obj = new BindItem("item4","div_save.form.cal_regEndDate","value","ds_utClausDetail","CLAUS_END_DT");
+            this.addChild(obj.name, obj);
+            obj.bind();
+
+            obj = new BindItem("item5","div_save.form.chk_noEndDt","value","ds_utClausDetail","CHK_NO_END_DT");
+            this.addChild(obj.name, obj);
+            obj.bind();
+
+            obj = new BindItem("item6","div_save.form.sta_regPsnId","text","ds_utClausDetail","REGPSN_NM");
+            this.addChild(obj.name, obj);
+            obj.bind();
+
+            obj = new BindItem("item8","div_save.form.sta_regDtm","text","ds_utClausDetail","REG_DTM");
+            this.addChild(obj.name, obj);
+            obj.bind();
+
+            obj = new BindItem("item9","div_save.form.sta_updDtm","text","ds_utClausDetail","UPD_DTM");
+            this.addChild(obj.name, obj);
+            obj.bind();
+
+            obj = new BindItem("item10","div_save.form.sta_updpsnId","text","ds_utClausDetail","UPDPSN_NM");
+            this.addChild(obj.name, obj);
+            obj.bind();
+            
+            // TriggerItem Information
+
+        };
+        
+        this.loadPreloadList = function()
+        {
+
+        };
+        
+        // User Script
+        this.addIncludeScript("SSP_BO_CN_16.xfdl","CO::coUtils.xjs");
+        this.registerScript("SSP_BO_CN_16.xfdl", function() {
+        /*******************************************************
+        PROJECT NAME : SSP-BO
+        CREATION DATES :
+        *******************************************************/
+        this.executeIncludeScript("CO::coUtils.xjs"); /*include "CO::coUtils.xjs"*/;
+        /***********************************************************************************************
+        * Form 변수 선언 영역
+        ************************************************************************************************/
+        this.fv_oApp = nexacro.getApplication();	//application object
+        this.fvDocWeb = "";
+        this.fvRtnHeight=260; //버튼사이즈
+        /***********************************************************************************************
+        * FORM EVENT 영역(onload)
+        ************************************************************************************************/
+        this.fn_onLoad = function(obj,e){
+        	this.gfn_formOnLoad(this);
+        	this.fn_commonCodeSearch();
+        	this.ds_search.setColumn(0, "UT_CLAUS_SEQ", this.parent.utClausSeq);
+        	this.fn_search();
+        };
+        /***********************************************************************************************
+        * Transaction 서비스 호출 영역
+        ************************************************************************************************/
+        //공통코드조회
+        this.fn_commonCodeSearch = function(){
+        	var sSvcId = "commonCodeSearch";
+        	var sUrl = "/co/select_common_code_list.do";
+        	var inDs = "ds_search=ds_search";
+        	var outDs = "ds_utClausSprCd=ds_output1";
+        	var arg = "";
+
+        	this.ds_search.setColumn(0, "CODE_LIST", "UT_CLAUS_SPR_CD");
+        	this.ds_search.setColumn(0, "LANG_CD", "KO");
+        	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+        };
+
+        //조회
+        this.fn_search = function(){
+        	var sSvcId = "search";
+        	var sUrl = "/co/ut_claus/select_ut_claus_list_detail.do";
+        	var inDs = "ds_search=ds_search"
+        	var outDs = "ds_utClausDetail=ds_output1";
+        	var arg;
+        	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack", false);
+        };
+
+        //저장
+        this.fn_save = function(type){
+        	var sSvcId = "save";
+
+        	if(type == "DEL"){
+        		sSvcId = "delete";
+        	}
+
+        	var sUrl = "/co/ut_claus/save_ut_claus_list.do";
+        	var inDs = "ds_save=ds_utClausDetail:U"
+        	var outDs = "";
+        	var arg;
+        	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+        };
+
+
+        /***********************************************************************************************
+        * Callback 처리 영역
+        ************************************************************************************************/
+        this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+        	if(errorCode != 0 && errorCode != -100){
+        		alert(errorMsg);
+        	}
+
+        	switch(svcID){
+        	case "search":
+        		this.ds_utClausDetail.addColumn("CHK_NO_END_DT","INT");
+        		if(this.gfn_isNull(this.ds_utClausDetail.getColumn(0, "CLAUS_END_DT"))){
+        			this.ds_utClausDetail.setColumn(0, "CHK_NO_END_DT", 1);
+        			this.div_save.form.cal_regEndDate.set_readonly(true);
+        		}
+        		break;
+        	case "commonCodeSearch":
+        		this.ds_utClausSprCd.insertRow(0);
+        		this.ds_utClausSprCd.setColumn(0,"COM_DTL_CD_NM","선택");
+
+        		var sUrl = nexacro.getEnvironment().services["svcUrl"].url + "smartEditor/SmartEditor2.html";
+        		this.div_save.form.wbs_utClausCts.set_url(sUrl);
+
+        		break;
+        	case "save":
+        		if(errorCode == -100){
+        			alert(errorMsg);
+        		}else{
+        			alert("저장되었습니다.");
+        			this.close(true);
+        		}
+        		break;
+        	case "delete":
+        		if(errorCode == -100){
+        			alert(errorMsg);
+        		}else{
+        			this.close(true);
+        		}
+        		break;
+        	default:
+        		break;
+        	}
+        };
+
+
+        this.fnEditorCallback = function(sType)
+        {
+        	switch (sType)
+        	{
+        		case "onload" :
+        			var sContents = this.ds_utClausDetail.getColumn(0, "UT_CLAUS_CTS");
+        			this.fvDocWeb.getProperty("ir1").setProperty("value", sContents);
+        			this.fvDocWeb.getProperty("editorSetBtn").callMethod("click");
+        			break;
+        	}
+        };
+
+        /***********************************************************************************************
+        * 외부 호출 FUNCTION 영역
+        ************************************************************************************************/
+        /***********************************************************************************************
+        *  개발자(사용자) 함수 영역
+        ************************************************************************************************/
+
+        //저장 유효성 체크
+        this.fn_validationCheck = function(){
+        	if(this.gfn_isNull(this.div_save.form.cmb_utClausSprCd.value)) {
+        		alert("유형은 필수 입력항목입니다.");
+        		return false;
+        	}
+
+        	if(this.gfn_isNull(this.div_save.form.cal_regStartDate.value)) {
+        		alert("게시 일자 시작일은 필수 입력항목입니다.");
+        		return false;
+        	}
+
+        	if(!this.div_save.form.chk_noEndDt.value){
+        		if(this.gfn_isNull(this.div_save.form.cal_regEndDate.value)) {
+        			alert("게시 일자 종료일은 필수 입력항목입니다.");
+        			return false;
+        		}
+
+        		if(this.div_save.form.cal_regStartDate.value > this.div_save.form.cal_regEndDate.value){
+        			alert("종료일이 시작일보다 작습니다.");
+        			this.div_save.form.cal_regEndDate.setFocus();
+        			return;
+        		}
+        	}
+
+        	if(this.gfn_isNull(this.div_save.form.edt_qstTtl.value)) {
+        		alert("개정 이력은 필수 입력항목입니다.");
+        		return false;
+        	}
+
+        	//에디터 내용을 가져오기
+        	this.fvDocWeb.getProperty("editorGetBtn").callMethod("click");
+        	var sEditorData = this.fvDocWeb.getProperty("ir1").getProperty("value");
+
+        	if( sEditorData == ""  || sEditorData == null || sEditorData == '&nbsp;' || sEditorData == '<p><br></p>')  {
+               alert("내용은 필수 입력항목입니다.");
+               return;
+        	}
+        	this.ds_utClausDetail.setColumn(0, "UT_CLAUS_CTS", sEditorData);
+
+        	return true;
+        };
+
+
+
+        this.fnResize = function(nWidth, nHeight)
+        {
+        	var sValue = nWidth+","+nHeight;
+        	this.fvDocWeb.getProperty("resize").setProperty("value",sValue);
+        	this.fvDocWeb.getProperty("btnResize").callMethod("click");
+        };
+        /***********************************************************************************************
+        *  각 Component 별 이벤트 영역
+        ************************************************************************************************/
+        //취소
+        this.btn_cancel_onclick = function(obj,e)
+        {
+        	var sReturn = this.confirm("취소하시겠습니까?");
+        	if(sReturn == true){
+        		this.close(false);
+        	}
+        };
+
+        this.btn_save_onclick = function(obj,e)
+        {
+        	if(this.fn_validationCheck()){
+        		this.fn_save("INS");
+        	}
+        };
+
+        this.btn_delete_onclick = function(obj,e)
+        {
+        	var sReturn = this.confirm("삭제하시겠습니까?");
+        	if(sReturn == true){
+        		this.ds_utClausDetail.deleteAll();
+        		this.fn_save("DEL");
+        	}
+        };
+
+        //종료일 없음 체크시 종료일 비활성화
+        this.chk_noEndDt_onchanged = function(obj,e)
+        {
+        	if(this.div_save.form.chk_noEndDt.value){
+        		this.div_save.form.cal_regEndDate.set_readonly(true);
+        		this.div_save.form.cal_regEndDate.set_value("");
+        	}else{
+        		this.div_save.form.cal_regEndDate.set_readonly(false);
+        		var endDate = "";
+        		if(this.ds_utClausDetail.getOrgColumn(0, "CLAUS_END_DT")  != undefined){
+        			endDate = this.ds_utClausDetail.getOrgColumn(0, "CLAUS_END_DT");
+        		}
+        		this.div_save.form.cal_regEndDate.set_value(endDate);
+        	}
+        };
+
+        this.edt_qstTtl_onchanged = function(obj,e)
+        {
+        	if(this.div_save.form.edt_qstTtl.value.toString().length == 0){
+        		this.ds_utClausDetail.setColumn(0, "UT_CLAUS_TTL", null);
+        	}
+        };
+
+
+        this.webEditor_onloadcompleted = function(obj,e)
+        {
+        	this.fvDocWeb = this.div_save.form.wbs_utClausCts.getProperty("document").getProperty("all");
+        };
+
+        this.webEditor_onusernotify = function(obj,e)
+        {
+        	try
+        	{
+        		// parent의 최상의 Form에 이벤트 발생시킴
+        		var oForm = this;
+        		if (oForm && oForm.fnEditorCallback)
+        		{
+        			if (e.userdata == "onload")
+        			{
+        				var initHeight = this.div_save.form.wbs_utClausCts.getOffsetHeight();
+        				this.fnResize(obj.getOffsetWidth(), initHeight-this.fvRtnHeight);
+        			}
+
+        			oForm.fnEditorCallback(e.userdata);
+        		}
+        	}
+        	catch(e){
+        		trace("sampleNaverEditor.xfdl :: webEditor_onusernotify() => " + e.message);
+        	}
+        };
+
+        });
+        
+        // Regist UI Components Event
+        this.on_initEvent = function()
+        {
+            this.addEventHandler("onload",this.fn_onLoad,this);
+            this.div_save.form.edt_utClausCts.addEventHandler("onchanged",this.div_save_edt_utClausCts_onchanged,this);
+            this.div_save.form.Static00.addEventHandler("onclick",this.Static00_onclick,this);
+            this.div_save.form.Static02.addEventHandler("onclick",this.Div_top_info_Static02_onclick,this);
+            this.div_save.form.edt_qstTtl.addEventHandler("onchanged",this.edt_qstTtl_onchanged,this);
+            this.div_save.form.cal_regStartDate.addEventHandler("ondropdown",this.cal_regStartDate_ondropdown,this);
+            this.div_save.form.chk_noEndDt.addEventHandler("onchanged",this.chk_noEndDt_onchanged,this);
+            this.div_save.form.wbs_utClausCts.addEventHandler("onloadcompleted",this.webEditor_onloadcompleted,this);
+            this.div_save.form.wbs_utClausCts.addEventHandler("onusernotify",this.webEditor_onusernotify,this);
+            this.div_save.form.wbs_utClausCts.addEventHandler("onsize",this.webEditor_onsize,this);
+            this.btn_cancel.addEventHandler("onclick",this.btn_cancel_onclick,this);
+            this.btn_delete.addEventHandler("onclick",this.btn_delete_onclick,this);
+            this.btn_save.addEventHandler("onclick",this.btn_save_onclick,this);
+        };
+        this.loadIncludeScript("SSP_BO_CN_16.xfdl");
+        this.loadPreloadList();
+        
+        // Remove Reference
+        obj = null;
+    };
+}
+)();

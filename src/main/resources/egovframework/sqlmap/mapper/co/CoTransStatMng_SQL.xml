@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CoTransStatMng">
+
+    <!--
+    ******************************************************************************
+    * SELECT : 거래명세서관리 목록 카운트
+    * 작성자 : lee
+    * 작성 일자 : 2022-03-11
+    ******************************************************************************
+    -->
+    <select id="selectTransStatMngListCount" parameterType="HashMap" resultType="int">
+        SELECT COUNT(1) AS CNT
+          FROM SSP_APP.TB_CO_GO_STM_MST A
+        <include refid="selectTransStatMngWhere"/>
+    </select>
+
+    <!--
+    ******************************************************************************
+    * SELECT : 거래명세서 관리 목록
+    * 작성자 : lee
+    * 작성 일자 : 2022-03-11
+    ******************************************************************************
+    -->
+    <select id="selectTransStatMngList" parameterType="HashMap" resultType="HashMap">
+        SELECT A.RPT_ID
+             , A.RPT_NM
+             , A.RPT_URL
+             , A.SALSPRC_YN
+             , A.USE_YN
+             , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI') AS REG_DTM
+             , TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI') AS UPD_DTM
+             , A.REGPSN_ID
+             , A.UPDPSN_ID
+             , (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.OPRTR_ID = A.REGPSN_ID) AS REGPSN_NM
+             , (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.OPRTR_ID = A.UPDPSN_ID) AS UPDPSN_NM
+             , 0 AS COL_CHK
+        FROM SSP_APP.TB_CO_GO_STM_MST A
+        <include refid="selectTransStatMngWhere"/>
+    </select>
+
+    <!--
+    ******************************************************************************
+    * WHERE : 거래명세서관리 조건절
+    * 작성자 : lee
+    * 작성 일자 : 2022-03-11
+    ******************************************************************************
+    -->
+    <sql id="selectTransStatMngWhere">
+        <where>
+            <if test=" rptId != null and rptId != '' ">
+                AND  A.RPT_ID LIKE '%' || #{rptId} || '%'
+            </if>
+            <if test=" rptNm != null and rptNm != '' ">
+                AND A.RPT_NM LIKE '%' || #{rptNm} || '%'
+            </if>
+            <if test=" salsprcYn != null and salsprcYn != '' ">
+                AND A.SALSPRC_YN = #{salsprcYn}
+            </if>
+            <if test=" useYn != null and useYn != '' ">
+                AND A.USE_YN = #{useYn}
+            </if>
+        </where>
+    </sql>
+
+
+    <!--
+    ******************************************************************************
+    * INSERT : 거래명세서관리 등록
+    * 작성자 : lee
+    * 작성 일자 : 2022-03-11
+    ******************************************************************************
+    -->
+    <insert id="insertTransStatMng" parameterType="HashMap">
+        INSERT INTO SSP_APP.TB_CO_GO_STM_MST
+        (
+            RPT_ID
+          , RPT_NM
+          , RPT_URL
+          , SALSPRC_YN
+          , USE_YN
+          , REG_DTM
+          , REGPSN_ID
+        ) VALUES (
+           #{rptId}
+         , #{rptNm}
+         , #{rptUrl}
+         , #{salsprcYn}
+         , #{useYn}
+         , SYSDATE
+         , #{regpsnId}
+        )
+    </insert>
+
+    <!--
+    ******************************************************************************
+    * UPDATE : 거래명세서관리 수정
+    * 작성자 : lee
+    * 작성 일자 : 2022-03-11
+    ******************************************************************************
+    -->
+    <update id="updateTransStatMng" parameterType="HashMap">
+        UPDATE SSP_APP.TB_CO_GO_STM_MST 
+           SET RPT_NM = #{rptNm}
+             , RPT_URL = #{rptUrl}
+             , SALSPRC_YN = #{salsprcYn}
+             , USE_YN = #{useYn}
+             , UPDPSN_ID = #{updpsnId}
+             , UPD_DTM = SYSDATE
+         WHERE RPT_ID = #{rptId}
+    </update>
+    
+    <!--
+    ******************************************************************************
+    * DELETE : 거래명세서관리 삭제
+    * 작성자 : lee
+    * 작성 일자 : 2022-03-11
+    ******************************************************************************
+    -->
+    <update id="deleteTransStatMng" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_CO_GO_STM_MST
+         WHERE RPT_NM = #{rptNm}
+    </update>
+
+
+</mapper>

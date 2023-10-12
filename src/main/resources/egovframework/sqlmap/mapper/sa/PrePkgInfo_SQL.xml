@@ -1,0 +1,859 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PrePkgInfo">
+
+	<select id="selectPrePkgInfoList" parameterType="HashMap" resultType="HashMap">
+		/* 프리패키지 목록 조회 - PrePkgInfo_SQL.selectPrePkgInfoList */
+		
+		SELECT Z.CO_CD
+		     	, Z.PRE_PKG_SEQ
+		     	, Z.PRE_PKG_NM
+		     	, Z.PRE_PKG_DESC
+		     	, Z.PC_DOC_REG_ID
+		     	, Z.MBL_DOC_REG_ID
+		     	, Z.IDDT_DSGN_YN
+		     	, Z.USE_YN
+		     	, Z.REGPSN_ID
+		     	, TO_CHAR(REG_DTM, 'YYYY.MM.DD') AS REG_DTM
+		     	, Z.UPDPSN_ID
+		     	, TO_CHAR(UPD_DTM, 'YYYY.MM.DD') AS UPD_DTM	
+		     	, Z.IDDT_DSGN_YN_NM
+		     	, Z.USE_YN_NM	     
+		     	, Z.REGPSN_ID_NM
+		     	, Z.UPDPSN_ID_NM
+			 	, Z.EXPS_SO
+		     	, Z.IDDT_NM || CASE WHEN Z.IDDT_NM_CNT > 0 THEN ' 외 ' || Z.IDDT_NM_CNT || '개'
+		                       ELSE ''
+		                  END AS IDDT_NM
+		     	, Z.MALL_SPR_CD
+		     	, Z.MALL_SPR_CD_NM
+			
+		  FROM (
+		        SELECT A.CO_CD
+		             	, A.PRE_PKG_SEQ
+		             	, A.PRE_PKG_NM
+		             	, A.PRE_PKG_DESC
+		             	, A.PC_DOC_REG_ID
+		             	, A.MBL_DOC_REG_ID
+		             	, A.IDDT_DSGN_YN
+		             	, A.ALL_INC_YN
+		             	, A.USE_YN
+		             	, A.REGPSN_ID
+		             	, A.REG_DTM
+		             	, A.UPDPSN_ID
+		             	, A.UPD_DTM
+					 	, A.EXPS_SO
+		             	, CASE WHEN A.IDDT_DSGN_YN = 'Y' THEN '산업군'
+		                       WHEN A.IDDT_DSGN_YN = 'N' THEN '없음'
+		                  	   ELSE ''
+		               	  END 										AS IDDT_DSGN_YN_NM
+		             	, CASE WHEN A.ALL_INC_YN = 'Y' THEN '포함'
+		                       WHEN A.ALL_INC_YN = 'N' THEN '미포함'
+		                       ELSE ''
+		               	  END 										AS ALL_INC_YN_NM
+		             	, CASE WHEN A.USE_YN = 'Y' THEN '사용'
+		                       WHEN A.USE_YN = 'N' THEN '미사용'
+		                       ELSE ''
+		               	  END 										AS USE_YN_NM
+		             
+		             	, B.OPRTR_NM AS REGPSN_ID_NM
+		             	, C.OPRTR_NM AS UPDPSN_ID_NM
+		             
+		             	, (
+			                SELECT IDDT_NM
+			                FROM TB_CC_IDDT_BASIS X
+			                WHERE X.IDDT_ID = (
+			                                    SELECT IDDT_ID
+			                                    FROM TB_SA_PRE_PKG_IDDT_DTL Y
+			                                    WHERE Y.CO_CD = A.CO_CD
+			                                    AND Y.PRE_PKG_SEQ = A.PRE_PKG_SEQ
+			                                    AND ROWNUM <![CDATA[ <= ]]> 1
+			                                  )
+		               	   )										 AS IDDT_NM
+		             	, (
+			                SELECT COUNT(1)
+			                FROM TB_SA_PRE_PKG_IDDT_DTL Y
+			                WHERE Y.CO_CD = A.CO_CD
+			                AND Y.PRE_PKG_SEQ = A.PRE_PKG_SEQ
+			               ) - 1 									AS IDDT_NM_CNT
+			               
+		       			, A.MALL_SPR_CD
+		       			, CASE WHEN A.MALL_SPR_CD = '10' THEN 'SSP'
+		       				   WHEN A.MALL_SPR_CD = '20' THEN 'RND'
+		       				   ELSE ''
+		       			  END 										AS MALL_SPR_CD_NM
+		       			
+		          FROM TB_SA_PRE_PKG_INFO A
+		             , TB_CO_MBR_OPRTR_INFO B
+		             , TB_CO_MBR_OPRTR_INFO C
+		
+		         WHERE A.CO_CD = B.CO_CD(+)
+		           AND A.REGPSN_ID = B.OPRTR_ID(+)
+		 
+		           AND A.CO_CD = C.CO_CD(+)
+		           AND A.UPDPSN_ID = C.OPRTR_ID(+)
+		           
+				<if test="iddtId != null and iddtId != ''">
+					<choose>
+						<when test="iddtId == 'all'">
+							AND ((A.CO_CD, A.PRE_PKG_SEQ) IN (
+															SELECT CO_CD
+	                                                 			 	, PRE_PKG_SEQ
+	                                              			FROM TB_SA_PRE_PKG_IDDT_DTL X
+	                                        		    	INNER JOIN TB_CC_IDDT_BASIS Y
+	                                               			ON Y.IDDT_ID = X.IDDT_ID
+	                                             			WHERE Y.USE_YN = 'Y'
+		                                           			)
+		                         OR A.IDDT_DSGN_YN IN ('Y','N')                 			
+		                         )
+						</when>
+						
+						<when test="iddtId == 'unused'">
+							AND (A.CO_CD, A.PRE_PKG_SEQ) IN (
+	                                            			SELECT CO_CD
+	                                                 			    , PRE_PKG_SEQ
+	                                              			FROM TB_SA_PRE_PKG_IDDT_DTL X
+	                                        		    	INNER JOIN TB_CC_IDDT_BASIS Y
+	                                               			ON Y.IDDT_ID = X.IDDT_ID
+	                                             			WHERE Y.USE_YN = 'N'
+		                                          			)
+						</when>
+						
+						<otherwise>
+							AND (A.CO_CD, A.PRE_PKG_SEQ) IN (
+	                                            			SELECT CO_CD
+	                                                 			 	, PRE_PKG_SEQ
+	                                              			FROM TB_SA_PRE_PKG_IDDT_DTL X
+	                                             			WHERE X.IDDT_ID = #{iddtId}
+		                                           			)
+						</otherwise>
+					</choose>
+				</if>
+							
+				<if test="useYn != null and useYn != '' ">
+				    AND A.USE_YN = #{useYn}
+				</if>
+			
+			    <if test="mallSprCd != null and mallSprCd != '' ">
+				    AND A.MALL_SPR_CD = #{mallSprCd}
+				</if> 
+		
+				<if test="startDate != null and startDate != '' and endDate != null and endDate != '' ">
+		            AND A.${termSpr} BETWEEN TO_DATE(#{startDate} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{endDate} || '235959', 'YYYYMMDDHH24MISS') 
+				</if>
+			
+				<if test="prePkgNm != null and prePkgNm != '' ">
+				    AND A.PRE_PKG_NM LIKE '%' || #{prePkgNm} || '%'
+				</if>
+			
+				<if test="reprPrdId != null and reprPrdId != '' ">
+		            AND (A.CO_CD, A.PRE_PKG_SEQ) IN (
+		                                            SELECT CO_CD
+		                                                 	, PRE_PKG_SEQ
+		                                            FROM TB_SA_PRE_PKG_PRD_DTL X
+		                                            WHERE X.PRD_ID LIKE '%' || #{reprPrdId} || '%'
+		                                            AND X.REPR_PRD_YN = 'Y'
+		                                           	)
+				</if>
+			
+				<if test="regpsnId != null and regpsnId != '' ">
+					AND A.REGPSN_ID = #{regpsnId}
+				</if>
+			
+				<if test="updpsnId != null and updpsnId != '' ">
+					AND A.UPDPSN_ID = #{updpsnId}
+				</if>
+		
+		       ) Z
+		 		
+				<if test="sortColumn != null and sortColumn != ''">
+		 			ORDER BY ${sortColumn} ${sortType}
+				</if>
+			
+				<if test="sortColumn == null or sortColumn == ''">		
+					ORDER BY Z.EXPS_SO, Z.USE_YN DESC 
+				</if>	
+				
+				<if test="excelDownloadYn != null and excelDownloadYn != ''">	
+					<if test='excelDownloadYn == "N"'>
+						OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY	 
+					</if>	
+				</if>
+
+	</select>
+
+
+	<!-- SSP-2111 : 엑셀용 프리패키지 목록 및 상세 조회 -->	
+	<select id="selectPrePkgInfoDtlForExcel" parameterType="HashMap" resultType="HashMap">
+	
+		SELECT A.PRE_PKG_NM 
+			 	, A.FRT_PKG_NM 
+			 	, D.IDDT_NM 
+			 	, A.REG_DTM 
+			 	, A.UPD_DTM 
+			 	, LTRIM(B.PRD_ID, '0') AS PRD_ID 
+			 	, E.PRD_NM 
+			 	, FN_PR_ATTR_VAL_LIST(E.CO_CD, E.PRD_ID) AS ATTR_VAL
+			 	, FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD',F.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM
+			 	, FN_COM_DTL_CDNM('KO','REPR_PRD_SPR_CD',DECODE(G.REPR_PRD_SPR_YN,'Y',G.REPR_PRD_SPR_RSN_CD,'3')) AS REPR_PRD_SPR_NM
+			 	, CASE WHEN E.PRD_USE_YN = 'Y' THEN '사용'
+			     	   WHEN E.PRD_USE_YN = 'N' THEN '미사용'
+			    	    ELSE '미사용'
+			  	  END  AS PRD_USE_YN_NM
+			 	, FN_COM_DTL_CDNM('KO','DISP_STATS_CD',H.DISP_STATS_CD) AS DISP_STATS_NM
+	 
+		FROM TB_SA_PRE_PKG_INFO A
+		
+		JOIN TB_SA_PRE_PKG_PRD_DTL B 
+		ON A.CO_CD = B.CO_CD 
+		AND A.PRE_PKG_SEQ = B.PRE_PKG_SEQ
+		
+		JOIN TB_SA_PRE_PKG_IDDT_DTL C 
+		ON A.CO_CD = C.CO_CD 
+		AND A.PRE_PKG_SEQ = C.PRE_PKG_SEQ 
+		
+		JOIN TB_CC_IDDT_BASIS D 
+		ON C.IDDT_ID = D.IDDT_ID 
+		
+		JOIN TB_PR_PRD_INFO E 
+		ON B.PRD_ID = E.PRD_ID 
+		
+		JOIN TB_PR_MRO_PRD_INFO F 
+		ON E.PRD_ID = F.PRD_ID
+		
+		JOIN TB_PR_REPR_PRD_MNG_DTL G 
+		ON E.CO_CD = G.CO_CD
+		AND E.PRD_ID = G.PRD_ID
+		AND G.SSP_PRD_YN = 'Y'
+		
+		JOIN TB_DP_PRD_DISP_STATS_INFO H 
+		ON E.CO_CD = H.CO_CD
+		AND E.PRD_ID = H.PRD_ID
+		AND F.PUB_ONLY_SPR_CD = 'P'
+		AND H.BZPLC_ID ='*' 
+		AND H.OPR_UNIT_ID ='*'
+		
+		WHERE 1=1
+		<if test="seqList != null and seqList.size() > 0">
+			AND (0, A.PRE_PKG_SEQ) 
+			IN	<foreach collection="seqList" item="item" open="(" close=")" separator=",">
+			    	(0, #{item})
+				</foreach>				
+		</if>
+		 
+		ORDER BY A.PRE_PKG_SEQ 
+		
+	</select>
+	
+	<select id="selectPrePkgInfoListCount" parameterType="HashMap" resultType="Integer">
+		/* 프리패키지 목록 건수 조회 - PrePkgInfo_SQL.selectPrePkgInfoListCount */
+		
+		SELECT COUNT(1)
+		       
+		  FROM TB_SA_PRE_PKG_INFO A
+		     , TB_CO_MBR_OPRTR_INFO B
+		     , TB_CO_MBR_OPRTR_INFO C
+		
+		 WHERE A.CO_CD = B.CO_CD(+)
+		   AND A.REGPSN_ID = B.OPRTR_ID(+)
+		
+		   AND A.CO_CD = C.CO_CD(+)
+		   AND A.UPDPSN_ID = C.OPRTR_ID(+)
+		   
+				<if test="iddtId != null and iddtId != ''">
+					<choose>
+						<when test="iddtId == 'all'">
+		                	AND ((A.CO_CD, A.PRE_PKG_SEQ) IN (
+															SELECT CO_CD
+	                                                 			 	, PRE_PKG_SEQ
+	                                              			FROM TB_SA_PRE_PKG_IDDT_DTL X
+	                                        		    	INNER JOIN TB_CC_IDDT_BASIS Y
+	                                               			ON Y.IDDT_ID = X.IDDT_ID
+	                                             			WHERE Y.USE_YN = 'Y'
+		                                           			)
+		                         OR A.IDDT_DSGN_YN IN ('Y','N')                 			
+		                         )
+						</when>
+						
+						<when test="iddtId == 'unused'">
+							AND (A.CO_CD, A.PRE_PKG_SEQ) IN (
+	                                            			SELECT CO_CD
+	                                                 			 	, PRE_PKG_SEQ
+	                                              			FROM TB_SA_PRE_PKG_IDDT_DTL X
+	                                        		   		INNER JOIN TB_CC_IDDT_BASIS Y
+	                                               			ON Y.IDDT_ID = X.IDDT_ID
+	                                             			WHERE Y.USE_YN = 'N'
+		                                          			)
+						</when>
+						
+						<otherwise>
+							AND (A.CO_CD, A.PRE_PKG_SEQ) IN (
+	                                            			SELECT CO_CD
+	                                                 			 	, PRE_PKG_SEQ
+	                                              			FROM TB_SA_PRE_PKG_IDDT_DTL X
+	                                             			WHERE X.IDDT_ID = #{iddtId}
+		                                           			)
+						</otherwise>
+					</choose>
+				</if>
+			
+				<if test="useYn != null and useYn != '' ">
+		   			AND A.USE_YN = #{useYn}
+				</if>
+			
+				<!-- <if test="allIncYn != null and allIncYn != '' ">
+		   			AND A.ALL_INC_YN = #{allIncYn}
+				</if> -->
+		
+				<if test="startDate != null and startDate != '' and endDate != null and endDate != '' ">
+		   			AND A.${termSpr} BETWEEN TO_DATE(#{startDate} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{endDate} || '235959', 'YYYYMMDDHH24MISS') 
+				</if>
+			
+				<if test="prePkgNm != null and prePkgNm != '' ">
+		   			AND A.PRE_PKG_NM LIKE '%' || #{prePkgNm} || '%'
+				</if>
+			
+				<if test="reprPrdId != null and reprPrdId != '' ">
+					
+				    AND (A.CO_CD, A.PRE_PKG_SEQ) IN (
+				                                    SELECT CO_CD
+				                                         	, PRE_PKG_SEQ
+				                                    FROM TB_SA_PRE_PKG_PRD_DTL X
+				                                    WHERE X.PRD_ID LIKE '%' || #{reprPrdId} || '%'
+				                                    AND X.REPR_PRD_YN = 'Y'
+				                                    )
+				</if>
+			
+				<if test="regpsnId != null and regpsnId != '' ">
+		   			AND A.REGPSN_ID = #{regpsnId}
+				</if>
+			
+				<if test="updpsnId != null and updpsnId != '' ">
+		   			AND A.UPDPSN_ID = #{updpsnId}
+				</if>
+
+	</select>
+
+	
+
+	<select id="selectPrePkgInfoSeq" parameterType="HashMap" resultType="String">
+		/* 프리패키지 시퀀스 값 조회 - PrePkgInfo_SQL.selectPrePkgInfoSeq */
+		
+		SELECT SQ_SA_PRE_PKG_INFO_01.NEXTVAL AS PRE_PKG_SEQ
+		FROM DUAL
+
+	</select>
+
+    <insert id="insertPrePkgInfo" parameterType="HashMap">
+		/* 프리패키지 기본 정보 등록 - PrePkgInfo.insertPrePkgInfo */
+		
+		INSERT INTO TB_SA_PRE_PKG_INFO
+		     ( CO_CD
+		     , PRE_PKG_SEQ
+		     , PRE_PKG_NM
+		     , PRE_PKG_DESC
+		     , PC_DOC_REG_ID
+		     , MBL_DOC_REG_ID
+		     , IDDT_DSGN_YN
+		     , ALL_INC_YN
+		     , USE_YN
+		     , REGPSN_ID
+		     , REG_DTM
+		     , UPDPSN_ID
+		     , UPD_DTM
+		     , EXPS_SO
+		     , PC_LST_VIEW_TYPE_CD
+		     , MBL_LST_VIEW_TYPE_CD
+		     , FRT_PKG_NM
+		     , LPAGE_PC_DOC_REG_ID
+		     , LPAGE_MBL_DOC_REG_ID
+		     , TGT_URL
+		     , CATG_USE_YN
+		     , MALL_SPR_CD
+		     , URL_USE_YN
+		     )
+		VALUES
+		     ( #{coCd}
+		     , #{prePkgSeq}
+		     , #{prePkgNm}
+		     , #{prePkgDesc}
+		     , #{pcDocRegId}
+		     , #{mblDocRegId}
+		     , #{iddtDsgnYn}
+		     , #{allIncYn}
+		     , #{useYn}
+		     , #{regpsnId}
+		     , SYSDATE
+		     , #{updpsnId}
+		     , SYSDATE
+		     , #{expsSo}
+		     , #{pcLstViewTypeCd}
+		     , #{mblLstViewTypeCd}
+		     , #{frtPkgNm}
+		     , #{lpagePcDocRegId}
+		     , #{lpageMblDocRegId}
+		     , #{tgtUrl}
+		     , #{catgUseYn}
+		     , #{mallSprCd}
+		     , #{urlUseYn}
+		     )
+
+    </insert>
+
+	<update id="updatePrePkgInfo" parameterType="hashMap">
+		/* 프리패키지 기본 정보 수정 - PrePkgInfo.updatePrePkgInfo */
+		
+		UPDATE TB_SA_PRE_PKG_INFO
+		SET PRE_PKG_NM = #{prePkgNm}
+		    , PRE_PKG_DESC = #{prePkgDesc}
+		    , PC_DOC_REG_ID = #{pcDocRegId}
+		    , MBL_DOC_REG_ID = #{mblDocRegId}
+		    , IDDT_DSGN_YN = #{iddtDsgnYn}
+		    , ALL_INC_YN = #{allIncYn}
+		    , USE_YN = #{useYn}
+		    , UPDPSN_ID = #{updpsnId}
+		    , UPD_DTM = SYSDATE
+		    , EXPS_SO = #{expsSo}           
+		    , PC_LST_VIEW_TYPE_CD = #{pcLstViewTypeCd}  
+		    , MBL_LST_VIEW_TYPE_CD = #{mblLstViewTypeCd} 
+		    , FRT_PKG_NM = #{frtPkgNm}         
+		    , LPAGE_PC_DOC_REG_ID = #{lpagePcDocRegId}  
+		    , LPAGE_MBL_DOC_REG_ID = #{lpageMblDocRegId} 
+		    , TGT_URL = #{tgtUrl}         
+		    , CATG_USE_YN = #{catgUseYn} 
+		    , MALL_SPR_CD = #{mallSprCd}   
+		    , URL_USE_YN = #{urlUseYn}     
+		WHERE CO_CD = #{coCd}
+		AND PRE_PKG_SEQ = #{prePkgSeq}
+
+	</update>
+	
+	<select id="selectPrePkgInfo" parameterType="HashMap" resultType="HashMap">
+		/* 프리패키지 상세 - PrePkgInfo_SQL.selectPrePkgInfo */
+		
+		SELECT A.CO_CD
+		     	, A.PRE_PKG_SEQ
+		     	, A.PRE_PKG_NM
+		     	, A.PRE_PKG_DESC
+		     	, A.PC_DOC_REG_ID
+		     	, A.MBL_DOC_REG_ID
+		     	, A.LPAGE_PC_DOC_REG_ID
+		     	, A.LPAGE_MBL_DOC_REG_ID
+		     	, A.IDDT_DSGN_YN
+		     	, A.ALL_INC_YN
+		     	, A.USE_YN
+		     	, A.EXPS_SO
+		     	, A.PC_LST_VIEW_TYPE_CD
+		     	, A.MBL_LST_VIEW_TYPE_CD
+		     	, A.FRT_PKG_NM
+		     	, A.TGT_URL
+		     	, A.CATG_USE_YN
+		     	, A.MALL_SPR_CD
+		     	, A.URL_USE_YN
+		     			     	
+		     	, B.ATFL_NM 			AS PC_DOC_REG_ID_NM
+		     	, B.DOC_REG_SEQ 		AS PC_DOC_REG_ID_REG_SEQ
+		     	, B.ATFL_STOR_PATH 		AS PC_DOC_REG_ID_ATFL_STOR_PATH
+		     	, B.ORI_ATFL_NM 		AS PC_DOC_REG_ID_ORI_ATFL_NM
+		     
+		     	, C.ATFL_NM 			AS MBL_DOC_REG_ID_NM
+		     	, C.DOC_REG_SEQ 		AS MBL_DOC_REG_ID_REG_SEQ
+		     	, C.ATFL_STOR_PATH 		AS MBL_DOC_REG_ID_ATFL_STOR_PATH
+		     	, C.ORI_ATFL_NM 		AS MBL_DOC_REG_ID_ORI_ATFL_NM
+		     	
+		     	, D.ATFL_NM 			AS LPAGE_PC_DOC_REG_ID_NM
+		     	, D.DOC_REG_SEQ 		AS LPAGE_PC_DOC_REG_ID_REG_SEQ
+		     	, D.ATFL_STOR_PATH 		AS LPAGE_PC_DOC_REG_ID_ATFL_STOR_PATH
+		     	, D.ORI_ATFL_NM 		AS LPAGE_PC_DOC_REG_ID_ORI_ATFL_NM
+		     	
+		     	, E.ATFL_NM 			AS LPAGE_MBL_DOC_REG_ID_NM
+		     	, E.DOC_REG_SEQ 		AS LPAGE_MBL_DOC_REG_ID_REG_SEQ
+		     	, E.ATFL_STOR_PATH 		AS LPAGE_MBL_DOC_REG_ID_ATFL_STOR_PATH
+		     	, E.ORI_ATFL_NM 		AS LPAGE_MBL_DOC_REG_ID_ORI_ATFL_NM
+		     
+		FROM TB_SA_PRE_PKG_INFO A
+		
+		LEFT JOIN TB_CO_ATFL_DTLS B
+		ON B.DOC_REG_ID = A.PC_DOC_REG_ID
+		AND B.DOC_REG_SEQ = '1'
+		
+		LEFT JOIN TB_CO_ATFL_DTLS C
+		ON C.DOC_REG_ID = A.MBL_DOC_REG_ID
+		AND C.DOC_REG_SEQ = '1'
+		
+		LEFT JOIN TB_CO_ATFL_DTLS D
+		ON D.DOC_REG_ID = A.LPAGE_PC_DOC_REG_ID
+		AND D.DOC_REG_SEQ = '1'
+		
+		LEFT JOIN TB_CO_ATFL_DTLS E
+		ON E.DOC_REG_ID = A.LPAGE_MBL_DOC_REG_ID
+		AND E.DOC_REG_SEQ = '1'
+		 
+		WHERE A.CO_CD = #{coCd}
+		AND A.PRE_PKG_SEQ = #{prePkgSeq}
+
+	</select>
+
+	<delete id="deletePrePkgInfo" parameterType="hashMap">
+		/* 프리패키지 정보 삭제 - PrePkgInfo.deletePrePkgInfo */
+		
+		DELETE 
+		FROM TB_SA_PRE_PKG_INFO
+		WHERE CO_CD = #{coCd}
+		AND PRE_PKG_SEQ = #{prePkgSeq}
+
+	</delete>
+
+
+	<select id="selectPrePkgIddtDtlList" parameterType="HashMap" resultType="HashMap">
+		/* 프리패키지 산업군 목록 - PrePkgInfo_SQL.selectPrePkgIddtDtlList */
+		
+		SELECT A.CO_CD
+		        , A.PRE_PKG_SEQ
+		        , A.IDDT_ID
+		        , B.IDDT_NM
+		FROM TB_SA_PRE_PKG_IDDT_DTL A
+		        , TB_CC_IDDT_BASIS B
+		WHERE A.IDDT_ID = B.IDDT_ID(+)
+		AND A.CO_CD = #{coCd}
+		AND A.PRE_PKG_SEQ = #{prePkgSeq}
+
+	</select>
+	
+    <insert id="insertPrePkgIddtDtl" parameterType="HashMap">
+		/* 프리패키지 산업군상세 정보 등록 - PrePkgInfo.insertPrePkgIddtDtl */
+		
+		INSERT INTO TB_SA_PRE_PKG_IDDT_DTL
+		     ( CO_CD
+		     , PRE_PKG_SEQ
+		     , IDDT_ID
+		     , REGPSN_ID
+		     , REG_DTM
+		     , UPDPSN_ID
+		     , UPD_DTM
+		     )
+		VALUES
+		     ( #{coCd}
+		     , #{prePkgSeq}
+		     , #{iddtId}
+		     , #{regpsnId}
+		     , SYSDATE
+		     , #{updpsnId}
+		     , SYSDATE
+		     )
+
+    </insert>
+
+	<delete id="deletePrePkgIddtDtl" parameterType="hashMap">
+		/* 프리패키지 산업군상세 정보 삭제 - PrePkgInfo.deletePrePkgIddtDtl */
+		
+		DELETE 
+		FROM TB_SA_PRE_PKG_IDDT_DTL
+		WHERE CO_CD = #{coCd}
+		AND PRE_PKG_SEQ = #{prePkgSeq}
+		<if test="iddtId != null and !iddtId.equals('')">
+           AND IDDT_ID = #{iddtId}
+        </if>
+		
+	</delete>
+
+	
+	
+	<select id="selectPrePkgCatgSeq" parameterType="HashMap" resultType="String">
+		/* 프리패키지 카테고리 시퀀스 값 조회 - PrePkgInfo.selectPrePkgCatgSeq */
+		
+		SELECT SQ_SA_PRE_PKG_CATG_DTL_01.NEXTVAL AS PRE_PKG_CATG_SEQ
+		FROM DUAL
+	</select>
+	
+	<select id="selectPrePkgCatgDtl" parameterType="HashMap" resultType="HashMap">
+		/* 프리패키지 카테고리 조회 | PrePkgInfo.selectPrePkgCatgDtl */
+		
+		SELECT CO_CD
+				, PRE_PKG_SEQ
+				, PRE_PKG_CATG_SEQ
+				, CATG_NM
+				, EXPS_SO
+				, REGPSN_ID
+				, REG_DTM
+				, UPDPSN_ID
+				, UPD_DTM
+		FROM TB_SA_PRE_PKG_CATG_DTL
+		WHERE CO_CD = #{coCd}
+		AND PRE_PKG_SEQ = #{prePkgSeq}
+	</select>
+	
+	<insert id="insertPrePkgCatgDtl" parameterType="HashMap">
+		/* 프리패키지 카테고리 등록 | PrePkgInfo.insertPrePkgCatgDtl */
+		
+		INSERT 
+		INTO TB_SA_PRE_PKG_CATG_DTL
+			( CO_CD
+			, PRE_PKG_SEQ
+			, PRE_PKG_CATG_SEQ
+			, CATG_NM
+			, EXPS_SO
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+			)
+		VALUES
+			( #{coCd}              
+			, #{prePkgSeq}       
+			, #{prePkgCatgSeq}   
+			, #{catgNm}            
+			, #{expsSo}            
+		    , #{regpsnId}          
+		    , SYSDATE            
+		    , #{updpsnId}          
+		    , SYSDATE            
+		    )                    
+	</insert>
+	
+	<update id="updatePrePkgCatgDtl" parameterType="HashMap">
+		/* 프리패키지 카테고리 수정 | PrePkgInfo.updatePrePkgCatgDtl */
+		
+		UPDATE TB_SA_PRE_PKG_CATG_DTL
+		SET CATG_NM = #{catgNm}         
+			, EXPS_SO = #{expsSo}         
+			, UPDPSN_ID = #{updpsnId}       
+			, UPD_DTM =	SYSDATE
+		WHERE CO_CD = #{coCd}
+		AND PRE_PKG_SEQ = #{prePkgSeq}
+		AND PRE_PKG_CATG_SEQ = #{prePkgCatgSeq}
+		           
+	</update>
+
+	<delete id="deletePrePkgCatgDtl" parameterType="hashMap">
+		/* 프리패키지 카테고리 삭제 - PrePkgInfo.deletePrePkgCatgDtl */
+		
+		DELETE 
+		FROM TB_SA_PRE_PKG_CATG_DTL
+		WHERE CO_CD = #{coCd}
+		AND PRE_PKG_SEQ = #{prePkgSeq}
+		<if test="prePkgCatgSeq != null and !prePkgCatgSeq.equals('') ">
+			AND PRE_PKG_CATG_SEQ = #{prePkgCatgSeq}		
+        </if>
+
+	</delete>
+
+
+
+    <insert id="insertPrePkgPrdDtl" parameterType="HashMap">
+		/* 프리패키지 상품 정보 등록 - PrePkgInfo.insertPrePkgPrdDtl */
+		
+		INSERT INTO TB_SA_PRE_PKG_PRD_DTL
+		     ( CO_CD
+		     , PRE_PKG_SEQ
+		     , PRD_ID
+		     , REPR_PRD_YN
+		     , REGPSN_ID
+		     , REG_DTM
+		     , UPDPSN_ID
+		     , UPD_DTM
+		     , EXPS_SO
+		     , PRE_PKG_CATG_SEQ
+		     )
+		VALUES
+		     ( #{coCd}
+		     , #{prePkgSeq}
+		     , #{prdId}
+		     , #{reprPrdYn}
+		     , #{regpsnId}
+		     , SYSDATE
+		     , #{updpsnId}
+		     , SYSDATE
+		     , #{expsSo}
+		     , #{prePkgCatgSeq}
+		     )
+
+    </insert>
+  
+  	<update id="updatePrePkgPrdDtl" parameterType="hashMap">
+  		/* 프리패키지 상품 정보 수정 - PrePkgInfo.updatePrePkgPrdDtl */
+  		
+  		UPDATE TB_SA_PRE_PKG_PRD_DTL
+  		SET REPR_PRD_YN = #{reprPrdYn}
+		  	, UPDPSN_ID = #{updpsnId}
+		    , UPD_DTM = SYSDATE
+		    , EXPS_SO = #{expsSo}
+		WHERE CO_CD = #{coCd}
+		AND PRE_PKG_SEQ = #{prePkgSeq}
+		<if test="prePkgCatgSeq != null and !prePkgCatgSeq.equals('') ">
+			AND PRE_PKG_CATG_SEQ = #{prePkgCatgSeq}		
+        </if>
+		AND PRD_ID = #{prdId}
+  	
+  	</update>
+  		 	
+	<delete id="deletePrePkgPrdDtl" parameterType="hashMap">
+		/* 프리패키지 상품 삭제 - PrePkgInfo.deletePrePkgPrdDtl */
+		
+		DELETE 
+		FROM TB_SA_PRE_PKG_PRD_DTL
+		WHERE CO_CD = #{coCd}
+        AND PRE_PKG_SEQ = #{prePkgSeq}
+        <if test="prePkgCatgSeq != null and !prePkgCatgSeq.equals('') ">
+			AND PRE_PKG_CATG_SEQ = #{prePkgCatgSeq}	
+			<if test="prdId != null and !prdId.equals('') ">
+	        	AND PRD_ID = #{prdId}
+	        </if>	
+        </if>
+		
+	</delete>
+	
+	<select id="selectPrePkgPrdDtlList" parameterType="HashMap" resultType="HashMap">
+		/* 프리패키지 상품 조회 - PrePkgInfo_SQL.selectPrePkgPrdDtlList */
+		
+		WITH TEMP_PRD_ID_INFO AS
+		(
+		    SELECT /*+ USE_NL(PRD MROPRD) INDEX(PRD TB_PR_PRD_INFO_PK) */
+		           PRD.CO_CD
+		         , PRD.PRD_ID
+		         , TO_NUMBER(PRD.PRD_ID) PRD_ID_VIEW
+		         , PRD.PRD_NM
+		         , SSP_APP.FN_PR_ATTR_VAL_LIST(PRD.CO_CD, PRD.PRD_ID) ATTR_VAL
+		         , MNFR.MNFR_NO
+		         , MNFR.MNFR_NM
+		         , FN_COM_DTL_CDNM_NVL('KO', 'MALL_SPR_CD', PRD.MALL_SPR_CD, '') AS MALL_SPR_CD_NM
+		         , PRD.MALL_SPR_CD
+		         , PRD.PRD_CLCD
+		         , SSP_APP.FN_PR_FULL_CLSF_NM(PRD.CO_CD, PRD.PRD_CLCD) FULL_PRD_CLSF_NM
+		         , PPCI.PRD_CLSF_NM
+		         , PRD.PRD_USE_YN
+		         , FN_COM_DTL_CDNM('KO', 'DISP_STATS_CD', DPDSI.DISP_STATS_CD) AS DISP_STATS_NM
+		         , FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD', MROPRD.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM
+		         , FN_COM_DTL_CDNM('KO','REPR_PRD_SPR_CD', DECODE(RPMD.REPR_PRD_SPR_YN, 'Y', RPMD.REPR_PRD_SPR_RSN_CD, '3')) AS REPR_PRD_SPR_NM
+		         , IDDT_NM
+		         
+		    FROM TB_PR_PRD_INFO PRD                    -- 상품기본정보
+		    
+		    INNER JOIN TB_PR_MRO_PRD_INFO MROPRD       -- MRO상품기본정보
+		    ON PRD.CO_CD = MROPRD.CO_CD 
+		    AND PRD.PRD_ID = MROPRD.PRD_ID
+		        
+		    INNER JOIN TB_PR_MNFR_INFO MNFR            -- 제조원
+		    ON MNFR.CO_CD = MROPRD.CO_CD 
+		    AND MNFR.MNFR_NO = MROPRD.MNFR_NO
+		       
+		    LEFT JOIN TB_PR_PRD_CLSF_INFO PPCI                -- 카테고리 정보
+		    ON (PRD.CO_CD = PPCI.CO_CD 
+		    AND PRD.PRD_CLCD = PPCI.PRD_CLCD 
+		    AND NVL(PPCI.USE_YN, '') = 'Y' 
+		    AND NVL(PPCI.FRT_EXPS_YN, 'Y') = 'Y' 
+		    AND NVL(PPCI.DEL_YN, 'N') = 'N')
+		       
+		    LEFT JOIN TB_DP_PRD_DISP_STATS_INFO DPDSI         -- 진열마스터
+		    ON (PRD.CO_CD = DPDSI.CO_CD 
+		    AND PRD.PRD_ID = DPDSI.PRD_ID 
+		    AND MROPRD.PUB_ONLY_SPR_CD = 'P'
+		    AND DPDSI.BZPLC_ID ='*' 
+		    AND DPDSI.OPR_UNIT_ID ='*')
+		       
+		    LEFT JOIN TB_PR_REPR_PRD_MNG_DTL RPMD             --대표상품
+		    ON (PRD.CO_CD = RPMD.CO_CD 
+		    AND PRD.PRD_ID = RPMD.PRD_ID
+		    AND RPMD.SSP_PRD_YN = 'Y')
+			
+			LEFT JOIN (										/* 산업군명들을 가져오기위한 테이블 */
+	        			SELECT LISTAGG(C.IDDT_NM, ',') WITHIN GROUP(ORDER BY C.IDDT_ID) AS IDDT_NM
+								, C.CO_CD
+								, C.PRD_CLCD
+		            	FROM ( SELECT B.IDDT_NM
+		            				   , B.IDDT_ID
+		            				   , A.PRD_CLCD 
+		            				   , A.CO_CD
+		            		   FROM TB_PR_PRD_CLSF_IDDT_MAPP A
+		            		   INNER JOIN TB_CC_IDDT_BASIS B
+		            		   ON 1=1
+		            		   AND B.IDDT_ID = A.IDDT_ID             		             		
+		            		   AND B.USE_YN = 'Y'            		  
+		            		 ) C	            		 
+		                GROUP BY C.PRD_CLCD, C.CO_CD
+	        		  ) TB
+        	ON TB.CO_CD = PRD.CO_CD 
+        	AND TB.PRD_CLCD = PRD.PRD_CLCD
+        
+		    WHERE PRD.CO_CD = #{coCd}
+		    AND PRD.PRD_USE_YN = 'Y'
+		    AND MROPRD.MRO_PRD_STATS_CD = '00'
+		
+			<if test="mallSprCd != null and !mallSprCd.equals('') ">
+		        AND PRD.MALL_SPR_CD = #{mallSprCd}
+			</if>
+		)
+		
+		SELECT '0' AS CHK
+		     	, A.CO_CD
+		     	, A.PRE_PKG_SEQ
+		     	, A.PRD_ID
+		     	, TO_NUMBER(A.PRD_ID) AS PRD_ID_VIEW
+		     	, A.REPR_PRD_YN
+		     	, B.PRD_NM
+		     	, B.ATTR_VAL
+		     	, B.MNFR_NM 
+			 	, B.PUB_ONLY_SPR_NM
+			 	, B.REPR_PRD_SPR_NM
+		     	, B.PRD_USE_YN
+			 	, CASE WHEN B.PRD_USE_YN = 'Y' THEN '사용'
+			           WHEN B.PRD_USE_YN = 'N' THEN '미사용'
+			           ELSE '미사용'
+			      END PRD_USE_YN_NM
+			 	, B.DISP_STATS_NM
+		     	, '' AS DELETE_ROW
+				, A.PRE_PKG_CATG_SEQ
+				, A.EXPS_SO
+				, B.IDDT_NM
+				, B.FULL_PRD_CLSF_NM
+				
+		FROM TB_SA_PRE_PKG_PRD_DTL A
+		        , TEMP_PRD_ID_INFO B
+		  
+		WHERE A.CO_CD = B.CO_CD(+)	
+		AND A.PRD_ID = B.PRD_ID(+)
+		    
+		AND A.CO_CD = #{coCd}
+		AND A.PRE_PKG_SEQ = #{prePkgSeq}
+		
+		<if test="prePkgCatgSeq != null and prePkgCatgSeq != '' ">
+			AND A.PRE_PKG_CATG_SEQ = #{prePkgCatgSeq}
+	    </if>
+		
+		ORDER BY A.EXPS_SO
+		
+	</select>
+	
+	
+	
+	<update id="updatePrePkgExpsSo" parameterType="hashMap">
+		/* PrePkgInfo.updatePrePkgExpsSo - 프리패키지 순서 저장 */
+	
+		UPDATE TB_SA_PRE_PKG_INFO
+		SET EXPS_SO = #{EXPS_SO}
+			, UPDPSN_ID = #{OPRTR_ID}
+			, UPD_DTM = SYSDATE
+		WHERE CO_CD = #{CO_CD}
+		AND PRE_PKG_SEQ = #{PRE_PKG_SEQ} 
+
+	</update>
+	
+	<update id="updatePrePkgPrdExpsSo" parameterType="hashMap">
+		/* PrePkgInfo.updatePrePkgPrdExpsSo - 프리패키지 상품 순서 저장 */
+		
+		UPDATE TB_SA_PRE_PKG_PRD_DTL
+		SET EXPS_SO = #{EXPS_SO}
+			, UPDPSN_ID = #{OPRTR_ID}
+			, UPD_DTM = SYSDATE
+		WHERE CO_CD = #{CO_CD}
+		AND PRE_PKG_SEQ = #{PRE_PKG_SEQ} 
+
+	</update>
+
+
+
+
+
+
+</mapper>

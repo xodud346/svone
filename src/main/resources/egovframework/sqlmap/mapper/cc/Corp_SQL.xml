@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.cc.corp">
+
+<!--
+ ******************************************************************************
+ * SELECT : selectList
+ * 작성자 : 박성근
+ * 작성일자 : 2022.02.10
+ ******************************************************************************
+ -->
+<sql id="sqlCorp">
+SELECT 0    CHK
+     , GRPB.GRP_NM
+     , CRPB.*
+  FROM TB_CC_BZPLC_CORP_BASIS  CRPB
+     , TB_CC_BZPLC_GRP_BASIS   GRPB
+ WHERE CRPB.CO_CD = GRPB.CO_CD(+) AND CRPB.GRP_ID = GRPB.GRP_ID(+)
+   AND CRPB.USE_YN = 'Y'
+   AND CRPB.CO_CD  = NVL(#{coCd }, '1000')
+   <if test='grpId      != null and !"".equals( grpId   )'>AND CRPB.GRP_ID   LIKE '%'|| #{grpId  } ||'%'</if>
+   <if test='grpNm      != null and !"".equals( grpNm   )'>AND GRPB.GRP_NM   LIKE '%'|| #{grpNm  } ||'%'</if>
+   <if test='corpId     != null and !"".equals( corpId  )'>AND CRPB.CORP_ID  LIKE '%'|| #{corpId } ||'%'</if>
+   <if test='corpNm     != null and !"".equals( corpNm  )'>AND CRPB.CORP_NM  LIKE '%'|| #{corpNm } ||'%'</if>
+   
+ ORDER BY 
+       CRPB.CO_CD
+     , CRPB.CORP_ID   NULLS LAST
+</sql>
+
+<select id="selectList" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.cc.corp.selectList */
+<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />
+
+<include refid="sqlCorp" />
+
+<include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+/* /com.ssp.cc.corp.selectList */
+</select>
+
+<select id="selectXlsx" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.cc.corp.selectXlsx */
+
+<include refid="sqlCorp" />
+
+/* /com.ssp.cc.corp.selectXlsx */
+</select>
+
+</mapper>

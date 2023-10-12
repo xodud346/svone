@@ -1,0 +1,272 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_CN_02" width="1280" titletext="매뉴얼 신규" onload="fn_onLoad" height="600">
+    <Layouts>
+      <Layout height="600" mobileorientation="landscape" width="1280">
+        <Div id="div_top_info" taborder="0" text="Div01" left="20" top="0" border="0px solid darkblue" width="1240" height="550">
+          <Layouts>
+            <Layout>
+              <Static id="Static21" taborder="5" left="0" top="82" cssclass="sta_cm_box02L" right="0" height="265"/>
+              <Static id="Static27" taborder="7" left="0" top="Static21:-1" height="135" cssclass="sta_cm_box02L" text="" right="0"/>
+              <Static id="Static07" taborder="3" left="0" top="51" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static03" taborder="1" left="0" top="20" height="32" cssclass="sta_cm_box02L_tdt" right="0" text=""/>
+              <Static id="Static02" taborder="0" text="제목" left="0" top="20" width="130" height="32" cssclass="sta_cm_box01L_tdt_necessary" onclick="Div_top_info_Static02_onclick"/>
+              <Static id="Static06" taborder="2" text="사용여부" left="0" top="51" width="130" height="32" cssclass="sta_cm_box01L_necessary"/>
+              <Static id="Static20" taborder="4" text="메모" left="0" top="82" width="130" height="265" cssclass="sta_cm_box01L_necessary"/>
+              <Static id="Static26" taborder="6" text="첨부파일" left="0" top="Static20:-1" width="130" height="135" cssclass="sta_cm_box01L_necessary"/>
+              <Combo id="Combo50" taborder="8" text="Combo00" left="159" top="-148" width="150" height="24" index="-1"/>
+              <Combo id="Combo51" taborder="9" text="Combo00" left="1021" top="-148" width="150" height="24" index="-1"/>
+              <Edit id="MANUAL_REG_TTL" taborder="10" left="140" top="24" height="24" right="10" maxlength="160" displaynulltext="최대 160자 까지 입력하실 수 있습니다."/>
+              <Button id="Button01" taborder="11" text="취소" left="545" top="511" height="30" onclick="div_top_info_Button01_onclick" width="70"/>
+              <Button id="Button01_00" taborder="12" text="등록" left="619" top="511" width="70" height="30" cssclass="btn_WF_select" onclick="Div_top_info_Button01_00_onclick"/>
+              <TextArea id="MEMO_CTS" taborder="13" left="140" top="92" right="10" height="245"/>
+              <Combo id="USE_YN" taborder="14" left="140" top="55" width="150" height="24" innerdataset="ds_useYn" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM"/>
+              <Div id="Div00" taborder="15" text="Div00" left="140" top="356" width="1090" height="120" url="CO::fileUploadSingle.xfdl"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <PopupDiv id="PopupDiv3" left="398" top="785" width="330" height="230" positionstep="0" background="#fffff" visible="false" text="" oncloseup="PopupDiv3_oncloseup">
+          <Layouts>
+            <Layout>
+              <Calendar id="searchStartDate" taborder="1" left="6" top="10" width="149" height="172" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd" type="monthonly" value=""/>
+              <Calendar id="searchEndDate" taborder="0" left="165" top="10" height="172" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd" type="monthonly" width="149"/>
+              <Button id="btn_confirm" taborder="3" text="Confirm" left="99" top="192" width="60" height="24" uWord="popup.ok" onclick="PopupDiv3_btn_confirm_onclick"/>
+              <Button id="btn_cancel" taborder="2" text="Cancel" left="169" top="192" width="60" height="24" uWord="popup.cancel" onclick="PopupDiv3_btn_cancel_onclick"/>
+            </Layout>
+          </Layouts>
+        </PopupDiv>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_CN_02
+/* 작 성 일 자 : 2022/02/16
+/* 작  성   자 : 이성민
+/* 설       명 : 공지사항 상세조회 팝업
+/***********************************************************/
+
+
+/* 스크립트 인클루드 */
+include "CO::coUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.valiFormIds = [
+	  { "id" : "MANUAL_REG_TTL", "name" : "제목" }
+	, { "id" : "MEMO_CTS", "name" : "메모" }
+	, { "id" : "USE_YN", "name" : "사용여부" }
+];
+
+//첨부파일 변수
+this.fileDs = "";
+this.fileUpTransfer = "";
+this.docRegId = "";
+
+	
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	this.gfn_formOnLoad(this);
+	
+	//빈 로우 생성
+	this.ds_manual.addRow();
+	
+	//공통코드 조회
+	this.fn_commonCodeSearch();
+	
+	//초기값 설정
+	this.initSetValue();
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "",
+		SHIFT_ENTER : "",
+		SHIFT_S : "Div_top_info_Button01_00_onclick",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+	
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_useYn=ds_output1";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "CODE_LIST", "USE_YN");
+	this.ds_search.setColumn(0, "LANG_CD", "KO");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//저장
+this.fn_save = function() {
+	var sSvcId = "saveManual";  
+    var sUrl = "/co/save-manual.do";
+	var inDs = "ds_save=ds_manual:U"
+    var outDs = "";
+    var arg;
+    var callback = "fn_callback";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+	
+}
+
+
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+//콜백 이벤트
+this.fn_callback = function(svcID, errorCode, errorMsg){
+	if(svcID == "saveManual"){
+		if( errorCode != 0 ) {
+			alert(errorMsg);
+			return false;
+		} else {
+			this.opener.fn_popupClose(svcID);
+			this.close();
+		}		
+	}
+}
+
+//파일 업로드 콜백.
+this.fn_fileUploadCallback = function(result) {
+
+	if( result.code == "success" ) {	
+		//문서번호 설정.
+		this.docRegId = result.docRegId;
+		this.ds_manual.setColumn(0, "DOC_REG_ID", this.docRegId);		
+	}
+	
+	// 수정함수 호출
+	this.fn_save("I");
+}
+
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+//초기값 설정
+this.initSetValue = function() {
+	//사용여부 기본값
+	this.ds_manual.setColumn(0, "USE_YN", "Y");
+
+	// include ds get
+	this.fileDs = this.div_top_info.form.Div00.form.ds_files;
+
+	//파일 트랜스퍼 연결
+	this.fileUpTransfer = this.div_top_info.form.Div00.form.FileUpTransfer;
+
+	//부모창 최상위값 연결
+	this.div_top_info.form.Div00.form.parentForm = this;
+}
+
+
+//라디오 변경 이벤트
+this.fn_radioChage = function(objId) {
+}
+
+//팝업호출
+this.fn_popup = function(type) {
+	if( type == "TARGET" ){
+		var objParam = {};
+		this.gfn_openPopup("oprUntMultiPop", "CO_POP::operateUnitMultiPopup.xfdl", objParam, "fn_popupCallback");
+	}
+}
+
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+//등록버튼 이벤트
+this.Div_top_info_Button01_00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	/*
+	if( this.parent.type == "U" ) {
+		var chkDsChange = this.fn_dataChangeCheck(this.ds_manual); //this.fn_dataCheck(this.ds_comCdList);
+		if( !chkDsChange ) {
+			alert("수정된 내용이 없습니다.");
+			return false;
+		}
+	}	
+	*/
+	
+	// 필수값 체크
+	var validation = this.fn_validationForm(this.div_top_info, this.valiFormIds, this.ds_manual);
+	if( validation ) {		
+		if(this.fileDs.rowcount == 0 ) {
+			alert(this.gfn_getMessage("COMS000011", ["첨부파일"])); //첨부파일을 입력해 주세요
+			return false;
+		}
+	
+		if( this.confirm(this.gfn_getMessage("COMS000013", ["저장"])) ){ //저장 하시겠습니까?
+			if( this.fileDs.rowcount > 0 ) {
+				//강제로딩
+				this.setWaitCursor(true);
+				this.fileUpTransfer.upload('/co/file-upload.do');
+			} else {
+			
+				this.fn_save();
+			}
+		}
+	}
+};
+
+
+//취소버튼
+this.div_top_info_Button01_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+]]></Script>
+    <Objects>
+      <Dataset id="ds_manual">
+        <ColumnInfo>
+          <Column id="MANUAL_REG_SEQ" type="STRING" size="256"/>
+          <Column id="MANUAL_REG_TTL" type="STRING" size="256"/>
+          <Column id="DOWN_CNT" type="STRING" size="256"/>
+          <Column id="MEMO_CTS" type="STRING" size="256"/>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="FILE_KEY" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="NOTCC_SEQ" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_useYn">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="div_top_info.form.MANUAL_REG_TTL" propid="value" datasetid="ds_manual" columnid="MANUAL_REG_TTL"/>
+      <BindItem id="item2" compid="div_top_info.form.MEMO_CTS" propid="value" datasetid="ds_manual" columnid="MEMO_CTS"/>
+      <BindItem id="item1" compid="div_top_info.form.USE_YN" propid="value" datasetid="ds_manual" columnid="USE_YN"/>
+    </Bind>
+  </Form>
+</FDL>

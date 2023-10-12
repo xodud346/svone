@@ -1,0 +1,851 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_SN_07" width="1336" height="846" titletext="고객사 입고 처리" onload="fn_onLoad" onkeyup="SSP_BO_SN_07_onkeyup">
+    <Layouts>
+      <Layout height="846" mobileorientation="landscape" width="1336">
+        <Div id="Div00" taborder="0" text="검색 영역" left="0" top="47" height="157" formscrolltype="none" formscrollbartype="none none" right="0" color="transparent">
+          <Layouts>
+            <Layout>
+              <Static id="Static05" taborder="1" top="0" height="32" cssclass="sta_cm_box02L_tdt" left="40" right="20" text=""/>
+              <Static id="Static31" taborder="0" top="31" height="32" cssclass="sta_cm_box02L" left="40" right="20"/>
+              <Static id="sta_oprUnit" taborder="2" text="운영 단위" left="20" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="sta_inqPeriod" taborder="3" text="조회 기간" left="20" top="31" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Button id="btn_ordNumPopup" taborder="4" left="829" top="4" height="24" cssclass="btn_WF_multi" width="24" onclick="Div00_btn_ordNumPopup_onclick"/>
+              <Button id="btn_ordNumMemo" taborder="5" left="852" top="4" height="24" cssclass="btn_WF_document" width="24" onclick="Div00_btn_ordNumMemo_onclick"/>
+              <Button id="Button00" taborder="6" text="Button00" left="461" top="165" width="66" height="23" onclick="Button00_onclick"/>
+              <Static id="sta_ordNum" taborder="7" text="주문 번호" left="462" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Edit id="edt_ordNum" taborder="8" left="599" top="4" width="226" height="24" readonly="false"/>
+              <Combo id="cbo_inqPeriod" taborder="9" left="159" top="35" width="140" height="24" index="0" innerdataset="ds_inqDtmSel" codecolumn="CODE_CD" datacolumn="CODE_NM" text="전체" value="" onitemchanged="Div00_cbo_inqPeriod_onitemchanged"/>
+              <Calendar id="cal_inqPeriodFrom" taborder="10" left="303" top="35" width="140" height="24" dateformat="yyyy-MM-dd" readonly="false" oncloseup="Div00_cal_baseDate_oncloseup" editformat="yyyy-MM-dd"/>
+              <Static id="sta_trdState" taborder="11" text="거래 명세서" left="882" top="31" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="sta_whClass" taborder="12" text="입고 구분" left="882" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Edit id="edt_trdState" taborder="13" left="1022" top="35" width="283" height="24" readonly="false"/>
+              <Combo id="cbo_whClass" taborder="14" left="1022" top="4" width="150" height="24" index="0" text="전체" value="" innerdataset="ds_giStatsSel" codecolumn="CODE_CD" datacolumn="CODE_NM"/>
+              <Static id="sta_fromTo" taborder="15" text="~" left="446" top="36" width="9" height="24"/>
+              <Calendar id="cal_inqPeriodTo" taborder="16" left="457" top="35" width="140" height="24" dateformat="yyyy-MM-dd" readonly="false" oncloseup="Div00_cal_baseDate_oncloseup" editformat="yyyy-MM-dd"/>
+              <Edit id="edt_oprUnit" taborder="17" left="159" top="4" width="246" height="24" readonly="false"/>
+              <Button id="btn_oprUnitPopup" taborder="18" left="409" top="4" height="24" cssclass="btn_WF_multi" width="24" onclick="Div00_btn_oprUnitPopup_onclick"/>
+              <Button id="btn_oprUnitMemo" taborder="19" left="432" top="4" height="24" cssclass="btn_WF_document" width="24" onclick="Div00_btn_oprUnitMemo_onclick"/>
+              <Combo id="cmb_viewCount" taborder="20" text="1000개씩" top="429" height="28" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" width="104" right="510" index="4" value="1000" type="dropdown">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">20</Col>
+                      <Col id="datacolumn">20개씩</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">50</Col>
+                      <Col id="datacolumn">50개씩</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">100</Col>
+                      <Col id="datacolumn">100개씩</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">500</Col>
+                      <Col id="datacolumn">500개씩</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">1000</Col>
+                      <Col id="datacolumn">1,000개씩</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">5000</Col>
+                      <Col id="datacolumn">5,000개씩</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">10000</Col>
+                      <Col id="datacolumn">10,000개씩</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Combo>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Grid id="grd_resList" taborder="1" left="20" top="218" right="20" bottom="116" fillareatype="none" cellmovingtype="col" cssclass="grd_WF_list" nodatatext="조회된 결과가 없습니다." binddataset="ds_resList" autoenter="none" selecttype="area" font="12px/normal &quot;Arial&quot;,&quot;맑은 고딕&quot;">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="48"/>
+                <Column size="124"/>
+                <Column size="120"/>
+                <Column size="120"/>
+                <Column size="77"/>
+                <Column size="120"/>
+                <Column size="120"/>
+                <Column size="105"/>
+                <Column size="120"/>
+                <Column size="120"/>
+                <Column size="120"/>
+                <Column size="120"/>
+                <Column size="140"/>
+                <Column size="200"/>
+                <Column size="400"/>
+                <Column size="82"/>
+                <Column size="64"/>
+                <Column size="120"/>
+                <Column size="200"/>
+                <Column size="120"/>
+                <Column size="200"/>
+                <Column size="120"/>
+                <Column size="120"/>
+                <Column size="120"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell color="blue" textDecoration="underline" displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="입고 현황"/>
+                <Cell col="2" text="입고 처리일"/>
+                <Cell col="3" text="입고 처리자"/>
+                <Cell col="4" text="검수 여부"/>
+                <Cell col="5" text="정산 대상 월"/>
+                <Cell col="6" text="거래명세서"/>
+                <Cell col="7" text="카테고리킬러"/>
+                <Cell col="8" text="사업장ID"/>
+                <Cell col="9" text="주문 품목 번호"/>
+                <Cell col="10" text="주문 생성일"/>
+                <Cell col="11" text="배송 완료일"/>
+                <Cell col="12" text="상품ID"/>
+                <Cell col="13" text="상품명"/>
+                <Cell col="14" text="규격"/>
+                <Cell col="15" text="주문수량"/>
+                <Cell col="16" text="주문단위"/>
+                <Cell col="17" text="운영단위ID"/>
+                <Cell col="18" text="운영단위명"/>
+                <Cell col="19" text="부서ID"/>
+                <Cell col="20" text="부서명"/>
+                <Cell col="21" text="주문자 ID"/>
+                <Cell col="22" text="주문자명"/>
+                <Cell col="23" text="수령자"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="expr:[GI_CMPL_NM] == &quot;완료&quot; ? &quot;none&quot; : &quot;checkboxcontrol&quot;" edittype="expr:[GI_CMPL_NM] == &quot;완료&quot; ? &quot;none&quot; : &quot;checkbox&quot;" text="bind:CHK"/>
+                <Cell col="1" text="bind:GI_CMPL_NM"/>
+                <Cell col="2" text="bind:GI_DTM" displaytype="date" calendardateformat="yyyy-MM-dd" calendardisplayinvalidtext=" " calendardisplayinvalidtype="none" calendardisplaynulltext=" " calendardisplaynulltype="none"/>
+                <Cell col="3" text="bind:GI_PRCS_PRSN_NM"/>
+                <Cell col="4" text="bind:GI_CONFIRM_YN"/>
+                <Cell col="5" text="bind:ADJ_YM" displaytype="date" calendardateformat="yyyy-MM"/>
+                <Cell col="6" text="bind:GDOC_NO"/>
+                <Cell col="7" text="bind:CATG_KILR_NM"/>
+                <Cell col="8" text="bind:BZPLC_ID"/>
+                <Cell col="9" text="bind:ODR_NO_N_ITM_NO"/>
+                <Cell col="10" text="bind:ODR_REQ_DTM" displaytype="date" calendardateformat="yyyy-MM-dd"/>
+                <Cell col="11" text="bind:DLV_CMPL_DTM" displaytype="date" calendardateformat="yyyy-MM-dd"/>
+                <Cell col="12" text="bind:PRD_ID"/>
+                <Cell col="13" text="bind:PRD_NM" textAlign="left"/>
+                <Cell col="14" text="bind:REPR_SPEC" textAlign="left"/>
+                <Cell col="15" text="bind:ODR_QTY" displaytype="number" textAlign="right"/>
+                <Cell col="16" text="bind:SELL_UNIT_CD"/>
+                <Cell col="17" text="bind:OPR_UNIT_ID"/>
+                <Cell col="18" text="bind:OPR_UNIT_NM" textAlign="left"/>
+                <Cell col="19" text="bind:DEPT_ID"/>
+                <Cell col="20" text="bind:DEPT_NM"/>
+                <Cell col="21" text="bind:ODRPSN_ID"/>
+                <Cell col="22" text="expr:comp.parent.fn_secureName(currow, &quot;ODRPSN_NM&quot;, dataset)"/>
+                <Cell col="23" text="expr:comp.parent.fn_secureName(currow, &quot;RCVR_NM&quot;, dataset)"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="div_paging" taborder="2" left="20" bottom="50" height="38" formscrollbartype="none none" right="20" url="COMM::cmmPaging.xfdl"/>
+        <Static id="sta_totCount" taborder="3" text="(총 0건 1/1)" left="20" top="190" width="121" height="25" usedecorate="true"/>
+        <Static id="sta_title1_1" taborder="4" text="■  조회" left="20" top="20" height="20" cssclass="sta_WF_title01" onclick="Static00_onclick" width="130"/>
+        <Button id="btn_search" taborder="5" text="조회" top="120" width="60" height="30" right="20" onclick="btn_search_onclick" cssclass="btn_WF_require"/>
+        <Static id="sta_title1_2" taborder="6" text="■  목록" left="21" top="169" height="20" cssclass="sta_WF_title01" onclick="Static00_onclick" width="130"/>
+        <Button id="btn_excel00" taborder="7" text="다운로드(P)" top="180" width="100" height="28" right="337" onclick="btn_excel_onclick" cssclass="btn_WF_excel"/>
+        <Button id="btn_reset" taborder="8" text="초기화" top="120" width="60" height="30" right="btn_search:4" onclick="btn_reset_onclick"/>
+        <Button id="btn_active" taborder="9" text="활성화" top="120" width="60" height="30" right="btn_reset:4" cssclass="btn_WF_default" onclick="btn_active_onclick"/>
+        <Button id="btn_selRcpPrc" taborder="10" text="선택입고처리" top="180" width="110" height="28" right="btn_excel00:5" cssclass="btn_WF_default" onclick="btn_selRcpPrc_onclick"/>
+        <Static id="Static02_00_01_00_00_01_00" taborder="11" top="186" height="10" cssclass="div_WF_guide" visible="false" text="10" width="30" right="1280"/>
+        <Static id="Static02_01_00_00_01_01_00_00_00" taborder="12" text="10" left="1305" top="79" width="10" height="30" cssclass="div_WF_guide" visible="false"/>
+        <Static id="Static02_01_00_00_01_00" taborder="13" text="4" left="739" top="79" width="4" height="30" cssclass="div_WF_guide" visible="false"/>
+        <Static id="Static02_00_01_00_00_01_00_00" taborder="14" top="208" height="10" cssclass="div_WF_guide" visible="false" text="10" width="30" right="174"/>
+        <Static id="Static02_00_01_00_00_00_00" taborder="15" top="730" height="30" cssclass="div_WF_guide" visible="false" text="30" width="30" right="699"/>
+        <Static id="Static02_00_01_00_00_00_00_00" taborder="16" top="150" height="30" cssclass="div_WF_guide" visible="false" text="30" width="30" right="86"/>
+        <Combo id="cmb_viewCount" taborder="17" text="1000개씩" top="180" height="28" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" width="104" right="228" index="4" value="1000" type="dropdown">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">20</Col>
+                <Col id="datacolumn">20개씩</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">50</Col>
+                <Col id="datacolumn">50개씩</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">100</Col>
+                <Col id="datacolumn">100개씩</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">500</Col>
+                <Col id="datacolumn">500개씩</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">1000</Col>
+                <Col id="datacolumn">1,000개씩</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">5000</Col>
+                <Col id="datacolumn">5,000개씩</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">10000</Col>
+                <Col id="datacolumn">10,000개씩</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Combo>
+        <Button id="btn_layoutSave" taborder="18" text="레이아웃 저장" top="180" width="100" height="28" right="125" onclick="btn_layoutSave_onclick" visible="true"/>
+        <Button id="btn_layoutInit" taborder="19" text="레이아웃 초기화" top="180" width="100" height="28" right="21" onclick="btn_layoutInit_onclick" visible="true"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : 정산 관리 - 고객사 입고 처리 목록
+  CREATION DATES : 
+*******************************************************/
+
+
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+include "OD::odUtils.xjs";
+
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;
+this.insertCount = 0;
+this.rtn = 0;
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//달력 현재날짜 디폴트설정
+	this.Div00.form.cal_inqPeriodFrom.set_value(this.gfn_getDate("date"));
+	this.Div00.form.cal_inqPeriodTo.set_value(this.gfn_getDate("date"));
+	this.copyPaste.addGrid(this.grd_resList);
+	//콤보박스 디폴트값 설정
+	this.Div00.form.cbo_whClass.set_index(0);
+	this.Div00.form.cbo_inqPeriod.set_index(0);
+	
+	this.fn_odCommLoading(); //공통메세지코드 로딩
+	this.fn_regShortCutMethod();
+};
+
+this.SSP_BO_SN_07_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+	
+//조회  
+this.fn_search = function(page)	{
+	var sSvcId = "selectWarehousingList";    
+	var sUrl = "/ad/wh/select-warehousing-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_resList=ds_output1 ds_search=ds_output2";
+	var arg = "";
+	
+	if( page ) {
+		var oPaging = this.div_paging;
+		oPaging.uPage = 1;
+		oPaging.uPageNum = 0;
+		this.ds_search.setColumn(0,"START_NUM", 0);
+		this.ds_search.setColumn(0,"ROW_COUNT",this.cmb_viewCount.value);
+		this.ds_search.setColumn(0,"SORT_COLUMN", "");
+		this.ds_search.setColumn(0,"SORT_TYPE", "");
+		this.ds_search.setColumn(0,"INQ_COND_DTLS", this.name);
+		this.ds_search.setColumn(0,"CO_CD", this.fv_coCd);
+		this.ds_search.setColumn(0,"TOTAL_COUNT", -1);
+	}
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");		
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "selectWarehousingList"){    
+		trace("### ds_resList.getRowCount() : " + this.ds_resList.getRowCount());	
+		
+		this.Div00.form.set_enable(false);
+		//paging 처리 
+		this.div_paging.form.cfn_createPage(this.div_paging,this.totalCount,this.cmb_viewCount.value,"fn_pageCallback");
+		this.cmb_viewCount.set_enable(false);
+	}
+	else if(svcID == "insertOdrInqTgtDtls"){    
+		trace("### insertOdrInqTgtDtls - insert count : " + this.insertCount);
+		this.fn_search(true);
+	}
+	else if(svcID == "deleteOdrInqTgtDtls"){    
+		this.ds_select.deleteAll();
+		trace("### deleteOdrInqTgtDtls");
+	}
+	else if (svcID == "updateWarehousingFinish") {
+		if (errorCode == "0") {
+			trace("=========================== rtn: " + this.rtn);
+			if (this.rtn > 0)
+			{
+				var msg = this.fn_getMessage("IFMS000001","","");
+				var objParam = {paramContents:msg};
+				
+				this.alert(msg);
+				this.fn_search(true);
+			} else {
+				var msg = this.fn_getMessage("ERRS000227","","");
+				
+				if (errorMsg == "")	this.alert(msg);
+				else	this.alert(msg + "\n" + errorMsg);
+			}
+		}
+	}
+};
+	
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;
+	if(sFlag){
+		this.ds_search.setColumn(0,"START_NUM",oPaging.uPageNum);
+		this.ds_search.setColumn(0,"ROW_COUNT",this.cmb_viewCount.value);
+		this.fn_search(false);
+	}
+	
+	if( this.gfn_isNull(oPaging.uPageCnt) || oPaging.uPageCnt == 'undefined' || isNaN(oPaging.uPageCnt) ) {
+		oPaging.uPageCnt = 0;
+	}
+	
+	var sTotText = "(<b v='true'>총 "+ this.gfn_appendComma(oPaging.uTotCount, 0)+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+	this.sta_totCount.set_text(sTotText);
+};
+
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_resList"){
+		oSortInfo = this.grd_resList.uaSortInfo;
+		this.ds_search.setColumn(0,"SORT_COLUMN",oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE",oSortInfo.status);
+	}
+};
+
+this.fn_popupCallback = function(sPopupId, sRetValue) {
+	var resData = "";
+	var sIdList = "";
+	var sNmList = "";
+	
+	trace("sRetValue: " + sRetValue);
+	
+	if(sRetValue == undefined){
+		return;
+	}else{
+		resData = JSON.parse(sRetValue);
+	}
+	
+	trace("resData: " + resData);
+	
+	if( sPopupId == "oprUnitMultiPopup" ){  //운영단위 멀티 팝업
+
+		for(var i = 0; i < resData.length; i++) {	
+			var rtnData = JSON.parse(resData[i]);
+			sIdList += rtnData.OPR_UNIT_ID +",";
+			sNmList += rtnData.OPR_UNIT_NM +",";
+		}
+		this.Div00.form.edt_oprUnit.set_value(sIdList);
+		this.fn_setMSearch(this.name,"OPR_UNIT_ID",sIdList);
+		
+	}else if( sPopupId == "SSP_BO_SN_07;OPR_UNIT_ID" ){  //운영단위 멀티 인풋
+	
+		sIdList = "";
+		
+		if(resData.length > 0){
+			for(var i = 0; i < resData.length; i++) {
+				var rtnData = JSON.parse(resData[i]);
+				sIdList += rtnData.VALUE +",";
+			}
+		}
+		
+		trace("sIdList : " + sIdList);
+		
+		this.Div00.form.edt_oprUnit.set_value(sIdList);		
+		this.fn_setMSearch(this.name,"OPR_UNIT_ID",sIdList);
+		
+	}else if( sPopupId == "odrNoMultiPopup" ){  //주문번호 멀티 팝업
+
+		for(var i = 0; i < resData.length; i++) {	
+			var rtnData = JSON.parse(resData[i]);
+			sIdList += rtnData.ODR_NO +",";
+		}
+		this.Div00.form.edt_ordNum.set_value(sIdList);
+		this.fn_setMSearch(this.name,"ODR_NO",sIdList);
+		
+	}else if( sPopupId == "SSP_BO_SN_07;ODR_NO" ){  //주문번호 멀티 인풋
+	
+		sIdList = "";
+		
+		if(resData.length > 0){
+			for(var i = 0; i < resData.length; i++) {
+				var rtnData = JSON.parse(resData[i]);
+				sIdList += rtnData.VALUE +",";
+			}
+		}
+		
+		trace("sIdList : " + sIdList);
+		
+		this.Div00.form.edt_ordNum.set_value(sIdList);		
+		this.fn_setMSearch(this.name,"ODR_NO",sIdList);
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+	
+	//search static 초기 설정
+	this.Div00.form.sta_oprUnit.uEssentiel = "true"; //필수값 표시
+	this.Div00.form.sta_inqPeriod.uEssentiel = "true";
+	
+	//grid 초기 설정
+	//sort
+	this.grd_resList.uSortFlag = "false";
+	this.grd_resList.uServerSortFlag = "true";
+	this.grd_resList.uSortCallback = "fn_sortCallback";
+	
+	//grid cell size 변경
+	this.grd_resList.uCellSizeType = "true";
+	
+	this.uGridList = "grd_resList";
+	this.grd_resList.uRightMouse = "true";
+	this.grd_resList.uPersonalFlag = "true";
+};
+
+this.cfn_personalPopupClose = function(sRet) {
+	this.grd_resList.set_formats(sRet);
+	this.pdiv_personal.closePopup();
+};
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_todoSearch = function() {
+	var oArgs = this.getOwnerFrame().arguments["oArgs"];
+	if (oArgs && oArgs.TODO === "Y") {  
+		if (oArgs.STATUS) this.ds_search.setColumn(0, "GI_STATS_SEL_CD", oArgs.STATUS); //  00 : 전체, 01 : 완료, 02 : 미완료
+		if (oArgs.STATUS2) this.ds_search.setColumn(0, "eOPR_UNIT_ID", oArgs.STATUS2);
+		if (oArgs.DTM) {
+			if (oArgs.DTM == 2) this.ds_search.setColumn(0, "INQ_DTM_FROM", "19000101");
+			else {
+				var dt = new nexacro.Date();
+				dt.setMonth(dt.getMonth() - 3);
+				this.Div00.form.cal_inqPeriodFrom.set_value(dt);
+			} 
+		}
+		this.ds_search.setColumn(0, "INQ_DTM_SEL_CD", "02");
+		this.btn_search.click();
+	}
+}
+this.clickHeadCheckBox = function (obj, strColName)
+{		
+	var headerCell = obj.getBindCellIndex("body", strColName);
+
+	var checkValue = "1";
+	
+	if(obj.getCellProperty("Head", headerCell, "displaytype") == "checkboxcontrol") {
+		if (obj.getCellProperty("Head", headerCell, "text") == "1") { //현재 체크박스 값과 반대되게
+			checkValue = "0";
+		} else {
+			checkValue = "1";
+		}
+	}
+	
+	obj.setCellProperty("Head", headerCell, "text", checkValue); //헤더 체크박스 값 변경
+	
+	var objDataset = obj.getBindDataset(); //그리드에 바인드되어있는 dataset 가져옴
+	if(objDataset.getRowCount() > 0) {
+		objDataset.set_enableevent(false); //이벤트 비활성화
+		for (var i=0; i<objDataset.getRowCount(); i++) {			
+		    objDataset.setColumn(i, strColName, checkValue); //체크박스를 checkValue로 설정
+		}
+		objDataset.set_enableevent(true); //이벤트 활성화
+	}
+};
+
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	this.fn_regMethodCtrlENTER("btn_search_onclick");
+	//this.fn_regMethodSave("");
+};
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+	
+//조회 버튼 click  이벤트
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_setMSearch(this.name,"OPR_UNIT_ID",this.Div00.form.edt_oprUnit.value);
+	this.fn_setMSearch(this.name,"ODR_NO",this.Div00.form.edt_ordNum.value);
+
+	var nCount = this.ds_select.getRowCount();
+	var arrOprUnitid = this.ds_select.extractRowsNF("COL_ITM =='OPR_UNIT_ID'");
+
+	if( nCount == 0 || arrOprUnitid.length == 0 )
+	{
+		var msg = this.fn_getMessage("ERRS000144","운영단위");
+	
+		var objParam = {paramContents:msg};
+		//this.gfn_openPopup("cmmAlert", "COMM::cmmAlert.xfdl", objParam);
+		this.alert(msg);
+		return;
+	}else if ( this.gfn_isNull(this.Div00.form.cal_inqPeriodFrom.value) || this.Div00.form.cal_inqPeriodFrom.value == '' || this.Div00.form.cal_inqPeriodFrom.value == '    -  -  ' 
+				|| this.gfn_isNull(this.Div00.form.cal_inqPeriodTo.value) || this.Div00.form.cal_inqPeriodTo.value == '' || this.Div00.form.cal_inqPeriodTo.value == '    -  -  ' )
+	{
+		var msg = this.fn_getMessage("ERRS000144","조회기간");
+	
+		var objParam = {paramContents:msg};
+		//this.gfn_openPopup("cmmAlert", "COMM::cmmAlert.xfdl", objParam);
+		this.alert(msg);
+		return;
+	}else if ( this.Div00.form.cal_inqPeriodTo.value < this.Div00.form.cal_inqPeriodFrom.value ) {
+		var msg = this.fn_getMessage("IFMS000002","","");
+	
+		var objParam = {paramContents:msg};
+		//this.gfn_openPopup("cmmAlert", "COMM::cmmAlert.xfdl", objParam);
+		this.alert(msg);
+		return;
+	}
+		
+	this.ds_search.setColumn(0, "LANG_CD", "KO"); //
+	this.fn_insertSelectedData("fn_callBack");
+};
+
+
+// 엑셀 다운로드
+this.btn_excel_onclick = function(obj,e)
+{
+	if(this.ds_resList.getRowCount() == 0){
+		this.alert(this.fn_getMessage("ERRP000205")); // '다운로드 가능한 데이터가 없습니다.'
+	}else{
+		// 20230503_박철희_엑셀다운로드수정		
+		// this.gfn_openPopup("pwdSetPopup", "CO_POP::pwdSetPopup.xfdl", null, "fn_excelDownload");
+		this.gfn_openPopup("excelDownPopup", "CO_POP::excelDownPopup.xfdl", null, "fn_excelDownload");
+	}
+};
+
+this.fn_excelDownload = function(objId, ret) {
+	// 20230503_박철희_엑셀다운로드수정
+	// if(!pwd) return; //취소(undefined)
+	// this.ofn_exportExcel({form:this, grid:this.grd_resList, fileName:"고객사입고처리", password: pwd, dbWrk: "dbWrk", pgmId: "SSP_BO_SN_07_02"});
+	var answr = ret.split("||||"); 
+	
+	if(this.gfn_isNull(answr)) { return; } 
+	this.ofn_exportExcel({form:this, grid:this.grd_resList, fileName:"고객사입고처리", password: answr[0], downRsn: answr[1], dbWrk: "DOWNLOAD", pgmId: "SSP_BO_SN_07_02"});
+};
+
+
+this.btn_reset_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.Div00.form.set_enable(true);
+	this.cmb_viewCount.set_enable(true);
+	this.ds_search.clearData();
+	this.ds_search.addRow();
+	
+	this.Div00.form.edt_oprUnit.set_value("");
+	this.Div00.form.edt_ordNum.set_value("");
+	this.Div00.form.cbo_whClass.set_index(0);
+	this.Div00.form.cbo_inqPeriod.set_index(0);
+	this.Div00.form.cal_inqPeriodFrom.set_value(new nexacro.Date());
+	this.Div00.form.cal_inqPeriodTo.set_value(new nexacro.Date());
+	this.Div00.form.edt_trdState.set_value("");
+		
+	if(this.ds_select.getRowCount() != 0 )
+		this.fn_deleteSelectedData("fn_callBack");	
+};
+
+this.btn_active_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.Div00.form.set_enable(true);
+	this.cmb_viewCount.set_enable(true);
+};
+
+this.Div00_btn_oprUnitPopup_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var objParam = { coCd: this.fv_coCd };  //gds_userInfo 사용여부 확인필요
+	this.gfn_openPopup("oprUnitMultiPopup", "CO_POP::SSP_BO_PP_23.xfdl", objParam, "fn_popupCallback");
+};
+
+this.Div00_btn_oprUnitMemo_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_showTareaInput(this.name,"OPR_UNIT_ID",this.Div00.form.edt_oprUnit.value,
+	"fn_popupCallback",120,300);
+};
+
+this.Div00_btn_ordNumPopup_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var objParam = {};
+	this.gfn_openPopup("odrNoMultiPopup", "OD::SSP_BO_OA_28.xfdl", objParam, "fn_popupCallback");
+};
+
+this.Div00_btn_ordNumMemo_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_showTareaInput(this.name,"ODR_NO",this.Div00.form.edt_ordNum.value,
+	"fn_popupCallback",130,300);
+};
+
+this.btn_selRcpPrc_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	// 입고처리 완료 저장
+	// 그리드 필터 사용시 깜빡임 증상 대처
+	this.grd_resList.set_binddataset(); // 그리드 바인드 비우기
+	
+	this.ds_resList.filter("CHK == '1' && GI_CMPL_NM != '완료'");
+	this.ds_chkList.deleteAll();
+	
+	trace("========================= ds_resList Cnt: " + this.ds_resList.getCount());
+	for ( var i=0; i<this.ds_resList.getCount(); i++ ) {
+		var nRow = this.ds_chkList.addRow();
+		trace("========================= nRow: " + nRow);
+		//trace("========================= CHK: " + this.ds_resList.getColumn(i, "CHK"));
+		//this.ds_chkList.copyRow(i, this.ds_resList, i);
+		this.ds_chkList.setColumn(nRow, "CO_CD", this.fv_coCd);	// 회사코드
+		this.ds_chkList.setColumn(nRow, "BZPLC_ID", this.ds_resList.getColumn(i, "BZPLC_ID"));
+		this.ds_chkList.setColumn(nRow, "ODR_NO", this.ds_resList.getColumn(i, "ODR_NO"));
+		this.ds_chkList.setColumn(nRow, "ODR_ITM_NO", this.ds_resList.getColumn(i, "ODR_ITM_NO"));
+		this.ds_chkList.setColumn(nRow, "ODRPSN_ID", this.ds_resList.getColumn(i, "ODRPSN_ID"));
+		this.ds_chkList.setColumn(nRow, "GI_STATS_CD", "01");	// 01 : 완료, 10 : 입고대기
+		this.ds_chkList.setColumn(nRow, "GI_DCN_DT", this.gfn_getDate("date"));	// 입고확정일
+		this.ds_chkList.setColumn(nRow, "ODR_QTY", this.ds_resList.getColumn(i, "ODR_QTY"));
+		trace("========================= ODR_NO: " + this.ds_chkList.getColumn(i, "ODR_NO"));
+		trace("========================= ODR_ITM_NO: " + this.ds_chkList.getColumn(i, "ODR_ITM_NO"));
+		trace("========================= ODR_QTY: " + this.ds_chkList.getColumn(i, "ODR_QTY"));
+	}
+	
+	this.ds_resList.filter(""); // 체크데이터 초기화
+	
+	this.grd_resList.set_binddataset(this.ds_resList); // 그리드 바인드 채우기
+	
+	var sSvcId = "updateWarehousingFinish";    
+	var sUrl = "/ad/wh/update-warehousing-finish.do";  
+	var inDs = "ds_chkList=ds_chkList";
+	var outDs = "";
+	var arg = "";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");		
+
+};
+
+
+
+// 레이아웃 저장
+this.btn_layoutSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.gfn_personalSave("grd_resList", this.grd_resList.getCurFormatString());
+};
+// 레이아웃 초기화
+this.btn_layoutInit_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.gfn_personalReset("grd_resList");
+	this.grd_resList.set_formats(this.grd_resList.uOrgFormat);
+};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_resList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="GI_STATS_CD" type="STRING" size="32"/>
+          <Column id="GI_STATS_NM" type="STRING" size="32"/>
+          <Column id="GI_CMPL_NM" type="STRING" size="32"/>
+          <Column id="GI_DTM" type="STRING" size="32"/>
+          <Column id="GI_PRCS_PRSN_NM" type="STRING" size="32"/>
+          <Column id="GI_CONFIRM_YN" type="STRING" size="32"/>
+          <Column id="ADJ_YM" type="STRING" size="32"/>
+          <Column id="GDOC_NO" type="STRING" size="32"/>
+          <Column id="CATG_KILR_CD" type="STRING" size="32"/>
+          <Column id="CATG_KILR_NM" type="STRING" size="32"/>
+          <Column id="BZPLC_ID" type="STRING" size="32"/>
+          <Column id="BZPLC_NM" type="STRING" size="32"/>
+          <Column id="ODR_NO_N_ITM_NO" type="STRING" size="32"/>
+          <Column id="ODR_REQ_DTM" type="STRING" size="32"/>
+          <Column id="DLV_CMPL_DTM" type="STRING" size="32"/>
+          <Column id="PRD_ID" type="STRING" size="32"/>
+          <Column id="PRD_NM" type="STRING" size="32"/>
+          <Column id="REPR_SPEC" type="STRING" size="32"/>
+          <Column id="ODR_QTY" type="STRING" size="32"/>
+          <Column id="SELL_UNIT_CD" type="STRING" size="32"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="32"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="32"/>
+          <Column id="DEPT_ID" type="STRING" size="32"/>
+          <Column id="DEPT_NM" type="STRING" size="32"/>
+          <Column id="ODRPSN_ID" type="STRING" size="32"/>
+          <Column id="ODRPSN_NM" type="STRING" size="32"/>
+          <Column id="RCVR_NM" type="STRING" size="32"/>
+          <Column id="CHK" type="STRING" size="1"/>
+          <Column id="ODR_NO" type="STRING" size="256"/>
+          <Column id="ODR_ITM_NO" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="GI_STATS_SEL_CD" type="STRING" size="256"/>
+          <Column id="INQ_DTM_SEL_CD" type="STRING" size="256"/>
+          <Column id="INQ_DTM_FROM" type="STRING" size="256"/>
+          <Column id="INQ_DTM_TO" type="STRING" size="256"/>
+          <Column id="GDOC_NO" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="TOTAL_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="SES_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="eOPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="ODR_NO" type="STRING" size="256"/>
+          <Column id="eODR_NO" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="LANG_CD">KO</Col>
+            <Col id="GI_STATS_SEL_CD"/>
+            <Col id="INQ_DTM_SEL_CD"/>
+            <Col id="INQ_DTM_FROM"/>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">20</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_page" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="COL_VALUE" type="STRING" size="256"/>
+          <Column id="COL_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COL_VALUE">20</Col>
+            <Col id="COL_NM">20개씩</Col>
+          </Row>
+          <Row>
+            <Col id="COL_VALUE">50</Col>
+            <Col id="COL_NM">50개씩</Col>
+          </Row>
+          <Row>
+            <Col id="COL_VALUE">100</Col>
+            <Col id="COL_NM">100개씩</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_searchCom" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="COM_CLSF_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="LANG_CD">KO</Col>
+            <Col id="COM_CLSF_CD"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_select" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="SES_ID" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="COL_ITM" type="STRING" size="256"/>
+          <Column id="COND_DATA_VAL" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_giStatsSel" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CODE_CD" type="STRING" size="256"/>
+          <Column id="CODE_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CODE_CD">00</Col>
+            <Col id="CODE_NM">전체</Col>
+          </Row>
+          <Row>
+            <Col id="CODE_CD">01</Col>
+            <Col id="CODE_NM">완료</Col>
+          </Row>
+          <Row>
+            <Col id="CODE_CD">02</Col>
+            <Col id="CODE_NM">미완료</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_inqDtmSel" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CODE_CD" type="STRING" size="256"/>
+          <Column id="CODE_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CODE_CD">01</Col>
+            <Col id="CODE_NM">주문 생성일</Col>
+          </Row>
+          <Row>
+            <Col id="CODE_CD">02</Col>
+            <Col id="CODE_NM">배송 완료일</Col>
+          </Row>
+          <Row>
+            <Col id="CODE_CD">03</Col>
+            <Col id="CODE_NM">입고 처리일</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_chkList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="ODR_NO" type="STRING" size="256"/>
+          <Column id="ODR_ITM_NO" type="STRING" size="256"/>
+          <Column id="GI_STATS_CD" type="STRING" size="256"/>
+          <Column id="GI_DCN_DT" type="STRING" size="256"/>
+          <Column id="GDPSN_ID" type="STRING" size="256"/>
+          <Column id="ODRPSN_ID" type="STRING" size="256"/>
+          <Column id="ODR_QTY" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CHK"/>
+            <Col id="CO_CD"/>
+            <Col id="BZPLC_ID"/>
+            <Col id="ODR_NO"/>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="Div00.form.cbo_whClass" propid="value" datasetid="ds_search" columnid="GI_STATS_SEL_CD"/>
+      <BindItem id="item1" compid="Div00.form.cbo_inqPeriod" propid="value" datasetid="ds_search" columnid="INQ_DTM_SEL_CD"/>
+      <BindItem id="item2" compid="Div00.form.cal_inqPeriodFrom" propid="value" datasetid="ds_search" columnid="INQ_DTM_FROM"/>
+      <BindItem id="item3" compid="Div00.form.cal_inqPeriodTo" propid="value" datasetid="ds_search" columnid="INQ_DTM_TO"/>
+      <BindItem id="item4" compid="Div00.form.edt_trdState" propid="value" datasetid="ds_search" columnid="GDOC_NO"/>
+      <BindItem id="item6" compid="Div00.form.edt_oprUnit" propid="value" datasetid="ds_search" columnid="eOPR_UNIT_ID"/>
+      <BindItem id="item7" compid="Div00.form.edt_ordNum" propid="value" datasetid="ds_search" columnid="eODR_NO"/>
+    </Bind>
+  </Form>
+</FDL>

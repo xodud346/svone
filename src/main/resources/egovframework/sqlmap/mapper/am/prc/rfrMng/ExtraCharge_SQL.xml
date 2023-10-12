@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ExtraCharge">
+	<select id="selectExtraCharge" parameterType="hashMap" resultType="sspMap">
+		/* ExtraCharge.selectExtraCharge */
+		SELECT
+			A.CO_CD,
+			A.PREMRT_ID,
+			A.PREMRT,
+			A.REG_RSN,
+			A.REGPSN_ID,
+			( SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = A.REGPSN_ID ) REGPSN_NM,
+			A.REG_DTM
+		FROM
+			TB_SG_GEN_PREMRT A
+		WHERE
+			1 = 1
+		AND
+			USE_YN = 'Y'
+	</select>
+
+	<insert id="insertExtraCharge" parameterType="hashMap">
+		/* ExtraCharge.insertExtraCharge */
+		<selectKey keyProperty="inputPremrtId" resultType="integer" order="BEFORE">
+			SELECT SQ_SG_GEN_PREMRT.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO
+			TB_SG_GEN_PREMRT
+				(	CO_CD,
+					PREMRT_ID,
+					PREMRT,
+					REG_RSN,
+					USE_YN,
+					REGPSN_ID,
+					REG_DTM
+				)
+			VALUES
+				(	'1000',
+					#{inputPremrtId},
+					#{inputPremrt},
+					#{inputRegRsn},
+					'Y',
+					#{userId},
+					SYSDATE
+				)
+	</insert>
+
+	<update id="updateExtraCharge" parameterType="hashMap">
+		/* ExtraCharge.updateExtraCharge */
+		UPDATE
+			TB_SG_GEN_PREMRT
+		SET
+			USE_YN = 'N',
+			UPDPSN_ID = #{userId},
+			UPD_DTM = SYSDATE
+		WHERE
+			PREMRT_ID = #{premrtId}
+	</update>
+
+	<insert id="insertExtraChargeHistory" parameterType="hashMap">
+		/* ExtraCharge.insertExtraChargeHistory */
+		INSERT INTO
+			TB_SG_GEN_PREMRT_HST
+				(	CO_CD,
+					PREMRT_ID,
+					HST_SEQ,
+					PREMRT,
+					REG_RSN,
+					USE_YN,
+					REG_DTM,
+					REGPSN_ID,
+					REGPSN_NM
+				)
+			VALUES
+				(	#{coCd},
+					#{premrtId},
+					( SELECT NVL(MAX(HST_SEQ), 0 ) + 1 FROM TB_SG_GEN_PREMRT_HST ),
+					#{preMrt},
+					#{regRsn},
+					'N',
+					SYSDATE,
+					#{regpsnId},
+					#{regpsnNm}
+				)
+	</insert>
+
+	<select id="selectHistoryCount" parameterType="hashMap" resultType="integer">
+		/* ExtraCharge.selectHistoryCount */
+		SELECT
+			COUNT(0)
+		FROM
+			TB_SG_GEN_PREMRT_HST
+		WHERE
+			1 = 1
+	</select>
+
+	<select id="selectHistoryList" parameterType="hashMap" resultType="sspMap">
+		/* ExtraCharge.selectHistoryList */
+		SELECT
+			S2.*
+		FROM
+			(	SELECT
+					ROWNUM RNUM,
+					S1.*
+				FROM
+					(	SELECT
+							PREMRT_ID,
+							PREMRT,
+							HST_SEQ,
+							REG_RSN,
+							USE_YN,
+							REG_DTM,
+							REGPSN_ID,
+							REGPSN_NM
+						FROM
+							TB_SG_GEN_PREMRT_HST
+						WHERE
+							1 = 1
+						ORDER BY
+							HST_SEQ DESC
+					) S1
+			) S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} and #{endNum}
+	</select>
+</mapper>

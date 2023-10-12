@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Manufacturer">
+
+	<!-- 제조원관리 갯수 -->
+    <select id="selectManufacturerCount" parameterType="hashMap" resultType="integer">
+        /* Manufacturer.selectManufacturerCount */
+        SELECT 
+    		COUNT(0)
+		FROM 
+		    TB_FV_MNFR_MAST TFMM
+		WHERE 
+		    TFMM.CO_CD = '1000'
+		<if test="searchMnfrNo != null and searchMnfrNo != ''">
+			AND 
+		    	TFMM.MNFR_NO = #{searchMnfrNo}
+		</if>
+		<if test="searchMnfrNm != null and searchMnfrNm != ''">
+			AND 
+				TFMM.MNFR_NM = #{searchMnfrNm}
+		</if>
+		<if test="searchSgMnfrNm != null and searchSgMnfrNm != ''">
+			AND 
+				TFMM.MNFR_NM = #{searchSgMnfrNm}
+		</if>
+		<if test="searchUpdpsnId != null and searchUpdpsnId != ''">
+			AND 
+		    	TFMM.UPDPSN_ID = #{searchUpdpsnId}
+		</if>
+		<if test="searchUpdpsnNm != null and searchUpdpsnNm != ''">
+			AND 
+				(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TFMM.UPDPSN_ID) = #{searchUpdpsnNm}
+		</if>
+		<if test="searchStartDate != null and searchStartDate != '' and searchEndDate != null and searchEndDate != ''">
+			AND 
+		    	TO_CHAR(TFMM.UPD_DTM,'YYYYMMDD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+		</if>
+		<if test='diffNm == "Y".toString()'>
+			AND 
+		    	TFMM.MNFR_NM <![CDATA[ <> ]]> TFMM.SG_MNFR_NM
+		    AND 
+		    	TFMM.SG_MNFR_NM IS NOT NULL
+		</if>
+    </select> 
+    
+    <!-- 제조원관리 리스트 조회 -->
+    <select id="selectManufacturerList" parameterType="hashMap" resultType="SspMap">
+        /* Manufacturer.selectManufacturerList */
+        SELECT
+            S2.*            
+        FROM
+            (   SELECT
+                    ROWNUM AS RNUM,
+                    S1.* 
+                FROM
+                    ( SELECT 
+						    TFMM.MNFR_NO,
+						    TFMM.MNFR_NM,
+						    DECODE(TFMM.SG_MNFR_NM, NULL, TFMM.MNFR_NM,TFMM.SG_MNFR_NM) SG_MNFR_NM,
+						    CASE WHEN (TFMM.SG_MNFR_NM IS NOT NULL AND TFMM.MNFR_NM <![CDATA[ <> ]]> TFMM.SG_MNFR_NM)
+						        THEN 'Y'
+						        ELSE ''
+						    END DIFFERENT_MNFR_NM,
+						    TO_CHAR(TFMM.REG_DTM, 'yyyy-mm-dd hh24:mi:ss') REG_DTM,
+						    DECODE(TFMM.REGPSN_ID,NULL,'','('||TFMM.REGPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TFMM.REGPSN_ID)) AS REGPSN,
+						    TFMM.REGPSN_ID,
+						    (SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TFMM.REGPSN_ID) AS REGPSN_NM,
+						    TO_CHAR(TFMM.UPD_DTM, 'yyyy-mm-dd hh24:mi:ss') UPD_DTM,
+						    DECODE(TFMM.UPDPSN_ID,NULL,'','('||TFMM.UPDPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TFMM.UPDPSN_ID)) AS UPDPSN,
+						    TFMM.UPDPSN_ID,
+						    (SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TFMM.UPDPSN_ID) AS UPDPSN_NM
+						FROM 
+						    TB_FV_MNFR_MAST TFMM
+						WHERE 
+						    TFMM.CO_CD = '1000'
+						<if test="searchMnfrNo != null and searchMnfrNo != ''">
+							AND 
+						    	TFMM.MNFR_NO = #{searchMnfrNo}
+						</if>
+						<if test="searchMnfrNm != null and searchMnfrNm != ''">
+							AND 
+								TFMM.MNFR_NM = #{searchMnfrNm}
+						</if>
+						<if test="searchSgMnfrNm != null and searchSgMnfrNm != ''">
+							AND 
+								TFMM.MNFR_NM = #{searchSgMnfrNm}
+						</if>
+						<if test="searchUpdpsnId != null and searchUpdpsnId != ''">
+							AND 
+						    	TFMM.UPDPSN_ID = #{searchUpdpsnId}
+						</if>
+						<if test="searchUpdpsnNm != null and searchUpdpsnNm != ''">
+							AND 
+								(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TFMM.UPDPSN_ID) = #{searchUpdpsnNm}
+						</if>
+						<if test="searchStartDate != null and searchStartDate != '' and searchEndDate != null and searchEndDate != ''">
+							AND 
+						    	TO_CHAR(TFMM.UPD_DTM,'YYYYMMDD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+						</if>
+						<if test='diffNm == "Y".toString()'>
+							AND 
+						    	TFMM.MNFR_NM <![CDATA[ <> ]]> TFMM.SG_MNFR_NM
+						    AND 
+						    	TFMM.SG_MNFR_NM IS NOT NULL
+						</if>
+                        <if test="sort != null and sort != ''">
+                        	ORDER BY 
+                        	<choose>
+                        		<when test="'MNFR_NO' eq sort">TFMM.MNFR_NO <if test="'DESC' eq sortType">DESC</if></when>
+                        		<when test="'UPD_DTM' eq sort">TFMM.UPD_DTM <if test="'DESC' eq sortType">DESC</if></when>
+                        		<otherwise>TFMM.MNFR_NO ASC</otherwise>
+                        	</choose>
+                        </if>
+                    )
+                    S1 
+            )
+            S2 
+        WHERE
+            S2.RNUM BETWEEN #{startNum} AND #{endNum}
+    </select>
+    
+    <!-- 제조원관리 엑셀 리스트 조회 -->
+    <select id="selectManufacturerListExcel" parameterType="hashMap" resultType="hashMap">
+    	SELECT 
+		    TFMM.MNFR_NO,
+		    TFMM.MNFR_NM,
+		    DECODE(TFMM.SG_MNFR_NM, NULL, TFMM.MNFR_NM,TFMM.SG_MNFR_NM) SG_MNFR_NM,
+		    CASE WHEN (TFMM.SG_MNFR_NM IS NOT NULL AND TFMM.MNFR_NM <![CDATA[ <> ]]> TFMM.SG_MNFR_NM)
+		        THEN 'Y'
+		        ELSE ''
+		    END DIFFERENT_MNFR_NM,
+		    TO_CHAR(TFMM.UPD_DTM, 'yyyy-mm-dd hh24:mi:ss') UPD_DTM,
+		    DECODE(TFMM.UPDPSN_ID,NULL,'','('||TFMM.UPDPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TFMM.UPDPSN_ID)) AS UPDPSN,
+		    TFMM.UPDPSN_ID,
+		    (SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TFMM.UPDPSN_ID) AS UPDPSN_NM
+		FROM 
+		    TB_FV_MNFR_MAST TFMM
+		WHERE 
+		    TFMM.CO_CD = '1000'
+		<if test="searchMnfrNo != null and searchMnfrNo != ''">
+			AND 
+		    	TFMM.MNFR_NO = #{searchMnfrNo}
+		</if>
+		<if test="searchMnfrNm != null and searchMnfrNm != ''">
+			AND 
+				TFMM.MNFR_NM = #{searchMnfrNm}
+		</if>
+		<if test="searchSgMnfrNm != null and searchSgMnfrNm != ''">
+			AND 
+				TFMM.MNFR_NM = #{searchSgMnfrNm}
+		</if>
+		<if test="searchUpdpsnId != null and searchUpdpsnId != ''">
+			AND 
+		    	TFMM.UPDPSN_ID = #{searchUpdpsnId}
+		</if>
+		<if test="searchUpdpsnNm != null and searchUpdpsnNm != ''">
+			AND 
+				(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TFMM.UPDPSN_ID) = #{searchUpdpsnNm}
+		</if>
+		<if test="searchStartDate != null and searchStartDate != '' and searchEndDate != null and searchEndDate != ''">
+			AND 
+		    	TO_CHAR(TFMM.UPD_DTM,'YYYYMMDD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+		</if>
+		<if test='diffNm.equals("Y")'>
+			AND 
+		    	TFMM.MNFR_NM <![CDATA[ <> ]]> TFMM.SG_MNFR_NM
+		    AND 
+		    	TFMM.SG_MNFR_NM IS NOT NULL
+		</if>
+		<if test="sort != null and sort != ''">
+			ORDER BY 
+			<choose>
+				<when test="'MNFR_NO' eq sort">TFMM.MNFR_NO <if test="'DESC' eq sortType">DESC</if></when>
+				<when test="'UPD_DTM' eq sort">TFMM.UPD_DTM <if test="'DESC' eq sortType">DESC</if></when>
+				<otherwise>TFMM.MNFR_NO ASC</otherwise>
+			</choose>
+		</if>
+    </select>
+    
+    <update id="updateManufacturer" parameterType="hashMap">
+    	UPDATE
+		    TB_FV_MNFR_MAST
+		SET
+		    SG_MNFR_NM = #{sgMnfrNm},
+		    UPD_DTM = SYSDATE,
+		    UPDPSN_ID = #{updpsnId}
+		WHERE 
+		    MNFR_NO = #{mnfrNo}
+    </update>
+</mapper>

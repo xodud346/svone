@@ -1,0 +1,172 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_TEST" width="110" height="110" titletext="New Form" onload="SSP_BO_TEST_onload" scrolltype="none" oninit="SSP_BO_TEST_oninit">
+    <Layouts>
+      <Layout height="110" width="110">
+        <TextArea id="tareaInput" taborder="0" left="0" top="0" width="740" height="280" onkeydown="tareaInput_onkeydown"/>
+        <Edit id="edt_bzplc" taborder="1" left="421" top="128" width="125" height="24"/>
+        <Edit id="edt_bzplcNm" taborder="2" left="550" top="128" width="125" height="24" enable="false"/>
+        <Button id="btn_bzplcPopup" taborder="3" left="680" top="128" height="24" cssclass="btn_WF_search02" width="24" text="" onclick="btn_bzplcPopup_onclick"/>
+        <Edit id="edt_bzplc1" taborder="4" left="420" top="178" width="125" height="24"/>
+        <Button id="btn_bzplcPopup1" taborder="5" left="679" top="178" height="24" cssclass="btn_WF_search02" width="24" text="" onclick="btn_bzplcPopup1_onclick"/>
+        <Edit id="edt_bzplcNm1" taborder="6" left="549" top="178" width="125" height="24" enable="false"/>
+        <Edit id="edt_bzplc2" taborder="7" left="421" top="216" width="125" height="24"/>
+        <Edit id="edt_bzplcNm2" taborder="8" left="550" top="216" width="125" height="24" enable="false"/>
+        <Button id="btn_bzplcPopup2" taborder="9" left="680" top="216" height="24" cssclass="btn_WF_search02" width="24" text="" onclick="btn_bzplcPopup2_onclick"/>
+        <Static id="staticTitle" taborder="10" left="270" top="128" height="20" font="bold 14pt &quot;Arial&quot;" text="회원 단일" cssclass="sta_WF_title03" width="120"/>
+        <Static id="staticTitle00" taborder="11" left="270" top="180" height="20" font="bold 14pt &quot;Arial&quot;" text="결재자 조회" cssclass="sta_WF_title03" width="120"/>
+        <Static id="staticTitle00_00" taborder="12" left="270" top="220" height="20" font="bold 14pt &quot;Arial&quot;" text="발주자 조회" cssclass="sta_WF_title03" width="120"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_select">
+        <ColumnInfo>
+          <Column id="SES_ID" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="COL_ITM" type="STRING" size="256"/>
+          <Column id="COND_DATA_VAL" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;
+this.insertCount = 0;
+
+this.fv_inqCondDtls ="";
+this.fv_colItm ="";
+			
+this.SSP_BO_TEST_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	fv_inqCondDtls = this.parent.pv1;
+    fv_colItm = this.parent.pv2;
+	
+	trace("### fv_inqCondDtls : " + fv_inqCondDtls + ", fv_colItm : " + fv_colItm);
+};
+
+
+// 주문조회대상내역(Insert, TB_OD_ODR_INQ_TGT_DTLS)
+this.fn_insertSelectedData = function() {
+	var sSvcId = "insertOdrInqTgtDtls";
+	var sUrl = "/od/odrPopup/insertOdrInqTgtDtls.do";
+	var inDs = "ds_search=ds_select";
+	var outDs = "";
+	var arg = "";
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "insertOdrInqTgtDtls"){    
+		trace("### insertOdrInqTgtDtls - insert count : " + this.insertCount);
+		this.close(this.insertCount);
+	}
+};
+
+this.tareaInput_onkeydown = function(obj:nexacro.TextArea,e:nexacro.KeyEventInfo)
+{
+	if(e.ctrlkey == true && e.keycode == 115)	this.close(0);
+	if(e.keycode != 13)	return;
+	
+	var regExp = /[\{\}\[\]\/?.,;:|\)*~`!^\- +<>@\#$%&\\\=\(\'\"]/gi
+	var val = obj.value.split('\n');
+	
+	this.ds_select.deleteAll();
+	var nRow ;
+	var strValue ;
+	for(var i=0; i < val.length; i++)
+	{
+		strValue = val[i];
+		strValue = strValue.replace(regExp,"");
+		
+		//trace("data is "+strValue + ", " + this.ds_select.findRow("COND_DATA_VAL",strValue));
+		if(strValue.length != 0  &&  this.ds_select.findRow("COND_DATA_VAL",strValue) == -1)
+		{
+			nRow = this.ds_select.addRow();
+			this.ds_select.setColumn(nRow, "SES_ID", "");
+			this.ds_select.setColumn(nRow, "INQ_COND_DTLS", fv_inqCondDtls);
+			this.ds_select.setColumn(nRow, "COL_ITM", fv_colItm);
+			this.ds_select.setColumn(nRow, "COND_DATA_VAL", strValue);
+			
+			//trace("data is "+fv_inqCondDtls + ", "+fv_colItm+ ", "+strValue);
+		}
+	}
+		
+	if(this.ds_select.rowcount != 0)
+	{
+		//this.close(nRow+1);
+		this.fn_insertSelectedData();
+	}
+	else
+		this.close(-1);
+};
+
+this.SSP_BO_TEST_oninit = function(obj:nexacro.Form,e:nexacro.EventInfo)
+{	
+	//this.getOwnerFrame().set_resizable(true);
+	//this.getOwnerFrame().set_width(this.parent.pv3);
+	//this.getOwnerFrame().set_height(this.parent.pv4);
+	//this.tareaInput.width = this.getOwnerFrame().width;
+	//this.tareaInput.height = this.getOwnerFrame().height;
+	//this.getOwnerFrame().set_showtitlebar(false);	
+};
+this.btn_bzplcPopup_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var objParam = {pv1:"0",pv2:"S000012561"};
+	this.gfn_openPopup("OA54", "OD::SSP_BO_OA_54.xfdl", objParam);
+};
+this.fn_popupCallback = function(sPopupId, sRetValue) {
+	var resData = "";
+	var sIdList = "";
+	var sNmList = "";
+	
+    if (sRetValue == undefined) {
+        return;
+    }
+	else {
+		resData = JSON.parse(sRetValue);
+	}
+	
+	switch (sPopupId) {
+		case "OA54":
+			this.edt_bzplc.set_value(resData.MBR_ID);
+			this.edt_bzplcNm.set_value(resData.MBR_NM);
+			break;
+		case "OA55":
+			this.edt_bzplc1.set_value(resData.MBR_ID);
+			this.edt_bzplcNm1.set_value(resData.MBR_NM);
+			break;	
+		case "OA56":
+			this.edt_bzplc2.set_value(resData.MBR_ID);
+			this.edt_bzplcNm2.set_value(resData.MBR_NM);
+			break;	
+		default : 
+			break;
+	}
+};
+
+this.btn_bzplcPopup1_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var objParam = {pv1:"1",pv2:"S000012316"};
+	this.gfn_openPopup("OA55", "OD::SSP_BO_OA_55.xfdl", objParam);
+};
+
+this.btn_bzplcPopup2_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var objParam = {pv1:"2",pv2:"S000010038"};
+	this.gfn_openPopup("OA56", "OD::SSP_BO_OA_55.xfdl", objParam);
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="edt_bzplc" propid="value" datasetid="ds_search" columnid="BZPLC_ID"/>
+      <BindItem id="item1" compid="edt_bzplc1" propid="value" datasetid="ds_search" columnid="BZPLC_ID"/>
+      <BindItem id="item2" compid="edt_bzplc2" propid="value" datasetid="ds_search" columnid="BZPLC_ID"/>
+    </Bind>
+  </Form>
+</FDL>

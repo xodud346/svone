@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PriceList">
+    <select id="selectPriceList" parameterType="HashMap" resultType="sspMap">
+        /* PriceList.selectPriceList 가격조회*/
+        SELECT A.PRD_ID
+        	 , B.BZPLC_ID
+        	 , B.BZPLC_NM
+        	 , C.OPR_UNT_ID
+        	 , C.OPR_UNT_NM
+			 , D.INGT_PRD_GRP_ID    	 
+        	 , ( SELECT PRD_GRP_ID FROM TB_SG_PRD_GRP WHERE CO_CD = A.CO_CD AND PRD_ID = A.PRD_ID AND PRD_GRP_SPR_CD = 'S' AND BSS_PRD_YN = 'Y') PRD_GRP_ID
+        	 , A.PRD_CLS_CD 
+        	 , A.SSP_ONLY_SPR 
+        	 , DECODE(D.INTG_PRD_SPR, '1', '통합_가격', '2', '통합_품질','') INTG_PRD_SPR
+          FROM  TB_FV_PRD A, TB_FC_BZPLC_BASIS B,
+          	   TB_FC_BZPLC_OPR_UNT C,
+			(	SELECT
+					A.CO_CD,
+					A.INGT_PRD_GRP_ID,
+					A.INGT_PRD_GRP_STATS,
+					A.REG_DTM REG_DTM_INGT,
+					A.REGPSN_ID,
+					B.INGT_PRD_GRP_ITM_NO,
+					B.PRD_ID,
+					B.INTG_NONINTG_PRD_SPR,
+					B.INTG_PRD_SPR
+				FROM
+					TB_FV_INTG_PRD_MNG_HEADR A,
+					TB_FV_INTG_PRD_MNG_DTL B
+				WHERE
+					A.CO_CD = B.CO_CD
+				AND
+					A.INGT_PRD_GRP_ID = B.INGT_PRD_GRP_ID
+			) D   ,
+			TB_SG_DISP_STATS E
+         WHERE E.BZPLC_ID = B.BZPLC_ID
+           AND A.CO_CD = D.CO_CD
+           AND A.PRD_ID = D.PRD_ID
+           AND E.OPR_UNT_ID = C.OPR_UNT_ID
+		 <![CDATA[              
+           AND ROWNUM <= 1        
+         ]]>           
+    </select>
+    <select id="selectPublicProcessWaitingList" parameterType="HashMap" resultType="sspMap">
+        /* PriceList.selectPublicProcessWaitingList 가격조회*/
+        SELECT A.PRD_ID
+        	 , G.RQST_NO
+        	 , G.PROC_STATS_CD
+        	 , C.BZPLC_ID
+        	 , C.BZPLC_NM
+        	 , D.OPR_UNT_ID
+        	 , D.OPR_UNT_NM
+			 , E.INGT_PRD_GRP_ID    	 
+        	 , ( SELECT PRD_GRP_ID FROM TB_SG_PRD_GRP WHERE CO_CD = A.CO_CD AND PRD_ID = A.PRD_ID AND PRD_GRP_SPR_CD = 'S' AND BSS_PRD_YN = 'Y') PRD_GRP_ID
+        	 , B.PRD_CLS_CD 
+        	 , B.SSP_ONLY_SPR 
+        	 , DECODE(E.INTG_PRD_SPR, '1', '통합_가격', '2', '통합_품질','') INTG_PRD_SPR
+          FROM  TB_FV_PRD A, TB_SG_PRD B, TB_FC_BZPLC_BASIS C,
+          	   TB_FC_BZPLC_OPR_UNT D,
+			(	SELECT
+					A.CO_CD,
+					A.INGT_PRD_GRP_ID,
+					A.INGT_PRD_GRP_STATS,
+					A.REG_DTM REG_DTM_INGT,
+					A.REGPSN_ID,
+					B.INGT_PRD_GRP_ITM_NO,
+					B.PRD_ID,
+					B.INTG_NONINTG_PRD_SPR,
+					B.INTG_PRD_SPR
+				FROM
+					TB_FV_INTG_PRD_MNG_HEADR A,
+					TB_FV_INTG_PRD_MNG_DTL B
+				WHERE
+					A.CO_CD = B.CO_CD
+				AND
+					A.INGT_PRD_GRP_ID = B.INGT_PRD_GRP_ID
+			) E   ,
+			TB_SG_DISP_STATS F,
+			TB_SG_PRD_RQST G
+         WHERE A.CO_CD = B.CO_CD 
+           AND A.PRD_ID = B.PRD_ID
+           AND F.BZPLC_ID = C.BZPLC_ID
+           AND B.CO_CD = E.CO_CD
+           AND B.PRD_ID = E.PRD_ID
+           AND F.OPR_UNT_ID = D.OPR_UNT_ID
+           AND A.CO_CD = G.CO_CD(+)
+           AND A.PRD_ID = G.PRD_ID(+)
+		 <![CDATA[              
+           AND ROWNUM <= 1        
+         ]]>           
+    </select>    
+</mapper>

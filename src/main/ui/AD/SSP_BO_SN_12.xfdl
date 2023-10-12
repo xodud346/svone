@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_SN_12" width="280" height="170" titletext="대용량다운로드팝업" onload="SSP_BO_SN_12_onload" onsize="SSP_BO_SN_12_onsize" onkeyup="SSP_BO_SN_12_onkeyup">
+    <Layouts>
+      <Layout height="170" mobileorientation="landscape" width="280">
+        <Static id="staticTitle" taborder="0" text="대용량 엑셀다운로드 하시겠습니까?" left="20" top="20" height="21" cssclass="sta_WF_title04" width="260"/>
+        <Radio id="rdo_calcNoCalc" taborder="1" left="30" top="53" width="230" height="33" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" columncount="2" value="N" text="정산내역" index="0">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">N</Col>
+                <Col id="datacolumn">정산내역</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">Y</Col>
+                <Col id="datacolumn">미정산내역</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Radio>
+        <Button id="btn_confirm" taborder="2" text="확인" onclick="btn_confirm_onclick" height="30" cssclass="btn_WF_select" width="60" left="60" top="106"/>
+        <Button id="btn_cancel" taborder="3" text="취소" top="106" width="60" height="30" right="70" onclick="btn_cancel_onclick"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[// 정산대사 대용량 다운로드 팝업
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+include "OD::odUtils.xjs";
+
+this.fv_oApp = nexacro.getApplication();	//application object 
+/***********************************************************************************************
+* FORM EVENT 영역
+************************************************************************************************/
+this.SSP_BO_SN_12_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	//검색 영역 최소size 적용
+	this.resetScroll();
+	this.fn_regShortCutMethod(); 
+};
+
+this.SSP_BO_SN_12_onsize = function(obj:nexacro.Form,e:nexacro.SizeEventInfo)
+{
+	if (e.cx < 280 || e.cx > 280)	this.setOffsetWidth(280);
+	if (e.cy < 170 || e.cy > 170)	this.setOffsetHeight(170);
+};
+
+this.SSP_BO_SN_12_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+
+/***********************************************************************************************
+* 사용자 함수 영역
+************************************************************************************************/
+this.fn_response = function(res) {
+	var resData = {};
+	var resString = "";
+	
+	resData.NO_CALC = this.rdo_calcNoCalc.value;
+	resData.RESPONSE = res;
+	resString = JSON.stringify(resData);
+	
+	this.close(resString);
+};
+
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	this.fn_regMethodESC("btn_cancel_onclick");
+	this.fn_regMethodShiftENTER("btn_confirm_onclick");
+};
+
+
+/***********************************************************************************************
+* BUTTON EVENT 영역
+************************************************************************************************/
+this.btn_confirm_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_response("Y");
+};
+
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close(0);
+};
+
+]]></Script>
+  </Form>
+</FDL>

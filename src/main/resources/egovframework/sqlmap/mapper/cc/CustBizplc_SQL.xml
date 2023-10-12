@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="custBizplc">
+
+   <!--
+    ******************************************************************************
+    * SELECT : 
+    * 작성자 : 차상영
+    * 작성 일자 : 2022-02-10
+    ******************************************************************************
+    -->
+
+   <select id="selectCodeList" parameterType="java.util.Map" resultType="java.util.Map">
+   <![CDATA[        
+        SELECT
+		    IDDT_ID AS ID
+		    ,IDDT_NM AS NM
+		    ,NULL AS RT
+		    ,'IDDT' AS GB
+		FROM TB_CC_IDDT_BASIS /*산업군*/
+		WHERE USE_YN='Y'
+		UNION ALL
+        SELECT
+            ID
+            ,NM
+            ,RT
+            ,GB        
+        FROM (
+            SELECT
+                BZPLC_GRD_ID AS ID
+                ,BZPLC_GRD_NM AS NM
+                ,TO_CHAR(APLY_DCRT,'FM999,999,999,999,990.00') AS RT
+                ,'GRD' AS GB
+            FROM SSP_APP.VW_CC_BZPLC_GRD_INFO /*사업장등급 뷰*/                  
+            WHERE USE_YN='Y'   
+            ORDER BY ID ASC
+        )
+     ]]>                           
+    </select>
+
+
+    <select id="selectBizplcDtl" parameterType="java.util.Map" resultType="java.util.Map">
+    /* custBizplc.selectBizplcDtl - 사업장정보 상세 */
+		SELECT
+		        A.CO_CD
+		        ,A.BZPLC_ID
+		        ,DECODE(A.BZPLC_NM, NULL, A.BZPLC_ID, A.BZPLC_ID || ' | ' || A.BZPLC_NM) AS BZPLC_NM
+		        ,A.GRP_ID
+		        ,DECODE(A.GRP_NM, NULL, A.GRP_ID, A.GRP_ID || ' | ' || A.GRP_NM) AS GRP_NM
+		        ,A.CORP_ID
+		        ,DECODE(A.CORP_NM, NULL, A.CORP_ID, A.CORP_ID || ' | ' || A.CORP_NM) AS CORP_NM
+		        ,A.CORP_NO        
+		        ,A.BIZNO
+		        ,A.BZCAT_NM
+		        ,A.BZTP_NM
+		        ,A.EMPCNT
+		        ,A.CEO_NM
+		        ,A.ZPCD
+		        ,A.REPR_ADDR
+		        ,A.DTL_ADDR
+		        ,A.CONT_STR_DT
+		        ,A.CONT_END_DT
+		        ,A.BZPLC_REG_STATS_CD
+		        ,DECODE(A.BZPLC_REG_STATS_NM, NULL, A.BZPLC_REG_STATS_CD, A.BZPLC_REG_STATS_CD || ' | ' || A.BZPLC_REG_STATS_NM) AS BZPLC_REG_STATS_NM
+		        ,A.SALS_CHRPSN_ID1
+		        ,DECODE(A.SALS_CHRPSN_NM1, NULL, A.SALS_CHRPSN_ID1, A.SALS_CHRPSN_ID1 || ' | ' || A.SALS_CHRPSN_NM1) AS SALS_CHRPSN_NM1
+		        ,A.SALS_CHRPSN_ID2
+		        ,A.CUST_SPR_CD
+		        ,DECODE(A.CUST_SPR_NM, NULL, A.CUST_SPR_CD, A.CUST_SPR_CD || ' | ' || A.CUST_SPR_NM) AS CUST_SPR_NM
+		        ,A.CONT_MNG_NM
+		        ,A.LGGRP_YN
+		        ,A.OSD_SPR_CD
+		        ,A.OSD_SPR_NM
+		        ,A.POSD_SPR_CD
+		        ,A.POSD_SPR_NM
+		        ,A.BZPLC_GRD_ID
+		        ,TO_CHAR(A.APLY_DCRT,'FM999,999,999,999,990.00') AS APLY_DCRT
+		        ,A.IDDT_ID
+		        ,A.ERP_CUST_CD
+		        ,A.USE_YN
+                ,A.GRP_APRV_USE_YN
+                ,A.CORP_APRV_USE_YN
+                ,A.GRP_ORD_USE_YN
+                ,A.CORP_ORD_USE_YN
+                ,A.ODR_AGNC_USE_YN
+                ,A.BZPLC_QRT_BGT_USE_YN	/*사업장분기예산사용여부 ,빅재광 20220518*/
+                ,A.BZPLC_BGT_FW_SPR_CD	/*사업장예산이월구분코드 ,빅재광 20220518*/
+                ,A.BZPLC_BGT_CLOS_DD_CD	/*사업장예산마감일코드 ,빅재광 20220518*/
+                ,A.BGT_YY_STR_MM 
+                ,A.BIZDOC_ATFL_ID
+                ,A.CUSTCI_ATFL_ID
+                
+                <!-- /* [2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+                ,           A.CONSN_CUST_YN
+                , DECODE(   A.CONSN_CUST_YN, 'Y', '특약고객')  CONSN_CUST_YNNM
+                , CASE WHEN A.CONSN_CUST_YN != 'Y'                                              THEN NULL
+                       WHEN A.CONSN_CUST_STR_DT IS NOT NULL AND A.CONSN_CUST_END_DT IS NOT NULL THEN TO_CHAR(TO_DATE(A.CONSN_CUST_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') ||' ~ '|| TO_CHAR(TO_DATE(A.CONSN_CUST_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD') 
+                  END  CONSN_CUST_DATE
+                , CASE WHEN A.CONSN_CUST_YN != 'Y'                                              THEN NULL
+                       WHEN A.CONSN_CUST_STR_DT IS     NULL OR  A.CONSN_CUST_END_DT IS     NULL THEN NULL
+                       WHEN TO_DATE(A.CONSN_CUST_END_DT, 'YYYYMMDD') = D_TODAY                  THEN '* 금일('    || TO_CHAR(D_TODAY, 'YYYY-MM-DD')                          ||') 완료예정.'
+                       WHEN TO_DATE(A.CONSN_CUST_END_DT, 'YYYYMMDD') > D_TODAY                  THEN '* 완료까지 '|| TRUNC(TO_DATE(A.CONSN_CUST_END_DT, 'YYYYMMDD')-D_TODAY) ||'일 남음.'
+                       WHEN D_TODAY > TO_DATE(A.CONSN_CUST_END_DT, 'YYYYMMDD')                  THEN '* 종료일 '  || TRUNC(D_TODAY-TO_DATE(A.CONSN_CUST_END_DT, 'YYYYMMDD')) ||'일 경과.'
+                  END  CONSN_CUST_DATE_MESG
+                , CASE WHEN A.CONSN_CUST_YN != 'Y'                                              THEN NULL
+                       WHEN D_TODAY > TO_DATE(A.CONSN_CUST_END_DT, 'YYYYMMDD')                  THEN 'Y'
+                  END  CONSN_CUST_EXPIRED_YN
+                , TO_CHAR(A.CONSN_CUST_FNL_CHG_DTM, 'YYYY-MM-DD HH24:MI:SS')                    CONSN_CUST_FNL_CHG_DATE
+                , NULL                                                                          FNSH_CONSN_CUST_YN
+                <!-- /* /[2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+                <!-- /* [2023-03-01] sg.park AI-018 CMS의료기기 사업장 관리 */ -->
+                ,           A.MEDI_DEVI_SELL_PERMIT_YN
+                , DECODE(   A.MEDI_DEVI_SELL_PERMIT_YN, 'Y', '판매허가')  MEDI_DEVI_SELL_PERMIT_YNNM
+                <!-- /* /[2023-03-01] sg.park AI-018 CMS의료기기 사업장 관리 */ -->
+                
+		FROM (
+		    SELECT
+		        A.CO_CD
+		        ,A.BZPLC_ID
+		        ,A.GRP_ID
+		        ,(SELECT GRP_NM FROM TB_CC_BZPLC_GRP_BASIS GRP WHERE GRP.CO_CD=A.CO_CD AND GRP.GRP_ID=A.GRP_ID) AS GRP_NM
+		        ,A.CORP_ID
+		        ,(SELECT CORP_NM FROM TB_CC_BZPLC_CORP_BASIS CORP WHERE CORP.CO_CD=A.CO_CD AND CORP.CORP_ID=A.CORP_ID) AS CORP_NM
+		        ,A.CORP_NO
+		        ,A.BZPLC_NM
+		        ,A.BIZNO
+		        ,A.BZCAT_NM
+		        ,A.BZTP_NM
+		        ,A.EMPCNT
+		        ,A.CEO_NM
+		        ,A.ZPCD
+		        ,A.REPR_ADDR
+		        ,A.DTL_ADDR
+		        <!-- ,TO_CHAR(TO_DATE(A.CONT_STR_DT,'YYYYMMDD'),'YYYY.MM.DD') AS CONT_STR_DT -->
+		        <!-- ,TO_CHAR(TO_DATE(A.CONT_END_DT,'YYYYMMDD'),'YYYY.MM.DD') AS CONT_END_DT -->
+		        ,NVL2(A.CONT_STR_DT, SUBSTR(A.CONT_STR_DT,0,4)||'.'||SUBSTR(A.CONT_STR_DT,5,2)||'.'||SUBSTR(A.CONT_STR_DT,7,2), NULL) AS CONT_STR_DT
+		        ,NVL2(A.CONT_END_DT, SUBSTR(A.CONT_END_DT,0,4)||'.'||SUBSTR(A.CONT_END_DT,5,2)||'.'||SUBSTR(A.CONT_END_DT,7,2), NULL) AS CONT_END_DT
+		        ,A.BZPLC_REG_STATS_CD
+		        ,(SELECT COM_DTL_CD_NM FROM TB_CO_COM_CD_DTL CODE WHERE CODE.LANG_CD='KO' AND CODE.COM_CLSF_CD='BZPLC_REG_STATS_CD' AND CODE.COM_DTL_CD=A.BZPLC_REG_STATS_CD) AS BZPLC_REG_STATS_NM
+		        ,A.SALS_CHRPSN_ID1
+		        ,(SELECT SALS_CHR_NM FROM TB_CC_SALS_CHR_BASIS SALS WHERE SALS.SALS_CHR_CD=A.SALS_CHRPSN_ID1) AS SALS_CHRPSN_NM1
+		        ,A.SALS_CHRPSN_ID2
+		        ,A.CUST_SPR_CD
+		        ,(SELECT COM_DTL_CD_NM FROM TB_CO_COM_CD_DTL CODE WHERE CODE.LANG_CD='KO' AND CODE.COM_CLSF_CD='CUST_SPR_CD' AND CODE.COM_DTL_CD=A.CUST_SPR_CD) AS CUST_SPR_NM
+		        ,A.CONT_MNG_NM
+		        ,DECODE(A.LGGRP_YN,'Y','예','아니오') AS LGGRP_YN
+		        ,A.OSD_SPR_CD
+		        ,(SELECT COM_DTL_CD_NM FROM TB_CO_COM_CD_DTL CODE WHERE CODE.LANG_CD='KO' AND CODE.COM_CLSF_CD='OSD_SPR_CD' AND CODE.COM_DTL_CD=A.OSD_SPR_CD) AS OSD_SPR_NM
+		        ,A.POSD_SPR_CD
+		        ,(SELECT COM_DTL_CD_NM FROM TB_CO_COM_CD_DTL CODE WHERE CODE.LANG_CD='KO' AND CODE.COM_CLSF_CD='POSD_SPR_CD' AND CODE.COM_DTL_CD=A.POSD_SPR_CD) AS POSD_SPR_NM
+		        ,A.BZPLC_GRD_ID
+<!-- 		        ,(SELECT APLY_DCRT FROM TB_CC_BZPLC_GRD_INFO GRD WHERE GRD.BZPLC_GRD_ID=A.BZPLC_GRD_ID) AS APLY_DCRT -->
+                , (SELECT APLY_DCRT FROM (
+                   <include refid="com.ssp.bo.cc.common.sqlBzplcGrdInfo" />
+                   ) WHERE BZPLC_GRD_ID=A.BZPLC_GRD_ID
+                  )  AS APLY_DCRT
+		        ,A.IDDT_ID
+		        ,A.ERP_CUST_CD
+		        ,A.BIZDOC_ATFL_ID
+		        ,A.CUSTCI_ATFL_ID		        		        
+		        ,DECODE(A.USE_YN,'Y','사용','미사용') AS USE_YN
+                ,DECODE(B.GRP_APRV_USE_YN,'Y','사용','미사용') AS GRP_APRV_USE_YN
+                ,DECODE(B.CORP_APRV_USE_YN,'Y','사용','미사용') AS CORP_APRV_USE_YN
+                ,DECODE(B.GRP_ORD_USE_YN,'Y','사용','미사용') AS GRP_ORD_USE_YN
+                ,DECODE(B.CORP_ORD_USE_YN,'Y','사용','미사용') AS CORP_ORD_USE_YN
+                ,DECODE(B.ODR_AGNC_USE_YN,'Y','사용','미사용') AS ODR_AGNC_USE_YN
+                ,B.BGT_YY_STR_MM                  
+                ,B.BZPLC_QRT_BGT_USE_YN	/*사업장분기예산사용여부 ,빅재광 20220518*/
+				,B.BZPLC_BGT_FW_SPR_CD	/*사업장예산이월구분코드 ,빅재광 20220518*/
+				,B.BZPLC_BGT_CLOS_DD_CD	/*사업장예산마감일코드 ,빅재광 20220518*/
+				
+                <!-- /* [2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+                ,       A.CONSN_CUST_YN
+                ,       A.CONSN_CUST_STR_DT
+                ,       A.CONSN_CUST_END_DT
+                ,       A.CONSN_CUST_FNL_CHG_DTM
+                <!-- /* /[2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+                <!-- /* [2023-03-01] sg.park AI-018 CMS의료기기 사업장 관리 */ -->
+                ,       A.MEDI_DEVI_SELL_PERMIT_YN
+                <!-- /* /[2023-03-01] sg.park AI-018 CMS의료기기 사업장 관리 */ -->
+                
+           FROM TB_CC_BZPLC_BASIS A, /* 사업장 기본 */
+                TB_CC_BZPLC_CTL_AUTH_INFO B /* 사업장 제어권한 */
+          WHERE A.CO_CD = B.CO_CD(+)
+            AND A.BZPLC_ID = B.BZPLC_ID(+)
+            AND A.CO_CD = #{coCd}
+            AND A.BZPLC_ID = #{bzplcId} 
+        )  A
+        , (SELECT TO_DATE(TO_CHAR(SYSDATE, 'YYYYMMDD'), 'YYYYMMDD')  D_TODAY  FROM DUAL)
+    /* /custBizplc.selectBizplcDtl - 사업장정보 상세 */
+    </select>
+    
+    <select id="selectBilcltCondList" parameterType="java.util.Map" resultType="java.util.Map">
+    	SELECT
+    		BILCLT_COND_CD || ' | ' || BILCLT_COND_NM AS CD_NM
+    	FROM (
+            SELECT
+                A.BILCLT_COND_CD
+                ,(SELECT COM_DTL_CD_NM FROM TB_CO_COM_CD_DTL CODE WHERE CODE.LANG_CD='KO' AND CODE.COM_CLSF_CD='BILCLT_COND_CD' AND CODE.COM_DTL_CD=A.BILCLT_COND_CD) AS BILCLT_COND_NM
+            FROM (
+                SELECT 
+                    A.BILCLT_COND_CD			    
+                FROM TB_CC_OPR_UNIT_BASIS A
+                WHERE A.USE_YN = 'Y'
+                AND A.CO_CD = #{coCd}
+                AND A.BZPLC_ID = #{bzplcId}  
+                GROUP BY A.BILCLT_COND_CD
+           ) A    
+        )            		 
+    </select>   
+
+    <select id="selectStlMeanList" parameterType="java.util.Map" resultType="java.util.Map">		
+	    SELECT
+	        STL_MEAN_CD || ' | ' || STL_MEAN_NM AS CD_NM
+	    FROM (
+	    	SELECT
+	            STL_MEAN_CD
+	    		,(SELECT COM_DTL_CD_NM FROM TB_CO_COM_CD_DTL CODE WHERE CODE.LANG_CD='KO' AND CODE.COM_CLSF_CD='STL_MEAN_CD' AND CODE.COM_DTL_CD=A.STL_MEAN_CD) AS STL_MEAN_NM
+	    	FROM (
+				SELECT A.STL_MEAN_CD
+				  FROM TB_CC_OPR_UNIT_STL_MEAN_INFO A
+				  JOIN TB_CC_OPR_UNIT_BASIS O <!-- SSP-900 사업장상세 결제수단 조회 시 운영단위ID 유효성체크 추가 -->
+				    ON A.CO_CD = O.CO_CD
+			       AND A.BZPLC_ID = O.BZPLC_ID
+			       AND A.OPR_UNIT_ID = O.OPR_UNIT_ID
+			       AND O.USE_YN = 'Y'
+			     WHERE A.USE_YN = 'Y'
+			       AND A.CO_CD = #{coCd}
+			       AND A.BZPLC_ID = #{bzplcId}
+	          GROUP BY A.STL_MEAN_CD
+			) A
+	    )  		    
+    </select>   
+
+    <update id="updateBizplcDtl" parameterType="java.util.Map">		
+		UPDATE TB_CC_BZPLC_BASIS
+		   SET IDDT_ID = #{iddtId}
+		   	 , BZPLC_GRD_ID = #{bzplcGrdId}
+		   	 , MEDI_DEVI_SELL_PERMIT_YN = NVL(#{mediDeviSellPermitYn}, 'N')
+		   	 , UPDPSN_ID = #{userId}
+		   	 , UPD_DTM = SYSDATE
+		 WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+	</update>
+
+    <update id="updateBizplcCtlAuth" parameterType="java.util.Map">		
+		UPDATE TB_CC_BZPLC_CTL_AUTH_INFO
+		   SET BGT_YY_STR_MM = #{bgtYyStrMm}		   
+			 , BZPLC_QRT_BGT_USE_YN = #{bzplcQrtBgtUseYn}	/*사업장분기예산사용여부, 박재광 2022.05.18*/
+			 , BZPLC_BGT_FW_SPR_CD = #{bzplcBgtFwSprCd}	/*사업장예산이월구분코드, 박재광 2022.05.18*/
+			 , BZPLC_BGT_CLOS_DD_CD = #{bzplcBgtClosDdCd}	/*사업장예산마감일코드, 박재광 2022.05.18*/
+		   	 , UPDPSN_ID = #{userId}
+		   	 , UPD_DTM = SYSDATE
+		 WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+	</update>
+
+    <insert id="insertBizplcCtlAuthHst" parameterType="java.util.Map">		
+		INSERT INTO TB_CC_BZPLC_CTL_AUTH_INFO_HST (
+		    CO_CD
+		    ,BZPLC_ID
+		    ,HST_SEQ
+		    ,BGT_YY_STR_MM
+		    ,BZPLC_QRT_BGT_USE_YN	/*사업장분기예산사용여부, 박재광 2022.05.18*/
+			,BZPLC_BGT_FW_SPR_CD	/*사업장예산이월구분코드, 박재광 2022.05.18*/
+			,BZPLC_BGT_CLOS_DD_CD	/*사업장예산마감일코드, 박재광 2022.05.18*/
+		    ,BZPLC_GRD_ID
+		    ,IDDT_ID
+		    ,REGPSN_ID
+		    ,REG_DTM
+		    ,UPDPSN_ID
+		    ,UPD_DTM
+		)
+		VALUES (
+		    #{coCd}
+		    ,#{bzplcId}
+		    ,(SELECT NVL(MAX(HST_SEQ),0)+1 FROM TB_CC_BZPLC_CTL_AUTH_INFO_HST WHERE CO_CD=#{coCd} AND BZPLC_ID=#{bzplcId})
+		    ,#{bgtYyStrMm}
+			,#{bzplcQrtBgtUseYn}	/*사업장분기예산사용여부, 박재광 2022.05.18*/
+			,#{bzplcBgtFwSprCd}	/*사업장예산이월구분코드, 박재광 2022.05.18*/
+			,#{bzplcBgtClosDdCd}	/*사업장예산마감일코드, 박재광 2022.05.18*/
+		    ,#{bzplcGrdId}
+		    ,#{iddtId}
+		    ,#{userId}
+		    ,SYSDATE
+		    ,#{userId}
+		    ,SYSDATE
+		)
+	</insert>
+	  
+	<select id="selectBizFileList" parameterType="hashMap" resultType="hashMap">
+		SELECT DOC_REG_ID
+		     , DOC_REG_SEQ
+		     , ATFL_NM
+		     , ATFL_LEN
+		     , ATFL_STOR_PATH
+		     , STOR_PLC_SPR_CD
+		     , ORI_ATFL_NM
+		     , SAP_DOC_ID
+		     , RMKS_CTS
+		     , ETC_FDS_1
+		     , ETC_FDS_2
+		     , ETC_FDS_3
+		     , ETC_FDS_4
+		     , ETC_FDS_5
+		     , REG_DTM
+		     , REGPSN_ID
+		     , UPD_DTM
+		     , UPDPSN_ID 
+		  FROM TB_CO_ATFL_DTLS
+		 WHERE DOC_REG_ID = #{docRegId}
+	  ORDER BY DOC_REG_SEQ ASC
+	</select>
+	
+	<select id="selectBzplcDupCheck" parameterType="hashMap" resultType="hashMap">
+		/* 사업자명 중복확인 selectBzplcDupCheck */
+		SELECT BZPLC_NM
+		FROM TB_CC_BZPLC_BASIS
+		WHERE BZPLC_NM = #{bzplcNm}
+		AND ROWNUM = 1
+	</select>
+	
+	<select id="selectBzplcOne" parameterType="hashMap" resultType="hashMap">
+		/* 사업장 검색 selectBzplcOne */
+		SELECT 
+			BZPLC_NM
+		FROM 
+			TB_CC_BZPLC_BASIS
+		WHERE 
+			BZPLC_ID = #{bzplcId}
+	</select>
+	
+	<update id="updateDeptDtl" parameterType="hashMap">
+		/* 부서명 업데이트 updateDeptDtl */
+		UPDATE 
+			TB_CC_DEPT_BASIS
+		SET 
+			DEPT_NM = #{bzplcNm}
+		WHERE 
+			BZPLC_ID = #{bzplcId}
+			AND ROWNUM = 1
+	</update>
+	
+	<insert id="insertSelectBzplcBasisReqInfo" parameterType="Map">
+	  /* CustBizplc.insertSelectBzplcBasisReqInfo */
+	  INSERT INTO TB_CC_BZPLC_BASIS_REQ_INFO(
+	      IF_SYSTEM_ID
+	    , IF_MSG_ID
+	    , IF_MSG_SEQ
+	    , IF_CO_CD
+	    , IF_PROC_TP_CD
+	    , BZPLC_ID
+	    , BIZNO
+	    , BZPLC_NM
+	    , ENG_BZPLC_NM
+	    , CORP_NO
+	    , CEO_NM
+	    , FND_CLB_DT
+	    , BZCAT_NM
+	    , BZTP_NM
+	    , EMPCNT
+	    , CONT_STR_DT
+	    , ZPCD
+	    , REPR_ADDR
+	    , DTL_ADDR
+	    , CTRY_SPR_CD
+	    , CURR_UNIT_CD
+	    , BIZDOC_ATFL_ID
+	    , MEDI_DEVI_SELL_PERMIT_YN    <!-- [2023.03.04] sg.park - AI-018 CMS의료기기 사업장 관리                -->
+	    , CUST_SPR_CD                 <!-- [2023-03-06] sg.park - AI-015 일반고객의 여신거래 가능 프로세스 추가 -->
+	    , REGPSN_ID
+	    , REG_DTM
+	    , UPDPSN_ID
+	    , UPD_DTM
+	  ) 
+	  SELECT
+	      #{ifSystemId}
+	    , #{ifMsgId}
+	    , #{ifMsgSeq}
+	    , #{ifCoCd}
+	    , #{ifProcTpCd}
+	    , BZPLC_ID
+	    , BIZNO
+	    , <choose><when test='"Y".equals(dupInfoYn)'> #{bzplcNm} </when><otherwise> BZPLC_NM </otherwise></choose>  <!-- [2023-04-12] sg.park - AI-015 일반고객의 여신거래 가능 프로세스 추가 -->
+	    , NULL
+	    , CORP_NO
+	    , CEO_NM
+	    , CONT_STR_DT
+	    , BZCAT_NM
+	    , BZTP_NM
+	    , EMPCNT
+	    , CONT_STR_DT
+	    , ZPCD
+	    , REPR_ADDR
+	    , DTL_ADDR
+	    , NVL(#{ctrySprCd }, 'KR' )
+	    , NVL(#{currUnitCd}, 'KRW')
+	    , BIZDOC_ATFL_ID
+	    ,    NVL(#{mediDeviSellPermitYn}, MEDI_DEVI_SELL_PERMIT_YN)  MEDI_DEVI_SELL_PERMIT_YN  <!-- [2023.03.04] sg.park - AI-018 CMS의료기기 사업장 관리                -->
+	    , DECODE(#{fnshConsnCustYn     }, 'Y', '30', CUST_SPR_CD  )  CUST_SPR_CD               <!-- [2023-03-06] sg.park - AI-015 일반고객의 여신거래 가능 프로세스 추가 -->
+	    , NVL(#{userId}, 'BO_MDFY_RQ')
+	    , SYSDATE
+	    , NVL(#{userId}, 'BO_MDFY_RQ')
+	    , SYSDATE
+	  FROM
+	    TB_CC_BZPLC_BASIS
+	  WHERE CO_CD    = #{ifCoCd }
+	    AND BZPLC_ID = #{bzplcId}
+  </insert>
+  
+  <insert id="insertSelectOprUnitBasisReqInfo" parameterType="Map">
+	  <selectKey keyColumn="IF_SYSTEM_ID,IF_MSG_ID,IF_MSG_SEQ,IF_CO_CD,BZPLC_ID,OPR_UNIT_ID"
+				 keyProperty="IF_SYSTEM_ID,IF_MSG_ID,IF_MSG_SEQ,IF_CO_CD,REQ_BZPLC_ID,REQ_OPR_UNIT_ID"
+				 resultType="Map" order="AFTER">
+		  SELECT IF_SYSTEM_ID, IF_MSG_ID, IF_MSG_SEQ, IF_CO_CD, BZPLC_ID, OPR_UNIT_ID
+		  FROM TB_CC_OPR_UNIT_BASIS_REQ_INFO
+		  WHERE IF_SYSTEM_ID = #{ifSystemId}
+		  AND IF_MSG_ID = #{ifMsgId}
+		  AND IF_MSG_SEQ = #{ifMsgSeq}
+	  </selectKey>
+	  /* CustBizplc.insertSelectOprUnitBasisReqInfo */
+	  INSERT INTO TB_CC_OPR_UNIT_BASIS_REQ_INFO(
+	      IF_SYSTEM_ID
+	    , IF_MSG_ID
+	    , IF_MSG_SEQ
+	    , IF_CO_CD
+	    , IF_PROC_TP_CD
+	    , OPR_UNIT_ID
+	    , OPR_UNIT_NM
+	    , BZPLC_ID
+	    , BZPLC_NM
+	    , OPR_UNIT_ERP_CUST_CD
+	    , USE_YN
+	    , ZPCD
+	    , REPR_ADDR
+	    , DTL_ADDR
+	    , HDV_DLV_USE_YN
+	    , SRVON_OCAR_UT_YN
+	    , REGPSN_ID
+	    , REG_DTM
+	    , UPDPSN_ID
+	    , UPD_DTM
+	  )
+	  SELECT
+	      #{ifSystemId}
+	    , #{ifMsgId}
+	    , #{ifMsgSeq}
+	    , #{ifCoCd}
+	    , #{ifProcTpCd}
+	    , A.OPR_UNIT_ID
+	    , <choose><when test='"Y".equals(dupInfoYn)'> #{bzplcNm} </when><otherwise> A.OPR_UNIT_NM </otherwise></choose>  <!-- [2023-04-12] sg.park - AI-015 일반고객의 여신거래 가능 프로세스 추가 -->
+	    , A.BZPLC_ID
+	    , <choose><when test='"Y".equals(dupInfoYn)'> #{bzplcNm} </when><otherwise> B.BZPLC_NM    </otherwise></choose>  <!-- [2023-04-12] sg.park - AI-015 일반고객의 여신거래 가능 프로세스 추가 -->
+	    , B.ERP_CUST_CD
+	    , A.USE_YN
+	    , B.ZPCD
+	    , B.REPR_ADDR
+	    , B.DTL_ADDR
+	    , NVL(#{hdvDlvUseYn  }, NVL(HDV_DLV_USE_YN  , 'Y'))  HDV_DLV_USE_YN
+	    , NVL(#{srvonOcarUtYn}, NVL(SRVON_OCAR_UT_YN, 'N'))  SRVON_OCAR_UT_YN
+	    , NVL(#{userId},'BO_MDFY_RQ')
+	    , SYSDATE
+	    , NVL(#{userId},'BO_MDFY_RQ')
+	    , SYSDATE
+	  FROM TB_CC_OPR_UNIT_BASIS          A
+	  JOIN TB_CC_BZPLC_BASIS             B   ON B.CO_CD=A.CO_CD AND B.BZPLC_ID   =A.BZPLC_ID
+      JOIN TB_CC_OPR_UNIT_CTL_AUTH_INFO  C   ON C.CO_CD=A.CO_CD AND C.OPR_UNIT_ID=A.OPR_UNIT_ID 
+	  WHERE B.CO_CD      =#{ifCoCd }
+	    AND B.BZPLC_ID   =#{bzplcId}
+	    AND ROWNUM       =1
+	    <choose><when test='fnshConsnCustYn != null and "Y".equals( fnshConsnCustYn .trim())'>
+	    AND A.CUST_SPR_CD='30'  <!-- 일반고객 전환용 -->
+	    </when><otherwise>
+	    </otherwise></choose>
+	  ORDER BY A.REG_DTM DESC
+  </insert>
+
+
+<!-- /* [2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+<select id="selectPiLog" parameterType="Map" resultType="sspMap" flushCache="true">
+/* PI 결과 조회 - custBizplc.selectPiLog */
+SELECT IF_PROC_RSLT_CD
+     , IF_PROC_RSLT_DTM
+     , IF_RSLT_FLD_1
+     , IF_RSLT_FLD_2
+     , PI_RSLT_MSG
+  FROM TB_CO_PI_RCV_LOG
+ WHERE IF_SYSTEM_ID = #{ifSystemId}
+   AND IF_PI_ID     = 'SD01750'
+   AND IF_MSG_ID    = #{ifMsgId}
+   AND IF_MSG_SEQ   = #{ifMsgSeq}
+/* /PI 결과 조회 - custBizplc.selectPiLog */
+</select>
+<select id="selectPiBzplc" parameterType="Map" resultType="Integer" flushCache="true">
+/* 사업장 생성여부 조회 - custBizplc.selectPiBzplc */
+SELECT COUNT(*) 
+  FROM TB_CC_BZPLC_BASIS     A
+  JOIN TB_CC_OPR_UNIT_BASIS  B  ON  B.CO_CD=A.CO_CD AND B.BZPLC_ID=A.BZPLC_ID
+WHERE B.CO_CD       = #{coCd     }
+  AND B.BZPLC_ID    = #{bzplcId  }
+  AND B.OPR_UNIT_ID = #{oprUnitId}
+/* /사업장 생성여부 조회 - custBizplc.selectPiBzplc */
+</select>
+<!-- /* /[2023-03-01] sg.park AI-015 일반고객의 여신거래 가능 프로세스 추가 */ -->
+
+<!-- /* [2023-03-01] sg.park AI-018 CMS의료기기 사업장 관리 */ -->
+<select id="selectBzplcMediDeviSellPermitAtfls" parameterType="Map" resultType="Map">
+/* custBizplc.selectBzplcMediDeviSellPermitAtfls - 의료기기 판매허가 첨부파일 조회 */
+
+SELECT '0'  CHK
+     , BMSP.CO_CD
+     , BMSP.BZPLC_ID
+     , BMSP.SELL_PERMIT_SEQ
+     , BMSP.SELL_PERMIT_ATTC_FILEID
+     , ATFL.DOC_REG_SEQ                 SELL_PERMIT_ATTC_FILESEQ
+     , ATFL.ATFL_NM                     SELL_PERMIT_ATTC_FILENM
+     , ATFL.ATFL_STOR_PATH              SELL_PERMIT_ATTC_FILEPATH
+     , ATFL.ORI_ATFL_NM                 SELL_PERMIT_ATTC_FILE_ORI_NM
+     , ATFL.*
+  FROM TB_CC_BZPLC_BASIS                       BZPL
+     , TB_CC_BZPLC_MEDI_DEVI_SELL_PERMIT_INFO  BMSP
+     , TB_CO_ATFL_DTLS                         ATFL
+ WHERE BZPL.CO_CD=BMSP.CO_CD AND BZPL.BZPLC_ID=BMSP.BZPLC_ID
+   AND BMSP.SELL_PERMIT_ATTC_FILEID=ATFL.DOC_REG_ID(+) AND ATFL.ATFL_NM IS NOT NULL
+<!--    AND BZPL.MEDI_DEVI_SELL_PERMIT_YN='Y' -->
+   <if test='coCd    != null and !"".equals( coCd    .trim() )'>AND BMSP.CO_CD   =#{coCd   }</if>
+   <if test='bzplcId != null and !"".equals( bzplcId .trim() )'>AND BMSP.BZPLC_ID=#{bzplcId}</if>
+   
+ ORDER BY
+       CO_CD, BZPLC_ID
+     , SELL_PERMIT_ATTC_FILEID
+     , SELL_PERMIT_ATTC_FILESEQ
+
+/* /custBizplc.selectBzplcMediDeviSellPermitAtfls - 의료기기 판매허가 첨부파일 조회 */
+</select>
+
+
+<update id="saveMediDeviSellPermitAtfls" parameterType="Map">
+/* custBizplc.saveMediDeviSellPermitAtfls - CMS 의료기기 사업장 첨부파일 저장 */
+BEGIN
+
+MERGE INTO TB_CC_BZPLC_MEDI_DEVI_SELL_PERMIT_INFO  TRGT
+USING (SELECT #{coCd                    }  CO_CD
+            , #{bzplcId                 }  BZPLC_ID
+            , 1                            SELL_PERMIT_SEQ
+            , #{sellPermitAttcFileid    }  SELL_PERMIT_ATTC_FILEID
+            , 1                            SELL_PERMIT_ATTC_FILE_SEQ
+            , SYSDATE  REG_DTM,  #{mbrId}  REGPSN_ID
+            , SYSDATE  UPD_DTM,  #{mbrId}  UPDPSN_ID
+            
+         FROM DUAL
+      )    INPT
+   ON (    INPT.CO_CD   =TRGT.CO_CD
+       AND INPT.BZPLC_ID=TRGT.BZPLC_ID
+      )
+ WHEN MATCHED THEN
+      UPDATE SET
+             SELL_PERMIT_ATTC_FILEID   = INPT.SELL_PERMIT_ATTC_FILEID
+           , SELL_PERMIT_ATTC_FILE_SEQ = INPT.SELL_PERMIT_ATTC_FILE_SEQ
+           , UPD_DTM                   = INPT.UPD_DTM
+           , UPDPSN_ID                 = INPT.UPDPSN_ID
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , BZPLC_ID
+           , SELL_PERMIT_SEQ
+           , SELL_PERMIT_ATTC_FILEID
+           , SELL_PERMIT_ATTC_FILE_SEQ
+           , REG_DTM
+           , REGPSN_ID
+           , UPD_DTM
+           , UPDPSN_ID
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.BZPLC_ID
+           , INPT.SELL_PERMIT_SEQ
+           , INPT.SELL_PERMIT_ATTC_FILEID
+           , INPT.SELL_PERMIT_ATTC_FILE_SEQ
+           , INPT.REG_DTM
+           , INPT.REGPSN_ID
+           , INPT.UPD_DTM
+           , INPT.UPDPSN_ID
+      )
+;
+
+END;
+/* custBizplc.saveMediDeviSellPermitAtfls - CMS 의료기기 사업장 첨부파일 저장 */
+</update>
+
+<update id="reqtMediDeviSellPermitAtfls" parameterType="Map">
+/* custBizplc.reqtMediDeviSellPermitAtfls - CMS 의료기기 사업장 첨부파일 저장요청 */
+
+INSERT INTO TB_CC_BZPLC_MEDI_DEVI_SELL_PERMIT_REQ_INFO (
+       IF_SYSTEM_ID
+     , IF_MSG_ID
+     , IF_MSG_SEQ
+     , IF_CO_CD
+     , IF_PROC_TP_CD
+     , BZPLC_ID
+     
+     , SELL_PERMIT_SEQ
+     , SELL_PERMIT_ATTC_FILE_NM
+     , SAP_DOC_ID
+     , SAP_DOC_REG_ID
+     
+     , REG_DTM,  REGPSN_ID
+     , UPD_DTM,  UPDPSN_ID
+)
+SELECT     #{ifSystemId}                             IF_SYSTEM_ID
+     ,     #{ifMsgId   }                             IF_MSG_ID
+     , NVL((SELECT MAX(IF_MSG_SEQ) FROM TB_CC_BZPLC_MEDI_DEVI_SELL_PERMIT_REQ_INFO WHERE IF_SYSTEM_ID=#{ifSystemId} AND IF_MSG_ID=#{ifMsgId}), 0) + DENSE_RANK() OVER(ORDER BY ATFL.DOC_REG_SEQ)  IF_MSG_SEQ  <!--  #{ifMsgSeq  }  -->
+     ,     #{ifCoCd    }                             IF_CO_CD
+     , NVL(#{ifProcTpCd}, <choose><when test="deleMediDeviSellPermitAtfls != null and deleMediDeviSellPermitAtfls .size() > 0">'D'</when><otherwise>'U'</otherwise></choose>)                              IF_PROC_TP_CD
+     , #{bzplcId}                                    BZPLC_ID
+     
+     , ATFL.DOC_REG_SEQ                              SELL_PERMIT_SEQ
+     , ATFL.ATFL_NM                                  SELL_PERMIT_ATTC_FILE_NM
+     , ATFL.SAP_DOC_ID                               ARC_DOC_ID
+     , ATFL.SAP_DOC_REG_ID                           DOC_REG_ID
+     
+     , SYSDATE  REG_DTM,  NVL(#{mbrId}, 'JOINREQ')   REGPSN_ID
+     , SYSDATE  UPD_DTM,  NVL(#{mbrId}, 'JOINREQ')   UPDPSN_ID
+     
+  FROM TB_CO_ATFL_DTLS                          ATFL
+ WHERE ROWNUM > 0
+   <if test='coCd     != null and !"".equals( coCd     .trim()) and bzplcId  != null and !"".equals( bzplcId  .trim())'>
+   AND EXISTS (
+        SELECT 1 FROM TB_CC_BZPLC_MEDI_DEVI_SELL_PERMIT_INFO
+         WHERE CO_CD=#{coCd} AND BZPLC_ID=#{bzplcId }
+           AND SELL_PERMIT_ATTC_FILEID=ATFL.DOC_REG_ID
+       )
+   </if>
+   <if test='docRegId != null and !"".equals( docRegId .trim())'>AND ATFL.DOC_REG_ID =#{docRegId}</if>
+   
+   <if test='!"D".equals( ifProcTpCd ) and mediDeviSellPermitAttcFiles != null and mediDeviSellPermitAttcFiles .size()>0'>
+   AND (ATFL.DOC_REG_ID, ATFL.DOC_REG_SEQ) IN (<foreach collection="mediDeviSellPermitAttcFiles" item="item" separator=",">
+          (#{item.docRegId}, #{item.docRegSeq})</foreach>
+       )
+   </if>
+   <choose><when test=' "N".equals( mediDeviSellPermitYn )'><!-- CMS 의료기기 사업장 첨부파일 전체삭제  -->
+   AND ATFL.DOC_REG_ID IN (SELECT DISTINCT SELL_PERMIT_ATTC_FILEID FROM TB_CC_BZPLC_MEDI_DEVI_SELL_PERMIT_INFO WHERE CO_CD=#{coCd} AND BZPLC_ID=#{bzplcId})
+   </when><otherwise>
+   <if test='!"N".equals( mediDeviSellPermitYn ) and "D".equals( ifProcTpCd ) and deleMediDeviSellPermitAtfls != null and deleMediDeviSellPermitAtfls .size() > 0'>
+   AND (ATFL.DOC_REG_ID, ATFL.DOC_REG_SEQ) IN (<foreach collection="deleMediDeviSellPermitAtfls" item="item" separator=",">
+          (#{item.docRegId}, #{item.docRegSeq})</foreach>
+       )
+   </if>
+   </otherwise></choose>
+
+/* /custBizplc.reqtMediDeviSellPermitAtfls - CMS 의료기기 사업장 첨부파일 저장요청 */
+</update>
+
+<!--
+<delete id="deleBzplcMediDeviSellPermitAtfls" parameterType="Map">
+/* custBizplc.deleBzplcMediDeviSellPermitAtfls - 의료기기 판매허가 첨부파일 삭제 */
+DELETE 
+  FROM TB_CC_BZPLC_MEDI_DEVI_SELL_PERMIT_INFO  BMSP
+ WHERE ROWNUM > 0
+   <if test='coCd    != null and !"".equals( coCd    .trim() )'>AND BMSP.CO_CD   =#{coCd   }</if>
+   <if test='bzplcId != null and !"".equals( bzplcId .trim() )'>AND BMSP.BZPLC_ID=#{bzplcId}</if>
+   
+/* custBizplc.deleBzplcMediDeviSellPermitAtfls - 의료기기 판매허가 첨부파일 삭제 */
+</delete>
+ -->
+<!-- /* /[2023-03-01] sg.park AI-018 CMS의료기기 사업장 관리 */ -->
+
+	<update id="bzplcChrpsnInfoReset" parameterType="Map">
+		/* custBizplc.bzplcChrpsnInfoReset - 사업장 담당자 정보 리셋 */
+		UPDATE TB_CC_BZPLC_BASIS
+		SET SALS_CHRPSN_ID1 = NULL
+			, SVC_CHRPSN_ID1 = NULL
+			, UPDPSN_ID = #{userId}
+			, UPD_DTM = SYSDATE
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+	</update>
+
+	<update id="oprUnitChrpsnInfoReset" parameterType="Map">
+		/* custBizplc.oprUnitChrpsnInfoReset - 운여단위 담당자 정보 리셋 */
+		UPDATE TB_CC_OPR_UNIT_BASIS
+		SET SALS_CHR_CD = NULL
+			, SALS_TEAM_CD = NULL
+			, SVC_TEAM_CD = NULL
+			, OPR_TEAM_CD = NULL
+			, SALS_CHRPSN_ID = NULL
+			, SVC_CHRPSN_ID = NULL
+			, OPR_CHRPSN_ID = NULL
+			, UPDPSN_ID = #{userId}
+			, UPD_DTM = SYSDATE
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND OPR_UNIT_ID = #{oprUnitId}
+	</update>
+
+</mapper>

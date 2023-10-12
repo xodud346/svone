@@ -1,0 +1,1117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PrCategory">
+
+    <select id="selectCategoryList" parameterType="HashMap" resultType="HashMap">
+        /* PrCategory.selectCategoryList */
+        SELECT /*+ PARALLEL(8) INDEX(A HRNK_PRD_CLCD) */
+               CO_CD
+             , PRD_CLCD
+             , MALL_SPR_CD
+             , HRNK_PRD_CLCD
+             , HIER_LVL
+             , PRD_CLSF_NM
+             , LWST_CD_YN
+             , USE_YN
+             , FRT_EXPS_YN
+             , MRO_PRD_CLCD
+             , NOTI_ITM_ID
+             , MCND_PRD_YN
+             , SRT_SO
+             , DEL_YN
+          FROM SSP_APP.TB_PR_PRD_CLSF_INFO A
+         WHERE 1=1
+           AND CO_CD = #{CO_CD}
+           AND MALL_SPR_CD = #{MALL_SPR_CD}
+           AND NVL(DEL_YN,'N') != 'Y'
+         START WITH HRNK_PRD_CLCD IS NULL
+       CONNECT BY PRIOR PRD_CLCD = HRNK_PRD_CLCD
+         ORDER SIBLINGS BY SRT_SO ASC 
+    </select>
+    
+    <select id="selectSubCategoryList" parameterType="HashMap" resultType="HashMap">
+        /* PrCategory.selectSubCategoryList*/
+        SELECT CO_CD
+             , PRD_CLCD
+             , MALL_SPR_CD
+             , HRNK_PRD_CLCD
+             , HIER_LVL
+             , PRD_CLSF_NM
+             , DISP_PRD_FILE_ATTC_ID
+             , LWST_CD_YN
+             , USE_YN
+             , FRT_EXPS_YN
+             , MRO_PRD_CLCD
+             , NOTI_ITM_ID
+             , MCND_PRD_YN
+             , SRT_SO
+         FROM SSP_APP.TB_PR_PRD_CLSF_INFO
+        WHERE 1=1
+          AND NVL(DEL_YN,'N') != 'Y'
+          AND CO_CD   = #{CO_CD}
+          AND MALL_SPR_CD = #{MALL_SPR_CD}
+          <choose>
+            <when test='null != PRD_CLCD and "" != PRD_CLCD'>
+               AND HRNK_PRD_CLCD = #{PRD_CLCD}
+            </when>
+            <otherwise>
+               AND HRNK_PRD_CLCD IS NULL
+            </otherwise>
+           </choose>
+        ORDER BY SRT_SO ASC
+    </select>
+    
+    <select id="selectCategory" parameterType="HashMap" resultType="HashMap">
+        /* PrCategory.selectCategory */
+        SELECT DISTINCT 
+               A.CO_CD
+             , A.PRD_CLCD
+             , FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD) AS PRD_CLS_LVL_NM
+             , A.MALL_SPR_CD
+             , A.HRNK_PRD_CLCD
+             , A.HIER_LVL
+             , A.PRD_CLSF_NM
+             , A.DISP_PRD_FILE_ATTC_ID
+             , A.LWST_CD_YN
+             , A.USE_YN
+             , A.FRT_EXPS_YN
+             , A.MRO_PRD_CLCD
+             , F.MRO_PRD_CLSF_NM
+             , A.NOTI_ITM_ID
+             , G.NOTI_ITM_NM
+             , A.MCND_PRD_YN
+             , A.SRT_SO
+             , A.DEL_YN
+             , A.SEL_MTHD_CD
+             , A.REGPSN_ID
+             , J.OPRTR_NM AS REGPSN_NM
+             , TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+             , A.UPDPSN_ID
+             , K.OPRTR_NM AS UPDPSN_NM
+             , TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM
+             , B.PRD_CLSF_CHRPSN_ID AS PR_PRD_CLSF_CHRPSN_ID
+             , D.OPRTR_NM AS PR_PRD_CLSF_CHRPSN_NM
+             , C.PRD_CLSF_CHRPSN_ID AS MD_PRD_CLSF_CHRPSN_ID
+             , E.OPRTR_NM AS MD_PRD_CLSF_CHRPSN_NM
+             , (SELECT NVL(COUNT(PRD_ID),0) FROM SSP_APP.TB_PR_PRD_INFO WHERE PRD_CLCD = A.PRD_CLCD) AS PRD_CNT
+             , (SELECT NVL(COUNT(PRD_ID),0) FROM SSP_APP.TB_PR_PRD_INFO WHERE PRD_CLCD = A.PRD_CLCD AND PRD_USE_YN = 'Y') AS USE_PRD_CNT
+             , (SELECT NVL(COUNT(PRD_ID),0) FROM SSP_APP.TB_PR_PRD_INFO WHERE PRD_CLCD = A.PRD_CLCD AND PRC_APLY_SPR_CD =  '20') AS LOSS_LEADER_CNT
+             , SSP_APP.FN_PR_CLSF_IDDT_LIST(A.CO_CD, A.PRD_CLCD) AS SPECIAL_IDDT
+             , (SELECT LISTAGG(TB.PRNM, ';') WITHIN GROUP(ORDER BY TB.SRT_SO ASC)
+				FROM (
+				SELECT A.CO_CD, A.PRD_CLCD 
+				     , DECODE(A.MAND_YN, 'Y', B.PRNM||'*', B.PRNM) PRNM
+				     , NVL(SRT.SRT_SO, A.SRT_SO) SRT_SO
+				     , NVL(SRT.EXPS_YN, 'Y') EXPS_YN
+				FROM SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP A
+				INNER JOIN SSP_APP.TB_PR_PRD_ATTR_INFO B
+				    ON 1=1 AND A.PRD_ATTR_CD = B.PRD_ATTR_CD AND A.CO_CD = #{CO_CD} AND A.PRD_CLCD = #{PRD_CLCD}
+				LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+				    ON A.CO_CD = SRT.CO_CD AND A.PRD_CLCD = SRT.PRD_CLCD AND B.PRD_ATTR_CD = SRT.INTG_ATTR_CD AND SRT.INTG_ATTR_SPR_CD = '10'
+				) TB 
+				WHERE TB.EXPS_YN = 'Y'
+				GROUP BY TB.CO_CD, TB.PRD_CLCD) PRD_CL_NM
+             , (SELECT LISTAGG(TB.PRNM, ';') WITHIN GROUP(ORDER BY TB.SRT_SO ASC) PRNM
+				FROM (
+				SELECT A.CO_CD, #{PRD_CLCD} PRD_CLCD 
+				     , DECODE(A.MAND_YN, 'Y', A.PRNM||'*', A.PRNM) PRNM
+				     , NVL(SRT.SRT_SO, A.ATTR_SEQ) SRT_SO
+				     , NVL(SRT.EXPS_YN, 'Y') EXPS_YN
+				FROM TB_PR_MRO_PRD_CLSF_ATTR_INFO A
+				INNER JOIN TB_PR_PRD_CLSF_INFO CLSF 
+				    ON A.CO_CD = CLSF.CO_CD AND A.MRO_PRD_CLCD = CLSF.MRO_PRD_CLCD AND CLSF.CO_CD =  #{CO_CD} AND CLSF.PRD_CLCD = #{PRD_CLCD}
+				LEFT OUTER JOIN TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+				    ON A.CO_CD = SRT.CO_CD AND SRT.PRD_CLCD = CLSF.PRD_CLCD 
+				    AND A.MRO_ATTR_CD = SRT.INTG_ATTR_CD AND SRT.INTG_ATTR_SPR_CD = '30'
+				) TB 
+				WHERE TB.EXPS_YN = 'Y'
+				GROUP BY TB.CO_CD, TB.PRD_CLCD) PRD_CLSF_ATTR_PRNM
+             , H.PRNM AS PRD_ATTR_NM
+             , A.UPD_RSN
+             , (SELECT COUNT(*) FROM TB_PR_PRD_CLSF_INFO T WHERE USE_YN = 'Y' START WITH T.HRNK_PRD_CLCD = A.PRD_CLCD CONNECT BY PRIOR T.PRD_CLCD = T.HRNK_PRD_CLCD) AS CNT
+             , (SELECT COUNT(*) FROM TB_PR_PRD_CLSF_INFO T WHERE USE_YN = 'N' START WITH A.HRNK_PRD_CLCD = T.PRD_CLCD CONNECT BY PRIOR T.HRNK_PRD_CLCD = T.PRD_CLCD ) AS TOP_CNT
+             , SSP_APP.FN_PR_GET_SSP_PRD_NM_SET(A.CO_CD, A.PRD_CLCD) SSP_PRD_CONF_NM
+         FROM SSP_APP.TB_PR_PRD_CLSF_INFO A
+            , (SELECT CO_CD, PRD_CLCD, PRD_CLSF_CHRPSN_ID FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO 
+                WHERE PRD_CLSF_CHRPSN_TP_CD = '10'
+                  AND PRD_CLSF_CHRPSN_SPR_CD = '10'
+                  AND PRD_CLSF_CHRPSN_USEYN = 'Y') B
+            , (SELECT CO_CD, PRD_CLCD, PRD_CLSF_CHRPSN_ID FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO 
+                WHERE PRD_CLSF_CHRPSN_TP_CD = '20'
+                  AND PRD_CLSF_CHRPSN_SPR_CD = '10'
+                  AND PRD_CLSF_CHRPSN_USEYN = 'Y') C
+            , SSP_APP.TB_CO_MBR_OPRTR_INFO D
+            , SSP_APP.TB_CO_MBR_OPRTR_INFO E    
+            , (SELECT CO_CD, MRO_PRD_CLCD, SUBSTR(SYS_CONNECT_BY_PATH(MRO_PRD_CLSF_NM, '>'),2) AS MRO_PRD_CLSF_NM
+                 FROM SSP_APP.TB_PR_MRO_PRD_CLSF_INFO
+                WHERE USE_YN = 'Y' AND PRD_CLSF_LVL = 4
+                START WITH HRNK_MRO_PRD_CLCD IS NULL
+              CONNECT BY PRIOR MRO_PRD_CLCD = HRNK_MRO_PRD_CLCD) F  
+            , SSP_APP.TB_PR_NOTI_ITM_BASIS G    
+            , (SELECT TB.CO_CD, PRD_CLCD, LISTAGG(TB.PRNM, ';') WITHIN GROUP(ORDER BY ORD_NO, SRT_SO ASC) PRNM
+					FROM (
+					SELECT A.CO_CD, A.PRD_CLCD 
+					     , DECODE(A.MAND_YN, 'Y', B.PRNM||'*', B.PRNM) PRNM
+					     , NVL(SRT.SRT_SO, A.SRT_SO) SRT_SO
+					     , NVL(SRT.EXPS_YN, 'Y') EXPS_YN
+                         , NVL2(SRT.SRT_SO, '1', '2')  ORD_NO
+					FROM SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP A
+					INNER JOIN SSP_APP.TB_PR_PRD_ATTR_INFO B
+					    ON 1=1 AND A.PRD_ATTR_CD = B.PRD_ATTR_CD AND A.CO_CD = '1000' AND A.PRD_CLCD = #{PRD_CLCD}
+					LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+					    ON A.CO_CD = SRT.CO_CD AND A.PRD_CLCD = SRT.PRD_CLCD AND B.PRD_ATTR_CD = SRT.INTG_ATTR_CD AND SRT.INTG_ATTR_SPR_CD = '10'
+					UNION ALL 
+					SELECT A.CO_CD, #{PRD_CLCD} PRD_CLCD 
+					     , DECODE(A.MAND_YN, 'Y', A.PRNM||'*', A.PRNM) PRNM
+					     , NVL(SRT.SRT_SO, A.ATTR_SEQ) SRT_SO
+					     , NVL(SRT.EXPS_YN, 'Y') EXPS_YN
+					     , '1' ORD_NO
+					FROM TB_PR_MRO_PRD_CLSF_ATTR_INFO A
+					INNER JOIN TB_PR_PRD_CLSF_INFO CLSF 
+					    ON A.CO_CD = CLSF.CO_CD AND A.MRO_PRD_CLCD = CLSF.MRO_PRD_CLCD AND CLSF.PRD_CLCD = #{PRD_CLCD}
+					LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+					    ON A.CO_CD = SRT.CO_CD AND SRT.PRD_CLCD = CLSF.PRD_CLCD AND A.MRO_ATTR_CD = SRT.INTG_ATTR_CD AND SRT.INTG_ATTR_SPR_CD = '30'
+					WHERE NOT EXISTS
+                        (
+                            SELECT 'X'
+                            FROM TB_PR_PRD_CLSF_ATTR_MAPP B
+                            JOIN TB_PR_PRD_ATTR_INFO C
+                            ON ( B.CO_CD = C.CO_CD AND B.PRD_ATTR_CD = C.PRD_ATTR_CD AND B.PRD_CLCD = #{PRD_CLCD} )
+                            LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+                            ON A.CO_CD = SRT.CO_CD AND C.PRD_ATTR_CD = SRT.INTG_ATTR_CD AND B.PRD_CLCD = SRT.PRD_CLCD AND SRT.INTG_ATTR_SPR_CD = '10'
+                            WHERE 0=0
+                            AND NVL(EXPS_YN, 'Y') = 'Y'
+                            AND B.CO_CD = A.CO_CD
+                            AND C.PRNM = A.PRNM
+                        )
+					) TB 
+					WHERE TB.EXPS_YN = 'Y'
+				    GROUP BY CO_CD, PRD_CLCD
+                ) H
+            , (SELECT CO_CD, MRO_PRD_CLCD, LISTAGG(PRNM , ',') WITHIN GROUP(ORDER BY ATTR_SEQ) AS PRD_CLSF_ATTR_PRNM FROM SSP_APP.TB_PR_MRO_PRD_CLSF_ATTR_INFO WHERE USE_YN = 'Y' GROUP BY CO_CD, MRO_PRD_CLCD) I
+            , TB_CO_MBR_OPRTR_INFO J 
+            , TB_CO_MBR_OPRTR_INFO K 
+        WHERE 1=1 
+          AND A.CO_CD = B.CO_CD(+)
+          AND A.CO_CD = C.CO_CD(+)
+          AND A.CO_CD = F.CO_CD(+)
+          AND A.CO_CD = I.CO_CD(+)
+          AND A.CO_CD = G.CO_CD(+)
+          AND A.CO_CD = H.CO_CD(+)
+          AND A.PRD_CLCD = B.PRD_CLCD(+)
+          AND A.PRD_CLCD = C.PRD_CLCD(+)
+          AND A.PRD_CLCD = H.PRD_CLCD(+)
+          AND B.PRD_CLSF_CHRPSN_ID = D.EMP_NO(+)
+          AND C.PRD_CLSF_CHRPSN_ID = E.EMP_NO(+) 
+          AND A.MRO_PRD_CLCD = F.MRO_PRD_CLCD(+)
+          AND A.NOTI_ITM_ID = G.NOTI_ITM_ID(+)
+          AND A.MRO_PRD_CLCD = I.MRO_PRD_CLCD(+)
+          AND A.REGPSN_ID = J.OPRTR_ID(+)
+          AND A.UPDPSN_ID = K.OPRTR_ID(+)
+          AND A.CO_CD   = #{CO_CD}
+          AND A.PRD_CLCD = #{PRD_CLCD}
+          AND A.MALL_SPR_CD = #{MALL_SPR_CD}
+          AND G.USE_YN(+) = 'Y'
+    </select>  
+    
+    <insert id="insertCategory" parameterType="HashMap">
+        /* PrCategory.insertCategory */
+        INSERT INTO SSP_APP.TB_PR_PRD_CLSF_INFO (
+               CO_CD
+             , PRD_CLCD
+             , MALL_SPR_CD
+             , HRNK_PRD_CLCD
+             , HIER_LVL
+             , PRD_CLSF_NM
+             , DISP_PRD_FILE_ATTC_ID
+             , LWST_CD_YN
+             , USE_YN
+             , FRT_EXPS_YN
+             , MRO_PRD_CLCD
+             , NOTI_ITM_ID
+             , MCND_PRD_YN
+             , SRT_SO
+             , DEL_YN
+             , SEL_MTHD_CD
+             , UPD_RSN
+             , REGPSN_ID
+             , REG_DTM
+         ) VALUES (
+               #{CO_CD}
+             , #{PRD_CLCD}
+             , #{MALL_SPR_CD}
+             , #{HRNK_PRD_CLCD}
+             , #{HIER_LVL}
+             , #{PRD_CLSF_NM}
+             , #{DISP_PRD_FILE_ATTC_ID}
+             , #{LWST_CD_YN}
+             , #{USE_YN}
+             , #{FRT_EXPS_YN}
+             , #{MRO_PRD_CLCD}
+             , #{NOTI_ITM_ID}
+             , #{MCND_PRD_YN}
+             , (SELECT NVL(MAX(SRT_SO),0)+1 FROM SSP_APP.TB_PR_PRD_CLSF_INFO 
+                 WHERE CO_CD = #{CO_CD} AND MALL_SPR_CD = #{MALL_SPR_CD}
+                   <if test="HRNK_PRD_CLCD != null and HRNK_PRD_CLCD != ''">
+                   AND HRNK_PRD_CLCD = #{HRNK_PRD_CLCD} 
+                   </if>
+                )    
+             , #{DEL_YN}
+             , #{SEL_MTHD_CD}
+             , #{UPD_RSN}
+             , #{USER_ID}
+             , SYSDATE
+         )
+    </insert>
+    
+    <insert id="insertPrdClsfChrpsn" parameterType="HashMap">
+        /* PrCategory.insertPrdClsfChrpsn */
+        INSERT INTO SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO (
+            CO_CD
+            , PRD_CLSF_CHRPSN_ID
+            , PRD_CLCD
+            , MNFR_NO
+            , PRD_CLSF_CHRPSN_SEQ
+            , MALL_SPR_CD
+            , PRD_CLSF_CHRPSN_TP_CD
+            , PRD_CLSF_CHRPSN_USEYN
+            , PRD_CLSF_CHRPSN_SPR_CD
+            , UPD_RSN
+            , REG_DTM
+            , REGPSN_ID
+        ) VALUES (
+              #{CO_CD}
+            , #{PRD_CLSF_CHRPSN_ID}
+            , #{PRD_CLCD}
+            , '*'
+            , (SELECT NVL(MAX(PRD_CLSF_CHRPSN_SEQ),0)+1 FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO)
+            , #{MALL_SPR_CD}
+            , #{PRD_CLSF_CHRPSN_TP_CD}
+            , 'Y'
+            , '10'
+            , #{UPD_RSN}
+            , SYSDATE
+            , #{USER_ID}
+        )    
+    </insert>
+    
+    <update id="updateCategory" parameterType="HashMap">
+        /* PrCategory.updateCategory */
+        UPDATE SSP_APP.TB_PR_PRD_CLSF_INFO
+           SET PRD_CLSF_NM    = #{PRD_CLSF_NM}
+             , USE_YN         = #{USE_YN} 
+             , FRT_EXPS_YN    = #{FRT_EXPS_YN}
+             , MRO_PRD_CLCD   = #{MRO_PRD_CLCD}
+             , NOTI_ITM_ID    = #{NOTI_ITM_ID}
+             , MCND_PRD_YN    = #{MCND_PRD_YN}
+             , SEL_MTHD_CD    = #{SEL_MTHD_CD}
+             , DISP_PRD_FILE_ATTC_ID = #{DISP_PRD_FILE_ATTC_ID}
+             , UPD_RSN        = #{UPD_RSN}
+             , UPDPSN_ID      = #{USER_ID}
+             , UPD_DTM        = SYSDATE
+         WHERE CO_CD          = #{CO_CD}
+           AND PRD_CLCD       = #{PRD_CLCD}    
+    </update>
+    
+    <update id="deleteCategory" parameterType="HashMap">
+       /* PrCategory.deleteCategory */
+       UPDATE SSP_APP.TB_PR_PRD_CLSF_INFO
+          SET DEL_YN         = 'Y'
+            , FRT_EXPS_YN    = 'N'
+            , USE_YN         = 'N'
+            , UPD_RSN        = PRD_CLSF_NM ||' 삭제'
+            , UPDPSN_ID      = #{USER_ID}
+            , UPD_DTM        = SYSDATE
+        WHERE CO_CD          = #{CO_CD}
+          AND PRD_CLCD       = #{PRD_CLCD}      
+    </update>
+    
+    <select id="selectPrdClcdSeq1" parameterType="HashMap" resultType="String">
+        /* PrCategory.selectPrdClcdSeq1 */
+        SELECT 'C' || LPAD(TO_CHAR(NVL(MAX(SUBSTR(PRD_CLCD,2)), 0) + 1), 2, '0') 
+          FROM TB_PR_PRD_CLSF_INFO 
+         WHERE HIER_LVL = 1
+           AND CO_CD = #{CO_CD}
+           AND MALL_SPR_CD = #{MALL_SPR_CD}
+    </select>
+    
+    <select id="selectPrdClcdSeq2" parameterType="HashMap" resultType="String">
+        /* PrCategory.selectPrdClcdSeq2 */
+        SELECT SUBSTR(#{HRNK_PRD_CLCD},0,3) || LPAD(TO_CHAR(NVL(MAX(SUBSTR(PRD_CLCD,4,5)), 0) + 1), 5, '0') 
+          FROM TB_PR_PRD_CLSF_INFO 
+         WHERE HRNK_PRD_CLCD LIKE SUBSTR(#{HRNK_PRD_CLCD},0,3) ||'%' 
+           AND CO_CD = #{CO_CD}
+           AND MALL_SPR_CD = #{MALL_SPR_CD} 
+    </select>
+    
+    <update id="updateCategorySrtSo" parameterType="HashMap">
+        /* PrCategory.updateCategorySrtSo */
+        UPDATE SSP_APP.TB_PR_PRD_CLSF_INFO
+           SET SRT_SO   = #{SRT_SO}
+             , UPD_RSN  = #{UPD_RSN}
+             , UPDPSN_ID= #{USER_ID}
+             , UPD_DTM  = SYSDATE
+         WHERE CO_CD    = #{CO_CD}
+           AND PRD_CLCD = #{PRD_CLCD}    
+    </update>
+    
+    <select id="selectPrdAttrList" parameterType="HashMap" resultType="HashMap">
+        /* PrCategory.selectClsfAttrMappList */
+        SELECT 0 AS CHK
+             , PRD_ATTR_CD
+             , PRNM
+         FROM SSP_APP.TB_PR_PRD_ATTR_INFO  
+        WHERE 1=1
+          AND CO_CD = #{CO_CD}
+          <if test="PRNM != null and PRNM != ''">
+          AND PRNM LIKE '%'|| #{PRNM} ||'%'
+          </if>
+          AND MALL_SPR_CD = #{MALL_SPR_CD}
+          AND USE_YN = 'Y'
+        ORDER BY PRD_ATTR_CD ASC
+    </select>    
+    
+    <select id="selectClsfAttrMappList" parameterType="HashMap" resultType="HashMap">
+        /* PrCategory.selectClsfAttrMappList */
+		SELECT CHK,CO_CD,PRD_CLCD,PRD_ATTR_CD,PRNM,MAND_YN,SRT_SO,INTG_ATTR_SPR_CD,INTG_ATTR_SPR_CD_NM,MRO_PRD_CLCD,EXPS_YN,ORD_NO,ROWNUM RN
+		FROM (
+		SELECT CHK,CO_CD,PRD_CLCD,PRD_ATTR_CD,PRNM,MAND_YN,SRT_SO,INTG_ATTR_SPR_CD,INTG_ATTR_SPR_CD_NM,MRO_PRD_CLCD,EXPS_YN,ORD_NO
+		FROM (
+		 SELECT 0 AS CHK
+		     , A.CO_CD
+		     , A.PRD_CLCD
+		     , A.PRD_ATTR_CD
+		     , B.PRNM
+		     , A.MAND_YN
+		     , NVL(SRT.SRT_SO, A.SRT_SO) SRT_SO
+		     , '10' INTG_ATTR_SPR_CD
+		     , SSP_APP.FN_COM_DTL_CDNM('KO', 'INTG_ATTR_SPR_CD', '10') INTG_ATTR_SPR_CD_NM
+		     , #{MRO_PRD_CLCD} MRO_PRD_CLCD 
+		     , NVL(SRT.EXPS_YN, 'Y') EXPS_YN
+		     , NVL2(SRT.SRT_SO, '1', '2')  ORD_NO
+		FROM SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP A
+		INNER JOIN SSP_APP.TB_PR_PRD_ATTR_INFO B
+		    ON A.PRD_ATTR_CD = B.PRD_ATTR_CD AND A.CO_CD = #{CO_CD} AND A.PRD_CLCD = #{PRD_CLCD}
+		LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+		    ON A.CO_CD = SRT.CO_CD AND A.PRD_CLCD = SRT.PRD_CLCD AND B.PRD_ATTR_CD = SRT.INTG_ATTR_CD AND SRT.INTG_ATTR_SPR_CD = '10'
+		UNION ALL 
+		SELECT 0 AS CHK
+		     , A.CO_CD
+		     , #{PRD_CLCD} PRD_CLCD
+		     , A.MRO_ATTR_CD
+		     , A.PRNM
+		     , A.MAND_YN
+		     , NVL(SRT.SRT_SO, A.ATTR_SEQ) SRT_SO
+		     , '30' 
+		     , SSP_APP.FN_COM_DTL_CDNM('KO', 'INTG_ATTR_SPR_CD', '30') INTG_ATTR_SPR_CD_NM
+		     , A.MRO_PRD_CLCD 
+		     , NVL(SRT.EXPS_YN, 'Y') EXPS_YN
+		     , '1' ORD_NO
+		FROM TB_PR_MRO_PRD_CLSF_ATTR_INFO A
+		LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+		    ON A.CO_CD = SRT.CO_CD AND SRT.PRD_CLCD = #{PRD_CLCD}
+		    AND A.MRO_ATTR_CD = SRT.INTG_ATTR_CD AND SRT.INTG_ATTR_SPR_CD = '30'
+		WHERE A.CO_CD = #{CO_CD} AND A.MRO_PRD_CLCD = #{MRO_PRD_CLCD})
+		ORDER BY ORD_NO, SRT_SO ASC
+		) TB
+    </select>    
+    
+     <insert id="insertClsfAttrMapp" parameterType="HashMap">
+        /* PrCategory.insertClsfAttrMapp */
+        INSERT INTO SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP (
+              CO_CD
+            , PRD_CLCD
+            , PRD_ATTR_CD
+            , MAND_YN
+            , SRT_SO
+            , UPD_RSN
+            , REGPSN_ID
+            , REG_DTM
+            , UPDPSN_ID
+            , UPD_DTM
+        ) VALUES (
+              #{CO_CD}
+            , #{PRD_CLCD}
+            , #{PRD_ATTR_CD}
+            , #{MAND_YN}
+            , #{SRT_SO}
+            , #{UPD_RSN}
+            , #{USER_ID}
+            , SYSDATE
+            , #{USER_ID}
+            , SYSDATE
+        )     
+     </insert>
+     
+     <update id="updateClsfAttrMapp" parameterType="HashMap">
+        /* PrCategory.updateClsfAttrMapp */
+        UPDATE SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP
+           SET MAND_YN      = #{MAND_YN}
+             , SRT_SO       = #{SRT_SO}
+             , UPD_RSN      = #{UPD_RSN}
+             , UPDPSN_ID    = #{USER_ID}
+             , UPD_DTM      = SYSDATE
+         WHERE CO_CD        = #{CO_CD}
+           AND PRD_CLCD     = #{PRD_CLCD}
+           AND PRD_ATTR_CD  = #{PRD_ATTR_CD}      
+     </update>
+     
+     <delete id="deleteClsfAttrMapp" parameterType="HashMap">
+        /* PrCategory.deleteClsfAttrMapp */
+        DELETE FROM SSP_APP.TB_PR_PRD_CLSF_ATTR_MAPP
+         WHERE CO_CD        = #{CO_CD}
+           AND PRD_CLCD     = #{PRD_CLCD}
+           AND PRD_ATTR_CD  = #{PRD_ATTR_CD}     
+     </delete>
+     
+     <select id="selectPrdClsfNmCnt" parameterType="HashMap" resultType="Integer">
+        /* PrCategory.selectPrdClsfNmCnt */
+        SELECT COUNT(0) FROM SSP_APP.TB_PR_PRD_CLSF_INFO 
+         WHERE 1=1
+           AND CO_CD = #{CO_CD}
+           AND PRD_CLSF_NM = #{PRD_CLSF_NM} 
+           AND MALL_SPR_CD = #{MALL_SPR_CD} 
+           AND NVL(DEL_YN,'N') != 'Y'
+           <if test="PRD_CLCD != null and PRD_CLCD != ''">
+           AND PRD_CLCD != #{PRD_CLCD}
+           </if>
+     </select>
+     
+     <select id="selectPrdClsfNm" parameterType="HashMap" resultType="HashMap">
+        /* PrCategory.selectPrdClsfNm */
+        SELECT A.PRD_CLCD
+             , FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD) AS PRD_CLSF_LVL_NM
+             , B.PRD_CLSF_CHRPSN_ID
+             , D.OPRTR_NM 
+         FROM SSP_APP.TB_PR_PRD_CLSF_INFO A
+            , (SELECT CO_CD, PRD_CLCD, PRD_CLSF_CHRPSN_ID FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO 
+                WHERE PRD_CLSF_CHRPSN_TP_CD = '10'
+                  AND PRD_CLSF_CHRPSN_SPR_CD = '10'
+                  AND PRD_CLSF_CHRPSN_USEYN = 'Y') B
+            , (SELECT OPRTR_ID, OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO WHERE USE_YN = 'Y') D  
+        WHERE 1=1 
+          AND A.CO_CD = B.CO_CD(+)
+          AND A.PRD_CLCD = B.PRD_CLCD(+)
+          AND B.PRD_CLSF_CHRPSN_ID = D.OPRTR_ID(+)
+          AND A.CO_CD   = #{CO_CD}
+          AND A.PRD_CLCD = #{PRD_CLCD}
+          AND A.MALL_SPR_CD = #{MALL_SPR_CD}
+         
+     </select>
+     
+     <insert id="insertCategoryHst" parameterType="HashMap">
+        /* PrCategory.insertCategoryHst */
+        INSERT INTO TB_PR_PRD_CLSF_INFO_HST (
+              CO_CD
+            , PRD_CLCD
+            , HST_SEQ
+            , UPD_RSN
+            , DATA_CHG_TP_CD
+            , MALL_SPR_CD
+            , HRNK_PRD_CLCD
+            , HIER_LVL
+            , PRD_CLSF_NM
+            , DISP_PRD_FILE_ATTC_ID
+            , LWST_CD_YN
+            , USE_YN
+            , FRT_EXPS_YN
+            , MRO_PRD_CLCD
+            , NOTI_ITM_ID
+            , MCND_PRD_YN
+            , SRT_SO
+            , DEL_YN
+            , SEL_MTHD_CD
+            , REGPSN_ID
+            , REG_DTM
+            , UPDPSN_ID
+            , UPD_DTM
+        ) VALUES (
+              #{CO_CD}
+            , #{PRD_CLCD}
+            , (SELECT NVL(MAX(HST_SEQ),0)+1 FROM TB_PR_PRD_CLSF_INFO_HST)
+            , #{UPD_RSN}
+            , #{DATA_CHG_TP_CD}
+            , #{MALL_SPR_CD}
+            , #{HRNK_PRD_CLCD}
+            , #{HIER_LVL}
+            , #{PRD_CLSF_NM}
+            , #{DISP_PRD_FILE_ATTC_ID}
+            , #{LWST_CD_YN}
+            , #{USE_YN}
+            , #{FRT_EXPS_YN}
+            , #{MRO_PRD_CLCD}
+            , #{NOTI_ITM_ID}
+            , #{MCND_PRD_YN}
+            , #{SRT_SO}
+            , #{DEL_YN}
+            , #{SEL_MTHD_CD}
+            , #{USER_ID}
+            , SYSDATE
+            , #{USER_ID}
+            , SYSDATE
+        )     
+     </insert>
+     
+     <insert id="insertClsfAttrMappHst" parameterType="HashMap">
+        /* PrCategory.insertClsfAttrMappHst */
+        INSERT INTO TB_PR_PRD_CLSF_ATTR_MAPP_HST (
+              CO_CD
+            , PRD_CLCD
+            , PRD_ATTR_CD
+            , HST_SEQ
+            , DATA_CHG_TP_CD
+            , SRT_SO
+            , MAND_YN
+            , REGPSN_ID
+            , REG_DTM
+            , UPDPSN_ID
+            , UPD_DTM
+        ) VALUES (
+              #{CO_CD}
+            , #{PRD_CLCD}
+            , #{PRD_ATTR_CD}
+            , (SELECT NVL(MAX(HST_SEQ),0)+1 FROM TB_PR_PRD_CLSF_ATTR_MAPP_HST)
+            , #{DATA_CHG_TP_CD}
+            , #{SRT_SO}
+            , #{MAND_YN}
+            , #{USER_ID}
+            , SYSDATE
+            , #{USER_ID}
+            , SYSDATE
+        )     
+     </insert>
+     
+     <select id="selectAttcFileDtlsInq" parameterType="HashMap" resultType="HashMap">
+         /* PrCategory.selectAttcFileDtlsInq */
+		SELECT DOC_REG_ID
+		     , DOC_REG_SEQ
+		     , ATFL_NM
+		     , ATFL_LEN
+		     , ATFL_STOR_PATH
+		     , STOR_PLC_SPR_CD
+		     , ORI_ATFL_NM
+		     , SAP_DOC_ID
+		     , RMKS_CTS
+		     , ATFL_META_SEQ
+		     , ETC_FDS_1
+		     , ETC_FDS_2
+		     , ETC_FDS_3
+		     , ETC_FDS_4
+		     , ETC_FDS_5
+		     , REG_DTM
+		     , REGPSN_ID
+		     , UPD_DTM
+		     , UPDPSN_ID
+		FROM TB_CO_ATFL_DTLS
+		WHERE 1=1
+		  <if test="DOC_REG_ID != null and DOC_REG_ID != ''">
+		  AND DOC_REG_ID = #{DOC_REG_ID}
+		  </if>     
+     </select>
+     
+     <update id="updateClsfAttrSrtInfo" parameterType="HashMap">
+        MERGE INTO SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO USING DUAL
+		    ON (CO_CD=#{CO_CD} AND PRD_CLCD=#{PRD_CLCD} AND INTG_ATTR_CD=#{PRD_ATTR_CD})
+		WHEN MATCHED THEN 
+		UPDATE SET
+		    EXPS_YN = #{EXPS_YN},
+		    SRT_SO = #{SRT_SO},
+		    INTG_ATTR_SPR_CD = #{INTG_ATTR_SPR_CD},
+		    UPDPSN_ID = #{USER_ID},
+		    UPD_DTM = SYSDATE
+		WHEN NOT MATCHED THEN
+		INSERT
+		    (CO_CD,
+		    PRD_CLCD,
+		    MRO_PRD_CLCD,
+		    INTG_ATTR_CD,
+		    EXPS_YN,
+		    SRT_SO,
+		    INTG_ATTR_SPR_CD,
+		    REGPSN_ID,
+		    REG_DTM)
+		VALUES (#{CO_CD},
+		    #{PRD_CLCD},
+		    #{MRO_PRD_CLCD},
+		    #{PRD_ATTR_CD},
+		    #{EXPS_YN},
+		    #{SRT_SO},
+		    #{INTG_ATTR_SPR_CD},
+		    #{USER_ID},
+		    SYSDATE)
+     </update>
+     
+     <delete id="deletePrdClsfAttrSrtInfo" parameterType="HashMap">
+        /* PrCategory.deletePrdClsfAttrSrtInfo */
+        DELETE FROM SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO
+		WHERE CO_CD = #{CO_CD}
+		    AND PRD_CLCD = #{PRD_CLCD}
+		    AND INTG_ATTR_CD = #{PRD_ATTR_CD}
+     </delete>
+     
+     
+     
+     
+     
+     <select id="selectSspPrdNmFrtMdfrList" parameterType="HashMap" resultType="HashMap">
+        SELECT
+            CO_CD,
+            PRD_CLCD,
+            MDFR_ITM_NO,
+            MDFR_ITM_NO ITM_NO,
+            SSP_PRD_NM_TP_CD,
+            MDFR_NM,
+            MDFR_CD,
+            DECODE(MDFR_IPT_TP_CD, '1', MDFR_CD, MDFR_NM) MDFR_DATA,
+            MDFR_IPT_TP_CD,
+            REGPSN_ID,
+            REG_DTM,
+            UPDPSN_ID,
+            UPD_DTM,
+            ROWNUM SRT_SO
+        FROM SSP_APP.TB_PR_SSP_PRD_NM_FRT_MDFR_INFO
+        WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD}
+        ORDER BY CO_CD, PRD_CLCD, MDFR_ITM_NO
+    </select>
+    <select id="selectSspPrdNmRearMdfrList" parameterType="HashMap" resultType="HashMap">
+        SELECT
+            CO_CD,
+            PRD_CLCD,
+            MDFR_ITM_NO,
+            MDFR_ITM_NO ITM_NO,
+            SSP_PRD_NM_TP_CD,
+            MDFR_NM,
+            MDFR_CD,
+            DECODE(MDFR_IPT_TP_CD, '1', MDFR_CD, MDFR_NM) MDFR_DATA,
+            MDFR_IPT_TP_CD,
+            REGPSN_ID,
+            REG_DTM,
+            UPDPSN_ID,
+            UPD_DTM,
+            ROWNUM SRT_SO
+        FROM SSP_APP.TB_PR_SSP_PRD_NM_REAR_MDFR_INFO
+        WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD}
+        ORDER BY CO_CD, PRD_CLCD, MDFR_ITM_NO
+    </select>
+    <select id="selectSspPrdNmAttrList" parameterType="HashMap" resultType="HashMap">
+        SELECT
+            CO_CD,
+            PRD_CLCD,
+            ATTR_ITM_NO,
+            ATTR_ITM_NO ITM_NO,
+            SSP_PRD_NM_TP_CD,
+            INTG_ATTR_CD,
+            INTG_ATTR_SPR_CD,
+            REGPSN_ID,
+            REG_DTM,
+            UPDPSN_ID,
+            UPD_DTM
+        FROM SSP_APP.TB_PR_SSP_PRD_NM_ATTR_INFO
+        WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD}
+        ORDER BY CO_CD, PRD_CLCD, ATTR_ITM_NO
+    </select>
+    <select id="selectSspPrdNmAddInfo" parameterType="HashMap" resultType="HashMap">
+        WITH TB_ATTR AS (SELECT *
+        FROM SSP_APP.TB_PR_SSP_PRD_NM_ADD_INFO
+        WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD})
+        SELECT
+            #{CO_CD} CO_CD,
+            #{PRD_CLCD} PRD_CLCD,
+            '3' SSP_PRD_NM_TP_CD, /* 3하드코딩(공통코드) */
+            NVL(B.BRND_EXPS_YN, 'N') BRND_EXPS_YN,
+            NVL(B.MNFR_EXPS_YN, 'N') MNFR_EXPS_YN,
+            NVL(B.ODR_UNIT_EXPS_YN, 'N') ODR_UNIT_EXPS_YN
+        FROM DUAL
+        LEFT OUTER JOIN TB_ATTR B ON 0=0
+    </select>
+    <select id="selectSspPrdNmMngList" parameterType="HashMap" resultType="HashMap">
+         WITH ATTR_TB AS (SELECT A.CO_CD,
+		        A.PRD_CLCD,
+		        B.ATTR_ITM_NO,
+		        B.SSP_PRD_NM_TP_CD,
+		        A.ATTR_CD INTG_ATTR_CD,
+		        A.INTG_ATTR_SPR_CD,
+		        A.MAND_YN,
+		        NVL2(B.ATTR_ITM_NO, 'Y', 'N') EXPS_YN,
+		        A.PRNM INTG_ATTR_NM
+		  FROM 
+		       (SELECT
+		            A.CO_CD,
+		            CLSF.PRD_CLCD,
+		            A.MRO_ATTR_CD ATTR_CD,
+		            NVL(SRT.SRT_SO, A.ATTR_SEQ) SRT_SO, 
+		            A.PRNM, 
+		            '1' ORD_NO,
+		            NVL(A.MAND_YN, 'N') MAND_YN,
+		            NVL(SRT.EXPS_YN, 'Y') EXPS_YN,
+		            '30' INTG_ATTR_SPR_CD
+		        FROM TB_PR_MRO_PRD_CLSF_ATTR_INFO A 
+		        INNER JOIN TB_PR_PRD_CLSF_INFO CLSF 
+		            ON A.CO_CD = CLSF.CO_CD AND A.MRO_PRD_CLCD = CLSF.MRO_PRD_CLCD AND CLSF.CO_CD = #{CO_CD} AND CLSF.PRD_CLCD = #{PRD_CLCD}
+		        LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+		            ON A.CO_CD = SRT.CO_CD AND CLSF.PRD_CLCD = SRT.PRD_CLCD AND A.MRO_ATTR_CD = SRT.INTG_ATTR_CD AND SRT.INTG_ATTR_SPR_CD = '30'
+		        UNION ALL
+		        SELECT
+		            MAPP.CO_CD,
+		            MAPP.PRD_CLCD,
+		            MAPP.PRD_ATTR_CD,
+		            NVL(SRT.SRT_SO, MAPP.SRT_SO), 
+		            PRNM, 
+		            NVL2(SRT.SRT_SO, '1', '2')  ORD_NO,
+		            NVL(MAPP.MAND_YN, 'N'),
+		            NVL(SRT.EXPS_YN, 'Y') EXPS_YN,
+		            C.MALL_SPR_CD 
+		        FROM TB_PR_PRD_CLSF_ATTR_MAPP MAPP
+		        JOIN TB_PR_PRD_ATTR_INFO C
+		            ON MAPP.CO_CD = C.CO_CD AND MAPP.PRD_ATTR_CD = C.PRD_ATTR_CD AND MAPP.CO_CD =#{CO_CD} AND MAPP.PRD_CLCD = #{PRD_CLCD}
+		        LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+		        ON MAPP.CO_CD = SRT.CO_CD AND MAPP.PRD_CLCD = SRT.PRD_CLCD AND SRT.INTG_ATTR_CD = MAPP.PRD_ATTR_CD AND SRT.PRD_CLCD = MAPP.PRD_CLCD
+		       ) A 
+		       LEFT OUTER JOIN TB_PR_SSP_PRD_NM_ATTR_INFO B 
+		       ON A.CO_CD = B.CO_CD AND A.PRD_CLCD = B.PRD_CLCD AND A.ATTR_CD = B.INTG_ATTR_CD 
+		       WHERE A.EXPS_YN = 'Y')
+        SELECT 
+            CO_CD,
+            PRD_CLCD,
+            SSP_PRD_NM_TP_CD,
+            ITM_NO,
+            SRT_SO,
+            SSP_PRD_NM_DLMTR_TP_CD,
+            DECODE(SSP_PRD_NM_TP_CD, '1', ITM_NAME||ITM_SRT_SO, '4', ITM_NAME||ITM_SRT_SO, ITM_NAME) ITM_NAME, 
+            ITM_DATA
+        FROM (
+            SELECT NVL(B.CO_CD, #{CO_CD}) CO_CD, 
+		            NVL(B.PRD_CLCD, #{PRD_CLCD}) PRD_CLCD, 
+		            NVL(B.SSP_PRD_NM_TP_CD, '5') SSP_PRD_NM_TP_CD, 
+		            1 ITM_NO, 
+		            NVL(B.SRT_SO, 1) SRT_SO, 
+		            SSP_PRD_NM_DLMTR_TP_CD,
+		            1 ITM_SRT_SO, 
+		            '상품명' ITM_NAME, 
+		            '' ITM_DATA,
+		            'Y' EXPS_YN
+            FROM DUAL LEFT OUTER JOIN TB_PR_SSP_PRD_NM_MNG_INFO B ON CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND SSP_PRD_NM_TP_CD = '5' AND INTG_ITM_NO = '1'
+            UNION ALL 
+            SELECT
+                CO_CD,
+                PRD_CLCD,
+                SSP_PRD_NM_TP_CD,
+                INTG_ITM_NO ITM_NO,
+                SRT_SO,
+                SSP_PRD_NM_DLMTR_TP_CD,
+                ROW_NUMBER() OVER(PARTITION BY CO_CD, PRD_CLCD, SSP_PRD_NM_TP_CD ORDER BY CO_CD, PRD_CLCD, SSP_PRD_NM_TP_CD, SRT_SO) ITM_NO,
+                CASE 
+                    WHEN SSP_PRD_NM_TP_CD = '1' THEN 'Front 수식어' 
+                    WHEN SSP_PRD_NM_TP_CD = '2' THEN '상품군 속성' 
+                    WHEN SSP_PRD_NM_TP_CD = '3' AND INTG_ITM_NO = '1' THEN '제조원명' 
+                    WHEN SSP_PRD_NM_TP_CD = '3' AND INTG_ITM_NO = '2' THEN '브랜드명' 
+                    WHEN SSP_PRD_NM_TP_CD = '3' AND INTG_ITM_NO = '3' THEN '주문단위' 
+                    WHEN SSP_PRD_NM_TP_CD = '4' THEN 'Rear 수식어' 
+                    WHEN SSP_PRD_NM_TP_CD = '6' THEN '줄바꿈' 
+                END ITM_NAME,
+                CASE 
+                    WHEN SSP_PRD_NM_TP_CD = '1' THEN (SELECT DECODE(S1.MDFR_IPT_TP_CD , '1', 
+                                                    (SELECT COM_DTL_CD_NM||DECODE(NVL(COMCD.USE_YN, 'N'), 'N', '(미사용)', '') 
+                                                    FROM SSP_APP.TB_CO_COM_CD_DTL COMCD WHERE LANG_CD='KO' AND COM_CLSF_CD='MDFR_CD' AND COM_DTL_CD = S1.MDFR_CD), 
+                                                    S1.MDFR_NM)
+                                                    FROM TB_PR_SSP_PRD_NM_FRT_MDFR_INFO S1 
+                                                    WHERE S1.CO_CD=A.CO_CD AND S1.PRD_CLCD=A.PRD_CLCD 
+                                                    AND S1.SSP_PRD_NM_TP_CD=A.SSP_PRD_NM_TP_CD AND S1.MDFR_ITM_NO=A.INTG_ITM_NO)
+                    WHEN SSP_PRD_NM_TP_CD = '2' AND INTG_ATTR_SPR_CD IN ('10', '20') THEN (SELECT S2.PRNM FROM TB_PR_SSP_PRD_NM_ATTR_INFO S1, TB_PR_PRD_ATTR_INFO S2 
+                                                    WHERE S1.CO_CD=S2.CO_CD AND S1.CO_CD=A.CO_CD AND S1.ATTR_ITM_NO=A.INTG_ITM_NO
+                                                    AND S1.PRD_CLCD=A.PRD_CLCD AND S1.INTG_ATTR_CD=S2.PRD_ATTR_CD)
+                    WHEN SSP_PRD_NM_TP_CD = '2' AND INTG_ATTR_SPR_CD = '30' THEN (SELECT S2.PRNM FROM TB_PR_SSP_PRD_NM_ATTR_INFO S1, TB_PR_MRO_PRD_CLSF_ATTR_INFO S2, TB_PR_PRD_CLSF_INFO CLSF
+                                                    WHERE S1.CO_CD=S2.CO_CD AND S1.CO_CD=A.CO_CD AND S1.CO_CD = CLSF.CO_CD AND S1.ATTR_ITM_NO=A.INTG_ITM_NO
+                                                    AND S1.PRD_CLCD=A.PRD_CLCD AND S1.PRD_CLCD=CLSF.PRD_CLCD AND S2.MRO_PRD_CLCD = CLSF.MRO_PRD_CLCD
+                                                    AND S1.INTG_ATTR_CD=S2.MRO_ATTR_CD)
+                    WHEN SSP_PRD_NM_TP_CD = '4' THEN (SELECT DECODE(S1.MDFR_IPT_TP_CD, '1', 
+                                                    (SELECT COM_DTL_CD_NM||DECODE(NVL(COMCD.USE_YN, 'N'), 'N', '(미사용)', '') 
+                                                    FROM SSP_APP.TB_CO_COM_CD_DTL COMCD WHERE LANG_CD='KO' AND COM_CLSF_CD='MDFR_CD' AND COM_DTL_CD = S1.MDFR_CD), 
+                                                    S1.MDFR_NM)
+                                                    FROM TB_PR_SSP_PRD_NM_REAR_MDFR_INFO S1 
+                                                    WHERE S1.CO_CD=A.CO_CD AND S1.PRD_CLCD=A.PRD_CLCD 
+                                                    AND S1.SSP_PRD_NM_TP_CD=A.SSP_PRD_NM_TP_CD AND S1.MDFR_ITM_NO=A.INTG_ITM_NO)
+                END ITM_DATA,
+                CASE 
+		            WHEN SSP_PRD_NM_TP_CD = '2' THEN 
+		              (SELECT NVL2(ATT.INTG_ATTR_CD, NVL(SRT.EXPS_YN, 'Y'), 'N') 
+                        FROM ATTR_TB ATT LEFT JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT ON ATT.CO_CD = SRT.CO_CD AND ATT.INTG_ATTR_CD = SRT.INTG_ATTR_CD AND ATT.PRD_CLCD = SRT.PRD_CLCD 
+                        WHERE ATT.CO_CD = A.CO_CD AND ATT.PRD_CLCD = A.PRD_CLCD AND ATT.INTG_ATTR_CD = A.INTG_ATTR_CD)
+		            ELSE 'Y'
+		        END EXPS_YN
+            FROM (
+                    SELECT
+                        A.*,
+                        (SELECT INTG_ATTR_CD FROM TB_PR_SSP_PRD_NM_ATTR_INFO S1 WHERE S1.CO_CD=A.CO_CD AND S1.PRD_CLCD=A.PRD_CLCD AND S1.ATTR_ITM_NO=A.INTG_ITM_NO) INTG_ATTR_CD,
+                        (SELECT INTG_ATTR_SPR_CD FROM TB_PR_SSP_PRD_NM_ATTR_INFO S1 WHERE S1.CO_CD=A.CO_CD AND S1.PRD_CLCD=A.PRD_CLCD AND S1.ATTR_ITM_NO=A.INTG_ITM_NO) INTG_ATTR_SPR_CD
+                    FROM SSP_APP.TB_PR_SSP_PRD_NM_MNG_INFO A
+                    WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND SSP_PRD_NM_TP_CD != '5'
+            ) A
+        ) TB 
+        WHERE EXPS_YN = 'Y'
+        ORDER BY DECODE(SSP_PRD_NM_TP_CD, '1', 1, '4', 99, 2), SRT_SO
+    </select>
+    <select id="selectClsfAttrList" parameterType="HashMap" resultType="HashMap">
+        SELECT A.CO_CD,
+                A.PRD_CLCD,
+                B.ATTR_ITM_NO,
+                B.SSP_PRD_NM_TP_CD,
+                A.ATTR_CD INTG_ATTR_CD,
+                A.INTG_ATTR_SPR_CD,
+                A.MAND_YN,
+                NVL2(B.ATTR_ITM_NO, 'Y', 'N') EXPS_YN,
+                A.PRNM INTG_ATTR_NM
+          FROM 
+               (SELECT
+                    A.CO_CD,
+                    CLSF.PRD_CLCD,
+                    A.MRO_ATTR_CD ATTR_CD,
+                    NVL(SRT.SRT_SO, A.ATTR_SEQ) SRT_SO, 
+                    A.PRNM, 
+                    '1' ORD_NO,
+                    NVL(A.MAND_YN, 'N') MAND_YN,
+                    NVL(SRT.EXPS_YN, 'Y') EXPS_YN,
+                    '30' INTG_ATTR_SPR_CD
+                FROM TB_PR_MRO_PRD_CLSF_ATTR_INFO A 
+                INNER JOIN TB_PR_PRD_CLSF_INFO CLSF 
+                    ON A.CO_CD = CLSF.CO_CD AND A.MRO_PRD_CLCD = CLSF.MRO_PRD_CLCD AND CLSF.CO_CD = #{CO_CD} AND CLSF.PRD_CLCD = #{PRD_CLCD}
+                LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+                    ON A.CO_CD = SRT.CO_CD AND CLSF.PRD_CLCD = SRT.PRD_CLCD AND A.MRO_ATTR_CD = SRT.INTG_ATTR_CD AND SRT.INTG_ATTR_SPR_CD = '30'
+                UNION ALL
+                SELECT
+                    MAPP.CO_CD,
+                    MAPP.PRD_CLCD,
+                    MAPP.PRD_ATTR_CD,
+                    NVL(SRT.SRT_SO, MAPP.SRT_SO), 
+                    PRNM, 
+                    NVL2(SRT.SRT_SO, '1', '2')  ORD_NO,
+                    NVL(MAPP.MAND_YN, 'N'),
+                    NVL(SRT.EXPS_YN, 'Y') EXPS_YN,
+                    C.MALL_SPR_CD 
+                FROM TB_PR_PRD_CLSF_ATTR_MAPP MAPP
+                JOIN TB_PR_PRD_ATTR_INFO C
+                    ON MAPP.CO_CD = C.CO_CD AND MAPP.PRD_ATTR_CD = C.PRD_ATTR_CD AND MAPP.CO_CD = #{CO_CD} AND MAPP.PRD_CLCD = #{PRD_CLCD}
+                LEFT OUTER JOIN SSP_APP.TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT 
+                ON MAPP.CO_CD = SRT.CO_CD AND MAPP.PRD_CLCD = SRT.PRD_CLCD AND SRT.INTG_ATTR_CD = MAPP.PRD_ATTR_CD AND SRT.PRD_CLCD = MAPP.PRD_CLCD
+               ) A 
+               LEFT OUTER JOIN TB_PR_SSP_PRD_NM_ATTR_INFO B 
+               ON A.CO_CD = B.CO_CD AND A.PRD_CLCD = B.PRD_CLCD AND A.ATTR_CD = B.INTG_ATTR_CD 
+               WHERE A.EXPS_YN = 'Y'
+         ORDER BY ORD_NO, SRT_SO
+    </select>
+    
+   <update id="updateSspPrdNmFrtMdfrInfo" parameterType="HashMap">
+        MERGE INTO
+            SSP_APP.TB_PR_SSP_PRD_NM_FRT_MDFR_INFO USING DUAL
+          ON (CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND MDFR_ITM_NO = #{MDFR_ITM_NO})
+        WHEN MATCHED THEN 
+        UPDATE SET
+            SSP_PRD_NM_TP_CD = #{SSP_PRD_NM_TP_CD},
+            MDFR_NM = DECODE(#{MDFR_IPT_TP_CD}, '2', NVL(#{MDFR_DATA}, #{MDFR_NM}), MDFR_NM),
+            MDFR_CD = DECODE(#{MDFR_IPT_TP_CD}, '1', #{MDFR_DATA}, MDFR_CD),
+            MDFR_IPT_TP_CD = #{MDFR_IPT_TP_CD},
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+        INSERT
+            (CO_CD,
+            PRD_CLCD,
+            MDFR_ITM_NO,
+            SSP_PRD_NM_TP_CD,
+            MDFR_NM,
+            MDFR_CD,
+            MDFR_IPT_TP_CD,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES (#{CO_CD},
+	        #{PRD_CLCD},
+	        #{MDFR_ITM_NO},
+	        #{SSP_PRD_NM_TP_CD},
+	        NVL(#{MDFR_DATA}, #{MDFR_NM}),
+	        DECODE(#{MDFR_IPT_TP_CD}, '1', #{MDFR_DATA}, NULL),
+	        #{MDFR_IPT_TP_CD},
+	        #{SESSION_OPRTR_ID},
+	        SYSDATE)
+    </update>
+    <update id="updateSspPrdNmRearMdfrInfo" parameterType="HashMap">
+        MERGE INTO SSP_APP.TB_PR_SSP_PRD_NM_REAR_MDFR_INFO USING DUAL
+          ON (CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND MDFR_ITM_NO = #{MDFR_ITM_NO})
+        WHEN MATCHED THEN
+        UPDATE SET
+            SSP_PRD_NM_TP_CD = #{SSP_PRD_NM_TP_CD},
+            MDFR_NM = DECODE(#{MDFR_IPT_TP_CD}, '2', NVL(#{MDFR_DATA}, #{MDFR_NM}), MDFR_NM),
+            MDFR_CD = DECODE(#{MDFR_IPT_TP_CD}, '1', #{MDFR_DATA}, MDFR_CD),
+            MDFR_IPT_TP_CD = #{MDFR_IPT_TP_CD},
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+        INSERT
+            (CO_CD,
+            PRD_CLCD,
+            MDFR_ITM_NO,
+            SSP_PRD_NM_TP_CD,
+            MDFR_NM,
+            MDFR_CD,
+            MDFR_IPT_TP_CD,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES (#{CO_CD},
+	        #{PRD_CLCD},
+	        #{MDFR_ITM_NO},
+	        #{SSP_PRD_NM_TP_CD},
+	        NVL(#{MDFR_DATA}, #{MDFR_NM}),
+	        DECODE(#{MDFR_IPT_TP_CD}, '1', #{MDFR_DATA}, NULL),
+	        #{MDFR_IPT_TP_CD},
+	        #{SESSION_OPRTR_ID},
+	        SYSDATE)
+    </update>
+    <delete id="deleteSspPrdNmFrtMdfrInfo" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_SSP_PRD_NM_FRT_MDFR_INFO
+        WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND MDFR_ITM_NO = #{MDFR_ITM_NO}
+    </delete>
+    <delete id="deleteSspPrdNmRearMdfrInfo" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_SSP_PRD_NM_REAR_MDFR_INFO
+        WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND MDFR_ITM_NO = #{MDFR_ITM_NO}
+    </delete>
+    <update id="updateSspPrdNmAttrInfo" parameterType="HashMap">
+        MERGE INTO SSP_APP.TB_PR_SSP_PRD_NM_ATTR_INFO USING DUAL
+        ON (CO_CD = #{CO_CD} AND #{PRD_CLCD} = PRD_CLCD AND ATTR_ITM_NO = #{ATTR_ITM_NO})
+        WHEN MATCHED THEN
+        UPDATE SET
+            SSP_PRD_NM_TP_CD = #{SSP_PRD_NM_TP_CD},
+            INTG_ATTR_CD = #{INTG_ATTR_CD},
+            INTG_ATTR_SPR_CD = #{INTG_ATTR_SPR_CD},
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+        INSERT
+            (CO_CD,
+            PRD_CLCD,
+            ATTR_ITM_NO,
+            SSP_PRD_NM_TP_CD,
+            INTG_ATTR_CD,
+            INTG_ATTR_SPR_CD,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES (
+	        #{CO_CD},
+	        #{PRD_CLCD},
+	        #{ATTR_ITM_NO},
+	        #{SSP_PRD_NM_TP_CD},
+	        #{INTG_ATTR_CD},
+	        #{INTG_ATTR_SPR_CD},
+	        #{SESSION_OPRTR_ID},
+        SYSDATE)
+    </update>
+    <delete id="deleteSspPrdNmAttrInfo" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_SSP_PRD_NM_ATTR_INFO
+        WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND ATTR_ITM_NO = #{ATTR_ITM_NO}
+    </delete>
+    <update id="updateSspPrdNmAddInfo"  parameterType="HashMap">
+        MERGE INTO SSP_APP.TB_PR_SSP_PRD_NM_ADD_INFO USING DUAL
+        ON (CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD})
+            WHEN MATCHED THEN
+        UPDATE SET
+            SSP_PRD_NM_TP_CD = #{SSP_PRD_NM_TP_CD},
+            BRND_EXPS_YN = #{BRND_EXPS_YN},
+            MNFR_EXPS_YN = #{MNFR_EXPS_YN},
+            ODR_UNIT_EXPS_YN = #{ODR_UNIT_EXPS_YN},
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+        INSERT
+            (CO_CD,
+            PRD_CLCD,
+            SSP_PRD_NM_TP_CD,
+            BRND_EXPS_YN,
+            MNFR_EXPS_YN,
+            ODR_UNIT_EXPS_YN,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES (#{CO_CD},
+            #{PRD_CLCD},
+            #{SSP_PRD_NM_TP_CD},
+            #{BRND_EXPS_YN},
+            #{MNFR_EXPS_YN},
+            #{ODR_UNIT_EXPS_YN},
+            #{SESSION_OPRTR_ID},
+            SYSDATE)
+    </update>
+    
+    <update id="updateSspPrdNmMngInfo"  parameterType="HashMap">
+        MERGE INTO SSP_APP.TB_PR_SSP_PRD_NM_MNG_INFO USING DUAL
+        ON (CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND SSP_PRD_NM_TP_CD = #{SSP_PRD_NM_TP_CD} AND INTG_ITM_NO = #{ITM_NO})
+        WHEN MATCHED THEN
+        UPDATE SET
+            SRT_SO = NVL(#{SRT_SO}, SRT_SO),
+            SSP_PRD_NM_DLMTR_TP_CD = NVL(#{SSP_PRD_NM_DLMTR_TP_CD}, SSP_PRD_NM_DLMTR_TP_CD),
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+        INSERT
+            (CO_CD,
+            PRD_CLCD,
+            SSP_PRD_NM_TP_CD,
+            INTG_ITM_NO,
+            SRT_SO,
+            SSP_PRD_NM_DLMTR_TP_CD,
+            REGPSN_ID,
+            REG_DTM)
+        VALUES (#{CO_CD},
+            #{PRD_CLCD},
+            #{SSP_PRD_NM_TP_CD},
+            #{ITM_NO},
+            DECODE(#{SSP_PRD_NM_TP_CD}, '5', NVL(#{SRT_SO}, '4'), #{SRT_SO}),
+            #{SSP_PRD_NM_DLMTR_TP_CD},
+            #{SESSION_OPRTR_ID},
+            SYSDATE)
+    </update>
+    <delete id="deleteSspPrdNmMngInfo" parameterType="HashMap">
+        DELETE FROM SSP_APP.TB_PR_SSP_PRD_NM_MNG_INFO
+        WHERE CO_CD = #{CO_CD} AND PRD_CLCD = #{PRD_CLCD} AND SSP_PRD_NM_TP_CD = #{SSP_PRD_NM_TP_CD} AND INTG_ITM_NO = #{ITM_NO}
+    </delete>
+    
+    <select id="selectLastBatchTime" parameterType="HashMap" resultType="HashMap">
+        WITH TMP AS (
+		    SELECT PRD.CO_CD, PRD.PRD_CLCD, PRD.PRD_ID, SP.REGPSN_ID, SP.REG_DTM, SP.UPDPSN_ID, SP.UPD_DTM 
+		    FROM SSP_APP.TB_PR_PRD_INFO PRD 
+		    INNER JOIN SSP_APP.TB_PR_PRD_CLSF_INFO CLSF 
+		    ON PRD.CO_CD = CLSF.CO_CD AND PRD.PRD_CLCD = CLSF.PRD_CLCD AND CLSF.PRD_CLCD = #{PRD_CLCD}
+		    INNER JOIN TB_PR_SSP_PRD_NM_INFO SP 
+		    ON SP.CO_CD = PRD.CO_CD AND SP.PRD_ID = PRD.PRD_ID 
+		    WHERE PRD.CO_CD = #{CO_CD}
+		)
+		SELECT CO_CD, PRD_CLCD, TO_CHAR(LAST_DATE, 'YYYY-MM-DD HH24:MI:SS') LAST_DATE FROM (
+			SELECT #{CO_CD} CO_CD, #{PRD_CLCD} PRD_CLCD, CASE WHEN REG_DTM > UPD_DTM THEN REG_DTM ELSE UPD_DTM END LAST_DATE 
+			FROM (
+			    SELECT
+			    (SELECT MAX(A.REG_DTM) FROM TMP A WHERE REGPSN_ID='BATCH') REG_DTM,
+			    (SELECT MAX(A.UPD_DTM) FROM TMP A WHERE UPDPSN_ID ='BATCH') UPD_DTM 
+			    FROM DUAL
+			)
+		)
+    </select>
+
+    <insert id="insertPrdClsfIddtMapp" parameterType="HashMap">
+    /* PrCategory.insertPrdClsfIddtMapp */
+    INSERT INTO TB_PR_PRD_CLSF_IDDT_MAPP
+        (   CO_CD
+            , PRD_CLCD
+            , IDDT_ID
+            , REGPSN_ID
+            , REG_DTM
+            , UPDPSN_ID
+            , UPD_DTM
+        )
+    VALUES
+        (   #{CO_CD}
+            , #{PRD_CLCD}
+            , '999'
+            , #{USER_ID}
+            ,SYSDATE
+            , #{USER_ID}
+            , SYSDATE
+        )
+    </insert>
+</mapper>

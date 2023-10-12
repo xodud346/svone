@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="RndregPrdLstMng">
+   <!--
+    ******************************************************************************
+    * SELECT : 공용상품가격관리
+    * 작성자 : 
+    * 작성 일자 : 2022.03.02
+    ******************************************************************************
+    -->
+	    
+    <sql id="listWhere">
+		<if test="coCd != null and coCd != ''">
+			AND A.CO_CD = #{coCd}
+		</if>
+		<if test="prdId != null and prdId != ''">
+			AND A.PRD_ID = #{prdId}
+		</if>		
+		<if test="prdNm != null and prdNm != ''">
+			AND A.PRD_NM = #{prdNm}
+		</if>		
+		<if test="prdClcd != null and prdClcd != ''">
+			AND A.PRD_CLCD = #{prdClcd}
+		</if>		
+		<if test="regpsnId != null and regpsnId != ''">
+			AND A.REGPSN_ID = #{regpsnId}
+		</if>		
+		<if test="mnfrNo != null and mnfrNo != ''">
+			AND B.MNFR_NO = #{mnfrNo}
+		</if>		
+		<if test="mroPrdStatsCd != null and mroPrdStatsCd != ''">
+			AND B.MRO_PRD_STATS_CD = #{mroPrdStatsCd}
+		</if>		
+		<if test="dispStatsCd != null and dispStatsCd != ''">
+			AND C.DISP_STATS_CD = #{dispStatsCd}
+		</if>		
+		<if test="mroReprAttr != null and mroReprAttr != ''">
+			AND B.MRO_REPR_ATTR = #{mroReprAttr}
+		</if>			
+		<if test="pubonlySprCd != null and pubonlySprCd != ''">
+			AND B.PUB_ONLY_SPR_CD = #{pubonlySprCd}
+		</if>	
+		
+
+		<if test="prdIdArr != null and prdIdArr.length > 0">
+	        AND A.PRD_ID IN
+	    	<foreach collection="prdIdArr" item="prdIdArr" open="(" close=")" separator=",">
+	        	#{prdIdArr}
+	        </foreach>
+	    </if>
+		<if test="mallSprCd != null and mallSprCd != ''">
+			AND A.MALL_SPR_CD = #{mallSprCd}
+		</if>
+		<if test="prdClcdArr != null and prdClcdArr.length > 0">
+	        AND A.PRD_CLCD IN
+	    	<foreach collection="prdClcdArr" item="prdClcdArr" open="(" close=")" separator=",">
+	        	#{prdClcdArr}
+	        </foreach>
+	    </if>
+	    <if test="regpsnIdArr != null and regpsnIdArr.length > 0">
+	        AND A.REGPSN_ID IN
+	    	<foreach collection="regpsnIdArr" item="regpsnIdArr" open="(" close=")" separator=",">
+	        	#{regpsnIdArr}
+	        </foreach>
+	    </if>
+	    <if test="prdNmArr != null and prdNmArr.length > 0">
+	        AND A.PRD_NM IN
+	    	<foreach collection="prdNmArr" item="prdNmArr" open="(" close=")" separator=",">
+	        	#{prdNmArr}
+	        </foreach>
+	    </if>	    
+	    <if test="mnfrNoArr != null and mnfrNoArr.length > 0">
+	        AND B.MNFR_NO IN
+	    	<foreach collection="mnfrNoArr" item="mnfrNoArr" open="(" close=")" separator=",">
+	        	#{mnfrNoArr}
+	        </foreach>
+	    </if>	    
+		<if test="dateUnit != null and dateUnit != ''">
+            <if test="dateUnit != 0">
+                AND A.REG_DTM BETWEEN TO_DATE(#{regDtmStart}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{regDtmEnd}||'235959', 'YYYYMMDDHH24MISS')
+            </if>
+        </if>			
+	</sql>
+	
+	    <select id="selectPcPrdPrcDtlsCount" parameterType="HashMap" resultType="Integer">
+        /* PubPrdPrcMng.selectPcPrdPrcDtlsCount */
+        SELECT
+            COUNT(*)
+        FROM SSP_APP.TB_PR_PRD_INFO A
+			INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO B
+			ON ( 0=0 AND B.CO_CD = A.CO_CD AND B.PRD_ID = A.PRD_ID )
+			LEFT JOIN SSP_APP.TB_DP_PRD_DISP_STATS_INFO C
+			ON ( 0=0 AND C.CO_CD = A.CO_CD AND C.PRD_ID = A.PRD_ID AND C.BZPLC_ID = '*' AND C.OPR_UNIT_ID = '*')
+			LEFT JOIN SSP_APP.TB_PC_PRD_PRC_DTLS D
+			ON ( 0=0 AND D.CO_CD = A.CO_CD AND D.PRD_ID = A.PRD_ID AND D.BZPLC_ID = '*')
+		WHERE 0=0
+		 	<include refid="listWhere" />
+				      
+    </select>
+    
+    <select id="selectPcPrdPrcDtls" parameterType="HashMap" resultType="HashMap">
+    	/* PubPrdPrcMng.selectPcPrdPrcDtls   */
+SELECT 
+	A.CO_CD
+	,A.PRD_ID
+	,A.PRD_USE_YN --공급가능상태
+	,A.PRD_CLCD --카테고리
+	,B.PUB_ONLY_SPR_CD --공용전용구분
+	,B.MRO_PRD_STATS_CD --상품상태
+	,C.DISP_STATS_CD --진열상태
+	,A.PRD_NM --상품명
+	,B.MRO_REPR_ATTR --대표규격
+	,B.MNFR_NO --제조사번호
+	,(SELECT E.MRO_MNFR_NM FROM TB_PR_MNFR_INFO E WHERE E.CO_CD = B.CO_CD AND E.MNFR_NO = B.MNFR_NO) MNFR_NM --제조원명
+	,'' --주문단위
+	,'' --원산지
+	,D.BSS_PCPRC --최저매입가
+	,D.BZPLC_ID --협력사ID
+	,'' --협력사명
+	,D.STPRC -- RND기준가
+	,D.DSTRB_STD_PRC -- LIST PRICE
+	,CASE WHEN D.DSTRB_STD_PRC != '' THEN D.STPRC
+	 ELSE D.DSTRB_STD_PRC 
+	 END AS BSS_SALSPRC--기준판매가
+	 ,D.BSS_SALSPRC_STR_DTM --가격유효기간
+	 ,D.BSS_SALSPRC_END_DTM --가격유효기간
+	 ,'' --일반고객노출판매가
+	 ,'' --최소주문수량
+	 ,'' --배수주문수량
+	 ,C.SAFT_INVN_YN --재고여부
+	 ,'' --평균배송일
+	 ,B.PURG_CHRPSN_ID --구매담당자ID
+	 ,(SELECT F.OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO F WHERE F.EMP_NO = B.PURG_CHRPSN_ID) PURG_CHRPSN_NM --구매담당자명
+	 ,A.REG_DTM --등록일
+	 ,C.REG_DTM --가격정보갱신일
+FROM SSP_APP.TB_PR_PRD_INFO A
+INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO B
+ON ( 0=0 AND B.CO_CD = A.CO_CD AND B.PRD_ID = A.PRD_ID )
+LEFT JOIN SSP_APP.TB_DP_PRD_DISP_STATS_INFO C
+ON ( 0=0 AND C.CO_CD = A.CO_CD AND C.PRD_ID = A.PRD_ID AND C.BZPLC_ID = '*' AND C.OPR_UNIT_ID = '*')
+LEFT JOIN SSP_APP.TB_PC_PRD_PRC_DTLS D
+ON ( 0=0 AND D.CO_CD = A.CO_CD AND D.PRD_ID = A.PRD_ID AND D.BZPLC_ID = '*')
+WHERE 0=0
+		 	<include refid="listWhere" />
+		 		
+				ORDER BY A.PRD_ID 
+		
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+
+    
+</mapper>

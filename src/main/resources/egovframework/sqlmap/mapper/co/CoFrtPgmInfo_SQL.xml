@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.co.coFrtPgmInfo">
+   <!--
+    ******************************************************************************
+    * SELECT : 프론트프로그램관리
+    * 작성자 : 
+    * 작성 일자 : 2022.03.16
+    ******************************************************************************
+    -->
+	    
+    <sql id="frtPgmWhere">
+    	<if test="coCd != null and coCd != ''">
+		AND A.CO_CD = #{coCd}
+		</if>
+		<if test="pgmId != null and pgmId != ''">
+		AND A.PGM_ID LIKE '%' || #{pgmId} || '%'
+		</if>
+		<if test="pgmInfo != null and pgmInfo != ''">
+		AND  ((A.PGM_ID LIKE '%' || #{pgmInfo} || '%') OR (A.PGM_NM LIKE '%' || #{pgmInfo} || '%'))
+		</if>
+		<if test="pgmGrpId != null and pgmGrpId != ''">
+		AND A.PGM_GRP_ID = #{pgmGrpId}
+		</if>
+		<if test="pgmNm != null and pgmNm != ''">
+		AND A.PGM_NM LIKE '%' || #{pgmNm} || '%'
+		</if>
+		<if test="useYn != '' and useYn != null">
+	    AND A.USE_YN = #{useYn}
+		</if>
+		<if test="mnuSprCd != null and mnuSprCd != ''">
+		AND A.MNU_SPR_CD = #{mnuSprCd}
+		</if>
+		<if test="pgmGrpSprCd != null and pgmGrpSprCd != ''">
+		AND A.PGM_GRP_SPR_CD = #{pgmGrpSprCd}
+		</if>
+	</sql>
+	
+    <select id="selectFrtPgmList" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.co.coFrtPgmInfo.selectFrtPgmList   */
+	  SELECT 0 AS CHK
+		  , A.CO_CD
+		  , A.PGM_ID
+		  , A.PGM_NM
+		  , A.MNU_SPR_CD
+		  , A.PGM_GRP_SPR_CD
+		  , A.PAGE_CALL_ADDR
+		  , A.QCK_MNU_USE_YN
+		  , A.BASIS_PGM_YN
+		  , A.PRD_REQ_AUTH_YN
+		  , A.MNG_AUTH_CTL_CD
+		  , A.GI_AUTH_YN
+		  , A.ADJ_AUTH_YN
+		  , A.BGT_AUTH_YN
+		  , A.ORD_AUTH_YN
+		  , A.APRV_AUTH_YN
+		  , A.TAXINV_AUTH_YN
+		  , A.REFPSN_AUTH_YN
+		  , A.SRT_SO
+		  , A.USE_YN
+		  , A.REG_DTM
+		  , A.REGPSN_ID
+		 FROM SSP_APP.TB_CO_FRT_PGM_INFO A 
+		<where>
+		 	<include refid="frtPgmWhere" />
+		</where>
+		 
+		<choose>
+			<when test="sortColumn != null and sortColumn != ''">
+			 	ORDER BY ${sortColumn} ${sortType}
+			</when>
+			<otherwise>
+				ORDER BY A.SRT_SO 
+			</otherwise>
+		</choose>
+		
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <!-- 프론트프로그램관리 갯수 -->
+	<select id="selectFrtPgmListCount" parameterType="hashMap" resultType="integer">
+		/* com.ssp.bo.co.coFrtPgmInfo.selectFrtPgmListCount */
+		SELECT
+			COUNT(0)
+		  FROM SSP_APP.TB_CO_FRT_PGM_INFO A 
+		<where>
+			 <include refid="frtPgmWhere" />
+		</where>
+	</select>
+	
+	<!--  프론트프로그램관리 등록 -->
+    <insert id="saveFrtPgmInfo" parameterType="HashMap">
+        /*com.ssp.bo.co.coFrtPgmInfo.saveFrtPgmInfo  */
+        MERGE INTO SSP_APP.TB_CO_FRT_PGM_INFO
+		USING DUAL 
+				ON ( 		CO_CD =  #{coCd}
+		  				AND PGM_ID = #{pgmId}
+					)
+		WHEN MATCHED THEN
+			  UPDATE
+				 SET  PGM_NM = #{pgmNm}
+					, MNU_SPR_CD = #{mnuSprCd}
+					, PGM_GRP_SPR_CD = #{pgmGrpSprCd}
+					, PAGE_CALL_ADDR = #{pageCallAddr}
+					, QCK_MNU_USE_YN = #{qckMnuUseYn}
+					, BASIS_PGM_YN = #{basisPgmYn}
+					, PRD_REQ_AUTH_YN = #{prdReqAuthYn}
+					, MNG_AUTH_CTL_CD = #{mngAuthCtlCd}
+					, GI_AUTH_YN = #{giAuthYn}
+					, ADJ_AUTH_YN = #{adjAuthYn}
+					, BGT_AUTH_YN = #{bgtAuthYn}
+					, ORD_AUTH_YN = #{ordAuthYn}
+					, APRV_AUTH_YN = #{aprvAuthYn}
+					, TAXINV_AUTH_YN = #{taxinvAuthYn}
+					, REFPSN_AUTH_YN = #{refpsnAuthYn}
+					, SRT_SO = #{srtSo}
+					, USE_YN = #{useYn}
+					, UPD_DTM = SYSDATE
+					, UPDPSN_ID = #{updpsnId}
+		WHEN NOT MATCHED THEN
+                  INSERT
+		               ( 
+		                CO_CD
+					  , PGM_ID
+					  , PGM_NM
+					  , MNU_SPR_CD
+					  , PGM_GRP_SPR_CD
+					  , PAGE_CALL_ADDR
+					  , QCK_MNU_USE_YN
+					  , BASIS_PGM_YN
+					  , PRD_REQ_AUTH_YN
+					  , MNG_AUTH_CTL_CD
+					  , GI_AUTH_YN
+					  , ADJ_AUTH_YN
+					  , BGT_AUTH_YN
+					  , ORD_AUTH_YN
+					  , APRV_AUTH_YN
+					  , TAXINV_AUTH_YN
+					  , REFPSN_AUTH_YN
+					  , SRT_SO
+					  , USE_YN
+					  , REG_DTM
+					  , REGPSN_ID
+		              )
+		        VALUES 
+		               (
+		                  #{coCd}    
+		                , #{pgmId}
+					    , #{pgmNm} 
+					    , #{mnuSprCd}
+					    , #{pgmGrpSprCd}
+					    , #{pageCallAddr}
+					    , #{qckMnuUseYn}
+					    , #{basisPgmYn}
+					    , #{prdReqAuthYn}
+					    , #{mngAuthCtlCd}
+					    , #{giAuthYn}
+					    , #{adjAuthYn}
+		                , #{bgtAuthYn}
+		                , #{ordAuthYn}
+		                , #{aprvAuthYn}
+		                , #{taxinvAuthYn}
+		                , #{refpsnAuthYn}
+		                , #{srtSo}
+		                , #{useYn}
+		                , SYSDATE
+		                , #{regpsnId}
+		                )            
+    </insert>
+    
+    <!--  프론트프로그램관리 삭제 -->
+    <delete id="deleteFrtPgmInfo" parameterType="hashMap">
+		/* com.ssp.bo.co.coFrtPgmInfo.deleteFrtPgmInfo */
+		DELETE FROM SSP_APP.TB_CO_FRT_PGM_INFO
+		WHERE CO_CD = #{coCd}
+		  AND PGM_ID = #{pgmId}
+	</delete>
+	
+	<!-- 팝업 사용하지 않아서 주석처리 
+     <select id="selectFrtPgmPopupList" parameterType="HashMap" resultType="HashMap">
+    	/* CoFrtPgmInfo.selectFrtPgmPopupList   */
+	   SELECT A.PGM_ID
+			, A.PAGE_TP_ID
+			, A.PGM_GRP_ID
+			, A.PGM_NM
+			, A.HRNK_PGM_ID
+			, A.PAGE_CALL_ADDR
+			, A.PGM_TP_DTL
+			, A.BASIS_PGM_YN
+			, A.MALL_SPR_CD
+			, A.MNU_SPR_CD
+			, A.QCK_MNU_USE_YN
+			, A.SRT_SO
+			, A.USE_YN
+		 FROM SSP_APP.TB_CO_FRT_PGM_INFO A 
+	    <where>
+			<if test="curPgmId != null and curPgmId != ''">
+			  AND A.PGM_ID != #{curPgmId}
+		    </if>
+			<if test="coCd != null and coCd != ''">
+			  AND A.CO_CD = #{coCd}
+			</if>
+			<if test="pgmId != null and pgmId != ''">
+			  AND A.PGM_ID LIKE '%' || #{pgmId} || '%'
+			</if>
+			<if test="pgmNm != null and pgmNm != ''">
+			  AND A.PGM_NM LIKE '%' || #{pgmNm} || '%'
+			</if>
+			<if test="useYn != '' and useYn != null">
+		      AND A.USE_YN = #{useYn}
+			</if>
+		</where>
+		ORDER BY A.SRT_SO 
+
+    </select>
+     -->
+    
+    
+</mapper>

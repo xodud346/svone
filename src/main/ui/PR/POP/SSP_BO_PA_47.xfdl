@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PA_47" width="600" height="530" onload="fn_onLoad" titletext="고시품목 검색" scrollbartype="none none" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="530" width="600">
+        <Grid id="grd_list" taborder="0" left="20" top="98" binddataset="ds_list" autofittype="col" cellsizebandtype="allband" oncelldblclick="grd_list_oncelldblclick" autosizingtype="none" bottom="59" right="20" onenterdown="grd_list_onenterdown" autoenter="select" oncellclick="grd_list_oncellclick" scrollbartype="auto fixed">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="250"/>
+                <Column size="250"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="고시품목ID"/>
+                <Cell col="1" text="고시품목명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:NOTI_ITM_ID" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;" wordWrap="char"/>
+                <Cell col="1" text="bind:NOTI_ITM_NM" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;" wordWrap="char"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="Static01" taborder="1" text="고시품목 조회" left="20" top="20" width="120" height="22" cssclass="sta_WF_title04"/>
+        <Button id="btn_search" taborder="2" text="조회" top="60" height="28" cssclass="btn_WF_require" width="60" right="20" onclick="btn_search_onclick"/>
+        <Static id="sta_totcnt" taborder="3" text="총 0건" left="20" usedecorate="true" width="300" height="14" top="65"/>
+        <Static id="sta_totcnt00" taborder="4" text="최대조회수" top="60" height="28" usedecorate="true" cssclass="sta_WF_txtR" right="188" width="60" onclick="Div00_sta_totcnt00_onclick"/>
+        <Edit id="edt_rowCount" taborder="5" top="60" height="28" right="84" width="100" value="1000" text="1000" readonly="true"/>
+        <Button id="btn_add" taborder="6" text="선택" onclick="btn_add_onclick" width="60" right="270" height="30" bottom="20" cssclass="btn_WF_select"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_listCopy">
+        <ColumnInfo>
+          <Column id="NOTI_ITM_ID" type="STRING" size="256"/>
+          <Column id="NOTI_ITM_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : MarketA
+CREATION DATES : 2021.01.19
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+    this.gfn_formOnLoad(this);
+	var notiItmId = this.parent.notiItmId;
+	var notiItmNm = this.parent.notiItmNm;
+	if(this.gfn_isNull(this.parent.coCd) || this.parent.coCd ==  undefined){
+		alert("팝업창의 회사코드가 비어있습니다. 확인해주세요.");
+		return;
+	}else{
+		this.ds_search.setColumn(0, "CO_CD", this.parent.coCd);
+	}
+	if(!this.gfn_isNull(notiItmId) || !this.gfn_isNull(notiItmNm)){
+		this.ds_search.setColumn(0, "NOTI_ITM_ID", notiItmId);
+		this.ds_search.setColumn(0, "NOTI_ITM_NM", notiItmNm);
+		this.fn_search();
+	}else{
+		this.fn_initGrid();
+	}
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	if(e.keycode == 13 && e.ctrlkey){
+		this.btn_add_onclick();
+	}else if(e.keycode == 27){
+		this.close();
+	}
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (bInit)
+{
+    var sSvcId = "search";    
+    var sUrl = "/pr/prd-popup/select-product-notice-popup-list.do";  
+    var inDs = "ds_search=ds_search";
+    var outDs = "ds_listCopy=ds_list";
+    var arg = "";
+
+    this.ds_search.setColumn(0,"ROW_COUNT", this.edt_rowCount.value);
+    
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+    switch(svcID) {
+        case "search" :
+			this.ds_list.clearData();
+			this.fn_initGrid();
+			this.ds_list.appendData(this.ds_listCopy, true);
+            this.sta_totcnt.set_text("총 "+ this.gfn_appendComma(this.totalCount, 0) +"건");
+            break;
+            
+    }
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_initGrid = function(){
+	this.ds_list.insertRow(0);
+	this.ds_list.setColumn(0, "NOTI_ITM_ID",  this.ds_search.getColumn(0, "NOTI_ITM_ID"));
+	this.ds_list.setColumn(0, "NOTI_ITM_NM",  this.ds_search.getColumn(0, "NOTI_ITM_NM"));
+	this.ds_list.set_rowposition(-1);
+};
+
+this.fn_searchMapSetting = function(){
+	this.ds_search.setColumn(0, "NOTI_ITM_ID", this.ds_list.getColumn(0, "NOTI_ITM_ID"));
+	this.ds_search.setColumn(0, "NOTI_ITM_NM", this.ds_list.getColumn(0, "NOTI_ITM_NM"));
+};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//조회버튼
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var coCd = this.ds_search.getColumn(0, "CO_CD");
+	if(this.gfn_isNull(coCd) || coCd ==  undefined){
+		alert("팝업창의 회사코드가 비어있습니다. 확인해주세요.");
+		return;
+	}
+	this.fn_searchMapSetting();
+    this.fn_search();
+};
+
+//검색조건 ROW에서 엔터
+this.grd_list_onenterdown = function(obj:nexacro.Grid,e:nexacro.GridEditEventInfo)
+{
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+//ROW더블클릭
+this.grd_list_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row != 0){
+		var resData = {};
+		var resString = "";
+		
+		resData.CO_CD = this.ds_list.getColumn(this.ds_list.rowposition, "CO_CD");
+		resData.NOTI_ITM_ID = this.ds_list.getColumn(this.ds_list.rowposition, "NOTI_ITM_ID");
+		resData.NOTI_ITM_NM = this.ds_list.getColumn(this.ds_list.rowposition, "NOTI_ITM_NM");
+		
+		resString = JSON.stringify(resData);
+		this.close(resString);
+	}
+};
+
+//검색조건 ROW의 CELL 클릭 시 글자 맨 끝으로 커서 가도록
+this.grd_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row == 0){
+		var cellText = obj.getCellText(e.row, e.cell);
+		if(cellText != undefined){
+			obj.setEditSelect(cellText.length, cellText.length);
+		}
+	}
+};
+
+this.btn_add_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_list.rowposition < 1){
+		alert("선택된 데이터가 없습니다.");
+		return;
+	}
+	var resData = {};
+	var resString = "";
+	resData.CO_CD = this.ds_list.getColumn(this.ds_list.rowposition, "CO_CD");
+	resData.NOTI_ITM_ID = this.ds_list.getColumn(this.ds_list.rowposition, "NOTI_ITM_ID");
+	resData.NOTI_ITM_NM = this.ds_list.getColumn(this.ds_list.rowposition, "NOTI_ITM_NM");
+	resString = JSON.stringify(resData);
+	this.close(resString);
+};
+]]></Script>
+    <Bind/>
+  </Form>
+</FDL>

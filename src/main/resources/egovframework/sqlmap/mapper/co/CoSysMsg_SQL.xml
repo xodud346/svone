@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="SysMng">
+	<!--
+	******************************************************************************
+	* SELECT : 시스템 메세지 관리 전체 개수 조회
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-08
+	******************************************************************************
+	-->
+	<select id="selectSystemMessageMngListCount" parameterType="HashMap" resultType="int">
+		/* SysMng.selectSystemMessageMngListCount */
+		SELECT COUNT(1)
+		  FROM SSP_APP.TB_CO_SYS_MSG_INFO A
+		 WHERE A.MSG_CD LIKE '%' || #{msgCd} || '%'
+		<!-- <include refid="tbCoSysMsgInfoWhere"/> -->
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 시스템 메세지 관리 조회
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-08
+	******************************************************************************
+	-->
+	<select id="selectSystemMessageMngList" parameterType="HashMap" resultType="HashMap">
+		/* SysMng.selectSystemMessageMngList */
+		SELECT 0 AS COL_CHK
+		     , A.MSG_CD
+		     , A.MSG_CTS
+		     , A.BO_USE_YN
+		     , A.FO_USE_YN
+		     , A.SERVER_USE_YN
+		     , A.USE_YN
+		     , A.LANG_CD
+		     , A.REGPSN_ID
+			 , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI') AS REG_DTM
+		     , A.UPDPSN_ID
+			 , (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.OPRTR_ID = A.REGPSN_ID) AS REGPSN_NM
+			 , (SELECT OPRTR_NM FROM SSP_APP.TB_CO_MBR_OPRTR_INFO OPR WHERE OPR.OPRTR_ID = A.UPDPSN_ID) AS UPDPSN_NM
+		     , TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI') AS UPD_DTM
+		     , ROWNUM AS RNUM
+		  FROM SSP_APP.TB_CO_SYS_MSG_INFO A
+		<include refid="tbCoSysMsgInfoWhere"/>
+
+		<choose>
+			<when test="sortColumn != null and sortColumn != ''">
+				ORDER BY ${sortColumn} ${sortType}
+			</when>
+			<otherwise>
+				ORDER BY MSG_CD  DESC
+			</otherwise>
+		</choose>
+
+		<if test="startNum != null and startNum > -1">
+			OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+		</if>
+	</select>
+
+	<!--
+	******************************************************************************
+	* WHERE : 시스템메세지관리 조회 조건절
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-08
+	******************************************************************************
+	-->
+	<sql id="tbCoSysMsgInfoWhere">
+		<where>
+			<if test="msgCd != '' and msgCd != null">
+				AND A.MSG_CD LIKE '%' || #{msgCd} || '%'
+			</if>
+			<if test="msgCts != '' and msgCts != null">
+				AND A.MSG_CTS LIKE '%' || #{msgCts} || '%'
+			</if>
+			<if test="useYn != '' and useYn != null">
+				AND A.USE_YN = #{useYn}
+			</if>
+		</where>
+	</sql>
+	
+	<!--
+	******************************************************************************
+	* INSERT : 시스템메세지관리 등록
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-10
+	******************************************************************************
+	-->
+	<insert id="insertSysMessageMng" parameterType="HashMap">
+		INSERT INTO SSP_APP.TB_CO_SYS_MSG_INFO
+		(
+			MSG_CD
+		  , MSG_CTS
+		  , BO_USE_YN
+		  , FO_USE_YN
+		  , SERVER_USE_YN
+		  , USE_YN
+		  , LANG_CD
+		  , REG_DTM
+		  , REGPSN_ID
+		) VALUES (
+		   #{msgCd}
+		 , #{msgCts}		 
+		 , #{boUseYn}
+		 , #{foUseYn}
+		 , #{serverUseYn}		 
+		 , #{useYn}
+		 , #{langCd}
+		 , SYSDATE
+		 , #{regpsnId}
+		)
+	</insert>
+
+	<!--
+	******************************************************************************
+	* UPDATE : 시스템메세지관리 수정
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-10
+	******************************************************************************
+	-->
+	<update id="updateSysMessageMng" parameterType="HashMap">
+		UPDATE SSP_APP.TB_CO_SYS_MSG_INFO
+		   SET MSG_CTS       = #{msgCts}
+		     , LANG_CD       = #{langCd}		     
+		     , BO_USE_YN     = #{boUseYn}
+		     , FO_USE_YN     = #{foUseYn}
+		     , SERVER_USE_YN = #{serverUseYn}	
+		     , USE_YN     	 = #{useYn}	     
+		     , UPD_DTM       = SYSDATE
+		     , UPDPSN_ID     = #{updpsnId}
+		 WHERE MSG_CD = #{msgCd}
+	</update>
+
+	<!--
+	******************************************************************************
+	* UPDATE : 시스템메세지관리 삭제
+	* 작성자 : lee
+	* 작성 일자 : 2022-03-10
+	******************************************************************************
+	-->
+	<delete id="deleteSysMessageMng" parameterType="HashMap">
+		 DELETE FROM SSP_APP.TB_CO_SYS_MSG_INFO
+		  WHERE MSG_CD = #{msgCd}
+	</delete>
+
+</mapper>

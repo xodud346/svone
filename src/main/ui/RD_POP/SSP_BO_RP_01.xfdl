@@ -1,0 +1,249 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form" width="630" height="236" titletext="사유등록처리" onclose="form_onclose" onload="form_onload" background="black">
+    <Layouts>
+      <Layout height="236" mobileorientation="landscape" width="630">
+        <Static id="sta_bg" taborder="6" left="0" top="22" right="0" background="white" height="214"/>
+        <Static id="Static03" taborder="0" text="20" left="-20" height="20" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" right="0" top="216"/>
+        <Static id="Static04" taborder="1" text="20" left="0" top="20" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" width="20" bottom="5"/>
+        <Static id="Static05" taborder="2" text="20" top="0" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" width="20" bottom="5" right="0"/>
+        <Static id="sta_Title01" taborder="3" left="20" top="23" height="36" cssclass="sta_WF_title04" width="300"/>
+        <Static id="Static01_01" taborder="4" text="20" left="0" top="60" height="10" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" right="0"/>
+        <Static id="Static01_00_00" taborder="5" left="0" top="175" height="10" color="#000000" background="aqua" visible="false" text="10" textAlign="center" right="0"/>
+        <Button id="btn_close" taborder="7" top="0" width="20" height="20" text="X" visible="true" onclick="btn_close_onclick" background="black" cursor="pointer" right="0"/>
+        <Button id="btn_exit" taborder="8" text="닫기" left="243" top="185" width="70" height="30" onclick="btn_exit_onclick"/>
+        <Button id="btn_reason" taborder="9" text="저장" left="317" top="185" width="70" height="30" cssclass="btn_WF_select" onclick="btn_reason_onclick"/>
+        <Static id="st_bagTitle" taborder="10" left="21" top="70" height="102" cssclass="sta_cm_box02L" right="20"/>
+        <Static id="sta_Title02" taborder="11" left="21" top="70" width="170" height="102" cssclass="sta_cm_box01L"/>
+        <TextArea id="txt_reason" taborder="12" left="195" top="73" width="410" height="95" oninput="txa_regDisTip_oninput" autoselect="true" wordWrap="char"/>
+        <Static id="sta_batySize" taborder="13" text="0/300" left="549" usedecorate="true" width="60" bottom="161" height="29" textAlign="right"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/**********************************************************************
+* FormID(화면   ID명): SSP_BO_RP_01.xfdl(R&D상품 등록불가 처리)
+* 작 성			일 명: 나용철
+* 작 성	    	일 자: 2022/04/28
+* 변 경     	일 자:
+* 변 경			자 명:
+* 변경 및 수정 로그 : 일자별로 변경자 및 변경사항을 간략히 기술
+*/
+/**********************************************************************
+	01. 전처리 공통 함수 선언 
+***********************************************************************/
+include "RD::rdMain.xjs";
+/**********************************************************************
+	02. 폼 변수 정의 
+***********************************************************************/
+this.sOptinoArg1;
+this.sOptinoArg2;
+this.sParamArg1;
+this.sParamArg2;
+this.sParamArg3;
+
+/**********************************************************************
+	03. 폼 로드 및 닫을때(폼이 포커스 갈때)
+***********************************************************************/
+/**
+ * 기능 : 폼 로드 완료후 초기값 Setting
+ */
+this.form_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//폼에 공통으로 로드시 사용하는 함수.
+	this.gfn_formOnLoad(this);
+	//사용자 초기화 함수
+	this.fn_formInit();
+}; 
+/**
+ * 기능 : 폼언 로드(닫기전 셋팅)  Setting
+ */
+this.form_onclose = function(obj:nexacro.Form,e:nexacro.CloseEventInfo)
+{
+	
+};
+/**********************************************************************
+	04. 공통 코드 및 콤보 데이타 조회 
+***********************************************************************/
+this.fn_formInit = function()
+{
+	/******************* 기본셋팅 *********************/
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sOp01))
+	{
+		 this.sOptinoArg1 = this.getOwnerFrame().pv_sOp01;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sOp02))
+	{
+		 this.sOptinoArg2 = this.getOwnerFrame().pv_sOp02;        
+	}
+	
+	/******************* 넘어온 인자값 *********************/
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal01))
+	{
+		 this.sParamArg1 = this.getOwnerFrame().pv_sVal01;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal02))
+	{
+		 this.sParamArg2 = this.getOwnerFrame().pv_sVal02;        
+	}
+	
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal03))
+	{
+		 this.sParamArg3 = this.getOwnerFrame().pv_sVal03;        
+	}
+	this.postformInit();
+	
+};
+
+this.postformInit = function()                                                                                                                                                                                   
+{   
+	this.ds_list.clearData();
+	this.ds_list.addRow();    
+	
+	this.sta_Title01.set_text(this.sParamArg1);
+	this.sta_Title02.set_text(this.sParamArg2);
+};  
+
+
+/**
+ * 기능 : 콜백함수(후처리) 
+ */
+this.fn_callBack = function(sSvcId,nErrorCode, sErrorMsg) 
+{
+	if(nErrorCode != 0)
+	{
+		this.fn_alert(sErrorMsg,"에러정보","","error");
+		return false;
+	}else
+	{
+		/*sSvcId (Transaction Id)*/
+		switch(sSvcId)
+		{
+			case "Init":
+				this.postformInit();
+				break;
+			case "Search":
+			    this.postSearch();
+				break;
+			case "Save":
+			    this.postSave();
+				break;
+			
+			default:
+				break;
+		}
+	}
+};
+/**********************************************************************
+	05. 조회 함수 선언  
+***********************************************************************/
+
+this.btn_reason_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_reason();
+};
+/**
+ * 기능 : 저장 전 실행
+ */
+this.preReason = function()
+{ 
+
+	var nByte = this.fn_getLengthB(this.txt_reason.value,3);
+	if(nByte > 300)
+	{
+		this.fn_alert("ERRR000167","반려정보","상세사유,300Byte","warning");                    // 입력한 상세사유가 200Byte를 넘길수 없습니다.
+		this.txt_reason.setFocus();
+		return false;
+	}
+	return true;
+};
+
+/**
+ * 기능 : 화면조회 전 실행
+ */
+this.fn_reason = function()
+{
+	if(!this.preReason())
+	{
+		return false;
+	}
+	
+	this.fn_postReason();    // 사유을 파리미터 처리 
+}
+
+/**
+ * 기능 : 부모한테 사유를 파라미터로 넘김
+ */
+this.fn_postReason = function()
+{ 
+	this.selDataSet(this.ds_list.name,0);
+};
+
+/**********************************************************************
+	06. 닫기버튼
+***********************************************************************/
+this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close("CLOSE");
+};
+
+this.btn_exit_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close("EXIT");
+};
+/**********************************************************************
+	07.Get, Set Method 
+***********************************************************************/
+ /**
+ * 한행을 처리하는 로직
+ **/
+this.selDataSet = function(dsobj,nRow)
+{
+	var odsObj 	= this.all[dsobj];
+	var ds = new Dataset;
+	this.dsDummy.copyData(odsObj);
+	this.dsDummy.clearData();
+	ds.copyData(this.dsDummy); 			//전체 구조을 카피하기위해 데이타를 카피
+	var TRow = ds.addRow();
+	ds.copyRow(TRow, odsObj, nRow); 		//0번재 로에 행을 카피함
+	
+	var objRtnArr = new Array(2);
+	objRtnArr[0] = "SUCCESS";
+	objRtnArr[1] = ds.saveXML();
+	this.opener.fn_dsChildCopydsDummy(ds);
+	this.close(objRtnArr.toString());
+	
+};
+/*
+ * 테스트처리시 사이즈 확인 로직
+ */
+this.txa_regDisTip_oninput = function(obj:nexacro.TextArea,e:nexacro.InputEventInfo)
+{
+	var nByte = this.fn_getLengthB(obj.value,3);
+	this.sta_batySize.set_text(nByte + "/300");
+	if(nByte > 300)
+	{
+		this.fn_alert("ERRR000167","반려정보","상세사유,300Byte","warning");                    // 입력한 상세사유가 200Byte를 넘길수 없습니다.
+		return false;
+	}
+};
+
+]]></Script>
+    <Objects>
+      <Dataset enableevent="true" id="dsDummy" preload="true" updatecontrol="true" useclientlayout="false"/>
+      <Dataset enableevent="true" id="ds_list" preload="true" updatecontrol="true" useclientlayout="true" cancolumnchange="ds_list_cancolumnchange">
+        <ColumnInfo>
+          <Column id="REASON" type="STRING" size="32"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="REASON"/>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item1" compid="txt_reason" propid="value" datasetid="ds_list" columnid="REASON"/>
+    </Bind>
+  </Form>
+</FDL>

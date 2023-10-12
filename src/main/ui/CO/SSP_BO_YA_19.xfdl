@@ -1,0 +1,741 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_YA_19" width="1202" height="722" titletext="엑셀메타관리" onload="fn_onload">
+    <Layouts>
+      <Layout height="722" width="1202">
+        <Div id="Div00" taborder="0" text="Div00" left="0" top="0" height="108" cssclass="div_WF_SearchArea" right="0">
+          <Layouts>
+            <Layout>
+              <Static id="Static21" taborder="2" left="20" top="20" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+              <Static id="Static20" taborder="3" text="프로그램" left="20" top="20" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static22_00" taborder="4" text="사용여부" left="765" top="20" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Combo id="USE_YN" taborder="1" text="전체" left="Static22_00:10" top="24" height="24" width="120" innerdataset="ds_useYn" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" value="ALL" index="0"/>
+              <Edit id="PGM_NM" taborder="0" left="160" top="24" width="595" height="24"/>
+              <Button id="btnSearch" taborder="5" text="조회" top="Static21:10" width="60" cssclass="btn_WF_require" right="20" height="26" onclick="Div00_btnSearch_onclick"/>
+              <Button id="btnClear" taborder="6" text="초기화" top="Static21:10" width="60" right="84" onclick="div_search_btnClear_onclick" height="26"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Grid id="grd_metaMstlist" taborder="2" left="20" top="176" width="500" bottom="54" binddataset="ds_list" autofittype="col" oncellposchanged="grd_metaMstlist_oncellposchanged">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="28"/>
+                <Column size="318"/>
+                <Column size="88"/>
+                <Column size="62"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="프로그램명"/>
+                <Cell col="2" text="엑셀메타 순번"/>
+                <Cell col="3" text="입력위치"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox" text="bind:CHK_COL"/>
+                <Cell col="1" text="bind:PGM_NM" textAlign="left"/>
+                <Cell col="2" text="bind:EXCEL_META_SEQ"/>
+                <Cell col="3" text="bind:IPT_PST_TYPE_CD" displaytype="combotext" combodataset="ds_ipt_pst_type" combocodecol="COM_DTL_CD" combodatacol="COM_DTL_CD_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="totalPageCount" taborder="1" text="(총 0건, 1 / 1)" left="20" width="270" usedecorate="true" bottom="grd_metaMstlist:3" height="25"/>
+        <Div id="div_paging" taborder="3" left="20" bottom="20" height="24" formscrollbartype="none none" url="COMM::cmmPaging.xfdl" width="500"/>
+        <Button id="btnDtlDel" taborder="4" text="삭제" width="81" right="-10" height="28" top="966" onclick="btnDtlDel_onclick" visible="false"/>
+        <Button id="btnDtlRegist" taborder="5" text="등록" width="81" right="btnDtlDel:4" height="28" top="966" onclick="btnDtlRegist_onclick" visible="false"/>
+        <Grid id="grd_list_dtl" taborder="6" left="grd_metaMstlist:50" top="btnDtlRegist:10" binddataset="ds_list_dtl" autofittype="col" bottom="-461" right="-10" visible="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="31"/>
+                <Column size="131"/>
+                <Column size="555"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="언어코드"/>
+                <Cell col="2" text="컬럼타이틀정보"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox" text="bind:CHK_COL"/>
+                <Cell col="1" text="bind:LANG_CD"/>
+                <Cell col="2" text="bind:COL_TTL_INFO"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="div_mst" taborder="1" text="Div01" left="540" top="Div00:30" height="412" right="20">
+          <Layouts>
+            <Layout>
+              <Button id="btnExcel" taborder="12" text="엑셀다운로드" top="0" height="28" cssclass="btn_WF_excel" textPadding="0px" width="110" right="0" onclick="div_mst_btnExcel_onclick"/>
+              <Button id="btnSave" taborder="11" text="저장" width="81" right="btnExcel:4" height="28" top="0" onclick="btnSave_onclick" cssclass="btn_WF_select"/>
+              <Button id="btnDel" taborder="9" text="삭제" width="81" right="btnSave:91" height="28" top="0" onclick="div_mst_btnDel_onclick" visible="false"/>
+              <Button id="btnAdd" taborder="10" text="추가" width="81" right="btnDel:-166" height="28" top="0" onclick="btnAdd_onclick"/>
+              <Static id="Static21_00" taborder="13" left="0" top="38" height="32" cssclass="sta_cm_box02L_tdt" text="" right="0"/>
+              <Static id="sta_pgm" taborder="14" text="프로그램" left="0" top="38" width="130" height="32" cssclass="sta_cm_box01L_tdt_necessary" onclick="Static20_00_onclick"/>
+              <Static id="Static27_01" taborder="15" left="0" top="69" height="32" cssclass="sta_cm_box02L" right="0"/>
+              <Static id="sta_meta" taborder="16" text="엑셀메타순번" left="0" top="69" width="130" height="32" cssclass="sta_cm_box01L_necessary"/>
+              <Static id="Static20_00_00_00" taborder="17" text="입력위치" left="374" top="69" width="145" height="32" cssclass="sta_cm_box01L_necessary"/>
+              <Static id="Static27_01_00" taborder="18" left="0" top="100" height="32" cssclass="sta_cm_box02L" right="0"/>
+              <Static id="Static27_01_00_01" taborder="19" left="0" top="131" height="81" cssclass="sta_cm_box02L" right="0"/>
+              <Static id="Static27_01_00_03" taborder="20" left="0" top="372" height="40" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static27_01_00_01_00" taborder="21" left="0" top="211" height="61" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static27_01_00_01_00_00" taborder="22" left="0" top="291" height="81" cssclass="sta_cm_box02L" right="0"/>
+              <Static id="Static20_00_01_00" taborder="23" text="다운로드제한건수" left="0" top="100" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static20_00_00_00_00" taborder="24" text="대용량다운로드 여부" left="374" top="100" width="145" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static20_00_01_00_00" taborder="25" text="컬럼정보" left="0" top="131" width="130" height="81" cssclass="sta_cm_box01L"/>
+              <Static id="Static20_00_01_00_00_00" taborder="26" text="컬럼속성정보&#13;&#10;(문자,숫자만)" left="0" top="211" width="130" height="81" cssclass="sta_cm_box01L"/>
+              <Static id="Static20_00_01_00_00_00_00" taborder="27" text="셀너비값" left="0" top="291" width="130" height="81" cssclass="sta_cm_box01L"/>
+              <Static id="sta_dataInqClassNm" taborder="28" text="자료조회클래스명" left="0" top="372" width="130" height="40" cssclass="sta_cm_box01L"/>
+              <TextArea id="TextArea00" taborder="7" left="140" top="310" height="54" right="10"/>
+              <TextArea id="COL_ATTR_INFO" taborder="6" left="140" top="217" height="49" right="10"/>
+              <TextArea id="COL_INFO" taborder="5" left="140" top="137" height="69" right="10"/>
+              <Edit id="PGM_ID" taborder="29" left="140" top="42" width="201" height="24" readonly="true" enable="true"/>
+              <Button id="btn_dept" taborder="0" left="345" top="42" width="25" height="24" verticalAlign="" cssclass="btn_WF_search02" onclick="btn_dept_onclick"/>
+              <Edit id="PGM_NM" taborder="30" left="374" top="42" height="24" readonly="true" right="10"/>
+              <Edit id="EXCEL_META_SEQ" taborder="1" left="140" top="73" width="224" height="24" inputtype="number" readonly="true"/>
+              <Edit id="DOWN_LMT_CNT" taborder="3" left="140" top="104" width="224" height="24" inputtype="number"/>
+              <Combo id="BVAL_DOWN_YN" taborder="4" text="Combo01" left="529" top="104" height="24" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" right="10">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">Y</Col>
+                      <Col id="datacolumn">여</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">N</Col>
+                      <Col id="datacolumn">부</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Combo>
+              <Combo id="IPT_PST_TYPE_CD" taborder="2" text="Combo00" left="529" top="73" height="24" innerdataset="ds_ipt_pst_type" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" right="10"/>
+              <Static id="Static27_01_00_03_00" taborder="31" left="0" top="272" height="32" cssclass="sta_cm_box02L" right="0"/>
+              <Static id="sta_dataInqMethodNm" taborder="32" text="자료조회메소드명" left="305" top="374" width="145" height="38" cssclass="sta_cm_box01L"/>
+              <Static id="sta_useyn00" taborder="33" text="사용여부" left="0" top="272" width="130" height="32" cssclass="sta_cm_box01L_necessary"/>
+              <Combo id="USE_YN" taborder="8" text="Combo00" left="140" top="276" width="224" height="24" innerdataset="ds_useYnGrd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM"/>
+              <Edit id="DATA_INQ_CLASS_NM" taborder="34" left="140" top="379" width="161" height="26"/>
+              <Edit id="DATA_INQ_METHOD_NM" taborder="35" left="455" top="381" width="177" height="24" inputtype="normal"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Grid id="grid_excel" taborder="7" left="0" top="902" height="48" visible="false" binddataset="ds_excel" right="0">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="124"/>
+                <Column size="81"/>
+                <Column size="61"/>
+                <Column size="106"/>
+                <Column size="131"/>
+                <Column size="218"/>
+                <Column size="194"/>
+                <Column size="80"/>
+                <Column size="159"/>
+                <Column size="172"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="245"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="프로그램명"/>
+                <Cell col="1" text="엑셀메타 순번"/>
+                <Cell col="2" text="입력위치"/>
+                <Cell col="3" text="다운로드제한건수"/>
+                <Cell col="4" text="대용량다운로드여부"/>
+                <Cell col="5" text="컬럼정보"/>
+                <Cell col="6" text="컬럼속성정보"/>
+                <Cell col="7" text="셀너비값"/>
+                <Cell col="8" text="자료조회클래스명"/>
+                <Cell col="9" text="자료조회메소드명"/>
+                <Cell col="10" text="사용여부"/>
+                <Cell col="11" text="언어코드"/>
+                <Cell col="12" text="컬럼타이틀정보"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:PGM_NM"/>
+                <Cell col="1" text="bind:EXCEL_META_SEQ"/>
+                <Cell col="2" text="bind:IPT_PST_TYPE_NM"/>
+                <Cell col="3" text="bind:DOWN_LMT_CNT"/>
+                <Cell col="4" text="bind:BVAL_DOWN_YN"/>
+                <Cell col="5" text="bind:COL_INFO"/>
+                <Cell col="6" text="bind:COL_ATTR_INFO"/>
+                <Cell col="7" text="bind:COL_SIZE"/>
+                <Cell col="8" text="bind:DATA_INQ_CLASS_NM"/>
+                <Cell col="9" text="bind:DATA_INQ_METHOD_NM"/>
+                <Cell col="10" text="bind:USE_YN"/>
+                <Cell col="11" text="bind:LANG_CD"/>
+                <Cell col="12" text="bind:COL_TTL_INFO"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_YA_19
+/* 작 성 일 자 : 2022/03/14
+/* 작  성   자 : 이성민
+/* 설       명 : 시스템관리 > 엑셀메타관리
+/***********************************************************/
+
+
+/* 스크립트 인클루드 */
+include "CO::coUtils.xjs";
+include "OD::odUtils.xjs";
+  
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;	//전체 카운트
+this.pageViewCnt = 20;
+
+//필수값 검증용 파라메터
+this.valiFormIds = [
+	  {"name" : "프로그램ID", "id" : "PGM_ID"}
+	, {"name" : "프로그램ID 명", "id" : "PGM_NM"}
+	, {"name" : "엑셀메타순번", "id" : "EXCEL_META_SEQ"}
+	, {"name" : "입력위치", "id" : "IPT_PST_TYPE_CD"}
+	, {"name" : "사용여부", "id" : "USE_YN"}
+];
+ 
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 필수
+	this.gfn_formOnLoad(this);
+	
+	//공통코드
+	this.fn_commonCodeSearch();
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "Div00_btnSearch_onclick",
+		SHIFT_ENTER : "",
+		SHIFT_S : "btnSave_onclick",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_useYn=ds_output1 ds_ipt_pst_type=ds_output2";
+	var arg = "";
+	
+	//ds_authClsfCd 권한 분류코드	
+	this.ds_search.setColumn(0, "CODE_LIST", "USE_YN,IPT_PST_TYPE_CD");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//조회
+this.fn_search = function(sSvcId, page) {
+    var sUrl = "";
+	var inDs = "";
+    var outDs = "";
+    var arg;
+    var callback = "fn_callBack";
+	 
+	if( sSvcId == "selectExcelMetaMstList" ) {
+		
+		// 엑셀 메타 마스터 조회
+		sUrl = "/co/select-excel-meta-mst-list.do";
+		inDs = "ds_search=ds_search";
+		outDs = "ds_list=ds_output";
+
+		if( page == 0 ) {
+			// 조회버튼 클릭시 페이징 초기화 시킨다.
+			this.div_paging.uPage=1;
+			this.div_paging.uPageNum=0;
+			this.ds_search.setColumn(0,"START_NUM", 0);
+			this.ds_search.setColumn(0,"ROW_COUNT", this.pageViewCnt);	
+		}	
+		
+	 
+	} else if( sSvcId = "selectExcelMetaDtlList" ) {
+		// 엑셀 메타 상세 조회
+		sUrl = "/co/select-excel-meta-dtl-list.do";
+		inDs = "ds_search=ds_search_dtl";
+		outDs = "ds_list_dtl=ds_output";
+	}
+
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+this.fn_save = function() {
+	var sSvcId = "saveExcelMetaMst";  
+    var sUrl = "/co/save-excel-meta-mst.do";
+	var inDs = "ds_save=ds_list:U"
+    var outDs = "";
+    var arg;
+    var callback = "fn_callBack";
+	
+	//if( this.confirm("저장 하시겠습니까?") ){		
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+	//}	
+}
+
+//엑셀 다운로드
+this.fn_excel = function() {
+	var sSvcId = "selectSaveExcelMetaList";  
+    var sUrl = "/co/select-save-excel-meta-list.do";
+	var inDs = "ds_search=ds_search"
+    var outDs = "ds_excel=ds_output";
+    var arg;
+    var callback = "fn_callBack";
+	
+	if( this.confirm("엑셀다운로드를 하시겠습니까?") ){		
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+	}	
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+//조회 콜백
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+	if(errorCode != 0){
+		this.alert(errorMsg);
+		this.fn_search("selectExcelMetaMstList", 0);
+		return false;
+	}
+	
+	if( svcID == "commonCodeSearch" ) { //공통코드 콜백
+		//전체값 제외한 콤보
+		this.ds_useYnGrd.copyData(this.ds_useYn);
+		
+		//사용여부 전체값 추가
+		this.ds_useYn.insertRow(0);
+		this.ds_useYn.setColumn(0, "COM_DTL_CD", "");
+		this.ds_useYn.setColumn(0, "COM_DTL_CD_NM", "전체");
+		this.Div00.form.USE_YN.set_index(0);
+		
+	} else if( svcID == "selectExcelMetaMstList" ) { //엑셀 메타 마스터 조회 콜백	
+		// 페이징 생성
+		this.div_paging.form.cfn_createPage(this.div_paging, this.totalCount,this.pageViewCnt, "fn_pageCallback");
+	
+	} else if( svcID == "saveExcelMetaMst" ) { 
+		alert(this.gfn_getMessage("ERRC000079")); //저장되었습니다
+		if( this.ds_list.rowposition == -1 ) {
+			this.fn_search("selectExcelMetaMstList", 0);
+		} else {
+			this.searchExcelMetaDtlList();	
+		}
+		
+	} else if( svcID == "saveExcelMetaDtl" ) {
+		alert(this.gfn_getMessage("ERRC000079")); //저장되었습니다
+		this.searchExcelMetaDtlList();
+		
+	} else if( svcID == "selectSaveExcelMetaList" ) {
+		this.ofn_exportExcel({ form:this, grid:this.grid_excel, fileName:"엑셀메타관리" });
+	}
+	
+	this.div_mst.form.EXCEL_META_SEQ.set_readonly(true);	
+}
+
+
+//팝업 콜백
+this.fn_popupCallback = function(sPopupId, sRetValue) {
+	var resData = "";
+	var sIdList = "";
+	var sNmList = "";
+	
+	if(sRetValue == undefined){
+		return;
+	}else{
+		resData = JSON.parse(sRetValue);
+	}
+	
+	if( sPopupId == "SSP_BO_YA_25" ) {
+		var row = this.ds_list.rowposition;
+		// 프로그램 명 리턴
+		this.ds_list.setColumn( row, "PGM_ID", resData.PGM_ID );
+		this.ds_list.setColumn( row, "PGM_NM", resData.PGM_NM );
+	}
+};
+
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;
+
+	if(sFlag){
+		//this.ds_search.setColumn(0,"START_NUM", (oPaging.uPageNum == 0 || oPaging.uPageNum == 1 ? 0 : ( oPaging.uPageNum -1 ) * 10));
+		this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.ds_search.setColumn(0,"ROW_COUNT", this.pageViewCnt);	
+		this.fn_search("selectExcelMetaMstList");
+	}	
+	
+	//var sTotText = "(<b v='true'>총 "+ oPaging.uTotCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+	var sTotText = "(총 "+ this.gfn_appendComma(oPaging.uTotCount, 0)+"건, "+ oPaging.uPage +" / "+ oPaging.uPageCnt +")";
+    this.totalPageCount.set_text(sTotText);
+}
+
+
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+	//grid cell size 변경
+	this.grd_metaMstlist.uCellSizeType = "true";
+	
+	//static 필수값 표시 초기 설정
+	//this.div_mst.form.sta_pgm.uEssentiel = "true";
+	//this.div_mst.form.sta_meta.uEssentiel = "true";
+	//this.div_mst.form.sta_useyn.uEssentiel = "true";	
+	
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 10;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;	
+	
+	//grid 개인화(전제조건 : grid Head가 무조건 1Row인 경우)
+	this.uGridList = "grd_metaMstlist";
+	this.grd_metaMstlist.uRightMouse = "false";
+	this.grd_metaMstlist.uPersonalFlag = "false";
+	this.grd_metaMstlist.uDefaultFormat = "PGM_ID,EXCEL_META_SEQ,IPT_PST_TYPE_CD,DOWN_LMT_CNT,BVAL_DOWN_YN,COL_INFO,COL_ATTR_INFO,USE_YN,CHK_COL";
+	
+};	
+
+this.cfn_personalPopupClose = function(sRet){
+	this.grd_metaMstlist.set_formats(sRet);
+	this.pdiv_personal.closePopup();
+}
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+//팝업 호출 함수
+this.fn_popup = function(popupId) {
+	var objParam = {};
+	var row = this.ds_list.rowposition;
+	
+	if( popupId == "SSP_BO_YA_25" ){
+		// 조직명 조회 팝업
+		objParam.pgmId = this.ds_list.getColumn( row, "PGM_ID" );
+		objParam.pgmNm = this.ds_list.getColumn( row, "PGM_NM" );		
+	} else if( popupId == "SSP_BO_YA_26" ) {
+		objParam.pgmId = this.ds_list.getColumn( row, "PGM_ID" );
+		objParam.pgmNm = this.ds_list.getColumn( row, "PGM_NM" );		
+		objParam.excelMetaSeq = this.ds_list.getColumn( row, "EXCEL_META_SEQ" );		
+	}
+	
+	this.gfn_openPopup(popupId, "CO_POP::" + popupId + ".xfdl", objParam, "fn_popupCallback");
+};
+
+//팝업창 닫기 이벤트
+this.fn_popupClose = function(type) {
+	if( type == "save" ) {
+		alert(this.gfn_getMessage("ERRC000079")); //저장되었습니다
+		this.fn_search("selectExcelMetaDtlList");
+	}
+}
+
+// 상세조회
+this.searchExcelMetaDtlList = function() {
+	var row = this.ds_list.rowposition;
+	
+	if( this.ds_list.getColumn(row, "PGM_ID") != undefined ) {
+		this.ds_search_dtl.setColumn(0, "PGM_ID", this.ds_list.getColumn(row, "PGM_ID"));
+		this.ds_search_dtl.setColumn(0, "EXCEL_META_SEQ", this.ds_list.getColumn(row, "EXCEL_META_SEQ"));
+		
+		this.fn_search("selectExcelMetaDtlList");
+	}	
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//프로그램 조회 팝업
+this.btn_dept_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if( this.ds_list.rowcount == 0 ) {
+		alert(this.gfn_getMessage("ERRS000137")); //선택된 데이터가 없습니다.
+		return false;
+	} 
+	
+	this.fn_popup("SSP_BO_YA_25");	//프로그램 조회 팝업
+};
+
+
+//조회버튼 이벤트
+this.Div00_btnSearch_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search("selectExcelMetaMstList", 0);	//프로그램 조회 팝업
+};
+
+//추가버튼
+this.btnAdd_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var idx = this.ds_list.addRow();
+	
+	//콤보 기본값
+	this.ds_list.setColumn(idx, "BVAL_DOWN_YN", "Y");
+	this.ds_list.setColumn(idx, "USE_YN", "Y");
+	
+	//상세 그리드 초기화
+	this.ds_list_dtl.clearData();
+	
+	this.div_mst.form.EXCEL_META_SEQ.set_readonly(false);
+};
+
+this.btnSave_onclick = function(obj,e)
+        { 
+        	var chkDsChange = this.gfn_dsIsUpdated(this.ds_list);  
+        	if( !chkDsChange ) {
+        		alert(this.gfn_getMessage("COMS000008", ["수정", "내용"])); //수정된 내용이 없습니다
+        		return false;
+        	} else { 
+        		//그리드 필수값 체크
+        		var validation = this.fn_validationGrid(this.grd_list, this.valiGridIds, this.ds_list);
+ 
+        		if(validation){ 
+        			var sReturn = this.confirm(this.gfn_getMessage("COMS000013", ["저장"])); //저장 하시겠습니까?
+        			if(sReturn == true){ 
+        				this.fn_save();
+        			}
+        		}
+        	}
+        	/*if(!this.gfn_dsIsUpdated(this.ds_list)) {
+        		alert(this.gfn_getMessage("COMS000008", ["변경", "내용"])); //변경된 내용이 없습니다.
+        		return;
+        	}
+
+        	//필수값 체크
+        	var validation = this.fn_validationForm(this.div_mst, this.valiFormIds, this.ds_list);
+
+        	if( validation ) {
+        		this.fn_save();
+        	}*/
+        };
+
+// 마스터 그리드 포지션 이동
+this.grd_metaMstlist_oncellposchanged = function(obj:nexacro.Grid,e:nexacro.GridSelectEventInfo)
+{	
+	this.searchExcelMetaDtlList();	
+};
+
+ //마스터코드 삭제
+        this.div_mst_btnDel_onclick = function(obj,e)
+        {  
+			var chkCnt = this.ds_list.getCaseCount("CHK_COL==1");
+
+        	if( chkCnt == 0 ) {
+        		alert(this.gfn_getMessage("COMS000008", ["선택", "행"])); //선택된 행이 없습니다.
+        		return false;
+        	}
+
+        	var delArr = [];
+        	for(var i=0; i < this.ds_list.rowcount; i++){
+        		var checkbox = this.ds_list.getColumn(i, "CHK_COL");
+        		if( checkbox == 1 ) {
+        			delArr.push(i);
+        			//this.ds_comCdList.deleteRow(i);
+        		}
+        	}
+        	this.ds_list.deleteMultiRows(delArr);
+        	
+        	var sReturn = this.confirm("삭제하시겠습니까?");
+        	if(sReturn == true){
+        		//this.fn_save();
+        	}
+        };
+
+//메타 상세등록 팝업
+this.btnDtlRegist_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.fn_popup("SSP_BO_YA_26");
+};
+
+this.div_search_btnClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.clearData();
+	this.ds_search.addRow();
+	this.Div00.form.USE_YN.set_index(0);
+};
+
+this.btnDtlDel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var chkCnt = this.ds_list_dtl.getCaseCount("CHK_COL==1");
+	
+	if( chkCnt == 0 ) {
+		alert(this.gfn_getMessage("COMS000008", ["선택", "행"])); //선택된 행이 없습니다.
+		return false; 
+	}
+
+	var sReturn = this.gfn_getMessage("COMS000001",  ["선택한 데이터", "삭제"]); //선택한 데이터를 삭제하시겠습니까?
+	if( !sReturn ) return false;
+
+	var delArr = [];
+	for(var i=0; i < this.ds_list_dtl.rowcount; i++){
+		var checkbox = this.ds_list_dtl.getColumn(i, "CHK_COL");
+		if( checkbox == 1 ) {
+			delArr.push(i);
+			//this.ds_comCdList.deleteRow(i);
+		}
+	}	
+	this.ds_list_dtl.deleteMultiRows(delArr);	
+	
+	//head 체크박스 해제
+	this.grd_list_dtl.setCellProperty("head",0,"text","0");	
+		
+	var sSvcId = "saveExcelMetaDtl";  
+    var sUrl = "/co/save-excel-meta-dtl.do";
+	var inDs = "ds_save=ds_list_dtl:U"
+    var outDs = "";
+    var arg;
+    var callback = "fn_callBack";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);	
+};
+
+this.div_mst_btnExcel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_search.getRowType(0) == Dataset.ROWTYPE_UPDATE) {
+		alert(this.gfn_getMessage("COMS000007")); //조회 조건이 변경 되었습니다.\n다시 조회하시기 바랍니다.
+		return false;
+	}
+	this.fn_excel();
+};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_useYn">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="PGM_ID" type="STRING" size="256"/>
+          <Column id="EXCEL_META_SEQ" type="STRING" size="256"/>
+          <Column id="PGM_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="PGM_ID" type="STRING" size="256"/>
+          <Column id="EXCEL_META_SEQ" type="STRING" size="256"/>
+          <Column id="IPT_PST_TYPE_CD" type="STRING" size="256"/>
+          <Column id="IPT_PST_TYPE_NM" type="STRING" size="256"/>
+          <Column id="DOWN_LMT_CNT" type="STRING" size="256"/>
+          <Column id="BVAL_DOWN_YN" type="STRING" size="256"/>
+          <Column id="COL_INFO" type="STRING" size="256"/>
+          <Column id="COL_ATTR_INFO" type="STRING" size="256"/>
+          <Column id="COL_SIZE" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="CHK_COL" type="STRING" size="256"/>
+          <Column id="PGM_NM" type="STRING" size="256"/>
+          <Column id="DATA_INQ_CLASS_NM" type="STRING" size="256"/>
+          <Column id="DATA_INQ_METHOD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_useYnGrd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_dtl">
+        <ColumnInfo>
+          <Column id="PGM_ID" type="STRING" size="256"/>
+          <Column id="EXCEL_META_SEQ" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="COL_TTL_INFO" type="STRING" size="256"/>
+          <Column id="CHK_COL" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_ipt_pst_type">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search_dtl">
+        <ColumnInfo>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="PGM_ID" type="STRING" size="256"/>
+          <Column id="EXCEL_META_SEQ" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_excel">
+        <ColumnInfo>
+          <Column id="PGM_ID" type="STRING" size="256"/>
+          <Column id="PGM_NM" type="STRING" size="256"/>
+          <Column id="EXCEL_META_SEQ" type="STRING" size="256"/>
+          <Column id="IPT_PST_TYPE_NM" type="STRING" size="256"/>
+          <Column id="DOWN_LMT_CNT" type="STRING" size="256"/>
+          <Column id="BVAL_DOWN_YN" type="STRING" size="256"/>
+          <Column id="COL_INFO" type="STRING" size="256"/>
+          <Column id="COL_ATTR_INFO" type="STRING" size="256"/>
+          <Column id="COL_SIZE" type="STRING" size="256"/>
+          <Column id="DATA_INQ_CLASS_NM" type="STRING" size="256"/>
+          <Column id="DATA_INQ_METHOD_NM" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="COL_TTL_INFO" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="Div00.form.USE_YN" propid="value" datasetid="ds_search" columnid="USE_YN"/>
+      <BindItem id="item1" compid="div_mst.form.COL_ATTR_INFO" propid="value" datasetid="ds_list" columnid="COL_ATTR_INFO"/>
+      <BindItem id="item2" compid="div_mst.form.COL_INFO" propid="value" datasetid="ds_list" columnid="COL_INFO"/>
+      <BindItem id="item3" compid="div_mst.form.USE_YN" propid="value" datasetid="ds_list" columnid="USE_YN"/>
+      <BindItem id="item4" compid="div_mst.form.PGM_ID" propid="value" datasetid="ds_list" columnid="PGM_ID"/>
+      <BindItem id="item5" compid="div_mst.form.PGM_NM" propid="value" datasetid="ds_list" columnid="PGM_NM"/>
+      <BindItem id="item6" compid="div_mst.form.EXCEL_META_SEQ" propid="value" datasetid="ds_list" columnid="EXCEL_META_SEQ"/>
+      <BindItem id="item7" compid="div_mst.form.DOWN_LMT_CNT" propid="value" datasetid="ds_list" columnid="DOWN_LMT_CNT"/>
+      <BindItem id="item9" compid="div_mst.form.BVAL_DOWN_YN" propid="value" datasetid="ds_list" columnid="BVAL_DOWN_YN"/>
+      <BindItem id="item10" compid="div_mst.form.TextArea00" propid="value" datasetid="ds_list" columnid="COL_SIZE"/>
+      <BindItem id="item8" compid="div_mst.form.IPT_PST_TYPE_CD" propid="value" datasetid="ds_list" columnid="IPT_PST_TYPE_CD"/>
+      <BindItem id="item12" compid="div_mst.form.DATA_INQ_CLASS_NM" propid="value" datasetid="ds_list" columnid="DATA_INQ_CLASS_NM"/>
+      <BindItem id="item13" compid="div_mst.form.DATA_INQ_METHOD_NM" propid="value" datasetid="ds_list" columnid="DATA_INQ_METHOD_NM"/>
+      <BindItem id="item14" compid="Div00.form.PGM_NM" propid="value" datasetid="ds_search" columnid="PGM_NM"/>
+    </Bind>
+  </Form>
+</FDL>

@@ -1,0 +1,760 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="BfSetPrfrtMng">
+
+    <select id="selectBfSetPrfrtMng" parameterType="HashMap" resultType="HashMap">
+        /* BfSetPrfrtMngDao.selectBfSetPrfrtMng 사전설정매익률관리 조회 */
+        <![CDATA[
+            SELECT A1.CHK                              /*CHK*/
+			       ,A1.CO_CD                           /*회사코드*/
+                   ,A1.SEQ
+			       ,A1.USE_YN                          /*사용여부*/
+			       ,A1.USE_YN  OLD_USE_YN              /*사용여부*/
+			       ,A1.RND_PRFRT_SPR_CD                /*할인율구분코드*/
+			       ,A1.RND_PRFRT_SPR_NM                /*할인율구분명*/
+			       ,A1.PLN_PRFRT                       /*일반고객할인율*/
+			       ,A1.OLD_PLN_PRFRT                   
+			       ,A1.MNFR_NO                         /*제조원*/
+			       ,A1.MNFR_NM                         /*제조원명*/
+			       ,A1.PRD_CLCD                        /*카테고리*/
+			       ,A1.PRD_CLCD_NM                     /*카테고리명*/
+			       ,A1.PRD_CLCD_USE_YN                 /*카테고리사용여부*/
+			       ,A1.USE_YN_NM                       /*사용여부명*/
+			       ,A1.REG_UPD_ID                      /*등록변경담당자ID*/
+			       ,A1.REG_UPD_DTM                     /*등록변경일자*/
+			       ,A1.REG_UPD_NM                     /*등록변경자*/
+			       ,A1.CHG_HTS
+			FROM (
+			        SELECT '0' AS CHK
+			               ,A.CO_CD
+			               ,A.USE_YN
+                           ,A.SEQ
+			               ,A.RND_PRFRT_SPR_CD
+			               ,FN_COM_DTL_CDNM('KO','RND_PRFRT_SPR_CD',A.RND_PRFRT_SPR_CD) AS RND_PRFRT_SPR_NM
+			               ,A.PLN_PRFRT
+			               ,A.PLN_PRFRT AS OLD_PLN_PRFRT
+			               ,CASE WHEN A.MNFR_NO <> '*' THEN A.MNFR_NO END MNFR_NO
+			               ,B.MNFR_NM
+			               ,CASE WHEN A.PRD_CLCD <> '*' THEN A.PRD_CLCD END PRD_CLCD
+			               ,CASE WHEN A.PRD_CLCD <> '*' THEN FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) END PRD_CLCD_NM
+			               ,C.USE_YN AS PRD_CLCD_USE_YN 
+			               ,DECODE(C.USE_YN,'Y','사용','N','미사용') AS USE_YN_NM
+			               ,CASE WHEN A.UPDPSN_ID IS NULL THEN A.REGPSN_ID ELSE A.UPDPSN_ID END AS REG_UPD_ID
+			               ,CASE WHEN A.UPDPSN_ID IS NULL THEN TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS') ELSE TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') END AS REG_UPD_DTM
+			               ,CASE WHEN A.UPDPSN_ID IS NULL 
+			                      THEN (SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD = A.CO_CD AND OPRTR_ID = A.REGPSN_ID )
+			                      ELSE (SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD = A.CO_CD AND OPRTR_ID = A.UPDPSN_ID  )
+			                END AS REG_UPD_NM
+			               ,ROW_NUMBER() OVER (PARTITION BY A.CO_CD,A.MNFR_NO,A.PRD_CLCD ORDER BY A.SEQ DESC) AS NUM  
+			               ,'변경이력' AS CHG_HTS
+			               ,A.REGPSN_ID
+			               ,A.UPDPSN_ID
+			          FROM TB_PC_PLN_PRFRT_INFO A
+			          LEFT JOIN TB_PR_MNFR_INFO B
+			            ON B.CO_CD = A.CO_CD
+			           AND B.MNFR_NO = A.MNFR_NO
+                      LEFT JOIN TB_PR_PRD_CLSF_INFO C
+                        ON C.CO_CD = A.CO_CD
+                       AND C.PRD_CLCD = A.PRD_CLCD
+                       AND C.MALL_SPR_CD = '20'
+        ]]>
+			         <if test="MNFR_NO_CNT > 0">
+			         INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S1
+			            ON 0=0
+				       AND S1.SES_ID        = #{SES_ID}
+				       AND S1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				       AND S1.COL_ITM       = 'MNFR_NO'
+				       AND S1.COND_DATA_VAL = A.MNFR_NO
+			         </if>
+			         <if test="PRD_CLCD_CNT > 0">
+			          INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+			             ON 0=0
+				        AND S2.SES_ID        = #{SES_ID}
+				        AND S2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				        AND S2.COL_ITM       = 'PRD_CLCD'
+				        AND S2.COND_DATA_VAL = A.PRD_CLCD
+			         </if>
+			         WHERE A.CO_CD = #{CO_CD} 
+			           AND ( A.MNFR_NO <![CDATA[<>]]> '*' OR C.MALL_SPR_CD = '20' )
+			           AND ( A.REG_DTM BETWEEN TO_DATE(#{DATE_FR_DT},'YYYYMMDD') AND TO_DATE(#{DATE_TO_DT},'YYYYMMDD')+1
+			                 OR A.UPD_DTM BETWEEN TO_DATE(#{DATE_FR_DT},'YYYYMMDD') AND TO_DATE(#{DATE_TO_DT},'YYYYMMDD')+1 )
+			    ) A1
+        
+          WHERE 1=1
+            AND A1.NUM = 1
+            <if test="CHRPSN_ID != null and CHRPSN_ID != '' ">
+            	AND ( A1.REGPSN_ID = #{CHRPSN_ID} OR A1.UPDPSN_ID = #{CHRPSN_ID} )
+            </if>
+            <if test="STATS != null and STATS != '' ">
+	            AND A1.USE_YN = #{STATS}
+	        </if>
+	        <if test="PRFRT_SPR != null and PRFRT_SPR != '' ">
+	        	AND A1.RND_PRFRT_SPR_CD = #{PRFRT_SPR}
+	        </if>
+            <if test='(SORT_COLUMN != null and SORT_COLUMN != "") and (SORT_TYPE != null and SORT_TYPE != "")'>
+             ORDER BY A1.${SORT_COLUMN} ${SORT_TYPE}
+            </if>
+            
+            OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+
+   
+    <select id="selectBfSetPrfrtMngCount" parameterType="HashMap" resultType="Integer">
+        /* BfSetPrfrtMngDao.selectBfSetPrfrtMngCount 사전설정매익률관리 카운트 조회 */
+        <![CDATA[
+            SELECT COUNT(1) AS CNT
+			FROM (
+			        SELECT '0' AS CHK
+			               ,A.CO_CD
+			               ,A.USE_YN
+                           ,A.SEQ
+			               ,A.RND_PRFRT_SPR_CD
+			               ,FN_COM_DTL_CDNM('KO','RND_PRFRT_SPR_CD',A.RND_PRFRT_SPR_CD) AS RND_PRFRT_SPR_NM
+			               ,A.PLN_PRFRT
+			               ,A.PLN_PRFRT AS OLD_PLN_PRFRT
+			               ,CASE WHEN A.MNFR_NO <> '*' THEN A.MNFR_NO END MNFR_NO
+			               ,B.MNFR_NM
+			               ,CASE WHEN A.PRD_CLCD <> '*' THEN A.PRD_CLCD END PRD_CLCD
+			               ,CASE WHEN A.PRD_CLCD <> '*' THEN FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) END PRD_CLCD_NM
+			               ,C.USE_YN AS PRD_CLCD_USE_YN 
+			               ,DECODE(C.USE_YN,'Y','사용','N','미사용') AS USE_YN_NM
+			               ,CASE WHEN A.UPDPSN_ID IS NULL THEN A.REGPSN_ID ELSE A.UPDPSN_ID END AS REG_UPD_ID
+			               ,CASE WHEN A.UPDPSN_ID IS NULL THEN TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS') ELSE TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') END AS REG_UPD_DTM
+			               ,CASE WHEN A.UPDPSN_ID IS NULL 
+			                      THEN (SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD = A.CO_CD AND OPRTR_ID = A.REGPSN_ID )
+			                      ELSE (SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD = A.CO_CD AND OPRTR_ID = A.UPDPSN_ID  )
+			                END AS REG_UPD_NM
+			               ,ROW_NUMBER() OVER (PARTITION BY A.CO_CD,A.MNFR_NO,A.PRD_CLCD ORDER BY A.SEQ DESC) AS NUM  
+			               ,'변경이력' AS CHG_HTS
+			               ,A.REGPSN_ID
+			               ,A.UPDPSN_ID
+			          FROM TB_PC_PLN_PRFRT_INFO A
+			          LEFT JOIN TB_PR_MNFR_INFO B
+			            ON B.CO_CD = A.CO_CD
+			           AND B.MNFR_NO = A.MNFR_NO
+                      LEFT JOIN TB_PR_PRD_CLSF_INFO C
+                        ON C.CO_CD = A.CO_CD
+                       AND C.PRD_CLCD = A.PRD_CLCD
+                       AND C.MALL_SPR_CD = '20'
+        ]]>
+			         <if test="MNFR_NO_CNT > 0">
+			         INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S1
+			            ON 0=0
+				       AND S1.SES_ID        = #{SES_ID}
+				       AND S1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				       AND S1.COL_ITM       = 'MNFR_NO'
+				       AND S1.COND_DATA_VAL = A.MNFR_NO
+			         </if>
+			         <if test="PRD_CLCD_CNT > 0">
+			          INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+			             ON 0=0
+				        AND S2.SES_ID        = #{SES_ID}
+				        AND S2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				        AND S2.COL_ITM       = 'PRD_CLCD'
+				        AND S2.COND_DATA_VAL = A.PRD_CLCD
+			         </if>
+			         WHERE A.CO_CD = #{CO_CD} 
+			           AND ( A.MNFR_NO <![CDATA[<>]]> '*' OR C.MALL_SPR_CD = '20' )
+			           AND ( A.REG_DTM BETWEEN TO_DATE(#{DATE_FR_DT},'YYYYMMDD') AND TO_DATE(#{DATE_TO_DT},'YYYYMMDD')+1
+			                 OR A.UPD_DTM BETWEEN TO_DATE(#{DATE_FR_DT},'YYYYMMDD') AND TO_DATE(#{DATE_TO_DT},'YYYYMMDD')+1 )
+			    ) A1
+        
+          WHERE 1=1
+            AND A1.NUM = 1
+            <if test="CHRPSN_ID != null and CHRPSN_ID != '' ">
+            	AND ( A1.REGPSN_ID = #{CHRPSN_ID} OR A1.UPDPSN_ID = #{CHRPSN_ID} )
+            </if>
+            <if test="STATS != null and STATS != '' ">
+	            AND A1.USE_YN = #{STATS}
+	        </if>
+	        <if test="PRFRT_SPR != null and PRFRT_SPR != '' ">
+	        	AND A1.RND_PRFRT_SPR_CD = #{PRFRT_SPR}
+	        </if>
+    </select>
+    
+    <update id="saveBfSetPrfrtMng" parameterType="HashMap">
+    	/* BfSetPrfrtMngDao.saveBfSetPrfrtMng 사전설정매익률관리 등록/수정 */
+    	<selectKey keyProperty="RD_PLN_PRFRT_SEQ" resultType="Integer" order="BEFORE">   
+             SELECT NVL(MAX(SEQ)+1,1)
+              FROM TB_PC_PLN_PRFRT_INFO
+             WHERE CO_CD = #{CO_CD}
+               AND MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END
+               AND PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+        </selectKey>
+    	MERGE INTO TB_PC_PLN_PRFRT_INFO
+        USING DUAL
+           ON ( CO_CD      = #{CO_CD}
+            AND MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END
+            AND PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+            AND SEQ = #{SEQ}
+              )
+         WHEN MATCHED THEN
+        UPDATE SET PLN_PRFRT = #{PLN_PRFRT}
+                   ,USE_YN = #{USE_YN}
+                   ,UPDPSN_ID = #{SESSION_OPRTR_ID}
+                   ,UPD_DTM = SYSDATE
+         WHEN NOT MATCHED THEN
+              INSERT (CO_CD
+			         ,MNFR_NO
+			         ,PRD_CLCD
+			         ,SEQ
+			         ,PLN_PRFRT
+			         ,USE_YN
+			         ,VLD_STR_DTM
+			         ,VLD_END_DTM
+			         ,RND_PRFRT_SPR_CD
+			         ,REGPSN_ID
+			         ,REG_DTM)
+              VALUES 
+			         (#{CO_CD}
+			         ,CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END 
+			         ,CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+			         ,#{RD_PLN_PRFRT_SEQ}
+			         ,#{PLN_PRFRT}
+			         ,#{USE_YN}
+			         ,TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')
+			         ,'99991231235959'
+			         ,#{RND_PRFRT_SPR_CD}
+			         ,#{SESSION_OPRTR_ID}
+			         ,SYSDATE)
+    </update>
+    
+    <insert id="insertBfSetPrfrtMng" parameterType="HashMap">
+    	/* BfSetPrfrtMngDao.insertBfSetPrfrtMng 사전설정매익률관리 등록 */
+    	<selectKey keyProperty="RD_PLN_PRFRT_SEQ" resultType="Integer" order="BEFORE">   
+             SELECT NVL(MAX(SEQ)+1,1)
+              FROM TB_PC_PLN_PRFRT_INFO
+             WHERE CO_CD = #{CO_CD}
+               AND MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END
+               AND PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+        </selectKey>
+    	INSERT INTO TB_PC_PLN_PRFRT_INFO
+                     (CO_CD
+			         ,MNFR_NO
+			         ,PRD_CLCD
+			         ,SEQ
+			         ,PLN_PRFRT
+			         ,USE_YN
+			         ,VLD_STR_DTM
+			         ,VLD_END_DTM
+			         ,RND_PRFRT_SPR_CD
+			         ,REGPSN_ID
+			         ,REG_DTM)
+              VALUES 
+			         (#{CO_CD}
+			         ,CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END 
+			         ,CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+			         ,#{RD_PLN_PRFRT_SEQ}
+			         ,#{PLN_PRFRT}
+			         ,#{USE_YN}
+			         ,#{VLD_STR_DTM}
+			         ,'99991231235959'
+			         ,#{RND_PRFRT_SPR_CD}
+			         ,#{SESSION_OPRTR_ID}
+			         ,SYSDATE)
+    </insert>
+    
+    <select id="selectPurgChrpsnYn" parameterType="HashMap" resultType="HashMap">
+    	/* BfSetPrfrtMngDao.selectPurgChrpsnYn 구매담당자여부 조회 */
+    	SELECT CASE WHEN COUNT(1) <![CDATA[>]]> 0 THEN 'Y' ELSE 'N' END AS PURG_CHRPSN_YN
+		  FROM TB_PR_PRD_CLSF_CHRPSN_INFO
+         WHERE CO_CD = #{CO_CD}
+           AND PRD_CLSF_CHRPSN_ID = #{SESSION_OPRTR_ID}
+           AND MALL_SPR_CD = '20'
+           AND PRD_CLSF_CHRPSN_TP_CD = '30'
+           AND PRD_CLSF_CHRPSN_USEYN = 'Y'
+    </select>
+    
+    <select id="selectBfSetPrfrtMngDupl" parameterType="HashMap" resultType="Integer">
+    /* BfSetPrfrtMngDao.selectBfSetPrfrtMngDupl 중복체크 */
+    SELECT COUNT(1) AS CNT
+	  FROM TB_PC_PLN_PRFRT_INFO
+	 WHERE CO_CD      = #{CO_CD}
+	   AND MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END
+	   AND PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+    </select>
+    
+    <select id="selectBfSetPrfrtMngHst" parameterType="HashMap" resultType="HashMap">
+    /* BfSetPrfrtMngDao.selectBfSetPrfrtMngHst 사전설정매익률관리 이력조회 */
+    SELECT A.CO_CD
+        ,A.MNFR_NO
+        ,A.MNFR_NM
+        ,A.PRD_CLCD
+        ,A.PRD_CLCD_NM
+        ,A.SEQ
+        ,A.PLN_PRFRT
+        ,A.REG_RSN
+        ,A.USE_YN
+        ,A.VLD_STR_DTM
+        ,A.VLD_END_DTM
+        ,A.RND_PRFRT_SPR_CD
+        ,A.REG_UPD_ID
+        ,A.REG_UPD_DTM
+        ,A.OPRTR_NM
+    FROM ( SELECT A.CO_CD
+            ,A.MNFR_NO
+            ,A.MNFR_NM
+            ,A.PRD_CLCD
+            ,A.PRD_CLCD_NM
+            ,A.SEQ
+            ,A.PLN_PRFRT
+            ,A.REG_RSN
+            ,A.USE_YN
+            ,A.VLD_STR_DTM
+            ,A.VLD_END_DTM
+            ,A.RND_PRFRT_SPR_CD
+            ,A.REG_UPD_ID
+            ,A.REG_UPD_DTM
+            ,B.OPRTR_NM
+      FROM ( SELECT A.CO_CD
+                    ,A.MNFR_NO
+                    ,B.MNFR_NM
+                    ,A.PRD_CLCD
+                    ,CASE WHEN A.PRD_CLCD  <![CDATA[<>]]>  '*' THEN FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) END PRD_CLCD_NM 
+                    ,A.SEQ
+                    ,A.PLN_PRFRT
+                    ,A.REG_RSN
+                    ,A.USE_YN
+                    ,A.VLD_STR_DTM
+                    ,A.VLD_END_DTM
+                    ,A.RND_PRFRT_SPR_CD
+                    ,A.REGPSN_ID AS REG_UPD_ID
+                    ,TO_CHAR(A.REG_DTM,'YYYY.MM.DD HH24:MI:SS') AS REG_UPD_DTM
+              FROM TB_PC_PLN_PRFRT_INFO A
+              LEFT JOIN TB_PR_MNFR_INFO B
+                ON B.CO_CD = A.CO_CD
+               AND B.MNFR_NO = A.MNFR_NO
+             WHERE A.CO_CD = #{CO_CD}
+               AND A.MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END 
+               AND A.PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+             ORDER BY A.REG_DTM DESC , A.UPD_DTM DESC ) A
+            LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+                    ON A.CO_CD = B.CO_CD
+                    AND A.REG_UPD_ID = B.OPRTR_ID
+            ) A
+        <choose>
+            <when test='(SORT_COLUMN != null and SORT_COLUMN != "") and (SORT_TYPE != null and SORT_TYPE != "")'>
+             ORDER BY ${SORT_COLUMN} ${SORT_TYPE}
+            </when>
+            <otherwise>
+             ORDER BY A.SEQ DESC
+            </otherwise>
+        </choose>
+            OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+    
+    <select id="selectBfSetPrfrtMngHstCount" parameterType="HashMap" resultType="Integer">
+    	/* BfSetPrfrtMngDao.selectBfSetPrfrtMngHstCount 사전설정매익률관리 이력 카운트 */
+	    SELECT COUNT(1) AS CNT
+    FROM ( SELECT A.CO_CD
+            ,A.MNFR_NO
+            ,A.MNFR_NM
+            ,A.PRD_CLCD
+            ,A.PRD_CLCD_NM
+            ,A.SEQ
+            ,A.PLN_PRFRT
+            ,A.REG_RSN
+            ,A.USE_YN
+            ,A.VLD_STR_DTM
+            ,A.VLD_END_DTM
+            ,A.RND_PRFRT_SPR_CD
+            ,A.REG_UPD_ID
+            ,A.REG_UPD_DTM
+            ,B.OPRTR_NM
+      FROM ( SELECT A.CO_CD
+                    ,A.MNFR_NO
+                    ,B.MNFR_NM
+                    ,A.PRD_CLCD
+                    ,CASE WHEN A.PRD_CLCD  <![CDATA[<>]]>  '*' THEN FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) END PRD_CLCD_NM 
+                    ,A.SEQ
+                    ,A.PLN_PRFRT
+                    ,A.REG_RSN
+                    ,A.USE_YN
+                    ,A.VLD_STR_DTM
+                    ,A.VLD_END_DTM
+                    ,A.RND_PRFRT_SPR_CD
+                    ,A.REGPSN_ID AS REG_UPD_ID
+                    ,TO_CHAR(A.REG_DTM,'YYYY.MM.DD HH24:MI:SS') AS REG_UPD_DTM
+              FROM TB_PC_PLN_PRFRT_INFO A
+              LEFT JOIN TB_PR_MNFR_INFO B
+                ON B.CO_CD = A.CO_CD
+               AND B.MNFR_NO = A.MNFR_NO
+             WHERE A.CO_CD = #{CO_CD}
+               AND A.MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END 
+               AND A.PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+             ORDER BY A.REG_DTM DESC , A.UPD_DTM DESC ) A
+              LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+                    ON A.CO_CD = B.CO_CD
+                    AND A.REG_UPD_ID = B.OPRTR_ID
+            ) A
+    </select>
+    
+    <update id="updateBfSetPrfrtMng" parameterType="HashMap">
+		<selectKey keyProperty="VLD_STR_DTM" resultType="string" order="BEFORE">
+    		SELECT TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') 
+			FROM DUAL
+		</selectKey>
+		/* BfSetPrfrtMngDao.updateBfSetPrfrtMng 사전설정매익률관리 종료일자 수정 */
+		UPDATE TB_PC_PLN_PRFRT_INFO
+		   SET VLD_END_DTM = TO_CHAR(TO_DATE(#{VLD_STR_DTM},'YYYYMMDDHH24MISS')-1/(24*60*60),'YYYYMMDDHH24MISS')
+		       ,UPDPSN_ID = #{SESSION_OPRTR_ID}
+			   ,UPD_DTM = TO_DATE(#{VLD_STR_DTM},'YYYYMMDDHH24MISS')
+		 WHERE CO_CD = #{CO_CD}
+		   AND MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END 
+		   AND PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+           AND SEQ = #{SEQ}
+	</update>
+	
+	<select id="selectBfSetPrfrtMngChkCount" parameterType="HashMap" resultType="Integer" >
+		/* BfSetPrfrtMngDao.selectBfSetPrfrtMngChkCount 사전설정매익률관리 수정 후 가격정보 반영대상 카운트 */
+		 SELECT COUNT(1) AS CNT
+		  FROM TB_PC_PRD_PRC_HST A
+		  JOIN TB_PR_MRO_PRD_INFO B
+		    ON A.CO_CD = B.CO_CD
+		   AND A.PRD_ID = B.PRD_ID
+		   AND A.CO_CD = #{CO_CD}
+		   AND B.MALL_SPR_CD = '20'
+		   <if test='RND_PRFRT_SPR_CD !="30" ' >
+		   AND B.MNFR_NO = #{MNFR_NO}
+		   </if>
+		  JOIN TB_PR_PRD_INFO C
+		    ON A.CO_CD = C.CO_CD
+		   AND A.PRD_ID = C.PRD_ID
+		   AND A.CO_CD = #{CO_CD}
+		   AND C.MALL_SPR_CD = '20'
+		   <if test='RND_PRFRT_SPR_CD !="20" ' >
+		   AND C.PRD_CLCD = #{PRD_CLCD}
+		   </if>
+		 WHERE A.SEQ = ( SELECT MAX(SEQ) FROM TB_PC_PRD_PRC_HST WHERE CO_CD = A.CO_CD AND PRD_ID = A.PRD_ID )
+		   AND A.PLN_PRFRT <![CDATA[<>]]> ( SELECT PLN_PRFRT
+					              FROM (
+					                   SELECT PLN_PRFRT
+					                          ,ROW_NUMBER() OVER ( ORDER BY MNFR_NO DESC,PRD_CLCD DESC) AS NUM
+					                     FROM TB_PC_PLN_PRFRT_INFO
+					                    WHERE CO_CD = A.CO_CD 
+					                      AND ( MNFR_NO = B.MNFR_NO OR MNFR_NO = '*' )
+					                      AND ( PRD_CLCD = C.PRD_CLCD OR PRD_CLCD = '*' )
+					                      AND USE_YN = 'Y'
+					                      AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS')
+					                   )
+					             WHERE NUM = 1
+					           )
+		 	<if test='RND_PRFRT_SPR_CD == "20"' >
+		   AND NOT EXISTS ( SELECT 'X'
+		                     FROM TB_PC_PLN_PRFRT_INFO
+		                    WHERE MNFR_NO = B.MNFR_NO
+		                      AND PRD_CLCD = C.PRD_CLCD
+		                      AND CO_CD = #{CO_CD}
+		                      AND MNFR_NO = #{MNFR_NO}
+		                      AND PRD_CLCD != '*'
+		                      AND USE_YN = 'Y'
+		                      AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS') 
+                           )
+            </if>
+            <if test='RND_PRFRT_SPR_CD == "30"' >
+            AND NOT EXISTS ( SELECT 'X'
+                     FROM TB_PC_PLN_PRFRT_INFO
+                    WHERE MNFR_NO = B.MNFR_NO
+                      AND PRD_CLCD = C.PRD_CLCD
+                      AND CO_CD = #{CO_CD}
+                      AND MNFR_NO != '*'
+                      AND PRD_CLCD = #{PRD_CLCD}
+                      AND USE_YN = 'Y'
+                      AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS') 
+                      )
+   			AND 1 = ( SELECT NUM
+               			FROM (
+				                SELECT CO_CD , MNFR_NO , PRD_CLCD , PLN_PRFRT
+                                       ,ROW_NUMBER() OVER ( ORDER BY MNFR_NO DESC,PRD_CLCD DESC) AS NUM
+                                  FROM TB_PC_PLN_PRFRT_INFO
+                                 WHERE CO_CD = #{CO_CD}
+                                   AND ( MNFR_NO = B.MNFR_NO OR MNFR_NO = '*' )
+                                   AND ( PRD_CLCD = C.PRD_CLCD OR PRD_CLCD = '*' )
+                                   AND USE_YN = 'Y'
+                                   AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS')
+		                      )
+		               WHERE PRD_CLCD = #{PRD_CLCD} )
+		    </if>
+	</select>
+	
+	<update id="updateBfSetPrfrtMngPrcHst" parameterType="HashMap">
+		<selectKey keyProperty="BSS_SALSPRC_STR_DTM" resultType="string" order="BEFORE">
+    		SELECT TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') 
+			FROM DUAL
+		</selectKey>
+		/* BfSetPrfrtMngDao.updateBfSetPrfrtMngPrcHst 사전설정매익률관리 수정 후 가격정보 반영대상 종료일자 수정 */
+		 UPDATE (
+				 SELECT A.CO_CD
+				        ,A.PRD_ID
+				        ,A.BZPLC_ID
+				        ,A.SEQ
+				        ,A.BSS_PCPRC
+				        ,A.PLN_PRFRT
+				        ,A.STPRC
+				        ,A.DSTRB_STD_PRC
+				        ,A.MRK_LWST_SALSPRC
+				        ,A.INTL_LWST_SALSPRC
+				        ,A.PURG_DSGN_SALSPRC
+				        ,A.SSP_CURR_BSS_SALSPRC
+				        ,A.BSS_SALSPRC_CURR_UNIT_CD
+				        ,A.EXCHRT_APLY_YM
+				        ,A.SSP_BSS_SALSPRC
+				        ,A.BSS_SALSPRC_STR_DTM
+				        ,A.BSS_SALSPRC_END_DTM
+				        ,A.FST_HST_YN
+				        ,A.RND_DC_QTY
+				        ,A.RND_DC_SPR_CD
+				        ,A.RND_DC_VLD_STR_DTM
+				        ,A.RND_DC_VLD_END_DTM
+				        ,A.LWST_BUY_CPRTCP_ID
+				        ,A.SALSPRC_CAL_BSS_CD
+				        ,A.REGPSN_ID
+				        ,A.REG_DTM
+				        ,A.UPDPSN_ID
+				        ,A.UPD_DTM
+				  FROM TB_PC_PRD_PRC_HST A
+				  JOIN TB_PR_MRO_PRD_INFO B
+				    ON A.CO_CD = B.CO_CD
+				   AND A.PRD_ID = B.PRD_ID
+				   AND A.CO_CD = #{CO_CD}
+				   AND B.MALL_SPR_CD = '20'
+				   <if test='RND_PRFRT_SPR_CD !="30" ' >
+				   AND B.MNFR_NO = #{MNFR_NO}
+				   </if>
+				  JOIN TB_PR_PRD_INFO C
+				    ON A.CO_CD = C.CO_CD
+				   AND A.PRD_ID = C.PRD_ID
+				   AND A.CO_CD = #{CO_CD}
+				   AND C.MALL_SPR_CD = '20'
+				   <if test='RND_PRFRT_SPR_CD !="20" ' >
+				   AND C.PRD_CLCD = #{PRD_CLCD}
+				   </if>
+				 WHERE A.SEQ = ( SELECT MAX(SEQ) FROM TB_PC_PRD_PRC_HST WHERE CO_CD = A.CO_CD AND PRD_ID = A.PRD_ID )
+				   AND A.PLN_PRFRT <![CDATA[<>]]> ( SELECT PLN_PRFRT
+					              FROM (
+					                   SELECT PLN_PRFRT
+					                          ,ROW_NUMBER() OVER ( ORDER BY MNFR_NO DESC,PRD_CLCD DESC) AS NUM
+					                     FROM TB_PC_PLN_PRFRT_INFO
+					                    WHERE CO_CD = A.CO_CD 
+					                      AND ( MNFR_NO = B.MNFR_NO OR MNFR_NO = '*' )
+					                      AND ( PRD_CLCD = C.PRD_CLCD OR PRD_CLCD = '*' )
+					                      AND USE_YN = 'Y'
+					                      AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS')
+					                   )
+					             WHERE NUM = 1
+					           )
+				 	<if test='RND_PRFRT_SPR_CD == "20"' >
+				   AND NOT EXISTS ( SELECT 'X'
+				                     FROM TB_PC_PLN_PRFRT_INFO
+				                    WHERE MNFR_NO = B.MNFR_NO
+				                      AND PRD_CLCD = C.PRD_CLCD
+				                      AND CO_CD = #{CO_CD}
+				                      AND MNFR_NO = #{MNFR_NO}
+				                      AND PRD_CLCD != '*'
+				                      AND USE_YN = 'Y'
+				                      AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS') 
+		                           )
+		            </if>
+		            <if test='RND_PRFRT_SPR_CD == "30"' >
+		            AND NOT EXISTS ( SELECT 'X'
+		                     FROM TB_PC_PLN_PRFRT_INFO
+		                    WHERE MNFR_NO = B.MNFR_NO
+		                      AND PRD_CLCD = C.PRD_CLCD
+		                      AND CO_CD = #{CO_CD}
+		                      AND MNFR_NO != '*'
+		                      AND PRD_CLCD = #{PRD_CLCD}
+		                      AND USE_YN = 'Y'
+		                      AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS') 
+		                      )
+		   			AND 1 = ( SELECT NUM
+		               			FROM (
+						                SELECT CO_CD , MNFR_NO , PRD_CLCD , PLN_PRFRT
+		                                       ,ROW_NUMBER() OVER ( ORDER BY MNFR_NO DESC,PRD_CLCD DESC) AS NUM
+		                                  FROM TB_PC_PLN_PRFRT_INFO
+		                                 WHERE CO_CD = #{CO_CD}
+		                                   AND ( MNFR_NO = B.MNFR_NO OR MNFR_NO = '*' )
+		                                   AND ( PRD_CLCD = C.PRD_CLCD OR PRD_CLCD = '*' )
+		                                   AND USE_YN = 'Y'
+		                                   AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS')
+				                      )
+				               WHERE PRD_CLCD = #{PRD_CLCD} )
+				    </if>
+			) SET BSS_SALSPRC_END_DTM = TO_CHAR(TO_DATE(#{BSS_SALSPRC_STR_DTM},'YYYYMMDDHH24MISS')-1/(24*60*60),'YYYYMMDDHH24MISS')
+			      , UPDPSN_ID = #{SESSION_OPRTR_ID}
+				  , UPD_DTM = TO_DATE(#{BSS_SALSPRC_STR_DTM},'YYYYMMDDHH24MISS')
+	</update>
+	
+	<insert id="insertBfSetPrfrtMngPrcHst" parameterType="HashMap">
+		/* BfSetPrfrtMngDao.insertBfSetPrfrtMngPrcHst 사전설정매익률관리 수정 후 가격정보 등록 */
+		INSERT INTO TB_PC_PRD_PRC_HST
+		( CO_CD
+         ,PRD_ID
+         ,BZPLC_ID
+         ,SEQ
+         ,BSS_PCPRC
+         ,PLN_PRFRT
+         ,STPRC
+         ,DSTRB_STD_PRC
+         ,MRK_LWST_SALSPRC
+         ,INTL_LWST_SALSPRC
+         ,PURG_DSGN_SALSPRC
+         ,SSP_CURR_BSS_SALSPRC
+         ,BSS_SALSPRC_CURR_UNIT_CD
+         ,EXCHRT_APLY_YM
+         ,SSP_BSS_SALSPRC
+         ,BSS_SALSPRC_STR_DTM
+         ,BSS_SALSPRC_END_DTM
+         ,FST_HST_YN
+         ,RND_DC_QTY
+         ,RND_DC_SPR_CD
+         ,RND_DC_VLD_STR_DTM
+         ,RND_DC_VLD_END_DTM
+         ,LWST_BUY_CPRTCP_ID
+         ,SALSPRC_CAL_BSS_CD
+         ,REGPSN_ID
+         ,REG_DTM
+         ,UPDPSN_ID
+         ,UPD_DTM
+		)
+		 SELECT A.CO_CD
+	            ,A.PRD_ID
+	            ,A.BZPLC_ID
+	            ,A.SEQ
+		        ,A.BSS_PCPRC
+		        ,A.PLN_PRFRT
+		        ,NVL(FN_PC_DETR_INFO(A.BSS_PCPRC / (1 - (A.PLN_PRFRT / 100))),0) AS STPRC
+		        ,A.DSTRB_STD_PRC
+		        ,A.MRK_LWST_SALSPRC
+		        ,A.INTL_LWST_SALSPRC
+		        ,A.PURG_DSGN_SALSPRC
+		        ,CASE WHEN A.DSTRB_STD_PRC IS NULL OR A.DSTRB_STD_PRC = 0 THEN NVL(FN_PC_DETR_INFO(A.BSS_PCPRC / (1 - (A.PLN_PRFRT / 100))),0)
+		              ELSE A.DSTRB_STD_PRC
+		         END AS SSP_CURR_BSS_SALSPRC
+		        ,A.BSS_SALSPRC_CURR_UNIT_CD
+		        ,A.EXCHRT_APLY_YM
+		        ,CASE WHEN A.DSTRB_STD_PRC IS NULL OR A.DSTRB_STD_PRC = 0 THEN NVL(FN_PC_DETR_INFO(A.BSS_PCPRC / (1 - (A.PLN_PRFRT / 100))),0)
+		              ELSE A.DSTRB_STD_PRC
+		         END SSP_BSS_SALSPRC
+		        ,A.BSS_SALSPRC_STR_DTM
+		        ,A.BSS_SALSPRC_END_DTM
+		        ,A.FST_HST_YN
+		        ,A.RND_DC_QTY
+		        ,A.RND_DC_SPR_CD
+		        ,A.RND_DC_VLD_STR_DTM
+		        ,A.RND_DC_VLD_END_DTM
+		        ,A.LWST_BUY_CPRTCP_ID
+		        ,A.SALSPRC_CAL_BSS_CD
+		        ,A.REGPSN_ID
+		        ,A.REG_DTM
+		        ,A.UPDPSN_ID
+		        ,A.UPD_DTM
+		  FROM (
+		 		 	 SELECT A.CO_CD
+					        ,A.PRD_ID
+					        ,A.BZPLC_ID
+					        ,FN_PC_HIST_SEQ_CRT('PRD_PRC_HST') AS SEQ
+					        ,A.BSS_PCPRC
+					        ,( SELECT PLN_PRFRT
+					             FROM (
+					                   SELECT PLN_PRFRT
+					                          ,ROW_NUMBER() OVER ( ORDER BY MNFR_NO DESC,PRD_CLCD DESC) AS NUM
+					                     FROM TB_PC_PLN_PRFRT_INFO
+					                    WHERE CO_CD = A.CO_CD 
+					                      AND ( MNFR_NO = B.MNFR_NO OR MNFR_NO = '*' )
+					                      AND ( PRD_CLCD = C.PRD_CLCD OR PRD_CLCD = '*' )
+					                      AND USE_YN = 'Y'
+					                      AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS')
+					                  )
+					            WHERE NUM = 1
+					              ) AS PLN_PRFRT
+					        ,A.STPRC
+					        ,A.DSTRB_STD_PRC
+					        ,A.MRK_LWST_SALSPRC
+					        ,A.INTL_LWST_SALSPRC
+					        ,A.PURG_DSGN_SALSPRC
+					        ,A.BSS_SALSPRC_CURR_UNIT_CD
+					        ,A.EXCHRT_APLY_YM
+					        ,#{BSS_SALSPRC_STR_DTM}    AS BSS_SALSPRC_STR_DTM
+	        				,'99991231235959'  AS BSS_SALSPRC_END_DTM
+	        				,'N' AS FST_HST_YN
+					        ,A.RND_DC_QTY
+					        ,A.RND_DC_SPR_CD
+					        ,A.RND_DC_VLD_STR_DTM
+					        ,A.RND_DC_VLD_END_DTM
+					        ,A.LWST_BUY_CPRTCP_ID
+					        ,A.SALSPRC_CAL_BSS_CD
+					        ,#{SESSION_OPRTR_ID} AS REGPSN_ID
+					        ,SYSDATE AS REG_DTM
+					        ,#{SESSION_OPRTR_ID} UPDPSN_ID
+					        ,SYSDATE AS UPD_DTM
+				  FROM TB_PC_PRD_PRC_HST A
+				  JOIN TB_PR_MRO_PRD_INFO B
+				    ON A.CO_CD = B.CO_CD
+				   AND A.PRD_ID = B.PRD_ID
+				   AND A.CO_CD = #{CO_CD}
+				   AND B.MALL_SPR_CD = '20'
+				   <if test='RND_PRFRT_SPR_CD !="30" ' >
+				   AND B.MNFR_NO = #{MNFR_NO}
+				   </if>
+				  JOIN TB_PR_PRD_INFO C
+				    ON A.CO_CD = C.CO_CD
+				   AND A.PRD_ID = C.PRD_ID
+				   AND A.CO_CD = #{CO_CD}
+				   AND C.MALL_SPR_CD = '20'
+				   <if test='RND_PRFRT_SPR_CD !="20" ' >
+				   AND C.PRD_CLCD = #{PRD_CLCD}
+				   </if>
+				 WHERE A.SEQ = ( SELECT MAX(SEQ) FROM TB_PC_PRD_PRC_HST WHERE CO_CD = A.CO_CD AND PRD_ID = A.PRD_ID )
+				   AND A.PLN_PRFRT <![CDATA[<>]]> ( SELECT PLN_PRFRT
+					              FROM (
+					                   SELECT PLN_PRFRT
+					                          ,ROW_NUMBER() OVER ( ORDER BY MNFR_NO DESC,PRD_CLCD DESC) AS NUM
+					                     FROM TB_PC_PLN_PRFRT_INFO
+					                    WHERE CO_CD = A.CO_CD 
+					                      AND ( MNFR_NO = B.MNFR_NO OR MNFR_NO = '*' )
+					                      AND ( PRD_CLCD = C.PRD_CLCD OR PRD_CLCD = '*' )
+					                      AND USE_YN = 'Y'
+					                      AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS')
+					                   )
+					             WHERE NUM = 1
+					           )
+				 	<if test='RND_PRFRT_SPR_CD == "20"' >
+				   AND NOT EXISTS ( SELECT 'X'
+				                     FROM TB_PC_PLN_PRFRT_INFO
+				                    WHERE MNFR_NO = B.MNFR_NO
+				                      AND PRD_CLCD = C.PRD_CLCD
+				                      AND CO_CD = #{CO_CD}
+				                      AND MNFR_NO = #{MNFR_NO}
+				                      AND PRD_CLCD != '*'
+				                      AND USE_YN = 'Y'
+				                      AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS') 
+		                           )
+		            </if>
+		            <if test='RND_PRFRT_SPR_CD == "30"' >
+		            AND NOT EXISTS ( SELECT 'X'
+		                     FROM TB_PC_PLN_PRFRT_INFO
+		                    WHERE MNFR_NO = B.MNFR_NO
+		                      AND PRD_CLCD = C.PRD_CLCD
+		                      AND CO_CD = #{CO_CD}
+		                      AND MNFR_NO != '*'
+		                      AND PRD_CLCD = #{PRD_CLCD}
+		                      AND USE_YN = 'Y'
+		                      AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS') 
+		                      )
+		   			AND 1 = ( SELECT NUM
+		               			FROM (
+						                SELECT CO_CD , MNFR_NO , PRD_CLCD , PLN_PRFRT
+		                                       ,ROW_NUMBER() OVER ( ORDER BY MNFR_NO DESC,PRD_CLCD DESC) AS NUM
+		                                  FROM TB_PC_PLN_PRFRT_INFO
+		                                 WHERE CO_CD = #{CO_CD}
+		                                   AND ( MNFR_NO = B.MNFR_NO OR MNFR_NO = '*' )
+		                                   AND ( PRD_CLCD = C.PRD_CLCD OR PRD_CLCD = '*' )
+		                                   AND USE_YN = 'Y'
+		                                   AND SYSDATE BETWEEN TO_DATE(VLD_STR_DTM,'YYYYMMDDHH24MISS') AND TO_DATE(VLD_END_DTM,'YYYYMMDDHH24MISS')
+				                      )
+				               WHERE PRD_CLCD = #{PRD_CLCD} )
+				    </if>
+		     ) A
+	</insert>
+   
+</mapper>

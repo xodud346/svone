@@ -1,0 +1,566 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_CN_01" width="1336" height="843" titletext="New Form" onload="fn_onLoad" cssclass="div_WF_SearchAreaWhite">
+    <Layouts>
+      <Layout height="843" mobileorientation="landscape" width="1336">
+        <Tab id="Tab00" taborder="5" tabindex="0" left="20" top="20" onchanged="Tab00_onchanged" right="20" bottom="20" cssclass="tab_WF_basic">
+          <Tabpages>
+            <Tabpage id="Tabpage1" text="공지사항 등록" url="PUB_GUIDE::guideProductListTab.xfdl"/>
+            <Tabpage id="Tabpage2" text="메뉴얼 등록" url="PUB_GUIDE::guideProductListTab.xfdl"/>
+          </Tabpages>
+        </Tab>
+        <PopupDiv id="PopupDiv3" left="364" top="905" width="330" height="230" positionstep="0" background="#fffff" visible="false" text="" oncloseup="PopupDiv3_oncloseup">
+          <Layouts>
+            <Layout>
+              <Calendar id="searchStartDate" taborder="1" left="6" top="10" width="149" height="172" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd" type="monthonly" value=""/>
+              <Calendar id="searchEndDate" taborder="0" left="165" top="10" height="172" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd" type="monthonly" width="149"/>
+              <Button id="btn_confirm" taborder="3" text="Confirm" left="99" top="192" width="60" height="24" uWord="popup.ok" onclick="PopupDiv3_btn_confirm_onclick"/>
+              <Button id="btn_cancel" taborder="2" text="Cancel" left="169" top="192" width="60" height="24" uWord="popup.cancel" onclick="PopupDiv3_btn_cancel_onclick"/>
+            </Layout>
+          </Layouts>
+        </PopupDiv>
+        <Static id="Static02_00_00" taborder="1" left="20" top="0" width="20" height="20" cssclass="div_WF_guide" visible="false" text="20"/>
+        <Static id="Static02_00" taborder="2" left="0" top="20" width="20" height="20" cssclass="div_WF_guide" visible="false" text="20"/>
+        <Static id="Static02_00_01" taborder="3" top="20" height="20" cssclass="div_WF_guide" visible="false" text="20" width="20" right="0"/>
+        <Static id="Static03" taborder="4" text="20" left="20" width="20" height="20" cssclass="div_WF_guide" visible="false" bottom="0"/>
+        <Static id="Static02_00_00_00" taborder="5" left="20" top="50" width="20" height="20" cssclass="div_WF_guide" visible="false" text="20"/>
+        <Static id="Static02_00_00_00_00" taborder="6" left="20" top="96" width="20" height="10" cssclass="div_WF_guide" visible="false" text="10"/>
+        <Div id="Div00_01" taborder="7" left="1349" top="0" width="450" bottom="-212" text="">
+          <Layouts>
+            <Layout>
+              <Static id="Static63" taborder="0" text="&lt; 변경이력 &gt;" cssclass="sta_WF_SubTitle" left="0" top="0" height="21" right="0" font="bold 12px/normal &quot;Malgun Gothic&quot;,&quot;맑은고딕&quot;,&quot;Apple SD Gothic Neo&quot;,&quot;dotum&quot;,&quot;돋움&quot;,&quot;arial&quot;,&quot;sans-serif&quot;" textAlign="center"/>
+              <Static id="Static63_00" taborder="1" text="220308   변경이력 작성" cssclass="sta_WF_SubTitle" left="0" top="30" height="21" right="0" font="12px/normal &quot;Malgun Gothic&quot;,&quot;맑은고딕&quot;,&quot;Apple SD Gothic Neo&quot;,&quot;dotum&quot;,&quot;돋움&quot;,&quot;arial&quot;,&quot;sans-serif&quot;" onclick="Div00_Static63_00_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_CN_01
+/* 작 성 일 자 : 2022/02/15
+/* 작  성   자 : 이성민
+/* 설       명 : 공지사항
+/***********************************************************/
+
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;	//전체 카운트
+this.noticeTab = this.Tab00.Tabpage1.form;
+this.noticeForm = this.noticeTab.div_search.form;	//검색영역 div
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//콤보박스 기본값 초기화
+	//this.noticeForm.DATE_TYPE.set_index(0);
+	
+	
+	//라디오 초기값 설정.
+	//this.ds_popupYN.setColumn(0, "CODE", "ALL");
+	
+	//공통코드 조회
+	this.fn_commonCodeSearch();
+	
+	//초기 조회기간
+	this.fn_setSearchDate();
+	
+	//검색 초기값 설정
+	this.ds_search_origin.copyData(this.ds_search);
+	
+	//조회
+	this.fn_search(0);
+};
+
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function(page) {
+	 var sSvcId = "selectNotice";  
+     var sUrl = "/co/selectNoticeList.do";
+	 var inDs = "ds_search=ds_search ds_oprUnit=ds_oprUnit"
+     var outDs = "ds_list=ds_output";
+     var arg;
+     var callback = "fn_callBack";
+	 	 
+	 // 조회버튼 클릭시 페이징 초기화 시킨다.
+	 if( page == 0 ) {
+
+		this.noticeTab.div_paging.uPage=1;
+		this.noticeTab.div_paging.uPageNum=0;
+		this.ds_search.setColumn(0,"START_NUM", 0);
+		this.ds_search.setColumn(0,"ROW_COUNT",this.fv_oApp.gv_pageViewCnt);
+		
+		oSortInfo = this.noticeTab.grd_notice.uaSortInfo;
+		this.ds_search.setColumn(0,"SORT_COLUMN", "");
+		this.ds_search.setColumn(0,"SORT_TYPE", "");
+	 }
+	 
+	 this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/selectCommonCodeList.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_trem=ds_output1";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "CODE_LIST", "INQ_PERD_SPR_CD");
+	this.ds_search.setColumn(0, "LANG_CD", "KO");
+
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg){
+	if(svcID == "selectNotice"){    
+		//trace(this.ds_sampleList.saveXML());
+				
+		// 조회 카운트가 없으면 데이터셋이 날라감으로 강제 설정
+		if( this.ds_list.rowcount == 0 ) {
+			this.ds_list.copyData(this.ds_list_copy);			
+		}
+
+		//paging 처리 
+		//this.noticeTab.div_paging.form.cfn_createPage(this.noticeTab.div_paging, this.totalCount, this.fv_oApp.gv_pageViewCnt, "fn_pageCallback");
+		this.noticeTab.div_paging.form.cfn_createPage(this.noticeTab.div_paging, this.totalCount, this.fv_oApp.gv_pageViewCnt, "fn_pageCallback");
+		//this.div_paging.form.cfn_createPage(this.div_paging,1912,this.fv_oApp.gv_pageViewCnt,"fn_pageCallback");
+	} else if( svcID == "commonCodeSearch" ) { 
+		this.noticeForm.DATE_TERM.set_index(0);
+	} 
+}
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.noticeTab.div_paging;
+
+	if(sFlag){
+		//this.ds_search.setColumn(0,"START_NUM", (oPaging.uPageNum == 0 || oPaging.uPageNum == 1 ? 0 : ( oPaging.uPageNum -1 ) * 10));
+		this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.ds_search.setColumn(0,"ROW_COUNT", this.fv_oApp.gv_pageViewCnt);	
+		this.fn_search();
+	}	
+	
+	var sTotText = "(<b v='true'>총 "+ oPaging.uTotCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+	this.noticeTab.totalPageCount.set_text(sTotText);
+}
+
+//정렬 콜백
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_notice"){
+		oSortInfo = this.noticeTab.grd_notice.uaSortInfo;
+		
+		this.ds_search.setColumn(0,"SORT_COLUMN", oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE", oSortInfo.status);
+		
+		this.fn_search();
+	}
+};
+
+//팝업콜백
+this.fn_popupCallback = function(sPopupId, sRetValue) {
+	var resData = "";
+	var sIdList = "";
+	var sNmList = "";
+	
+	if(sRetValue == undefined){
+		return;
+	}else{
+		resData = JSON.parse(sRetValue);
+	}
+	
+	//대상조회 팝업
+	if( sPopupId == "oprUntMultiPop" ){
+		
+		for(var i = 0; i < resData.length; i++){	
+			var rtnData = JSON.parse(resData[i]);
+			sNmList += rtnData.OPR_UNIT_NM +",";
+			
+			//데이터셋 별도 지정.
+			var row = this.ds_oprUnit.addRow();
+			this.ds_oprUnit.setColumn(row, "OPR_UNIT_ID", rtnData.OPR_UNIT_ID);
+			this.ds_oprUnit.setColumn(row, "OPR_UNIT_NM", rtnData.OPR_UNIT_NM);
+			this.ds_oprUnit.setColumn(row, "CO_CD", rtnData.CO_CD);
+			this.ds_oprUnit.setColumn(row, "BZPLC_ID", rtnData.BZPLC_ID);			
+		}
+		
+		this.ds_search.setColumn(0, "TARGET_VALUE", sNmList.replace(/,\s*$/, ""));
+
+	} else if( sPopupId == "oprtrInfoPop" ){ 
+		this.ds_search.setColumn(0, "REGPSN_ID", resData.OPRTR_ID);
+		this.ds_search.setColumn(0, "REGPSN_NM", resData.OPRTR_NM);
+	}
+	
+}
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+
+	//grid 초기 설정
+	this.noticeTab.grd_notice.uSortFlag = "false";
+	this.noticeTab.grd_notice.uServerSortFlag = "true";
+	this.noticeTab.grd_notice.uSortCallback = "fn_sortCallback";
+	
+	this.noticeTab.grd_notice.uCellSizeType = "true";
+	
+	//페이징 초기 설정
+	this.noticeTab.div_paging.uPage = 1;
+	this.noticeTab.div_paging.uPageNum = 0;
+	this.noticeTab.div_paging.uPageRowCnt = 10;
+	this.noticeTab.div_paging.uPageCnt = 0;
+	this.noticeTab.div_paging.uTotCount = 0;
+}
+
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+// 검색영역 초기화
+this.clear = function() {
+	this.ds_search.copyData(this.ds_search_origin);
+	this.fn_setSearchDate();
+}
+
+//달력 close  이벤트
+this.PopupDiv3_oncloseup = function(obj:nexacro.PopupDiv,e:nexacro.EventInfo)
+{
+	if(this.PopupDiv3.form.searchStartDate.value > this.PopupDiv3.form.searchEndDate.value){
+		this.alert("종료일은 시작일보다 클 수 없습니다.");
+		this.Tab00.Tabpage1.form.div_search.form.TO_DATE.set_value("");
+	}
+};
+
+//조회기간 재설정
+this.fn_setSearchDate = function() {
+	
+	var term = this.noticeForm.DATE_TERM.value;
+	var objDate = new Date();
+	var sToday = objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0');
+
+	/*
+	1	1주일
+	2	2주일
+	3	1개월
+	4	2개월
+	5	3개월
+	6	6개월
+	7	1년
+	*/
+	if( term == undefined ) term = "1";
+	
+	if( term == "1" ) {
+		objDate.setDate(objDate.getDate() -7);
+	} else if( term == "2" ) {
+		objDate.setDate(objDate.getDate() -14);
+	} else if( term == "3" ) {
+		objDate.setMonth(objDate.getMonth() -1);
+	} else if( term == "4" ) {
+		objDate.setMonth(objDate.getMonth() -2);
+	} else if( term == "5" ) {
+		objDate.setMonth(objDate.getMonth() -3);
+	} else if( term == "6" ) {
+		objDate.setMonth(objDate.getMonth() -6);
+	} else if( term == "7" ) {
+		objDate.setMonth(objDate.getMonth() -12);
+	}
+	//console.log(objDate + "/" + objDate.getFullYear() + "/" + (objDate.getMonth() +1) + "/" + objDate.getDate());
+	
+    this.noticeForm.FROM_DATE.set_value(objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0'));
+    this.noticeForm.TO_DATE.set_value(sToday);	
+}
+
+//라디오 변경 이벤트
+this.fn_radioChage = function(objId) {
+	if( objId == "TGT_SET_YN" ) {
+		if( this.noticeForm[objId].value == "Y" ) {
+			this.noticeForm.TARGET_VALUE.set_enable(true);
+			this.noticeForm.btnTarget.set_enable(true);			
+		} else {
+			this.noticeForm.TARGET_VALUE.set_enable(false);
+			this.noticeForm.btnTarget.set_enable(false);			
+			this.noticeForm.TARGET_VALUE.set_value("");
+			this.ds_oprUnit.clearData();
+		}
+	}	
+}
+
+
+//상세 팝업 클릭 이벤트
+this.fn_noticeDetailPopup = function(type) {
+	
+	var dataset = this.ds_list;	
+	var objParam = {};
+	var popupPage = "CO_POP::SSP_BO_CN_02.xfdl";
+	
+	objParam.type = type;
+	if( type == "U" ) {
+		var noticeSeq = dataset.getColumn(dataset.rowposition, "NOTCC_SEQ");
+		//set params
+		objParam.noticeSeq = noticeSeq;
+		
+		popupPage = "CO_POP::SSP_BO_CN_03.xfdl";
+	}
+	
+	this.gfn_openPopup("SSP_BO_CN_02", popupPage, objParam, "fn_popupCallback");
+}
+
+//팝업호출
+this.fn_popup = function(type) {
+	var objParam = {};
+	
+	if( type == "TARGET" ){	
+		this.gfn_openPopup("oprUntMultiPop", "CO_POP::operateUnitMultiPopup.xfdl", objParam, "fn_popupCallback");
+		
+	} else if( type == "OPRTR_INFO" ){
+		this.gfn_openPopup("oprtrInfoPop", "CO_POP::SSP_BO_CN_26.xfdl", objParam, "fn_popupCallback");
+		
+	}	
+}
+
+this.fn_detailClose = function(type) {
+	if( type == "save" ) {
+		alert("저장되었습니다");
+		this.fn_search(0);
+	}
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+//달력 드롭다운
+this.DATE_ondropdown = function(obj:nexacro.Calendar,e:nexacro.EventInfo) {
+	this.PopupDiv3.form.searchStartDate.set_value(this.ds_search.getColumn(0, "FROM_DATE"));
+	this.PopupDiv3.form.searchEndDate.set_value(this.ds_search.getColumn(0, "TO_DATE"));
+	this.PopupDiv3.trackPopupByComponent(this.noticeForm.FROM_DATE, 0, obj.height);
+};
+
+
+//달력의 확인버튼
+this.PopupDiv3_btn_confirm_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo) {
+
+	var sFrom = this.PopupDiv3.form.searchStartDate.value;
+	var sTo = this.PopupDiv3.form.searchEndDate.value;	
+	
+	this.ds_search.setColumn(0, "FROM_DATE", sFrom);
+	this.ds_search.setColumn(0, "TO_DATE", sTo);
+	
+	this.PopupDiv3.closePopup();
+
+};
+
+
+//달력 취소버튼
+this.PopupDiv3_btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.PopupDiv3.closePopup();
+};
+
+//초기화
+this.div_search_btnClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.clear();
+};
+
+//조회
+this.div_search_btnSearch_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search(0);
+};
+
+//조회기간 변경 시 달력 날짜 세팅.
+this.Tab00_Tabpage1_div_search_DATE_TERM_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_setSearchDate();
+};
+
+//라디오 변경
+this.Tab00_Tabpage1_div_search_TGT_SET_YN_onitemchanged = function(obj:nexacro.Radio,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_radioChage("TGT_SET_YN");
+};
+
+// 그리드 더블클릭
+this.Tab00_Tabpage1_grd_notice_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	
+};
+
+// 대상 팝업조회
+this.Tab00_Tabpage1_div_search_btnTarget_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_popup("TARGET");
+};
+
+// 그리드 클릭
+this.Tab00_Tabpage1_grd_notice_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	this.fn_noticeDetailPopup("U");
+};
+
+//등록버튼
+this.Tab00_Tabpage1_btnRegist_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_noticeDetailPopup("N");
+};
+
+//등록자 조회 팝업
+this.Tab00_Tabpage1_div_search_Button39_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_popup("OPRTR_INFO");
+};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="DATE_TYPE" type="STRING" size="256"/>
+          <Column id="FROM_DATE" type="STRING" size="256"/>
+          <Column id="TO_DATE" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REGPSN_NM" type="STRING" size="256"/>
+          <Column id="POPUP_YN" type="STRING" size="256"/>
+          <Column id="SEARCH_WORD" type="STRING" size="256"/>
+          <Column id="TGT_SET_YN" type="STRING" size="256"/>
+          <Column id="TARGET_VALUE" type="STRING" size="256"/>
+          <Column id="DATE_TERM" type="STRING" size="256"/>
+          <Column id="TARGET_CODE" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="POPUP_YN">ALL</Col>
+            <Col id="DATE_TYPE">REG</Col>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+            <Col id="DATE_TERM">1</Col>
+            <Col id="USE_YN">Y</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="NOTCC_SEQ" type="STRING" size="256"/>
+          <Column id="NOTCC_TTL" type="STRING" size="256"/>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="NOTIC_STR_DT" type="STRING" size="256"/>
+          <Column id="NOTIC_END_DT" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="NOTCC_INQ_CNT" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="POPUP_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_copy">
+        <ColumnInfo>
+          <Column id="NOTCC_SEQ" type="STRING" size="256"/>
+          <Column id="NOTCC_TTL" type="STRING" size="256"/>
+          <Column id="ATTACH_FILE" type="STRING" size="256"/>
+          <Column id="NOTIC_STR_DT" type="STRING" size="256"/>
+          <Column id="NOTIC_END_DT" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="NOTCC_INQ_CNT" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="POPUP_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_popupYN">
+        <ColumnInfo>
+          <Column id="CODE" type="STRING" size="256"/>
+          <Column id="NAME" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CODE">ALL</Col>
+            <Col id="NAME">전체</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">Y</Col>
+            <Col id="NAME">사용</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">N</Col>
+            <Col id="NAME">미사용</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_trem">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_oprUnit">
+        <ColumnInfo>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search_origin">
+        <ColumnInfo>
+          <Column id="DATE_TYPE" type="STRING" size="256"/>
+          <Column id="FROM_DATE" type="STRING" size="256"/>
+          <Column id="TO_DATE" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REGPSN_NM" type="STRING" size="256"/>
+          <Column id="POPUP_YN" type="STRING" size="256"/>
+          <Column id="SEARCH_WORD" type="STRING" size="256"/>
+          <Column id="TGT_SET_YN" type="STRING" size="256"/>
+          <Column id="TARGET_VALUE" type="STRING" size="256"/>
+          <Column id="DATE_TERM" type="STRING" size="256"/>
+          <Column id="TARGET_CODE" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="POPUP_YN">ALL</Col>
+            <Col id="DATE_TYPE">REG</Col>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+            <Col id="DATE_TERM">1</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="Tab00.Tabpage1.form.div_search.form.POPUP_YN" propid="value" datasetid="ds_search" columnid="POPUP_YN"/>
+      <BindItem id="item1" compid="Tab00.Tabpage1.form.div_search.form.SEARCH_WORD" propid="value" datasetid="ds_search" columnid="SEARCH_WORD"/>
+      <BindItem id="item2" compid="Tab00.Tabpage1.form.div_search.form.DATE_TYPE" propid="value" datasetid="ds_search" columnid="DATE_TYPE"/>
+      <BindItem id="item3" compid="Tab00.Tabpage1.form.div_search.form.FROM_DATE" propid="value" datasetid="ds_search" columnid="FROM_DATE"/>
+      <BindItem id="item4" compid="Tab00.Tabpage1.form.div_search.form.TO_DATE" propid="value" datasetid="ds_search" columnid="TO_DATE"/>
+      <BindItem id="item5" compid="Tab00.Tabpage1.form.div_search.form.DATE_TERM" propid="value" datasetid="ds_search" columnid="DATE_TERM"/>
+      <BindItem id="item6" compid="Tab00.Tabpage1.form.div_search.form.TARGET_VALUE" propid="value" datasetid="ds_search" columnid="TARGET_VALUE"/>
+      <BindItem id="item7" compid="Tab00.Tabpage1.form.div_search.form.REGPSN_ID" propid="value" datasetid="ds_search" columnid="REGPSN_NM"/>
+      <BindItem id="item8" compid="Tab00.Tabpage1.form.div_search.form.Radio00" propid="value" datasetid="ds_search" columnid="USE_YN"/>
+    </Bind>
+  </Form>
+</FDL>

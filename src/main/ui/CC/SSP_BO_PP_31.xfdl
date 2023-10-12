@@ -1,0 +1,428 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="BzplcMultiPopup" width="570" height="675" titletext="계정 멀티팝업" onload="fn_onLoad" onkeyup="BzplcMultiPopup_onkeyup">
+    <Layouts>
+      <Layout height="675" width="570">
+        <Grid id="grd_list01" taborder="0" left="20" top="99" height="270" binddataset="ds_acctList" autofittype="col" cellsizebandtype="body" oncellclick="grd_list01_oncellclick" autoenter="select" oncelldblclick="grd_list01_oncelldblclick" onenterdown="grd_list01_onenterdown" nodatatext="조회된 결과값이 없습니다." width="530" cellsizingtype="col" scrollbartype="auto fixed">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="30"/>
+                <Column size="80"/>
+                <Column size="100"/>
+                <Column size="220"/>
+                <Column size="100"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="계정유형"/>
+                <Cell col="2" text="계정ID"/>
+                <Cell col="3" text="계정명"/>
+                <Cell col="4" text="계정코드"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:CHK" displaytype="expr:currow == 0 ? &quot;imagecontrol&quot; : &quot;checkboxcontrol&quot;" edittype="expr:currow == 0 ? &quot;none&quot; :  &quot;checkbox&quot; " cssclass="expr:currow == 0 ? &quot;grd_WF_searchImg&quot; : &quot;&quot;"/>
+                <Cell col="1" edittype="expr:currow == 0 ? &quot;combo&quot; : &quot;none&quot;" displaytype="expr:currow == 0 ? &quot;combocontrol&quot; : &quot;combotext&quot;" combodataset="ds_acctTpCd" combocodecol="ACCT_TP_CD" combodatacol="ACCT_TP_NM" text="bind:ACCT_TP_CD"/>
+                <Cell col="2" text="bind:ACCT_ID" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+                <Cell col="3" text="bind:ACCT_NM" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;" textAlign="left"/>
+                <Cell col="4" text="bind:ACCT_CD" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_search" taborder="1" text="조회" left="490" top="61" width="60" height="28" onclick="btn_search_onclick" cssclass="btn_WF_require"/>
+        <Button id="btn_del" taborder="2" text="삭제" left="485" top="587" width="65" height="28" onclick="btn_del_onclick"/>
+        <Button id="btn_select" taborder="3" text="선택" left="253" top="625" width="65" height="30" onclick="btn_select_onclick" cssclass="btn_WF_select"/>
+        <Static id="sta_totcnt" taborder="4" text="(총 0건)" left="20" top="65" width="370" height="25" usedecorate="true" onclick="sta_totcnt_onclick"/>
+        <Button id="btn_add" taborder="5" text="추가" left="485" top="379" width="65" height="28" onclick="btn_add_onclick" cssclass="btn_WF_select"/>
+        <Grid id="grd_list02" taborder="6" left="20" top="423" width="530" height="154" binddataset="ds_select" autofittype="col" cellsizebandtype="body">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="30"/>
+                <Column size="80"/>
+                <Column size="100"/>
+                <Column size="220"/>
+                <Column size="100"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="계정유형"/>
+                <Cell col="2" text="계정ID"/>
+                <Cell col="3" text="계정명"/>
+                <Cell col="4" text="계정코드"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox" text="bind:CHK"/>
+                <Cell col="1" text="bind:ACCT_TP_CD" combodataset="ds_acctTpCd" combocodecol="ACCT_TP_CD" combodatacol="ACCT_TP_NM" displaytype="combotext"/>
+                <Cell col="2" textAlign="center" text="bind:ACCT_ID"/>
+                <Cell col="3" text="bind:ACCT_NM" textAlign="left"/>
+                <Cell col="4" text="bind:ACCT_CD"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="Static60_00" taborder="7" text="| 계정 조회" left="20" top="20" height="21" cssclass="sta_WF_title02" width="300"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_acctList">
+        <ColumnInfo>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_CD" type="STRING" size="256"/>
+          <Column id="CHK" type="INT" size="256"/>
+          <Column id="ACCT_TP_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_CD" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="DEPT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_TP_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">1000</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_select">
+        <ColumnInfo>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_CD" type="STRING" size="256"/>
+          <Column id="CHK" type="INT" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="ACCT_TP_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_acctListCopy">
+        <ColumnInfo>
+          <Column id="ACCT_ID" type="STRING" size="256"/>
+          <Column id="ACCT_NM" type="STRING" size="256"/>
+          <Column id="ACCT_CD" type="STRING" size="256"/>
+          <Column id="CHK" type="INT" size="256"/>
+          <Column id="ACCT_TP_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_acctTpCd">
+        <ColumnInfo>
+          <Column id="ACCT_TP_CD" type="STRING" size="256"/>
+          <Column id="ACCT_TP_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="ACCT_TP_NM">전체</Col>
+            <Col id="ACCT_TP_CD">  </Col>
+          </Row>
+          <Row>
+            <Col id="ACCT_TP_CD">1</Col>
+            <Col id="ACCT_TP_NM">일반</Col>
+          </Row>
+          <Row>
+            <Col id="ACCT_TP_CD">2</Col>
+            <Col id="ACCT_TP_NM">공통</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 2021.01.19
+*******************************************************/
+include "CC::CcUtils.xjs";
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+//this.fv_oApp = nexacro.getApplication();	//application object
+
+this.ACCT_ID = "";
+this.ACCT_TP_CD = "";
+
+this.CO_CD    = "";
+this.BZPLC_ID = "";
+this.DEPT_ID  = "";
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+	this.gfn_formOnLoad(this);
+	this.ds_acctListCopy.copyData(this.ds_acctList);
+	
+	/* 파라미터 */
+	this.CO_CD    = this.parent.coCd;
+	this.BZPLC_ID = this.parent.bzplcId;
+	this.DEPT_ID  = this.parent.deptId;
+	this.ACCT_TP_CD  = (this.parent.acctTpCd==null ? "" : this.parent.acctTpCd);
+	
+	this.ds_search.setColumn(0, "CO_CD"   , this.CO_CD   );
+	this.ds_search.setColumn(0, "BZPLC_ID", this.BZPLC_ID);
+	this.ds_search.setColumn(0, "DEPT_ID" , this.DEPT_ID );
+	this.ds_search.setColumn(0, "ACCT_TP_CD" , this.ACCT_TP_CD);
+	
+	if(!this.gfn_isNull(this.ACCT_ID)){
+		this.ds_search.setColumn(0, "ACCT_ID", this.ACCT_ID);
+		this.fn_search(true);
+	}else{
+		this.fn_initGrid();
+	}
+	
+	// 단축키 등록
+	this.fn_regShortCutMethod();
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (bInit){
+	var sSvcId = "search";  
+	var sUrl = "/cc/acct/selectAcctMultiPopupList.do";
+	var inDs = "ds_search=ds_search"
+	var outDs = "ds_acctList=ds_output1";
+	var arg;
+
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(svcID == "search"){
+		if(this.totalCount < 1){
+			this.ds_acctList.copyData(this.ds_acctListCopy);
+		}
+		var sTotText = "(<b v='true'>총 "+ this.totalCount + "건)";
+		this.sta_totcnt.set_text(sTotText);
+		this.fn_initGrid();
+		
+		this.grd_list01.setCellProperty("head", 0, "text", "0"); 	
+		this.grd_list01.setFixedRow(0);
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+this.cfn_formInit = function(){
+	this.grd_list01.uUnCheckRow = "0";  //,구분자로 여려Row 설정 가능
+};
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+//그리드 검색조건 셋팅
+this.fn_initGrid = function(){
+	this.ds_acctList.insertRow(0);
+	this.ds_acctList.setColumn(0, "ACCT_ID",  this.ds_search.getColumn(0, "ACCT_ID"));
+	this.ds_acctList.setColumn(0, "ACCT_NM",  this.ds_search.getColumn(0, "ACCT_NM"));
+	this.ds_acctList.setColumn(0, "ACCT_CD",  this.ds_search.getColumn(0, "ACCT_CD"));
+	this.ds_acctList.setColumn(0, "ACCT_TP_CD",  this.ds_search.getColumn(0, "ACCT_TP_CD"));	//박재광 2022.06.23
+	this.ds_acctList.set_rowposition(-1);
+};
+
+//선택한 값을 조회 후에도 확인할 수 있도록 체크
+this.fn_dsSelectCheck = function(){
+	for(var i = 0; i< this.ds_select.rowcount; i++){
+		var findRow = this.ds_acctList.findRowExpr("ACCT_ID == '" + this.ds_select.getColumn(i, "ACCT_ID") + "'");
+		if(findRow > -1){
+			this.ds_acctList.setColumn(findRow, "CHK", 1);
+		}
+	}
+};
+
+//선택된 데이터가 있는지 체크
+this.fn_validationCheck = function(dataSet){
+	var chkCnt = dataSet.getCaseCount("CHK == 1");
+	if(chkCnt == 0){
+		//alert("선택된 데이터가 없습니다.");
+		alert(this.fn_getMessage("ERRC000050", "데이터"));
+		return false;
+	}
+	return true;
+};
+
+this.fn_searchMapSetting = function(){
+	this.ds_search.setColumn(0, "ACCT_ID" , this.ds_acctList.getColumn(0, "ACCT_ID"));
+	this.ds_search.setColumn(0, "ACCT_NM" , this.ds_acctList.getColumn(0, "ACCT_NM"));
+	this.ds_search.setColumn(0, "ACCT_CD" , this.ds_acctList.getColumn(0, "ACCT_CD"));
+	this.ds_search.setColumn(0, "ACCT_TP_CD" , this.ds_acctList.getColumn(0, "ACCT_TP_CD"));	//박재광 2022.06.23
+};
+
+// 창닫기
+this.fn_closeForm = function() {
+	this.close();
+};
+
+// 단축키 등록
+this.fn_regShortCutMethod = function() {
+	this.fn_regMethodENTER("btn_search_onclick");
+	this.fn_regMethodESC("fn_closeForm");
+	this.fn_regMethodShiftENTER("btn_select_onclick");
+};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//조회버튼 클릭 이벤트
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo){
+	this.fn_searchMapSetting();
+	this.fn_search(true);
+};
+// 그리드 클릭시 체크박스 체크되도록
+this.grd_list01_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo){
+	var dataSet = obj.getBindDataset();
+	var chkValue = obj.getCellText(e.row, 0);
+	
+	if( e.col != 0 ) {
+		chkValue = (chkValue == "1" ? "0" : "1");
+	}
+	
+	dataSet.setColumn(e.row, "CHK", chkValue);
+};
+//추가버튼 클릭 이벤트
+this.btn_add_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo){
+	var nRow = 0;
+
+	var aSelectedArr = new Array();
+	var aChkArr      = new Array();
+	var aTotalArr    = new Array();
+	
+	//체크된 값
+	if(this.ds_acctList.rowcount != 0){
+		aTotalArr = this.ds_acctList.extractRows("CHK == 1");
+	}
+
+	this.ds_acctList.set_enableevent(false);
+	this.ds_select.set_enableevent(false);
+	
+	if(aTotalArr != undefined && aTotalArr.length != 0){
+		for(var i = 0; i< aTotalArr.length; i++){
+			if(aTotalArr[i] != 0){ //첫번째 row가 선택되어있다면 제외
+				var findRow = this.ds_select.findRowExpr("ACCT_ID == '" + this.ds_acctList.getColumn(aTotalArr[i], "ACCT_ID") + "'");
+				if(findRow < 0){
+					nRow = this.ds_select.addRow();
+					this.ds_select.copyRow(nRow, this.ds_acctList, aTotalArr[i]);
+					this.ds_select.setColumn(nRow, "CHK", 0);
+					this.ds_acctList.setColumn(aTotalArr[i], "CHK", 1);
+				}
+			}
+		}		
+		this.grd_list01.clearSelect(); // 선택된 영역 해제
+	}else{
+		//alert("선택된 데이터가 없습니다.");
+		alert(this.fn_getMessage("ERRC000050", "데이터"));
+	}
+	
+	this.ds_acctList.set_enableevent(true);
+	this.ds_select.set_enableevent(true);
+	//this.fn_selectRowSetting();
+	
+};
+//삭제버튼 클릭 이벤트
+this.btn_del_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo){
+	var aDelArr = new Array();
+	var aDelIdArr = new Array();
+	if(this.fn_validationCheck(this.ds_select)){
+		for(var i = 0; i< this.ds_select.rowcount; i++){
+			if(this.ds_select.getColumn(i, "CHK") == 1){
+				aDelArr.push(i);
+				aDelIdArr.push(this.ds_select.getColumn(i, "ACCT_ID"));
+			}
+		}
+	}
+	this.ds_select.deleteMultiRows(aDelArr);
+	
+	for(var i = 0; i< aDelIdArr.length; i++){
+		var findRow = this.ds_acctList.findRowExpr("ACCT_ID == '" + aDelIdArr[i] + "'");
+		if(findRow >= 0){
+			this.ds_acctList.setColumn(findRow, "CHK", 0);
+		}
+	}
+		
+	this.grd_list02.setCellProperty("head", 0, "text", "0"); 
+};
+//선택버튼 클릭 이벤트
+this.btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo){
+	var resData = {};
+	var resList = [];
+	
+	if(this.ds_select.rowcount == 0){
+		//alert("선택된 데이터가 없습니다.");
+		alert(this.fn_getMessage("ERRC000050", "데이터"));
+		return;
+	}
+	
+	for(var i = 0; i< this.ds_select.rowcount; i++){
+	    resData.CO_CD    = this.ds_select.getColumn(i, "CO_CD");
+		resData.BZPLC_ID = this.ds_select.getColumn(i, "BZPLC_ID");
+		resData.ACCT_ID  = this.ds_select.getColumn(i, "ACCT_ID");
+		resData.ACCT_NM  = this.ds_select.getColumn(i, "ACCT_NM");
+		resData.ACCT_TP_CD  = this.ds_select.getColumn(i, "ACCT_TP_CD");	//박재광 2022.06.23
+		resList.push(JSON.stringify(resData));
+	}
+
+	this.close(JSON.stringify(resList));
+};
+//검색조건 ROW에서 enter 클릭 시 
+this.grd_list01_onenterdown = function(obj:nexacro.Grid,e:nexacro.GridEditEventInfo)
+{
+	this.fn_searchMapSetting();
+	this.fn_search(false);
+};
+
+this.grd_list01_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row == 0 && e.col != 0){
+		var cellText = obj.getCellText(e.row, e.cell);
+		if(cellText != undefined){
+			obj.setEditSelect(cellText.length, cellText.length);
+		}
+	}else if(e.row != 0 ){
+		var findRow = this.ds_select.findRowExpr("ACCT_ID == '" + this.ds_acctList.getColumn(e.row, "ACCT_ID") + "'");
+		if(findRow < 0){
+			var nRow = this.ds_select.addRow();
+			this.ds_select.copyRow(nRow, this.ds_acctList, e.row);
+			this.ds_select.setColumn(nRow, "CHK", 0);
+			this.ds_acctList.setColumn(e.row, "CHK", 1);
+		}
+	}
+};
+
+//검색조건 ROW의 CELL 클릭 시 글자 맨 끝으로 커서 가도록
+this.grd_list01_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row == 0 && e.col != 0){
+		var cellText = obj.getCellText(e.row, e.cell);
+		if(cellText != undefined){
+			obj.setEditSelect(cellText.length, cellText.length);
+		}
+	}
+};
+
+this.BzplcMultiPopup_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	this.fn_processKey(obj, e);
+};
+]]></Script>
+  </Form>
+</FDL>

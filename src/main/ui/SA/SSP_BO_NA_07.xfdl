@@ -1,0 +1,1237 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_NA_07" width="1336" height="846" titletext="쿠폰 - 목록" onload="SSP_BO_NA_07_onload" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="846" mobileorientation="landscape" width="1336">
+        <Static id="sta_totalCount" taborder="1" text="(총 0건 0/0)" left="20" top="210" width="121" height="25" usedecorate="true"/>
+        <Button id="btn_write" taborder="2" text="등록" top="200" width="81" height="28" right="342" onclick="btn_write_onclick"/>
+        <Button id="btn_excelDownload" taborder="3" text="엑셀다운로드" top="200" width="110" height="28" cssclass="btn_WF_excel" right="228" textPadding="0px" onclick="btn_excelDownload_onclick"/>
+        <Grid id="grd_cpnInfo" taborder="4" left="24" top="235" height="502" right="16" autofittype="col" cssclass="grd_WF_list" binddataset="ds_gridCpnInfo" autosizingtype="row" cellsizingtype="col" oncellclick="grd_cpnInfo_oncellclick" extendsizetype="row" cellmovingtype="col">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="70"/>
+                <Column size="45"/>
+                <Column size="45"/>
+                <Column size="60"/>
+                <Column size="170"/>
+                <Column size="100"/>
+                <Column size="95"/>
+                <Column size="75"/>
+                <Column size="75"/>
+                <Column size="75"/>
+                <Column size="75"/>
+                <Column size="55"/>
+                <Column size="55"/>
+                <Column size="70"/>
+                <Column size="75"/>
+                <Column size="60"/>
+                <Column size="70"/>
+                <Column size="50"/>
+              </Columns>
+              <Rows>
+                <Row size="35" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="쿠폰 이벤트&#13;&#10;번호"/>
+                <Cell col="1" text="사용&#13;&#10;여부"/>
+                <Cell col="2" text="쿠폰&#13;&#10;상태"/>
+                <Cell col="3" text="쿠폰 종류"/>
+                <Cell col="4" text="쿠폰명"/>
+                <Cell col="5" text="할인 금액/율&#13;&#10;(최대 할인 금액)"/>
+                <Cell col="6" text="사용 기간/일수"/>
+                <Cell col="7" text="발행시작일"/>
+                <Cell col="8" text="발행종료일"/>
+                <Cell col="9" text="사용시작일"/>
+                <Cell col="10" text="사용종료일"/>
+                <Cell col="11" text="사용&#13;&#10;수량"/>
+                <Cell col="12" text="발행&#13;&#10;수량"/>
+                <Cell col="13" text="발행&#13;&#10;방식"/>
+                <Cell col="14" text="등록자사번"/>
+                <Cell col="15" text="등록자"/>
+                <Cell col="16" text="등록일"/>
+                <Cell col="17" text="발행&#13;&#10;내역"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:CPN_EVT_NO" textAlign="center"/>
+                <Cell col="1" text="bind:USE_YN_NM" textAlign="center"/>
+                <Cell col="2" text="bind:CPN_STATS" textAlign="center" expr="CPN_STATS == 'READY' ? '대기' : CPN_STATS == 'ING' ? '진행중' : '종료'"/>
+                <Cell col="3" text="bind:CPN_KND_CD_NM"/>
+                <Cell col="4" text="bind:CPN_NM" textAlign="left" expr="CPN_NM  == '' ? CPN_NM : &quot;&lt;u v='true'&gt;&quot; + CPN_NM + &quot;&lt;/u&gt;&quot;" displaytype="decoratetext"/>
+                <Cell col="5" textAlign="center" expr="CPN_KND_CD == '20' ? '-' : dataset.parent.fn_getAutoComma(DC_AMT_DCRT) + (CPN_DC_SPR_CD  == '10' ? &quot;원&quot; : &quot;%&quot;) + (CPN_DC_SPR_CD  == '10' ? &quot;&quot; : &quot;\n(&quot; + dataset.parent.fn_getAutoComma(MAX_DC_AMT) + &quot;원)&quot;)" text="bind:DC_AMT_DCRT" displaytype="decoratetext" wordWrap="char"/>
+                <Cell col="6" textAlign="center" expr="CPN_USE_PERD_CD == &quot;20&quot; ? CPN_USE_PERD_CD_NM + &quot;\n(&quot; + USE_PSB_DCNT + &quot;일)&quot; : CPN_USE_PERD_CD_NM" text="bind:CPN_USE_PERD_CD" displaytype="decoratetext" wordWrap="char"/>
+                <Cell col="7" text="bind:PUBC_STR_DT"/>
+                <Cell col="8" text="bind:PUBC_END_DT"/>
+                <Cell col="9" text="bind:CPN_USE_STR_DT"/>
+                <Cell col="10" text="bind:CPN_USE_END_DT"/>
+                <Cell col="11" text="bind:USE_QTY" textAlign="right" expr="dataset.parent.fn_getAutoComma(USE_QTY)" displaytype="decoratetext"/>
+                <Cell col="12" text="bind:PUBC_QTY" textAlign="right" expr="dataset.parent.fn_getAutoComma(PUBC_QTY)" displaytype="decoratetext"/>
+                <Cell col="13" text="bind:CPN_PUBC_MTHD_CD_NM"/>
+                <Cell col="14" text="bind:REGPSN_ID" textAlign="center"/>
+                <Cell col="15" text="bind:REGPSN_ID_NM" textAlign="center"/>
+                <Cell col="16" text="bind:REG_DTM" textAlign="center"/>
+                <Cell col="17" text="bind:READ_COL" textAlign="center" expr="&quot;&lt;u v='true'&gt;조회&lt;/u&gt;&quot;" displaytype="decoratetext"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="Static00_00" taborder="5" text="W20" left="0" top="0" width="20" height="846" background="pink" visible="false" textAlign="center"/>
+        <Static id="Static00_00_00" taborder="6" text="W20" left="1316" top="0" width="20" height="846" background="pink" visible="false" textAlign="center"/>
+        <Static id="Static00_01" taborder="7" text="H20" left="0" top="826" width="1336" height="20" background="pink" visible="false" textAlign="center"/>
+        <Static id="Static00_02_00" taborder="8" text="H30" left="0" top="170" width="1336" height="30" background="pink" visible="false" textAlign="center"/>
+        <Static id="Static00_02_00_00" taborder="13" text="H30" left="0" top="740" width="1336" height="30" background="pink" visible="false" textAlign="center"/>
+        <Div id="div_paging" taborder="14" left="20" height="38" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="771" right="20"/>
+        <Button id="btn_layoutSave" taborder="15" text="레이아웃 저장" top="200" width="100" height="28" right="124" onclick="btn_layoutSave_onclick"/>
+        <Button id="btn_layoutInit" taborder="16" text="레이아웃 초기화" top="200" width="100" height="28" right="20" onclick="btn_layoutInit_onclick"/>
+        <Grid id="grd_cpnInfoExcel" taborder="17" left="20" top="980" height="100" right="20" autofittype="none" cssclass="grd_WF_list" binddataset="ds_gridCpnInfoExcel" autosizingtype="none" cellsizingtype="col" oncellclick="grd_cpnInfo_oncellclick" visible="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="75"/>
+                <Column size="60"/>
+                <Column size="60"/>
+                <Column size="170"/>
+                <Column size="110"/>
+                <Column size="75"/>
+                <Column size="75"/>
+                <Column size="75"/>
+                <Column size="75"/>
+                <Column size="60"/>
+                <Column size="60"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="60"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="쿠폰 이벤트&#13;&#10;번호"/>
+                <Cell col="1" text="쿠폰 상태"/>
+                <Cell col="2" text="쿠폰 종류"/>
+                <Cell col="3" text="쿠폰명"/>
+                <Cell col="4" text="할인 금액/율&#13;&#10;(최대 할인 금액)"/>
+                <Cell col="5" text="발행시작일"/>
+                <Cell col="6" text="발행종료일"/>
+                <Cell col="7" text="사용시작일"/>
+                <Cell col="8" text="사용종료일"/>
+                <Cell col="9" text="사용&#13;&#10;수량"/>
+                <Cell col="10" text="발행&#13;&#10;수량"/>
+                <Cell col="11" text="발행&#13;&#10;방식"/>
+                <Cell col="12" text="등록자사번"/>
+                <Cell col="13" text="등록자"/>
+                <Cell col="14" text="등록일"/>
+                <Cell col="15" text="발행&#13;&#10;내역"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:CPN_EVT_NO" textAlign="center"/>
+                <Cell col="1" text="bind:USE_YN_NM" textAlign="center"/>
+                <Cell col="2" text="bind:CPN_KND_CD_NM"/>
+                <Cell col="3" text="bind:CPN_NM" textAlign="left" expr="CPN_NM  == '' ? CPN_NM : &quot;&lt;u v='true'&gt;&quot; + CPN_NM + &quot;&lt;/u&gt;&quot;" displaytype="decoratetext"/>
+                <Cell col="4" text="bind:DC_AMT_DCRT" textAlign="right"/>
+                <Cell col="5" text="bind:PUBC_STR_DT"/>
+                <Cell col="6" text="bind:PUBC_END_DT"/>
+                <Cell col="7" text="bind:CPN_USE_STR_DT"/>
+                <Cell col="8" text="bind:CPN_USE_END_DT"/>
+                <Cell col="9" text="bind:USE_QTY" textAlign="right"/>
+                <Cell col="10" text="bind:PUBC_QTY" textAlign="right"/>
+                <Cell col="11" text="bind:CPN_PUBC_MTHD_CD_NM"/>
+                <Cell col="12" text="bind:REGPSN_ID" textAlign="center"/>
+                <Cell col="13" text="bind:REGPSN_ID_NM" textAlign="center"/>
+                <Cell col="14" text="bind:REG_DTM" textAlign="center"/>
+                <Cell col="15" text="bind:READ_COL" textAlign="center" expr="&quot;&lt;u v='true'&gt;조회&lt;/u&gt;&quot;" displaytype="decoratetext"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="div_search" taborder="0" text="Div01" left="0" top="0" height="170" right="0">
+          <Layouts>
+            <Layout>
+              <Static id="Static31_00" taborder="28" left="20" top="82" height="32" cssclass="sta_cm_box02L" right="20"/>
+              <Static id="Static31" taborder="27" left="20" top="51" height="32" cssclass="sta_cm_box02L" right="20"/>
+              <Static id="Static30" taborder="26" left="20" top="20" height="32" cssclass="sta_cm_box02L_tdt" right="20"/>
+              <Static id="Static22" taborder="0" text="사용 여부" left="452" top="20" width="130" height="32" cssclass="sta_cm_box01L_tdt" onclick="Static22_onclick"/>
+              <Combo id="cbx_searchCpnPubcMthdCd" taborder="1" text="" left="1024" top="55" width="281" height="24" index="-1" innerdataset="ds_comboCpnPubcMthdCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM"/>
+              <Edit id="edt_searchCpnEvtNo" taborder="2" left="160" top="55" width="282" height="24"/>
+              <Combo id="cbx_searchTermType" taborder="3" text="1주일" left="475" top="86" width="100" height="24" innerdataset="ds_inqPerdSprCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" index="0" value="2" onitemchanged="cbx_searchTermType_onitemchanged"/>
+              <Calendar id="cal_searchEndDate" taborder="4" left="376" top="86" width="95" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd"/>
+              <Static id="Static59" taborder="5" text="~" left="363" top="86" width="9" height="24"/>
+              <Calendar id="cal_searchStartDate" taborder="6" left="264" top="86" width="95" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd"/>
+              <Static id="Static00_03_01" taborder="7" text="W5" left="359" top="83" width="5" height="30" background="pink" visible="false" textAlign="center"/>
+              <Static id="Static00_03_01_00" taborder="8" text="W5" left="371" top="83" width="5" height="30" background="pink" visible="false" textAlign="center"/>
+              <Edit id="edt_searchCpnNm" taborder="9" left="592" top="55" width="282" height="24"/>
+              <Combo id="cbx_searchTermSpr" taborder="10" text="등록일" left="160" top="86" width="100" height="24" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" index="0" value="REG_DTM">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">REG_DTM</Col>
+                      <Col id="datacolumn">등록일</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">PUBC_DT</Col>
+                      <Col id="datacolumn">발행일</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Combo>
+              <Static id="Static02" taborder="11" text="쿠폰 종류" left="20" top="20" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static06" taborder="12" text="쿠폰 이벤트 번호" left="20" top="51" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static08" taborder="13" text="쿠폰 명" left="452" top="51" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static10" taborder="14" text="기간" left="20" top="82" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Combo id="cbx_searchUseYn" taborder="15" text="" left="592" top="24" width="282" height="24" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" index="0" value="2">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn"/>
+                      <Col id="datacolumn">전체</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">Y</Col>
+                      <Col id="datacolumn">사용</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">N</Col>
+                      <Col id="datacolumn">미사용</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Combo>
+              <Static id="Static09" taborder="16" text="발행 방식" left="884" top="51" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Radio id="rdo_searchCpnKndCd" taborder="17" left="160" top="24" width="170" height="24" innerdataset="ds_comboCpnKndCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" direction="vertical" index="0" text="A" value="1" onitemchanged="Div_top_info_Radio00_onitemchanged"/>
+              <Static id="Static00_02" taborder="18" text="H3" left="150" top="52" width="302" height="3" background="pink" visible="false" textAlign="center"/>
+              <Static id="Static00_03" taborder="19" text="W10" left="150" top="52" width="10" height="30" background="pink" visible="false" textAlign="center"/>
+              <Static id="Static00_02_02" taborder="20" text="H3" left="150" top="79" width="302" height="3" background="pink" visible="false" textAlign="center"/>
+              <Static id="Static00_03_00" taborder="21" text="W10" left="442" top="21" width="10" height="30" background="pink" visible="false" textAlign="center"/>
+              <Static id="Static12" taborder="22" text="쿠폰 상태" left="884" top="20" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Radio id="cbo_searchCpnStats" taborder="23" left="1028" top="24" width="265" height="24" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" direction="vertical" index="0" text="A" value="1">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn"/>
+                      <Col id="datacolumn">전체</Col>
+                    </Row>
+                    <Row>
+                      <Col id="datacolumn">대기</Col>
+                      <Col id="codecolumn">READY</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">ING</Col>
+                      <Col id="datacolumn">진행중</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">END</Col>
+                      <Col id="datacolumn">종료</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Radio>
+              <Button id="btn_search" taborder="24" text="조회" top="124" width="60" height="26" cssclass="btn_WF_require" right="20" onclick="btn_search_onclick"/>
+              <Button id="btn_init" taborder="25" text="초기화" top="124" width="60" height="26" right="84" onclick="btn_init_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Static id="Static00" taborder="11" text="H20" left="0" top="0" width="1336" height="20" background="pink" visible="false" textAlign="center"/>
+        <Static id="Static00_02_01_01" taborder="12" text="H10" left="0" top="228" width="1336" height="10" background="pink" visible="false" textAlign="center"/>
+        <Static id="Static00_02_01_00" taborder="10" text="H20" left="0" top="150" width="1336" height="20" background="pink" visible="false" textAlign="center"/>
+        <Static id="Static00_02_01" taborder="9" text="H10" left="0" top="114" width="1336" height="10" background="pink" visible="false" textAlign="center"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="CPN_EVT_NO" type="STRING" size="256"/>
+          <Column id="CPN_KND_CD" type="STRING" size="256"/>
+          <Column id="CPN_NM" type="STRING" size="256"/>
+          <Column id="CPN_PUBC_MTHD_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="CPN_STATS" type="STRING" size="256"/>
+          <Column id="TERM_SPR" type="STRING" size="256"/>
+          <Column id="START_DATE" type="STRING" size="256"/>
+          <Column id="END_DATE" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="EXCEL_DOWNLOAD_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_searchComCd">
+        <ColumnInfo>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_comboCpnKndCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_comboCpnPubcMthdCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_gridCpnInfo">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="CPN_EVT_NO" type="STRING" size="256"/>
+          <Column id="CPN_KND_CD" type="STRING" size="256"/>
+          <Column id="NOTIC_SPR_CD" type="STRING" size="256"/>
+          <Column id="CPN_NM" type="STRING" size="256"/>
+          <Column id="CPN_DESC" type="STRING" size="256"/>
+          <Column id="CPN_DC_SPR_CD" type="STRING" size="256"/>
+          <Column id="DC_AMT_DCRT" type="STRING" size="256"/>
+          <Column id="MIN_PURG_AMT" type="STRING" size="256"/>
+          <Column id="MAX_DC_AMT" type="STRING" size="256"/>
+          <Column id="PUBC_STR_DT" type="STRING" size="256"/>
+          <Column id="PUBC_END_DT" type="STRING" size="256"/>
+          <Column id="PUBC_QTY" type="STRING" size="256"/>
+          <Column id="UNLMT_PUBC_YN" type="STRING" size="256"/>
+          <Column id="CPN_PUBC_MTHD_CD" type="STRING" size="256"/>
+          <Column id="CPNBOX_EXPS_YN" type="STRING" size="256"/>
+          <Column id="CPN_USE_PERD_CD" type="STRING" size="256"/>
+          <Column id="CPN_USE_STR_DT" type="STRING" size="256"/>
+          <Column id="CPN_USE_END_DT" type="STRING" size="256"/>
+          <Column id="USE_PSB_DCNT" type="STRING" size="256"/>
+          <Column id="CPN_GUDC" type="STRING" size="256"/>
+          <Column id="CPN_APLY_TGT_SPR_CD" type="STRING" size="256"/>
+          <Column id="CPN_EXCPT_TGT_SPR_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+          <Column id="REGPSN_ID_NM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID_NM" type="STRING" size="256"/>
+          <Column id="CPN_KND_CD_NM" type="STRING" size="256"/>
+          <Column id="NOTIC_SPR_CD_NM" type="STRING" size="256"/>
+          <Column id="CPN_DC_SPR_CD_NM" type="STRING" size="256"/>
+          <Column id="UNLMT_PUBC_YN_NM" type="STRING" size="256"/>
+          <Column id="CPN_PUBC_MTHD_CD_NM" type="STRING" size="256"/>
+          <Column id="CPNBOX_EXPS_YN_NM" type="STRING" size="256"/>
+          <Column id="CPN_USE_PERD_CD_NM" type="STRING" size="256"/>
+          <Column id="CPN_APLY_TGT_SPR_CD_NM" type="STRING" size="256"/>
+          <Column id="CPN_EXCPT_TGT_SPR_CD_NM" type="STRING" size="256"/>
+          <Column id="USE_YN_NM" type="STRING" size="256"/>
+          <Column id="USE_QTY" type="STRING" size="256"/>
+          <Column id="READ_COL" type="STRING" size="256"/>
+          <Column id="CPN_STATS" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_gridCpnInfoExcel">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="CPN_EVT_NO" type="STRING" size="256"/>
+          <Column id="CPN_KND_CD" type="STRING" size="256"/>
+          <Column id="NOTIC_SPR_CD" type="STRING" size="256"/>
+          <Column id="CPN_NM" type="STRING" size="256"/>
+          <Column id="CPN_DESC" type="STRING" size="256"/>
+          <Column id="CPN_DC_SPR_CD" type="STRING" size="256"/>
+          <Column id="DC_AMT_DCRT" type="STRING" size="256"/>
+          <Column id="MIN_PURG_AMT" type="STRING" size="256"/>
+          <Column id="MAX_DC_AMT" type="STRING" size="256"/>
+          <Column id="PUBC_STR_DT" type="STRING" size="256"/>
+          <Column id="PUBC_END_DT" type="STRING" size="256"/>
+          <Column id="PUBC_QTY" type="STRING" size="256"/>
+          <Column id="UNLMT_PUBC_YN" type="STRING" size="256"/>
+          <Column id="CPN_PUBC_MTHD_CD" type="STRING" size="256"/>
+          <Column id="CPNBOX_EXPS_YN" type="STRING" size="256"/>
+          <Column id="CPN_USE_PERD_CD" type="STRING" size="256"/>
+          <Column id="CPN_USE_STR_DT" type="STRING" size="256"/>
+          <Column id="CPN_USE_END_DT" type="STRING" size="256"/>
+          <Column id="USE_PSB_DCNT" type="STRING" size="256"/>
+          <Column id="CPN_GUDC" type="STRING" size="256"/>
+          <Column id="CPN_APLY_TGT_SPR_CD" type="STRING" size="256"/>
+          <Column id="CPN_EXCPT_TGT_SPR_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+          <Column id="REGPSN_ID_NM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID_NM" type="STRING" size="256"/>
+          <Column id="CPN_KND_CD_NM" type="STRING" size="256"/>
+          <Column id="NOTIC_SPR_CD_NM" type="STRING" size="256"/>
+          <Column id="CPN_DC_SPR_CD_NM" type="STRING" size="256"/>
+          <Column id="UNLMT_PUBC_YN_NM" type="STRING" size="256"/>
+          <Column id="CPN_PUBC_MTHD_CD_NM" type="STRING" size="256"/>
+          <Column id="CPNBOX_EXPS_YN_NM" type="STRING" size="256"/>
+          <Column id="CPN_USE_PERD_CD_NM" type="STRING" size="256"/>
+          <Column id="CPN_APLY_TGT_SPR_CD_NM" type="STRING" size="256"/>
+          <Column id="CPN_EXCPT_TGT_SPR_CD_NM" type="STRING" size="256"/>
+          <Column id="USE_YN_NM" type="STRING" size="256"/>
+          <Column id="USE_QTY" type="STRING" size="256"/>
+          <Column id="CPN_STATS" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_inqPerdSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : 쿠폰 - 목록
+  CREATION DATES : 2022.03.17
+*******************************************************/
+
+/* 스크립트 인클루드 */
+include "CO::coUtils.xjs";
+include "OD::odUtils.xjs";
+/* ===============================================================
+ * 0. Form Variable
+ *  - Form 변수 영역
+ * =============================================================== 
+ */
+//var fv_변수명;
+
+this.totalCount = 0;
+this.fv_oApp = nexacro.getApplication();
+
+/* ===============================================================
+ * 1. Form Load
+ *  - Form 로드시 실행
+ * =============================================================== 
+ */
+this.SSP_BO_NA_07_onload = function(obj:Form, e:nexacro.LoadEventInfo)
+{
+	// 공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+
+	// 초기화
+	this.fn_init("VAL_INIT"); 
+	this.fn_init("SEARCH_INIT");
+	this.fn_init("CODE_INIT"); 
+	this.fn_init("GRID_INIT");
+}
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	// CTRL+ENTER KEY
+	if(e.keycode == 13 && e.ctrlkey){
+		this.btn_search_onclick();
+	}
+};
+
+
+
+
+
+
+
+
+
+/* =============================================================== 
+ * 2. transaction
+ *  - transaction 영역
+ * =============================================================== 
+ */
+ 
+/**
+ * 공통코드 조회
+ */
+this.fn_commonCodeSearch = function()
+{
+	this.ds_searchComCd.clearData();
+	var nRow = this.ds_searchComCd.addRow();
+	
+	this.ds_searchComCd.setColumn(nRow, "CODE_LIST", "CPN_KND_CD,CPN_PUBC_MTHD_CD,INQ_PERD_SPR_CD");
+	this.ds_searchComCd.setColumn(nRow, "LANG_CD", "KO");
+	
+	var sSvcId = "commonCodeSearch";
+	var sUrl = "/co/select-common-code-list.do";
+	var inDs = "ds_search=ds_searchComCd";
+	var outDs = "ds_comboCpnKndCd=ds_output1 ds_comboCpnPubcMthdCd=ds_output2 ds_inqPerdSprCd=ds_output3";
+	var arg = "";
+	var sCallback = "fn_callbackFunction";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, sCallback);
+}
+
+/**
+ * 쿠폰 grid 값 조회
+ */
+this.fn_gridCpnInfoList = function (sPage)
+{
+	/*
+	if (this.div_search.form.cal_searchStartDate.value == "" || this.div_search.form.cal_searchStartDate.value == undefined)
+	{
+		alert(this.fn_getMessage("ERRN000001", "시작일은")); // 시작일은 필수 입력항목입니다.
+		return
+	}
+		
+	if (this.div_search.form.cal_searchEndDate.value == "" || this.div_search.form.cal_searchEndDate.value == undefined)
+	{
+		alert(this.fn_getMessage("ERRN000001", "종료일은")); // 종료일은 필수 입력항목입니다.
+		return
+	}
+	*/
+
+	if (this.div_search.form.cal_searchStartDate.value != "" && this.div_search.form.cal_searchStartDate.value != undefined && (this.div_search.form.cal_searchEndDate.value == "" || this.div_search.form.cal_searchEndDate.value == undefined))
+	{
+		alert(this.fn_getMessage("ERRN000001", "시작일을 입력하면 종료일은")); // 시작일을 입력하면 종료일은 필수 입력항목입니다.
+		this.div_search.form.cal_searchEndDate.setFocus();
+		return
+	}
+
+	if ((this.div_search.form.cal_searchStartDate.value == "" || this.div_search.form.cal_searchStartDate.value == undefined) && this.div_search.form.cal_searchEndDate.value != "" && this.div_search.form.cal_searchEndDate.value != undefined)
+	{
+		alert(this.fn_getMessage("ERRN000001", "종료일을 입력하면 시작일은")); // 종료일을 입력하면 시작일은 필수 입력항목입니다.
+		this.div_search.form.cal_searchStartDate.setFocus();
+		return
+	}
+
+	if (this.div_search.form.cal_searchStartDate.value > this.div_search.form.cal_searchEndDate.value)
+	{
+		alert(this.fn_getMessage("ERRN000002", "종료일이 시작일보다")); // 종료일이 시작일보다 작습니다.
+		return
+	}
+	
+	if (sPage == 0)
+	{
+		// 페이징 초기화
+		var oPaging = this.div_paging;
+		oPaging.uPage = 1;
+		oPaging.uPageNum = 0;
+		
+		this.ds_search.setColumn(0, "START_NUM", 0);
+		this.ds_search.setColumn(0, "ROW_COUNT", this.div_paging.uPageRowCnt);
+	}
+	
+	this.ds_search.setColumn(0,"CO_CD", this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD"));
+	
+	var sSvcId = "gridCpnInfoList";  
+	var sUrl = "/sa/cpn/select-cpn-info-list.do";
+	var sInData = "ds_search=ds_search"
+	var sOutData = "ds_gridCpnInfo=ds_output1";
+	var sArg = "";
+	var sCallback = "fn_callbackFunction";
+
+	this.gfn_transaction(sSvcId, sUrl, sInData, sOutData, sArg, sCallback);
+};
+
+/**
+ * 쿠폰 엑셀 grid 값 조회
+ */
+this.fn_gridCpnInfoListExcel = function ()
+{
+	/*
+	if (this.div_search.form.cal_searchStartDate.value == "" || this.div_search.form.cal_searchStartDate.value == undefined)
+	{
+		alert(this.fn_getMessage("ERRN000001", "시작일은")); // 시작일은 필수 입력항목입니다.
+		return
+	}
+		
+	if (this.div_search.form.cal_searchEndDate.value == "" || this.div_search.form.cal_searchEndDate.value == undefined)
+	{
+		alert(this.fn_getMessage("ERRN000001", "종료일은")); // 종료일은 필수 입력항목입니다.
+		return
+	}
+	*/
+
+	if (this.div_search.form.cal_searchStartDate.value != "" && this.div_search.form.cal_searchStartDate.value != undefined && (this.div_search.form.cal_searchEndDate.value == "" || this.div_search.form.cal_searchEndDate.value == undefined))
+	{
+		alert(this.fn_getMessage("ERRN000001", "시작일을 입력하면 종료일은")); // 시작일을 입력하면 종료일은 필수 입력항목입니다.
+		this.div_search.form.cal_searchEndDate.setFocus();
+		return
+	}
+
+	if ((this.div_search.form.cal_searchStartDate.value == "" || this.div_search.form.cal_searchStartDate.value == undefined) && this.div_search.form.cal_searchEndDate.value != "" && this.div_search.form.cal_searchEndDate.value != undefined)
+	{
+		alert(this.fn_getMessage("ERRN000001", "종료일을 입력하면 시작일은")); // 종료일을 입력하면 시작일은 필수 입력항목입니다.
+		this.div_search.form.cal_searchStartDate.setFocus();
+		return
+	}
+
+	if (this.div_search.form.cal_searchStartDate.value > this.div_search.form.cal_searchEndDate.value)
+	{
+		alert(this.fn_getMessage("ERRN000002", "종료일이 시작일보다")); // 종료일이 시작일보다 작습니다.
+		return
+	}
+
+	this.ds_search.setColumn(0,"CO_CD", this.fv_oApp.gds_userInfo.getColumn(0, "CO_CD"));
+	
+	var sSvcId = "gridCpnInfoListExcel";  
+	var sUrl = "/sa/cpn/select-cpn-info-list.do";
+	var sInData = "ds_search=ds_search"
+	var sOutData = "ds_gridCpnInfoExcel=ds_output1";
+	var sArg = "";
+	var sCallback = "fn_callbackFunction";
+
+	this.gfn_transaction(sSvcId, sUrl, sInData, sOutData, sArg, sCallback);
+};
+
+
+
+
+
+
+
+
+
+
+
+/* =============================================================== 
+ * 3. CallBack
+ *  - transaction 후 처리 영역
+ * =============================================================== 
+ */
+
+/**
+ * 공통 callback
+ */
+this.fn_callbackFunction = function(svcID, errorCode, errorMsg)
+{
+	if(errorCode < 0)
+	{
+		alert(errorMsg);
+		return;
+	}
+	
+	switch (svcID)
+	{
+		case "commonCodeSearch" :
+
+			var nRow = this.ds_comboCpnKndCd.insertRow(0);
+			
+			this.ds_comboCpnKndCd.setColumn(nRow, "COM_DTL_CD", "");
+			this.ds_comboCpnKndCd.setColumn(nRow, "COM_DTL_CD_NM", "전체");
+			
+			this.div_search.form.rdo_searchCpnKndCd.set_index(0);
+			
+			var nRow2 = this.ds_comboCpnPubcMthdCd.insertRow(0);
+			
+			this.ds_comboCpnPubcMthdCd.setColumn(nRow2, "COM_DTL_CD", "");
+			this.ds_comboCpnPubcMthdCd.setColumn(nRow2, "COM_DTL_CD_NM", "전체");
+			
+			this.div_search.form.cbx_searchCpnPubcMthdCd.set_index(0);
+
+			this.div_search.form.cbx_searchTermType.set_index(1);
+			this.fn_searchDateSet("2");
+			
+			break;
+
+		case "gridCpnInfoList" :
+  	
+			//paging 처리 
+			this.div_paging.form.cfn_createPage(this.div_paging, this.totalCount, this.div_paging.uPageRowCnt, "fn_pageCallbackFunction");
+
+			break;
+
+		case "gridCpnInfoListExcel" :
+		
+			//trace(this.ds_gridCpnInfoExcel.saveXML());
+  	
+			var sFileName = "EXCEPL_EXPORT";			// file Name
+			var aGrid = [this.grd_cpnInfo];
+			var aSht  = ["쿠폰"];
+			
+			var oParam = {form:this, grid:aGrid, fileName:sFileName, sheetName:aSht};
+			this.gfn_exportExcel(oParam);	
+
+			break;
+
+		default : 
+		
+			break;
+	}
+}
+
+/**
+ * 싱글/멀티 팝업 공통 callback
+ */
+this.fn_popupCallbackFunction = function(sPopupId, sRetValue)
+{
+	if(this.gfn_isNull(sRetValue)) 
+	{
+		return;
+	}
+	
+	var retObj = JSON.parse(sRetValue);
+	
+	switch(sPopupId)
+	{
+		case "btn_write" :
+
+			if (retObj.RETURN_YN.replace(/,\s*$/, "") == "Y")
+			{
+				this.fn_gridCpnInfoList(0);
+			}
+			
+			break;
+
+		case "btn_edit" :
+
+			if (retObj.RETURN_YN.replace(/,\s*$/, "") == "Y")
+			{
+				this.fn_gridCpnInfoList();
+			}
+			
+			break;
+			
+		case "btn_cpnPubcDtls" :
+
+			break;
+
+		default : 
+		
+			break;
+	}
+}
+
+/**
+ * 페이징 공통 callback
+ */
+this.fn_pageCallbackFunction = function(sFlag)
+{
+	var oPaging = this.div_paging;	
+	
+	if(sFlag)
+	{
+		this.ds_search.setColumn(0, "START_NUM", oPaging.uPageNum);
+		this.ds_search.setColumn(0, "ROW_COUNT", this.div_paging.uPageRowCnt);
+		this.fn_gridCpnInfoList();
+	}
+
+	var sTotText = "(<b v='true'>총 " + oPaging.uTotCount + "건 </b><fc v='red'>" + oPaging.uPage + "</fc> / " + oPaging.uPageCnt + ")";
+	
+	this.sta_totalCount.set_text(sTotText);
+};
+
+/**
+ * 정렬 공통 callback
+ */
+this.fn_sortCallbackFunction = function(sGridId)
+{
+	var oGrid = null;
+	
+	if(sGridId == "grd_cpnInfo")
+	{
+		oSortInfo = this.grd_cpnInfo.uaSortInfo;
+
+		if (oSortInfo.bindCol != "READ_COL")
+		{
+			this.ds_search.setColumn(0, "SORT_COLUMN", oSortInfo.bindCol);
+			this.ds_search.setColumn(0, "SORT_TYPE", oSortInfo.status);
+			
+			this.fn_gridCpnInfoList();
+		}
+	}
+};
+
+
+
+
+
+
+
+
+
+
+/* =============================================================== 
+ * 4. 외부 호출 FUNCTION 영역
+ * =============================================================== 
+ */
+
+/**
+ * 화면 설정 함수
+ */
+this.cfn_formInit = function()
+{
+	// grid 초기 설정
+	this.grd_cpnInfo.uSortFlag = "false";
+	this.grd_cpnInfo.uServerSortFlag = "true";
+	this.grd_cpnInfo.uSortCallback = "fn_sortCallbackFunction";
+	this.grd_cpnInfo.uCellSizeType = "true";
+	
+	// 페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 20;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;
+	
+	//grid 개인화(전제조건 : grid Head가 무조건 1Row인 경우)
+	this.uGridList = "grd_cpnInfo";	
+	this.grd_cpnInfo.uRightMouse = "true";	
+	this.grd_cpnInfo.uPersonalFlag = "true";	
+	this.grd_cpnInfo.uDefaultFormat = "CPN_EVT_NO,USE_YN_NM,CPN_STATS,CPN_KND_CD_NM,CPN_NM,DC_AMT_DCRT,CPN_USE_PERD_CD,PUBC_STR_DT,PUBC_END_DT,CPN_USE_STR_DT,CPN_USE_END_DT,USE_QTY,PUBC_QTY,CPN_PUBC_MTHD_CD_NM,REGPSN_ID,REGPSN_ID_NM,REG_DTM,READ_COL";
+}
+
+this.cfn_personalPopupClose = function(sRet)
+{
+	this.grd_cpnInfo.set_formats(sRet);
+	this.pdiv_personal.closePopup();
+}
+
+
+
+
+
+
+
+
+
+
+/* =============================================================== 
+ * 5. event action
+ *  - dataset 및 component 이벤트 영역
+ * =============================================================== 
+ */
+
+/**
+ * 기간 유형의 combo 값을 변경 시
+ */
+this.cbx_searchTermType_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	if (this.div_search.form.cbx_searchTermType.value == "")
+	{
+		this.div_search.form.cal_searchStartDate.set_value("");
+		this.div_search.form.cal_searchEndDate.set_value("");
+	}
+	else
+	{
+		// 검색기간 설정
+		this.fn_searchDateSet(this.div_search.form.cbx_searchTermType.value);	
+	}
+};
+
+/**
+ * 초기화 버튼 클릭 시
+ */
+this.btn_init_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_init("SEARCH_INIT");
+};
+
+/**
+ * 조회 버튼 클릭 시
+ */
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.setColumn(0, "EXCEL_DOWNLOAD_YN", "N");
+
+	this.fn_gridCpnInfoList(0);	
+};
+
+/**
+ * 등록 버튼 클릭 시
+ */
+this.btn_write_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var oArg = {
+	           }; 
+
+	var oOption = { top : "-1"
+	              , left : "-1"
+	              , width : "-1"
+	              , height : "-1"
+	              , popuptype : "modal"	// modal:showModal, modeless:application.open, modalsync:showModalSync, modalwindow:showModalWindow
+	              , layered : "false"
+	              , opacity : "100"
+	              , autosize : "true"
+	              , titlebar : "true"
+	              , title : "쿠폰 등록"
+	              };	
+	
+	this.gfn_openPopup(e.fromobject.id, "SA::SSP_BO_NA_08.xfdl", oArg, "fn_popupCallbackFunction", oOption);
+};
+
+/**
+ * 엑셀다운로드 버튼 클릭 시
+ */
+this.btn_excelDownload_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+// 	this.ds_search.setColumn(0, "EXCEL_DOWNLOAD_YN", "Y");
+// 
+// 	this.fn_gridCpnInfoListExcel();
+	
+	var sFileName = "COUPON";			// file Name
+	var aGrid = [this.grd_cpnInfo];
+	var aSht  = ["쿠폰"];
+	
+	var oParam = {form:this, grid:aGrid, fileName:sFileName, sheetName:aSht};
+	this.gfn_exportExcel(oParam);	
+};
+
+/**
+ * 레이아웃 저장 버튼 클릭 시
+ */
+this.btn_layoutSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.gfn_personalSave("grd_cpnInfo", this.grd_cpnInfo.getCurFormatString());	
+};
+
+/**
+ * 레이아웃 초기화 버튼 클릭 시
+ */
+this.btn_layoutInit_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.gfn_personalReset("grd_cpnInfo");	
+	this.grd_cpnInfo.set_formats(this.grd_cpnInfo.uOrgFormat);
+};
+
+/**
+ * 그리드 cell 클릭 시
+ */
+this.grd_cpnInfo_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.col == this.grd_cpnInfo.getBindCellIndex("body", "CPN_NM"))
+	{
+		// 쿠폰 명 컬럼 클릭 시
+		
+		var objDs = obj.getBindDataset();
+		var nRow = objDs.rowposition;
+
+		var oArg = { sCoCd : objDs.getColumn(nRow, "CO_CD")
+				   , sCpnEvtNo : objDs.getColumn(nRow, "CPN_EVT_NO")
+			       , sPageNum : this.div_paging.uPage
+				   }; 
+
+		var oOption = { top : "-1"
+					  , left : "-1"
+					  , width : "-1"
+					  , height : "-1"
+					  , popuptype : "modal"	// modal:showModal, modeless:application.open, modalsync:showModalSync, modalwindow:showModalWindow
+					  , layered : "false"
+					  , opacity : "100"
+					  , autosize : "true"
+					  , titlebar : "true"
+					  , title : "쿠폰 상세/수정"
+					  };	
+	
+		this.gfn_openPopup("btn_edit", "SA::SSP_BO_NA_09.xfdl", oArg, "fn_popupCallbackFunction", oOption);
+	}
+	else if(e.col == this.grd_cpnInfo.getBindCellIndex("body", "READ_COL"))
+	{
+		// 발행 내역 컬럼 클릭 시
+		
+		var objDs = obj.getBindDataset();
+		var nRow = objDs.rowposition;
+
+		var oArg = { sCoCd : objDs.getColumn(nRow, "CO_CD")
+				   , sCpnEvtNo : objDs.getColumn(nRow, "CPN_EVT_NO")
+			       , sPageNum : this.div_paging.uPage
+				   }; 
+
+		var oOption = { top : "-1"
+					  , left : "-1"
+					  , width : "-1"
+					  , height : "-1"
+					  , popuptype : "modal"	// modal:showModal, modeless:application.open, modalsync:showModalSync, modalwindow:showModalWindow
+					  , layered : "false"
+					  , opacity : "100"
+					  , autosize : "true"
+					  , titlebar : "true"
+					  , title : "쿠폰 발행 내역 조회"
+					  };	
+	
+		this.gfn_openPopup("btn_cpnPubcDtls", "SA::SSP_BO_NA_10.xfdl", oArg, "fn_popupCallbackFunction", oOption);
+	}
+};
+
+
+
+
+
+
+
+
+
+
+/* =============================================================== 
+ * 6. User Function
+ *  - 사용자 구현 함수 영역
+ * =============================================================== */
+
+/**
+ * 검색영역의 기간 combo 선택 시 값이 변경되었을 경우 - 공통
+ *	- 검색영역의 기간 값을 변경해 줌
+ */
+this.fn_searchDateSet = function(sVal)
+{
+	var sNowDate;	// 날짜 object
+	var sYearSt;	// 시작 년
+	var sMonthSt;	// 시작 월
+	var sDaySt;		// 시작 일
+	var sYearEnd;	// 종료 년
+	var sMonthEnd;	// 종료 월
+	var sDayEnd;	// 종료 일
+
+	sNowDate = new Date();
+
+	//sNowDate.setYear( sNowDate.getFullYear());
+
+	if (sVal == "1")
+	{
+		// 당일
+	
+		sNowDate.setMonth(sNowDate.getMonth());
+		sNowDate.setDate(sNowDate.getDate());
+	}
+// 	else if (sVal == "1")
+// 	{
+// 		// 어제
+// 	
+// 		sNowDate.setMonth( sNowDate.getMonth());
+// 		sNowDate.setDate( sNowDate.getDate() - 1);
+// 	}
+	else if (sVal == "2")
+	{
+		// 1주일
+	
+		sNowDate.setMonth( sNowDate.getMonth());
+		sNowDate.setDate( sNowDate.getDate() - 6);
+	}
+	else if (sVal == "3")
+	{
+		// 2주일
+	
+		sNowDate.setMonth( sNowDate.getMonth());
+		sNowDate.setDate( sNowDate.getDate() - 13);
+	}
+	else if (sVal == "4")
+	{
+		// 1개월
+		
+		sNowDate.setMonth( sNowDate.getMonth() - 1);
+		sNowDate.setDate( sNowDate.getDate() + 1);
+	}
+	else if (sVal == "5")
+	{
+		// 3개월
+		
+		sNowDate.setMonth( sNowDate.getMonth() - 3);
+		sNowDate.setDate( sNowDate.getDate() + 1);
+	}
+	else if (sVal == "6")
+	{
+		// 6개월
+		
+		sNowDate.setMonth( sNowDate.getMonth() - 6);
+		sNowDate.setDate( sNowDate.getDate() + 1);
+	}
+	else if (sVal == "7")
+	{
+		// 1년
+		
+		sNowDate.setMonth( sNowDate.getMonth() - 12);
+		sNowDate.setDate( sNowDate.getDate() + 1);
+	}
+	
+	sYearSt = sNowDate.getFullYear();
+	sMonthSt = sNowDate.getMonth()+1;
+	sDaySt = sNowDate.getDate();
+
+	if ( sMonthSt < 10 )
+	{
+		sMonthSt = "0" + sMonthSt;
+	}
+	if ( sDaySt < 10 )
+	{
+		sDaySt = "0" + sDaySt;
+	}
+
+	sNowDate = new Date();
+
+	sYearEnd = sNowDate.getFullYear();
+	sMonthEnd = sNowDate.getMonth()+1;
+	sDayEnd = sNowDate.getDate();
+
+	if ( sMonthEnd < 10 )
+	{
+		sMonthEnd = "0" + sMonthEnd;
+	}
+	if ( sDayEnd < 10 )
+	{
+		sDayEnd = "0" + sDayEnd;
+	}
+
+	// 검색의 기간
+	this.div_search.form.cal_searchStartDate.set_value(sYearSt + "-" + sMonthSt + "-" + sDaySt);
+	this.div_search.form.cal_searchEndDate.set_value(sYearEnd + "-" + sMonthEnd + "-" + sDayEnd);
+}
+
+/**
+ * 자동콤마 찍기
+ */
+this.fn_getAutoComma = function(sVal)
+{
+	var newValue;
+	var len;
+	var ch;
+	var j;
+	var formatValue;
+	
+	if (sVal == "" || sVal == "undefined" || sVal == undefined)
+	{
+		return 0;
+	}
+
+	newValue = "" + sVal;
+	len = newValue.length;
+	ch = "";
+	j = 1;
+	formatValue = "";
+
+	//newValue = uf_getSelectNumber(newValue);
+	len = newValue.length;
+
+	for ( i=len; i>0; i-- )
+	{
+		ch = newValue.substring(i-1,i);
+
+		formatValue = ch + formatValue;
+
+		if ( (j%3) == 0 && i>1 )
+		{
+			formatValue = "," + formatValue
+		}
+
+		j++;
+	}
+
+	return formatValue;
+}
+
+/**
+ * 화면 초기화 함수
+ */
+this.fn_init = function(sVal)
+{
+	switch (sVal)
+	{
+		case "VAL_INIT" :
+		
+			// 변수 초기화
+			
+			this.totalCount = 0;
+
+			break;
+
+		case "SEARCH_INIT" :
+
+			// 검색 항목 초기화
+
+			// dataset 설정
+			this.ds_search.clearData();
+			var nRow = this.ds_search.addRow();
+
+			this.ds_search.setColumn(nRow, "SORT_COLUMN", "");
+			this.ds_search.setColumn(nRow, "SORT_TYPE", "");
+			this.ds_search.setColumn(nRow, "EXCEL_DOWNLOAD_YN", "N");
+
+			// 입력 항목 영역
+			this.div_search.form.rdo_searchCpnKndCd.set_index(0);
+			this.div_search.form.cbx_searchUseYn.set_index(0);
+			this.div_search.form.cbo_searchCpnStats.set_index(0);
+			this.div_search.form.cbx_searchCpnPubcMthdCd.set_index(0);
+			this.div_search.form.edt_searchCpnEvtNo.set_value("");
+			this.div_search.form.edt_searchCpnNm.set_value("");
+			this.div_search.form.cbx_searchTermSpr.set_index(0);
+			this.div_search.form.cal_searchStartDate.set_value("");
+			this.div_search.form.cal_searchEndDate.set_value("");
+			//this.div_search.form.cbx_searchTermType.set_index(0);
+
+			// 버튼 영역
+			
+			// 초기화, 조회
+			this.div_search.form.btn_init.set_enable(true);
+			this.div_search.form.btn_search.set_enable(true);
+			
+			// 등록, 엑셀다운로드, 레이아웃 저장, 레이아웃 초기화
+			this.btn_write.set_enable(true);
+			this.btn_excelDownload.set_enable(true);
+			this.btn_layoutSave.set_enable(true);
+			this.btn_layoutInit.set_enable(true);
+
+			// 검색기간 설정
+			this.div_search.form.cbx_searchTermType.set_index(1);
+			this.fn_searchDateSet("2");
+
+			// 페이징 초기화
+			this.ds_search.setColumn(0, "START_NUM", 0);
+			this.ds_search.setColumn(0, "ROW_COUNT", this.div_paging.uPageRowCnt);
+
+			break;
+
+		case "CODE_INIT" :
+		
+			// 코드 초기화
+			
+			// 공통코드 조회
+			this.fn_commonCodeSearch();
+
+			break;
+
+		case "GRID_INIT" :
+		
+			// grid 초기화
+			
+			this.sta_totalCount.set_text("(<b v='true'>총 0건 </b><fc v='red'>0</fc> / 0)");
+			
+			// dataset 영역
+			this.ds_gridCpnInfo.clearData();
+			this.ds_gridCpnInfoExcel.clearData();
+
+			this.grd_cpnInfo.clearSelect();
+			this.grd_cpnInfoExcel.clearSelect();
+
+			this.grd_cpnInfo.set_nodatatext("조회된 결과가 없습니다.");
+			this.grd_cpnInfoExcel.set_nodatatext("조회된 결과가 없습니다.");
+
+			// 쿠폰 조회
+			// this.fn_gridCpnInfoList(0); 
+
+			break;
+
+		default :
+			
+			//alert("작업구분이 없습니다.");
+
+			break;
+	}
+}
+
+
+
+
+
+
+
+
+
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="div_search.form.cbx_searchCpnPubcMthdCd" propid="value" datasetid="ds_search" columnid="CPN_PUBC_MTHD_CD"/>
+      <BindItem id="item1" compid="div_search.form.edt_searchCpnEvtNo" propid="value" datasetid="ds_search" columnid="CPN_EVT_NO"/>
+      <BindItem id="item2" compid="div_search.form.cal_searchEndDate" propid="value" datasetid="ds_search" columnid="END_DATE"/>
+      <BindItem id="item3" compid="div_search.form.cal_searchStartDate" propid="value" datasetid="ds_search" columnid="START_DATE"/>
+      <BindItem id="item4" compid="div_search.form.edt_searchCpnNm" propid="value" datasetid="ds_search" columnid="CPN_NM"/>
+      <BindItem id="item5" compid="div_search.form.cbx_searchTermSpr" propid="value" datasetid="ds_search" columnid="TERM_SPR"/>
+      <BindItem id="item6" compid="div_search.form.cbx_searchUseYn" propid="value" datasetid="ds_search" columnid="USE_YN"/>
+      <BindItem id="item7" compid="div_search.form.rdo_searchCpnKndCd" propid="value" datasetid="ds_search" columnid="CPN_KND_CD"/>
+      <BindItem id="item8" compid="div_search.form.cbo_searchCpnStats" propid="value" datasetid="ds_search" columnid="CPN_STATS"/>
+    </Bind>
+  </Form>
+</FDL>

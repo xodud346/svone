@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PP_43" width="600" height="600" titletext="조직 조회" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="600" mobileorientation="landscape" width="600">
+        <Grid id="grd_memOprInfo" taborder="0" left="20" top="98" height="442" binddataset="ds_list" autofittype="col" oncelldblclick="grd_memOprInfo_oncelldblclick" right="20" oncellclick="grd_memOprInfo_oncellclick" onenterdown="grd_memOprInfo_onenterdown" autoenter="select">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="156"/>
+                <Column size="340"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="조직코드"/>
+                <Cell col="1" text="조직명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:ORG_CD" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+                <Cell col="1" text="bind:ORG_NM" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Static id="Static60_00" taborder="1" text="조직 조회" left="20" top="20" height="21" cssclass="sta_WF_title04" width="300"/>
+        <Button id="btn_search" taborder="2" text="조회" top="60" height="28" cssclass="btn_WF_require" width="65" right="20" onclick="btn_search_onclick"/>
+        <Static id="sta_noData" taborder="3" text="조회된 결과가 없습니다." left="37" top="162" width="526" height="348" textAlign="center" visible="true" onclick="sta_noData_onclick"/>
+        <Edit id="edt_maxCnt" taborder="5" left="405" top="61" height="26" text="1,000" textAlign="right" right="btn_search:4" enable="false" onkeyup="Div00_edt_maxCnt_onkeyup"/>
+        <Static id="sta_totcnt00" taborder="4" text="최대조회수" left="336" top="60" height="25" usedecorate="true" right="edt_maxCnt:4"/>
+        <Static id="totalPageCount" taborder="6" text="총 0건" left="20" top="60" width="80" usedecorate="true" height="25"/>
+        <Button id="btn_select" taborder="7" text="선택" width="60" right="270" height="30" cssclass="btn_WF_select" onclick="Div00_btn_select_onclick" top="grd_memOprInfo:10"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">1000</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_copy">
+        <ColumnInfo>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_PP_43
+/* 작 성 일 자 : 2022/03/14
+/* 작  성   자 : 이성민
+/* 설       명 : 조직조회 팝업
+/***********************************************************/
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;	//전체 카운트
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	this.edt_maxCnt.set_value("1,000"); //초기 1000으로 셋팅
+	//초기화
+	this.fn_initGrid();
+	this.fn_search(0);
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "btn_search_onclick",
+		ESC : "",
+		CTRL_ENTER : "",
+		SHIFT_ENTER : "Div00_btn_select_onclick",
+		SHIFT_S : "",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+	
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회
+this.fn_search = function(page) {
+	 var sSvcId = "selectOprtrOrgInfoList";  
+     var sUrl = "/co/select-oprtr-org-info-list.do";
+	 var inDs = "ds_search=ds_search"
+     var outDs = "ds_list=ds_output";
+     var arg; 
+     var callback = "fn_callBack";
+
+	 var rowCount = this.gfn_removeComma(this.edt_maxCnt.value);
+	 this.ds_search.setColumn(0, "ROW_COUNT", rowCount);
+	 this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+//콜백이벤트
+this.fn_callBack = function(svcID, errorCode, errorMsg){
+	if(svcID == "selectOprtrOrgInfoList"){
+		//trace(this.ds_sampleList.saveXML());
+		var rowCnt = 0;
+		
+		// 조회 카운트가 없으면 데이터셋이 날라감으로 강제 설정
+		if( this.ds_list.rowcount == 0 ) {	
+			this.ds_list.copyData(this.ds_list_copy);		
+			this.sta_noData.bringToFront();
+		} else {
+			this.sta_noData.sendToBack();
+			rowCnt = this.ds_list.rowcount;
+		}
+		
+		
+		this.fn_initGrid();
+		var sTotText =  "총 "+ this.gfn_appendComma(rowCnt, 0) +"건";
+		this.totalPageCount.set_text(sTotText);
+		
+		console.log(this.ds_list);
+
+	}
+}
+
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+
+	//grid 초기 설정	
+	this.grd_memOprInfo.uCellSizeType = "true";
+	
+}
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_resData = function() {
+
+	var resData = {};
+	var resString = "";
+	
+	resData.ORG_CD = this.ds_list.getColumn(this.ds_list.rowposition, "ORG_CD");
+	resData.ORG_NM = this.ds_list.getColumn(this.ds_list.rowposition, "ORG_NM");
+	
+	//json string 변경
+	resString = JSON.stringify(resData);	
+	
+	//return
+	this.close(resString);
+}
+
+//그리드 검색조건 셋팅
+this.fn_initGrid = function(){
+	this.ds_list.insertRow(0);
+	this.ds_list.setColumn(0, "ORG_CD",  this.ds_search.getColumn(0, "ORG_CD"));
+	this.ds_list.setColumn(0, "ORG_NM",  this.ds_search.getColumn(0, "ORG_NM"));
+	this.ds_list.set_rowposition(-1);
+	this.grd_memOprInfo.setFixedRow(0);
+};
+
+this.fn_searchMapSetting = function(){
+	this.ds_search.setColumn(0, "ORG_CD", this.ds_list.getColumn(0, "ORG_CD"));
+	this.ds_search.setColumn(0, "ORG_NM", this.ds_list.getColumn(0, "ORG_NM"));
+};
+
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//조회버튼
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+// 조회데이터셋 리셋
+this.div_search_btnClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.reset();
+};
+
+//그리드 더블클릭 이벤트
+this.grd_memOprInfo_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row != 0) {
+		this.fn_resData();
+	}	
+};
+
+//검색조건 ROW의 CELL 클릭 시 글자 맨 끝으로 커서 가도록
+this.grd_memOprInfo_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row == 0){
+		var cellText = obj.getCellText(e.row, e.cell);
+		if(cellText != undefined){
+			obj.setEditSelect(cellText.length, cellText.length);
+		}
+	}
+};
+
+//검색조건 ROW에서 enter 클릭 시 
+this.grd_memOprInfo_onenterdown = function(obj:nexacro.Grid,e:nexacro.GridEditEventInfo)
+{
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+this.Div00_btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var resData = {};
+	var resString = "";
+
+	if(this.ds_list.rowposition < 1){
+		alert("선택된 데이터가 없습니다.");
+		this.grd_memOprInfo.setFocus();
+		return;
+	}
+	
+	resData.ORG_CD = this.ds_list.getColumn(this.ds_list.rowposition, "ORG_CD");
+	resData.ORG_NM = this.ds_list.getColumn(this.ds_list.rowposition, "ORG_NM");
+	resString = JSON.stringify(resData);	
+	this.close(resString);
+};
+]]></Script>
+  </Form>
+</FDL>

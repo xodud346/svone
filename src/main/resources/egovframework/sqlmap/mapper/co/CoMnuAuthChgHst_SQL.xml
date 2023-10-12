@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CoMnuAuthChgHst">
+       <!--
+	******************************************************************************
+	* SELECT 	: 메뉴권한변경이력 데이터 개수 조회
+	* 작성자 		: 이상민
+	* 작성 일자 	: 2023-07-24
+	******************************************************************************
+	-->
+	<select id="selectMnuAuthChgHstListCount" parameterType="HashMap" resultType="int">
+		/* CoMnuAuthChgHst.selectMnuAuthChgHstListCount */
+		SELECT 	COUNT(*)		
+		FROM 	TB_CO_MNU_AUTH_CHG_HST	A
+		
+				LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+				ON 		A.CO_CD 	= B.CO_CD
+				AND		A.OPRTR_ID 	= B.OPRTR_ID
+				
+				INNER JOIN TB_CO_MBR_OPRTR_INFO C
+				ON 		A.CO_CD 	= C.CO_CD
+				AND		A.REGPSN_ID = C.OPRTR_ID
+				
+				<if test="orgCdCnt > 0">
+                INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S1
+                ON 		S1.SES_ID           = #{sesId}
+                AND 	S1.INQ_COND_DTLS    = #{inqCondDtls}
+                AND 	S1.COL_ITM          = 'ORG_CD'
+                AND 	A.ORG_CD 			LIKE '%' || S1.COND_DATA_VAL 
+                </if>
+                
+                <if test="oprtrIdCnt > 0">
+                INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+                ON 		S2.SES_ID           = #{sesId}
+                AND 	S2.INQ_COND_DTLS    = #{inqCondDtls}
+                AND 	S2.COL_ITM          = 'OPRTR_ID'
+                AND 	A.OPRTR_ID 			LIKE '%' || S2.COND_DATA_VAL 
+                </if>
+                
+		WHERE 	A.CO_CD 		= #{coCd}
+		AND		A.REG_DTM 		BETWEEN TO_DATE(#{strDtm} 	|| ' 00:00:00', 'YYYYMMDD HH24:MI:SS') AND TO_DATE(#{endDtm} || ' 23:59:59', 'YYYYMMDD HH24:MI:SS')
+		AND		A.AUTH_GRP_CD 	LIKE #{authGrpCd} 	|| '%'
+		AND		A.AUTH_ROLE_CD 	LIKE #{authRoleCd} 	|| '%'
+		AND		A.CHG_ITM 		LIKE #{chgItm} 		|| '%'
+		AND		A.CHG_SPR 		LIKE #{chgSpr} 		|| '%'
+		AND		NVL(A.RSN, ' ')	LIKE '%' || #{RSN} 	|| '%'
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT 	: 메뉴권한변경이력 조회
+	* 작성자 		: 이상민
+	* 작성 일자 	: 2023-07-24
+	******************************************************************************
+	-->
+	<select id="selectMnuAuthChgHstList" parameterType="HashMap" resultType="HashMap">
+		/* CoMnuAuthChgHst.selectMnuAuthChgHstList */
+		SELECT 	A.CHG_SEQ,
+				A.CHG_ITM		|| ' ' || FN_COM_DTL_CDNM(#{langCd}, 'CHG_ITM', 		A.CHG_ITM) 			AS CHG_ITM,
+				A.CHG_SPR 		|| ' ' || FN_COM_DTL_CDNM(#{langCd}, 'CHG_SPR', 		A.CHG_SPR) 			AS CHG_SPR,
+				A.AUTH_GRP_CD 	|| ' ' || FN_COM_DTL_CDNM(#{langCd}, 'AUTH_GRP_CD', 	A.AUTH_GRP_CD) 		AS AUTH_GRP_CD,
+				A.AUTH_ROLE_CD	|| ' ' || FN_COM_DTL_CDNM(#{langCd}, 'AUTH_ROLE_CD', 	A.AUTH_ROLE_CD) 	AS AUTH_ROLE_CD,
+				A.ORG_CD		|| ' ' || D.ORG_NM															AS ORG_CD,
+				A.OPRTR_ID 		|| ' ' || B.OPRTR_NM 														AS OPRTR_ID,
+				A.RSN,
+				A.REGPSN_ID 	|| ' ' || C.OPRTR_NM 														AS REGPSN_ID,
+				TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') 												AS REG_DTM
+				
+		FROM 	TB_CO_MNU_AUTH_CHG_HST	A
+		
+				LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO B
+				ON 		A.CO_CD 	= B.CO_CD
+				AND		A.OPRTR_ID 	= B.OPRTR_ID
+				
+				INNER JOIN TB_CO_MBR_OPRTR_INFO C
+				ON 		A.CO_CD 	= C.CO_CD
+				AND		A.REGPSN_ID = C.OPRTR_ID
+				
+				LEFT OUTER JOIN TB_CO_ORG_INFO D
+				ON 		A.CO_CD 	= D.CO_CD
+				AND		A.ORG_CD 	= D.ORG_CD
+				
+				<if test="orgCdCnt > 0">
+                INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S1
+                ON 		S1.SES_ID           = #{sesId}
+                AND 	S1.INQ_COND_DTLS    = #{inqCondDtls}
+                AND 	S1.COL_ITM          = 'ORG_CD'
+                AND 	A.ORG_CD 			LIKE '%' || S1.COND_DATA_VAL 
+                </if>
+                
+                <if test="oprtrIdCnt > 0">
+                INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+                ON 		S2.SES_ID           = #{sesId}
+                AND 	S2.INQ_COND_DTLS    = #{inqCondDtls}
+                AND 	S2.COL_ITM          = 'OPRTR_ID'
+                AND 	A.OPRTR_ID 			LIKE '%' || S2.COND_DATA_VAL 
+                </if>
+                
+		WHERE 	A.CO_CD 		= #{coCd}
+		AND		A.REG_DTM 		BETWEEN TO_DATE(#{strDtm} 	|| ' 00:00:00', 'YYYYMMDD HH24:MI:SS') AND TO_DATE(#{endDtm} || ' 23:59:59', 'YYYYMMDD HH24:MI:SS')
+		AND		A.AUTH_GRP_CD 	LIKE #{authGrpCd} 	|| '%'
+		AND		A.AUTH_ROLE_CD 	LIKE #{authRoleCd} 	|| '%'
+		AND		A.CHG_ITM 		LIKE #{chgItm} 		|| '%'
+		AND		A.CHG_SPR 		LIKE #{chgSpr} 		|| '%'
+		AND		NVL(A.RSN, ' ')	LIKE '%' || #{RSN} 	|| '%'
+		
+		<if test="sortColumn != null and sortColumn != '' ">
+         	ORDER BY ${sortColumn} ${sortType}
+        </if>
+        <if test="sortColumn == null or sortColumn == '' ">
+         	ORDER BY A.CHG_SEQ DESC, A.CHG_DTL_SEQ, A.AUTH_GRP_CD, A.AUTH_ROLE_CD, A.OPRTR_ID
+        </if>
+		<if test="startNum != null and startNum > -1">
+			OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+		</if>
+	</select>
+    
+</mapper>

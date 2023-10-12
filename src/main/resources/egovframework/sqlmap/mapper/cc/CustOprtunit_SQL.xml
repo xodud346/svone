@@ -1,0 +1,1866 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.cc.oprunit">
+
+<!--
+ ******************************************************************************
+ * SELECT   : 사업장+운영단위+부서 목록 
+ * 작성자   : 박성근
+ * 작성일자 : 2022-03-21
+ ******************************************************************************
+-->
+<select id="selectBzplcOprunitDept" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.fo.cc.oprunit.selectBzplcOprunitDept - 사업장+운영단위+부서 목록 */
+SELECT BZPL.CO_CD
+     , BZPL.GRP_ID
+     , BZPL.CORP_ID
+     
+     , BZPL.BZPLC_ID
+     , BZPL.BZPLC_NM
+     
+     , OPRU.OPR_UNIT_ID
+     , OPRU.OPR_UNIT_NM
+     
+     , BZPL.BZPLC_NM ||' > '|| OPRU.OPR_UNIT_NM    BZPLC_OPR_UNIT_NM
+     
+     , DEPT.DEPT_SRTSEQ
+     , DEPT.DEPT_ID
+     , DEPT.DEPT_NM
+     , DEPT.DEPT_ID ||' | '|| DEPT.DEPT_NM         DEPT_INFO
+     
+  FROM TB_CC_BZPLC_BASIS     BZPL
+     , TB_CC_OPR_UNIT_BASIS  OPRU
+     , (SELECT LEVEL         LVL
+             , ROWNUM        DEPT_SRTSEQ
+             , D.*
+          FROM (SELECT *
+                  FROM TB_CC_DEPT_BASIS
+                 WHERE USE_YN       = 'Y'
+                   AND CO_CD        = #{coCd     }
+                   AND BZPLC_ID     = #{bzplcId  }
+                   <if test='oprUnitId != null and !"".equals(oprUnitId.trim())'>AND OPR_UNIT_ID  =     #{oprUnitId}</if>
+               )   D
+         START WITH HRNK_DEPT_ID IS NULL
+               CONNECT BY NOCYCLE PRIOR CO_CD   = CO_CD
+                              AND PRIOR DEPT_ID = HRNK_DEPT_ID
+         ORDER SIBLINGS BY 
+               CO_CD
+             , BZPLC_ID
+             , OPR_UNIT_ID
+             , DEPT_SRT_SEQ  NULLS LAST
+             , HRNK_DEPT_ID  NULLS FIRST
+             , DEPT_NM
+       )  DEPT
+ WHERE BZPL.CO_CD = OPRU.CO_CD AND BZPL.BZPLC_ID = OPRU.BZPLC_ID
+   AND OPRU.CO_CD = DEPT.CO_CD AND OPRU.BZPLC_ID = DEPT.BZPLC_ID
+   
+   AND BZPL.CO_CD                = NVL(#{coCd     }, '1000')
+   AND BZPL.BZPLC_ID             =     #{bzplcId  }
+   <if test='oprUnitId != null and !"".equals(oprUnitId.trim())'>AND OPRU.OPR_UNIT_ID          =     #{oprUnitId}</if>
+   
+ ORDER BY
+       BZPL.GRP_ID       NULLS LAST
+     , BZPL.CORP_ID      NULLS LAST
+     , BZPL.BZPLC_ID     NULLS LAST
+     , OPRU.OPR_UNIT_ID  NULLS LAST
+     , DEPT.DEPT_SRTSEQ  NULLS LAST
+     , DEPT.DEPT_ID
+/* /com.ssp.fo.cc.oprunit.selectBzplcOprunitDept - 사업장+운영단위+부서 목록 */
+</select>
+
+   <!--
+    ******************************************************************************
+    * SELECT : 
+    * 작성자 : moonjooh
+    * 작성 일자 : 2022-02-16
+    ******************************************************************************
+    -->
+    <select id="selectCustOprunit" parameterType="HashMap" resultType="HashMap">
+        /* custOprunit.selectCustOprunit 운영단위목록 조회 */
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+        SELECT '0' AS CHK 
+        	, A.CO_CD																																		/* 회사코드 */
+        	, A.CUST_SPR_CD 																																/* 고객구분코드 */
+			, A.MAT_SPR_CD																																	/* 자재구분코드 */
+			, A.USE_YN 																																		/* 사용여부 */
+			, A.BZPLC_ID																																	/* 사업장ID */
+			, (SELECT B.BZPLC_NM FROM TB_CC_BZPLC_BASIS B WHERE B.CO_CD = A.CO_CD AND B.BZPLC_ID = A.BZPLC_ID) AS BZPLC_NM 									/* 사업장명 */
+			, A.OPR_UNIT_ID																																	/* 운영단위ID */
+			, A.OPR_UNIT_NM																																	/* 운영단위명 */
+			, A.SALS_CHR_CD																																	/* 영업담당ID(영업담당코드) */
+			, (SELECT SALS_CHR_NM FROM TB_CC_SALS_CHR_BASIS F WHERE F.SALS_CHR_CD = A.SALS_CHR_CD ) AS SALS_CHR_NM											/* 영업 담당명 */
+			, A.SALS_TEAM_CD																																/* 영업팀ID */
+			, (SELECT E.ORG_NM FROM TB_CO_MBR_OPRTR_ORG_INFO E WHERE E.CO_CD = A.CO_CD AND E.SALS_TEAM_CD = A.SALS_TEAM_CD ) SALS_TEAM_NM 					/* 영업팀명 */
+			, A.SVC_TEAM_CD																																	/* 서비스팀ID */
+			, (SELECT E.ORG_NM FROM TB_CO_MBR_OPRTR_ORG_INFO E WHERE E.CO_CD = A.CO_CD AND E.ORG_CD = A.SVC_TEAM_CD ) AS SVC_TEAM_NM 						/* 서비스팀명 */
+			, A.OPR_TEAM_CD																																	/* 운영팀ID */
+			, (SELECT E.ORG_NM FROM TB_CO_MBR_OPRTR_ORG_INFO E WHERE E.CO_CD = A.CO_CD AND E.ORG_CD = A.OPR_TEAM_CD ) AS OPR_TEAM_NM 						/* 운영팀명 */
+			, A.SALS_CHRPSN_ID																																/* 영업 담당자ID */
+			, (SELECT D.OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO D WHERE D.CO_CD = A.CO_CD AND D.OPRTR_ID = A.SALS_CHRPSN_ID AND ROWNUM=1) AS SALS_CHRPSN_NM 		/* 영업 담당자명 */
+			, A.SVC_CHRPSN_ID																																/* CS 담당ID */
+			, (SELECT D.OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO D WHERE D.CO_CD = A.CO_CD AND D.OPRTR_ID = A.SVC_CHRPSN_ID AND ROWNUM=1) AS SVC_CHRPSN_NM 		/* CS 담당명 */
+			, A.OPR_CHRPSN_ID																																/* 운영 담당ID */
+			, (SELECT D.OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO D WHERE D.CO_CD = A.CO_CD AND D.OPRTR_ID = A.OPR_CHRPSN_ID AND ROWNUM=1) AS OPR_CHRPSN_NM 		/* 운영 담당명 */
+		FROM TB_CC_OPR_UNIT_BASIS A
+		<if test=" bzplcId > 0 ">
+            JOIN
+            TB_OD_ODR_INQ_TGT_DTLS   T1
+            ON  T1.SES_ID = #{sesId}
+            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+            AND T1.COL_ITM = 'BZPLC_ID'
+            AND T1.COND_DATA_VAL = A.BZPLC_ID
+           </if>
+		<if test=" oprUnitId > 0 ">
+            JOIN
+            TB_OD_ODR_INQ_TGT_DTLS   T3
+            ON  T3.SES_ID = #{sesId}
+            AND T3.INQ_COND_DTLS = #{inqCondDtls}
+            AND T3.COL_ITM = 'OPR_UNIT_ID'
+            AND T3.COND_DATA_VAL = A.OPR_UNIT_ID
+           </if>
+		<where>
+            <if test='regStats != null and !regStats.equals("") and !"0".equals(regStats)'>
+	            A.OPR_UNIT_REG_STATS_CD = #{regStats}
+	        </if>
+            <if test="salsTeamId != null and !salsTeamId.equals('') ">
+                AND A.SALS_TEAM_CD = TRIM(#{salsTeamId})
+            </if>
+            <if test="svcTeamId != null and !svcTeamId.equals('') ">
+                AND A.SVC_TEAM_CD = TRIM(#{svcTeamId})
+            </if>
+            <if test="oprTeamId != null and !oprTeamId.equals('') ">
+                AND A.OPR_TEAM_CD = TRIM(#{oprTeamId})
+            </if>
+            <if test='matSprCd != null and !matSprCd.equals("") and !"0".equals(matSprCd)'>
+                AND A.MAT_SPR_CD = #{matSprCd}
+            </if>
+            <if test='useYn != null and !useYn.equals("") and !"A".equals(useYn)'>
+                AND A.USE_YN = #{useYn}
+            </if>
+	        <if test='custSprCd != null and !custSprCd.equals("") and !"0".equals(custSprCd)'>
+	            AND A.CUST_SPR_CD = #{custSprCd}
+	        </if>
+        </where>
+        <if test="sortColumn != null and sortColumn != ''"> 
+        ORDER BY ${sortColumn} ${sortType} 
+        </if> 
+        <if test="sortColumn == null or sortColumn == ''"> 
+        ORDER BY OPR_UNIT_ID
+        </if>
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+    </select>
+    
+    <select id="selectCustOprunitCount" parameterType="HashMap" resultType="int">
+        /* custOprunit.selectCustOprunitCount 운영단위목록 건수조회 - 미사용 */
+        SELECT COUNT(*)
+        FROM(
+	        SELECT A.OPR_UNIT_ID
+			FROM TB_CC_OPR_UNIT_BASIS A
+			<if test=" bzplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'BZPLC_ID'
+	            AND T1.COND_DATA_VAL = A.BZPLC_ID
+            </if>
+			<if test=" oprUnitId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T3
+	            ON  T3.SES_ID = #{sesId}
+	            AND T3.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T3.COL_ITM = 'OPR_UNIT_ID'
+	            AND T3.COND_DATA_VAL = A.OPR_UNIT_ID
+            </if>
+			<where>
+	            <if test='regStats != null and !regStats.equals("") and !"0".equals(regStats)'>
+		            A.OPR_UNIT_REG_STATS_CD = #{regStats}
+		        </if>
+	            
+	            <if test="salsTeamId != null and !salsTeamId.equals('') ">
+	                AND A.SALS_TEAM_CD = #{salsTeamId}
+	            </if>
+	            <if test="svcTeamId != null and !svcTeamId.equals('') ">
+	                AND A.SVC_TEAM_CD = #{svcTeamId}
+	            </if>
+	            <if test="oprTeamId != null and !oprTeamId.equals('') ">
+	                AND A.OPR_TEAM_CD = #{oprTeamId}
+	            </if>
+	            <if test='matSprCd != null and !matSprCd.equals("") and !"0".equals(matSprCd)'>
+	                AND A.MAT_SPR_CD = #{matSprCd}
+	            </if>
+	            <if test='useYn != null and !useYn.equals("") and !"A".equals(useYn)'>
+	                AND A.USE_YN = #{useYn}
+	            </if>
+	        </where>
+        ) LIST  
+        <where>
+	        <if test='custSprCd != null and !custSprCd.equals("") and !"0".equals(custSprCd)'>
+	            CUST_SPR_CD = #{custSprCd}
+	        </if>
+        </where>
+    </select>
+    
+	
+	
+<select id="selectOprunitBasis" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.cc.custOprunit.selectOprunitBasis */
+SELECT OPRA.*
+     , OPRA.BZPLC_ID       ||' | '|| OPRA.BZPLC_NM           BZPLC_INF        -- 사업장
+     , OPRA.OPR_UNIT_ID    ||' | '|| OPRA.OPR_UNIT_NM        OPR_UNIT_INF     -- 운영단위
+     , OPRA.SALS_TEAM_CD   ||' | '|| OPRA.SALS_TEAM_CD_NM    SALS_TEAM_INF    -- 영업팀코드
+     , OPRA.SVC_TEAM_CD    ||' | '|| OPRA.SVC_TEAM_CD_NM     SVC_TEAM_INF     -- 서비스팀코드
+     , OPRA.OPR_TEAM_CD    ||' | '|| OPRA.OPR_TEAM_CD_NM     OPR_TEAM_INF     -- 운영팀코드
+     , OPRA.SALS_CHR_CD    ||' | '|| OPRA.SALS_CHR_CD_NM     SALS_CHR_INF     -- 영업담당코드
+     , OPRA.SVC_CHR_CD     ||' | '|| OPRA.SVC_CHR_CD_NM      SVC_CHR_INF      -- 서비스담당코드
+     , OPRA.OPR_CHR_CD     ||' | '|| OPRA.OPR_CHR_CD_NM      OPR_CHR_INF      -- 운영담당코드
+     <!--  
+     , OPRA.SALS_CHRPSN_ID ||' | '|| OPRA.SALS_CHRPSN_ID_NM  SALS_CHRPSN_INF  - - 영업담당자ID
+     , OPRA.SVC_CHRPSN_ID  ||' | '|| OPRA.SVC_CHRPSN_ID_NM   SVC_CHRPSN_INF   - - 서비스담당자ID
+     , OPRA.OPR_CHRPSN_ID  ||' | '|| OPRA.OPR_CHRPSN_ID_NM   OPR_CHRPSN_INF   - - 운영담당자ID
+     -->
+     , OPRA.SALS_CHRPSN_INF  -- 영업담당자ID
+     , OPRA.SVC_CHRPSN_INF   -- 서비스담당자ID
+     , OPRA.OPR_CHRPSN_INF   -- 운영담당자ID
+     
+     , OPRA.DSTRB_PATH_CD  ||' | '|| OPRA.DSTRB_PATH_CD_NM     DSTRB_PATH_INF   -- 유통경로
+
+     , ATPC.ATFL_NM AS PC_LOGO_DOC_REG_ID_NM
+     , ATPC.DOC_REG_SEQ AS PC_LOGO_DOC_REG_SEQ
+     , ATPC.ATFL_STOR_PATH AS PC_DOC_REG_ID_ATFL_STOR_PATH
+     , ATPC.ORI_ATFL_NM AS PC_DOC_REG_ID_ORI_ATFL_NM
+
+     , ATMB.ATFL_NM AS MBL_LOGO_DOC_REG_ID_NM
+     , ATMB.DOC_REG_SEQ AS MBL_LOGO_DOC_REG_SEQ
+     , ATMB.ATFL_STOR_PATH AS MBL_DOC_REG_ID_ATFL_STOR_PATH
+     , ATMB.ORI_ATFL_NM AS MBL_DOC_REG_ID_ORI_ATFL_NM
+
+  FROM (SELECT OPRU.CO_CD
+             , OPRU.BZPLC_ID                        , BZPL.BZPLC_NM        , NVL(BZPL.BZPLC_NM, NVL(OPRU.BZPLC_ID, '-'))  BZPLC_ID_NM
+             , OPRU.OPR_UNIT_ID                                            , OPRU.OPR_UNIT_NM                             OPR_UNIT_ID_NM
+             , OPRU.OPR_UNIT_NM
+             , OPRU.ZPCD
+             , OPRU.REPR_ADDR
+             , OPRU.DTL_ADDR
+             
+<!--              , NVL(OPRU.SALS_TEAM_CD         ,  '-')  SALS_TEAM_CD         , NVL((SELECT SALS_TEAM_NM FROM TB_CC_SALS_TEAM_BASIS    WHERE                      SALS_TEAM_CD=OPRU.SALS_TEAM_CD  ), NVL(OPRU.SALS_TEAM_CD   , '-'))  SALS_TEAM_CD_NM    - - 영업팀코드 -->
+             , NVL(OPRU.SALS_TEAM_CD         ,  '-')  SALS_TEAM_CD         , NVL(SLTM.ORG_NM               , NVL(SLTM.ORG_CD               ,  '-'))  SALS_TEAM_CD_NM    -- 영업팀코드
+             , NVL(OPRU.SVC_TEAM_CD          ,  '-')  SVC_TEAM_CD          , NVL((SELECT ORG_NM       FROM TB_CO_MBR_OPRTR_ORG_INFO WHERE CO_CD=OPRU.CO_CD AND ORG_CD      =OPRU.SVC_TEAM_CD   ), '-')  SVC_TEAM_CD_NM     -- 서비스팀코드
+             , NVL(OPRU.OPR_TEAM_CD          ,  '-')  OPR_TEAM_CD          , NVL((SELECT ORG_NM       FROM TB_CO_MBR_OPRTR_ORG_INFO WHERE CO_CD=OPRU.CO_CD AND ORG_CD      =OPRU.OPR_TEAM_CD   ), '-')  OPR_TEAM_CD_NM     -- 운영팀코드
+             
+             , NVL(OPRU.SALS_CHR_CD          ,  '-')  SALS_CHR_CD          , NVL((SELECT SALS_CHR_NM  FROM TB_CC_SALS_CHR_BASIS     WHERE                      SALS_CHR_CD =OPRU.SALS_CHR_CD   ), NVL(OPRU.SALS_CHR_CD    , '-'))  SALS_CHR_CD_NM     -- 영업담당코드
+             , NVL(NULL                      ,  '-')  SVC_CHR_CD           , '-'  SVC_CHR_CD_NM  -- 서비스담당코드
+             , NVL(NULL                      ,  '-')  OPR_CHR_CD           , '-'  OPR_CHR_CD_NM  -- 운영담당코드
+             
+             <!--
+             , NVL(OPRU.SALS_CHRPSN_ID       ,  '-')  SALS_CHRPSN_ID       , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=OPRU.CO_CD AND OPRTR_ID=OPRU.SALS_CHRPSN_ID AND USR_SPR_CD='1'), NVL(OPRU.SALS_CHRPSN_ID , '-'))  SALS_CHRPSN_ID_NM  - - 영업담당자ID
+             , NVL(OPRU.SVC_CHRPSN_ID        ,  '-')  SVC_CHRPSN_ID        , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=OPRU.CO_CD AND OPRTR_ID=OPRU.SVC_CHRPSN_ID  AND USR_SPR_CD='2'), NVL(OPRU.SVC_CHRPSN_ID  , '-'))  SVC_CHRPSN_ID_NM   - - 서비스담당자ID
+             , NVL(OPRU.OPR_CHRPSN_ID        ,  '-')  OPR_CHRPSN_ID        , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=OPRU.CO_CD AND OPRTR_ID=OPRU.OPR_CHRPSN_ID  AND USR_SPR_CD='5'), NVL(OPRU.OPR_CHRPSN_ID  , '-'))  OPR_CHRPSN_ID_NM   - - 운영담당자ID
+             -->
+             , NVL(OPTR.SALS_OPRTR_INF    , '- | -')  SALS_CHRPSN_INF  -- 영업담당자 ID
+             , NVL(OPTR.SVC_OPRTR_INF     , '- | -')  SVC_CHRPSN_INF   -- 서비스담당자ID
+             , NVL(OPTR.OPR_OPRTR_INF     , '- | -')  OPR_CHRPSN_INF   -- 운영담당자ID
+             
+             , NVL(OPRU.TAXINV_PUBC_SPR_CD   ,  '-')  TAXINV_PUBC_SPR_CD   , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'TAXINV_PUBC_SPR_CD'   , OPRU.TAXINV_PUBC_SPR_CD   ,  '-') FROM DUAL)  TAXINV_PUBC_SPR_CD_NM
+             , NVL(OPRU.TAXINV_PUBC_SYS_CD   ,  '-')  TAXINV_PUBC_SYS_CD   , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'TAXINV_PUBC_SYS_CD'   , OPRU.TAXINV_PUBC_SYS_CD   ,  '-') FROM DUAL)  TAXINV_PUBC_SYS_CD_NM
+             , NVL(OPRU.TAXINV_PUBC_SYS_NM   ,  '-')  TAXINV_PUBC_SYS_NM   
+             , NVL(OPRU.ADJ_SPR_CD           ,  '-')  ADJ_SPR_CD           , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'ADJ_SPR_CD'           , OPRU.ADJ_SPR_CD           ,  '-') FROM DUAL)  ADJ_SPR_CD_NM
+             , NVL(OPRU.ADJ_DD               ,  '-')  ADJ_DD               , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'ADJ_DD_CD'            , OPRU.ADJ_DD               ,  '-') FROM DUAL)  ADJ_DD_NM
+             , NVL(OPRU.BILCLT_COND_CD       ,  '-')  BILCLT_COND_CD       , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'BILCLT_COND_CD'       , OPRU.BILCLT_COND_CD       ,  '-') FROM DUAL)  BILCLT_COND_CD_NM
+             , NVL(OPRU.MAT_SPR_CD           ,  '-')  MAT_SPR_CD           , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'MAT_SPR_CD'           , OPRU.MAT_SPR_CD           ,  '-') FROM DUAL)  MAT_SPR_CD_NM
+<!--              , NVL(OPRU.ERP_CUST_CD          ,  '-')  ERP_CUST_CD         , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'ERP_CUST_CD'          , OPRU.ERP_CUST_CD          ,  '-') FROM DUAL)  ERP_CUST_CD_NM -->
+<!--              , NVL(OPRU.MALL_ID              ,  '-')  MALL_ID -->
+             , NVL(OPRU.OPR_UNIT_MALL_SPR_CD , '10')  OPR_UNIT_MALL_SPR_CD , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'MALL_SPR_CD'          , OPRU.OPR_UNIT_MALL_SPR_CD ,  '-') FROM DUAL)  OPR_UNIT_MALL_SPR_CD_NM
+             , NVL(OPRU.USE_YN               ,  '-')  USE_YN               , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'USE_YN'               , OPRU.USE_YN               ,  '-') FROM DUAL)  USE_YN_NM
+             , NVL(OPRU.OPR_UNIT_REG_STATS_CD,  '-')  OPR_UNIT_REG_STATS_CD, (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'OPR_UNIT_REG_STATS_CD', OPRU.OPR_UNIT_REG_STATS_CD,  '-') FROM DUAL)  OPR_UNIT_REG_STATS_CD_NM
+             
+             , NVL(OPRU.DOMD_EXP_SPR_CD      ,  '-')  DOMD_EXP_SPR_CD      , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'DOMD_EXP_SPR_CD'      , OPRU.DOMD_EXP_SPR_CD      ,  '-') FROM DUAL)  DOMD_EXP_SPR_CD_NM
+             , NVL(OPRU.DSTRB_PATH_CD        ,  '-')  DSTRB_PATH_CD        , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'DSTRB_PATH_CD'        , OPRU.DSTRB_PATH_CD        ,  '-') FROM DUAL)  DSTRB_PATH_CD_NM
+             , NVL(OPRU.TRSF_YN              ,  '-')  TRSF_YN              , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'TRSF_YN'              , OPRU.TRSF_YN              ,  '-') FROM DUAL)  TRSF_YN_NM
+             , NVL(OPRU.CURR_UNIT_CD         ,  '-')  CURR_UNIT_CD         , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'CURR_UNIT_CD'         , OPRU.CURR_UNIT_CD         ,  '-') FROM DUAL)  CURR_UNIT_CD_NM
+             , NVL(OPRU.CUST_SPR_CD          ,  '-')  CUST_SPR_CD          , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'CUST_SPR_CD'          , OPRU.CUST_SPR_CD          ,  '-') FROM DUAL)  CUST_SPR_CD_NM
+             
+             , OPRU.REG_DTM, OPRU.REGPSN_ID, (SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=OPRU.CO_CD AND OPRTR_ID=OPRU.REGPSN_ID)  REGPSN_ID_NM
+             , OPRU.UPD_DTM, OPRU.UPDPSN_ID, (SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=OPRU.CO_CD AND OPRTR_ID=OPRU.UPDPSN_ID)  UPDPSN_ID_NM
+             
+             , NVL(OPCA.HDV_DLV_USE_YN       ,  '-')  HDV_DLV_USE_YN       , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'HDV_DLV_USE_YN'       , OPCA.HDV_DLV_USE_YN       ,  '-') FROM DUAL)  HDV_DLV_USE_YN_NM     -- 택배배송사용여부
+             , NVL(OPCA.SRVON_OCAR_UT_YN     ,  '-')  SRVON_OCAR_UT_YN     , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'SRVON_OCAR_UT_YN'     , OPCA.SRVON_OCAR_UT_YN     ,  '-') FROM DUAL)  SRVON_OCAR_UT_YN_NM   -- 서브원자차이용여부
+             ,     OPCA.CART_PHS_CTS         /* 카트문구내용 */
+             
+             ,     RPTB.RPT_ID             , RPTB.RPT_NM   , RPTB.RPT_URL  , RPTB.SALSPRC_YN  /* 출고거래명세서 */
+
+             , NVL(OPRU.LOGN_AFTH_FST_PAGE_USEYN, 'N') AS FST_PAGE_USEYN
+             , OPRU.LOGN_AFTH_FST_PAGE_PC_URL AS FST_PAGE_PC_URL
+             , OPRU.LOGN_AFTH_FST_PAGE_MBL_URL AS FST_PAGE_MBL_URL
+             , OPRU.PC_LOGO_DOC_REG_ID AS PC_LOGO_DOC_REG_ID
+             , OPRU.MBL_LOGO_DOC_REG_ID AS MBL_LOGO_DOC_REG_ID
+
+          FROM TB_CC_OPR_UNIT_BASIS          OPRU
+             , TB_CC_OPR_UNIT_CTL_AUTH_INFO  OPCA
+             , TB_CC_BZPLC_BASIS             BZPL
+             , TB_CO_GO_STM_MST              RPTB
+             
+             , TB_CO_MBR_OPRTR_ORG_INFO      SLTM
+             
+             , (SELECT CO_CD, BZPLC_ID, OPR_UNIT_ID
+                     , LISTAGG(DISTINCT SALS_OPRTR_INF, CHR(13)||CHR(10)) WITHIN GROUP(ORDER BY PRC_MNG_CHR_YN DESC, SALS_OPRTR_INF)  SALS_OPRTR_INF
+                     , LISTAGG(DISTINCT SVC_OPRTR_INF , CHR(13)||CHR(10)) WITHIN GROUP(ORDER BY PRC_MNG_CHR_YN DESC, SVC_OPRTR_INF )  SVC_OPRTR_INF
+                     , LISTAGG(DISTINCT OPR_OPRTR_INF , CHR(13)||CHR(10)) WITHIN GROUP(ORDER BY PRC_MNG_CHR_YN DESC, OPR_OPRTR_INF )  OPR_OPRTR_INF
+                  FROM (SELECT DISTINCT
+                               CO_CD, BZPLC_ID, OPR_UNIT_ID
+                             , USR_SPR_CD
+                             , NVL(MAX(PRC_MNG_CHR_YN) OVER(PARTITION BY CO_CD, BZPLC_ID, OPR_UNIT_ID, USR_SPR_CD, OPRTR_ID, OPRTR_NM, OPRTR_INF), 'N')  PRC_MNG_CHR_YN
+                             , OPRTR_ID, OPRTR_NM, OPRTR_INF
+                             , DECODE(USR_SPR_CD, '1', OPRTR_ID ||' | '|| OPRTR_NM)  SALS_OPRTR_INF
+                             , DECODE(USR_SPR_CD, '2', OPRTR_ID ||' | '|| OPRTR_NM)  SVC_OPRTR_INF
+                             , DECODE(USR_SPR_CD, '5', OPRTR_ID ||' | '|| OPRTR_NM)  OPR_OPRTR_INF
+                          FROM (SELECT OPRT.CO_CD, OPRT.BZPLC_ID, OPRT.OPR_UNIT_ID
+                                     , OPRT.USR_SPR_CD||''  USR_SPR_CD
+                                     , OPRT.PRC_MNG_CHR_YN
+                                     , OPRT.OPRTR_ID, OPRT.OPRTR_NM, OPRT.OPRTR_ID ||' | '|| OPRT.OPRTR_NM  OPRTR_INF
+                                  FROM (SELECT OPUB.CO_CD, OPUB.BZPLC_ID, OPUB.OPR_UNIT_ID
+                                             , 'Y'  PRC_MNG_CHR_YN
+                                             , OPUB.SALS_CHRPSN_ID  SALS_CHRPSN_ID, NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=OPUB.CO_CD AND OPRTR_ID=OPUB.SALS_CHRPSN_ID), OPUB.SALS_CHRPSN_ID)  SALS_CHRPSN_NM
+                                             , OPUB.SVC_CHRPSN_ID   SVC_CHRPSN_ID , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=OPUB.CO_CD AND OPRTR_ID=OPUB.SVC_CHRPSN_ID ), OPUB.SVC_CHRPSN_ID )  SVC_CHRPSN_NM
+                                             , OPUB.OPR_CHRPSN_ID   OPR_CHRPSN_ID , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD=OPUB.CO_CD AND OPRTR_ID=OPUB.OPR_CHRPSN_ID ), OPUB.OPR_CHRPSN_ID )  OPR_CHRPSN_NM
+                                          FROM TB_CC_OPR_UNIT_BASIS  OPUB
+                                         WHERE OPUB.CO_CD       = #{coCd     }
+                                           AND OPUB.BZPLC_ID    = #{bzplcId  } 
+                                           AND OPUB.OPR_UNIT_ID = #{oprUnitId}
+                                       )
+                                 UNPIVOT ((OPRTR_ID, OPRTR_NM) FOR USR_SPR_CD IN (
+                                             (SALS_CHRPSN_ID, SALS_CHRPSN_NM)   AS 1  /* 영업담당   */
+                                           , (SVC_CHRPSN_ID , SVC_CHRPSN_NM )   AS 2  /* 서비스담당 */
+                                           , (OPR_CHRPSN_ID , OPR_CHRPSN_NM )   AS 5  /* 운영담당   */
+                                 )       )    OPRT
+                                 UNION 
+                                SELECT DISTINCT
+                                       OPRH.CO_CD, OPRH.BZPLC_ID, OPRH.OPR_UNIT_ID
+                                     , OMIF.USR_SPR_CD||''  USR_SPR_CD
+                                     , OPRH.PRC_MNG_CHR_YN
+                                     , OMIF.OPRTR_ID, OMIF.OPRTR_NM, OMIF.OPRTR_ID ||' | '|| OMIF.OPRTR_NM  OPRTR_INF
+                                  FROM TB_CC_OPR_UNIT_CCO_HELPER_INFO  OPRH
+                                     , TB_CO_MBR_OPRTR_INFO            OMIF
+                                 WHERE OPRH.CO_CD=OMIF.CO_CD AND OPRH.OPRTR_ID=OMIF.OPRTR_ID
+                                   AND OPRH.CO_CD       = #{coCd     }
+                                   AND OPRH.BZPLC_ID    = #{bzplcId  } 
+                                   AND OPRH.OPR_UNIT_ID = #{oprUnitId}
+                       )       )
+                 GROUP BY
+                       CO_CD, BZPLC_ID, OPR_UNIT_ID
+              )  OPTR
+         WHERE OPRU.CO_CD       = OPCA.CO_CD      (+)
+           AND OPRU.BZPLC_ID    = OPCA.BZPLC_ID   (+)
+           AND OPRU.OPR_UNIT_ID = OPCA.OPR_UNIT_ID(+)
+           
+           AND OPRU.CO_CD       = BZPL.CO_CD      (+)
+           AND OPRU.BZPLC_ID    = BZPL.BZPLC_ID   (+)
+           AND ROWNUM           = 1
+           
+           AND OPRU.CO_CD=SLTM.CO_CD(+) AND OPRU.SALS_TEAM_CD=SLTM.SALS_TEAM_CD(+)
+           
+           AND OPRU.CO_CD       = OPTR.CO_CD      (+)
+           AND OPRU.BZPLC_ID    = OPTR.BZPLC_ID   (+)
+           AND OPRU.OPR_UNIT_ID = OPTR.OPR_UNIT_ID(+)
+           
+           AND OPCA.RPT_ID      = RPTB.RPT_ID     (+)  /* 출고거래명세서 */
+           
+           AND OPRU.CO_CD       = #{coCd     }
+           AND OPRU.BZPLC_ID    = #{bzplcId  }
+           AND OPRU.OPR_UNIT_ID = #{oprUnitId}
+       )   OPRA
+  , TB_CO_ATFL_DTLS ATPC
+  , TB_CO_ATFL_DTLS ATMB
+  WHERE OPRA.PC_LOGO_DOC_REG_ID = ATPC.DOC_REG_ID(+) AND ATPC.DOC_REG_SEQ(+) = '1'
+    AND OPRA.MBL_LOGO_DOC_REG_ID = ATMB.DOC_REG_ID(+) AND ATMB.DOC_REG_SEQ(+) = '1'
+/* /com.ssp.bo.cc.custOprunit.selectOprunitBasis */
+</select>
+
+
+<select id="selectRefCdGrp" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.cc.custOprunit.selectRefCdGrp */
+SELECT     REFB.CO_CD
+     ,     REFB.BZPLC_ID
+     ,     REFB.OPR_UNIT_ID
+     ,     REFB.REF_CD_GRP_SEQ
+     ,     REFC.REF_CD_GRP_SEQ       REF_CD_GRP_SEQ_EXIST
+     ,     REFC.REF_CD_GRP_NM
+     , NVL(REFC.USE_YN             , REFB.DFLT_USE_YN             )  USE_YN             , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'USE_YN'             , NVL(REFC.USE_YN             , REFB.DFLT_USE_YN             ), '-') FROM DUAL)  USE_YN_NM
+     , NVL(REFC.MAND_YN            , REFB.DFLT_MAND_YN            )  MAND_YN            , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'MAND_YN'            , NVL(REFC.MAND_YN            , REFB.DFLT_MAND_YN            ), '-') FROM DUAL)  MAND_YN_NM
+     , NVL(REFC.REF_CD_CHG_TGT_CD  , REFB.DFLT_REF_CD_CHG_TGT_CD  )  REF_CD_CHG_TGT_CD  , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'REF_CD_CHG_TGT_CD'  , NVL(REFC.REF_CD_CHG_TGT_CD  , REFB.DFLT_REF_CD_CHG_TGT_CD  ), '-') FROM DUAL)  REF_CD_CHG_TGT_CD_NM
+     , NVL(REFC.REF_CD_EXPS_MTHD_CD, REFB.DFLT_REF_CD_EXPS_MTHD_CD)  REF_CD_EXPS_MTHD_CD, (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'REF_CD_EXPS_MTHD_CD', NVL(REFC.REF_CD_EXPS_MTHD_CD, REFB.DFLT_REF_CD_EXPS_MTHD_CD), '-') FROM DUAL)  REF_CD_EXPS_MTHD_CD_NM
+     
+     , REFC.REGPSN_ID, NVL((SELECT FN_CC_GET_MBR_NM(REFC.CO_CD, REFC.REGPSN_ID) FROM DUAL), REFC.REGPSN_ID)  REGPSN_ID_NM, TO_CHAR(REFC.REG_DTM, 'YYYY-MM-DD HH24:MI:SS')  REG_DTM
+     , REFC.UPDPSN_ID, NVL((SELECT FN_CC_GET_MBR_NM(REFC.CO_CD, REFC.UPDPSN_ID) FROM DUAL), REFC.UPDPSN_ID)  UPDPSN_ID_NM, TO_CHAR(REFC.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS')  UPD_DTM
+     
+  FROM (SELECT NVL(#{coCd     }, '1000')  CO_CD
+             ,     #{bzplcId  }           BZPLC_ID
+             ,     #{oprUnitId}           OPR_UNIT_ID
+             , LEVEL                      REF_CD_GRP_SEQ
+             , 'N'                        DFLT_USE_YN
+             , 'N'                        DFLT_MAND_YN
+             , '30'                       DFLT_NO_CHAR_SPR_CD
+             , '1'                        DFLT_REF_CD_CHG_TGT_CD
+             , '2'                        DFLT_REF_CD_EXPS_MTHD_CD
+          FROM DUAL CONNECT BY 5 >= LEVEL
+       )  REFB
+     , TB_CC_CCO_REF_CD_INFO  REFC
+ WHERE REFB.CO_CD          = REFC.CO_CD         (+)
+   AND REFB.BZPLC_ID       = REFC.BZPLC_ID      (+)
+   AND REFB.OPR_UNIT_ID    = REFC.OPR_UNIT_ID   (+)
+   AND REFB.REF_CD_GRP_SEQ = REFC.REF_CD_GRP_SEQ(+)
+ ORDER BY
+       REFB.REF_CD_GRP_SEQ
+/* /com.ssp.bo.cc.custOprunit.selectRefCdGrp */
+</select>
+
+
+<select id="selectOshtCd" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.cc.oprunit.selectOshtCd */
+SELECT     OSHT.OSHT_CD_ID
+     ,     OSBS.CO_CD
+     ,     OSBS.BZPLC_ID
+     ,     OSBS.OPR_UNIT_ID
+     ,     OSBS.OSHT_CD_SEQ
+     ,     OSHT.OSHT_CD_NM
+     , NVL(OSHT.USE_YN        , OSBS.DFLT_USE_YN        )  USE_YN             , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'USE_YN'        , NVL(OSHT.USE_YN        , OSBS.DFLT_USE_YN        ), '-') FROM DUAL)  USE_YN_NM
+     , NVL(OSHT.MAND_YN       , OSBS.DFLT_MAND_YN       )  MAND_YN            , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'MAND_YN'       , NVL(OSHT.MAND_YN       , OSBS.DFLT_MAND_YN       ), '-') FROM DUAL)  MAND_YN_NM
+     , NVL(OSHT.NO_CHAR_SPR_CD, OSBS.DFLT_NO_CHAR_SPR_CD)  NO_CHAR_SPR_CD     , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'NO_CHAR_SPR_CD', NVL(OSHT.NO_CHAR_SPR_CD, OSBS.DFLT_NO_CHAR_SPR_CD), '-') FROM DUAL)  NO_CHAR_SPR_NM
+     ,     OSHT.MAX_IPT_LEN
+     
+     , OSHT.REGPSN_ID, NVL((SELECT FN_CC_GET_MBR_NM(OSHT.CO_CD, OSHT.REGPSN_ID) FROM DUAL), OSHT.REGPSN_ID)  REGPSN_ID_NM, TO_CHAR(OSHT.REG_DTM, 'YYYY-MM-DD HH24:MI:SS')  REG_DTM
+     , OSHT.UPDPSN_ID, NVL((SELECT FN_CC_GET_MBR_NM(OSHT.CO_CD, OSHT.UPDPSN_ID) FROM DUAL), OSHT.UPDPSN_ID)  UPDPSN_ID_NM, TO_CHAR(OSHT.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS')  UPD_DTM
+     
+  FROM (SELECT NVL(#{coCd     }, '1000')  CO_CD
+             ,     #{bzplcId  }           BZPLC_ID
+             ,     #{oprUnitId}           OPR_UNIT_ID
+             , LEVEL                      OSHT_CD_SEQ
+             , 'N'                        DFLT_USE_YN
+             , 'N'                        DFLT_MAND_YN
+             , '30'                       DFLT_NO_CHAR_SPR_CD
+          FROM DUAL CONNECT BY 5 >= LEVEL
+       )   OSBS
+     , TB_CC_CCO_OSHT_CD_INFO     OSHT
+ WHERE OSBS.CO_CD       = OSHT.CO_CD      (+)
+   AND OSBS.BZPLC_ID    = OSHT.BZPLC_ID   (+)
+   AND OSBS.OPR_UNIT_ID = OSHT.OPR_UNIT_ID(+)
+   AND OSBS.OSHT_CD_SEQ = OSHT.OSHT_CD_SEQ(+)
+ ORDER BY
+       OSBS.CO_CD
+     , OSBS.BZPLC_ID
+     , OSBS.OPR_UNIT_ID
+     , OSBS.OSHT_CD_SEQ
+/* /com.ssp.bo.cc.oprunit.selectOshtCd */
+</select>
+
+<select id="selectStlMeanCd" parameterType="HashMap" resultType="HashMap">
+	SELECT LISTAGG(C.COM_DTL_CD_NM, CHR(13)||CHR(10)) WITHIN GROUP(ORDER BY C.COM_DTL_CD_NM) AS STL_MEAN_NM
+	  FROM TB_CC_OPR_UNIT_STL_MEAN_INFO
+	  LEFT OUTER JOIN TB_CO_COM_CD_DTL C
+			ON (C.LANG_CD = 'KO' AND C.COM_CLSF_CD = 'STL_MEAN_CD' AND C.COM_DTL_CD = STL_MEAN_CD)
+	 WHERE CO_CD 		= NVL(#{coCd }, '1000')
+	   AND BZPLC_ID		= #{bzplcId  }
+	   AND OPR_UNIT_ID 	= #{oprUnitId}
+</select>
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<!-- saveOprunitDetail                                                                                                                 -->
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<update id="saveOprunitBasis" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveOprunitBasis       */
+MERGE INTO TB_CC_OPR_UNIT_BASIS   TRGT
+USING ( SELECT #{CO_CD                     }  CO_CD
+             , #{BZPLC_ID                  }  BZPLC_ID
+             , #{OPR_UNIT_ID               }  OPR_UNIT_ID
+             
+             , #{OPR_UNIT_MALL_SPR_CD      }  OPR_UNIT_MALL_SPR_CD
+
+             , #{FST_PAGE_USEYN            }  LOGN_AFTH_FST_PAGE_USEYN
+             , #{FST_PAGE_PC_URL           }  LOGN_AFTH_FST_PAGE_PC_URL
+             , #{FST_PAGE_MBL_URL          }  LOGN_AFTH_FST_PAGE_MBL_URL
+             , #{PC_LOGO_DOC_REG_ID        }  PC_LOGO_DOC_REG_ID
+             , #{MBL_LOGO_DOC_REG_ID       }  MBL_LOGO_DOC_REG_ID
+             
+             , NVL(#{regpsnId }, 'X0025958')  REGPSN_ID
+             , SYSTIMESTAMP                   REG_DTM
+             , NVL(#{updpsnId }, 'X0025958')  UPDPSN_ID
+             , SYSTIMESTAMP                   UPD_DTM
+          FROM DUAL
+      )    INPT
+   ON (    INPT.CO_CD       = TRGT.CO_CD
+       AND INPT.BZPLC_ID    = TRGT.BZPLC_ID
+       AND INPT.OPR_UNIT_ID = TRGT.OPR_UNIT_ID
+      )
+ WHEN     MATCHED THEN
+      UPDATE SET
+             OPR_UNIT_MALL_SPR_CD       = INPT.OPR_UNIT_MALL_SPR_CD
+           , LOGN_AFTH_FST_PAGE_USEYN   = INPT.LOGN_AFTH_FST_PAGE_USEYN
+           , LOGN_AFTH_FST_PAGE_PC_URL  = INPT.LOGN_AFTH_FST_PAGE_PC_URL
+           , LOGN_AFTH_FST_PAGE_MBL_URL = INPT.LOGN_AFTH_FST_PAGE_MBL_URL
+           , PC_LOGO_DOC_REG_ID         = INPT.PC_LOGO_DOC_REG_ID
+           , MBL_LOGO_DOC_REG_ID        = INPT.MBL_LOGO_DOC_REG_ID
+           , UPDPSN_ID                  = INPT.UPDPSN_ID
+           , UPD_DTM                    = INPT.UPD_DTM
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , BZPLC_ID
+           , OPR_UNIT_ID
+           , OPR_UNIT_MALL_SPR_CD
+           , LOGN_AFTH_FST_PAGE_USEYN
+           , LOGN_AFTH_FST_PAGE_PC_URL
+           , LOGN_AFTH_FST_PAGE_MBL_URL
+           , PC_LOGO_DOC_REG_ID
+           , MBL_LOGO_DOC_REG_ID
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.BZPLC_ID
+           , INPT.OPR_UNIT_ID
+           , INPT.OPR_UNIT_MALL_SPR_CD
+           , INPT.LOGN_AFTH_FST_PAGE_USEYN
+           , INPT.LOGN_AFTH_FST_PAGE_PC_URL
+           , INPT.LOGN_AFTH_FST_PAGE_MBL_URL
+           , INPT.PC_LOGO_DOC_REG_ID
+           , INPT.MBL_LOGO_DOC_REG_ID
+           , INPT.REGPSN_ID
+           , INPT.REG_DTM
+           , INPT.UPDPSN_ID
+           , INPT.UPD_DTM
+      )
+/* /com.ssp.bo.cc.custOprunit.saveOprunitBasis       */
+</update>
+
+<update id="saveCtlAuthInfo4Parts" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveCtlAuthInfo4Parts */
+MERGE INTO TB_CC_OPR_UNIT_CTL_AUTH_INFO  TRGT
+USING ( SELECT #{CO_CD                     }  CO_CD
+             , #{BZPLC_ID                  }  BZPLC_ID
+             , #{OPR_UNIT_ID               }  OPR_UNIT_ID
+             
+             , #{SRVON_OCAR_UT_YN          }  SRVON_OCAR_UT_YN  <!-- // 제어권한 > 서브원자차이용여부 SRVON_OCAR_UT_YN     -->
+             , #{HDV_DLV_USE_YN            }  HDV_DLV_USE_YN    <!-- // 제어권한 > 택배배송사용여부   HDV_DLV_USE_YN       -->
+             , #{CART_PHS_CTS              }  CART_PHS_CTS      <!-- // 제어권한 > 카트문구내용       CART_PHS_CTS         -->
+             
+             , #{RPT_ID                    }  RPT_ID            <!-- /* 출고거래명세서                                  */ -->
+             
+             , NVL(#{regpsnId }, 'X0025958')  REGPSN_ID       , SYSTIMESTAMP  REG_DTM
+             , NVL(#{updpsnId }, 'X0025958')  UPDPSN_ID       , SYSTIMESTAMP  UPD_DTM
+          FROM DUAL
+      )    INPT
+   ON (    INPT.CO_CD       = TRGT.CO_CD
+       AND INPT.BZPLC_ID    = TRGT.BZPLC_ID
+       AND INPT.OPR_UNIT_ID = TRGT.OPR_UNIT_ID
+      )
+ WHEN     MATCHED THEN
+      UPDATE SET
+             SRVON_OCAR_UT_YN     = INPT.SRVON_OCAR_UT_YN
+           , HDV_DLV_USE_YN       = INPT.HDV_DLV_USE_YN
+           , CART_PHS_CTS         = INPT.CART_PHS_CTS
+           , RPT_ID               = INPT.RPT_ID
+             
+           , UPDPSN_ID            = INPT.UPDPSN_ID
+           , UPD_DTM              = INPT.UPD_DTM
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , BZPLC_ID
+           , OPR_UNIT_ID
+           
+           , SRVON_OCAR_UT_YN
+           , HDV_DLV_USE_YN
+           , CART_PHS_CTS
+           , RPT_ID
+           
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.BZPLC_ID
+           , INPT.OPR_UNIT_ID
+           
+           , INPT.SRVON_OCAR_UT_YN
+           , INPT.HDV_DLV_USE_YN
+           , INPT.CART_PHS_CTS
+           , INPT.RPT_ID
+           
+           , INPT.REGPSN_ID
+           , INPT.REG_DTM
+           , INPT.UPDPSN_ID
+           , INPT.UPD_DTM
+       )
+/* /com.ssp.bo.cc.custOprunit.saveCtlAuthInfo4Parts */
+</update>
+
+<insert id="saveRefCdGrp"       parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveRefCdGrp       */
+MERGE INTO TB_CC_CCO_REF_CD_INFO              TRGT
+USING (SELECT      CO_CD
+            ,      BZPLC_ID
+            ,      OPR_UNIT_ID
+            ,      REF_CD_GRP_SEQ
+            ,      REF_CD_GRP_NM
+            , NVL (USE_YN             , 'Y')  USE_YN
+            ,      MAND_YN
+            ,      REF_CD_CHG_TGT_CD
+            ,      REF_CD_EXPS_MTHD_CD
+            ,      REGPSN_ID          , REG_DTM
+            ,      UPDPSN_ID          , UPD_DTM
+         FROM (<trim prefixOverrides="AND|OR|UNION ALL|," prefix=""><foreach collection="REF_CD_GRP" item="item" >
+                 UNION ALL
+                SELECT     #{item.CO_CD                }  CO_CD
+                     ,     #{item.BZPLC_ID             }  BZPLC_ID
+                     ,     #{item.OPR_UNIT_ID          }  OPR_UNIT_ID
+                     ,     #{item.REF_CD_GRP_SEQ       }  REF_CD_GRP_SEQ
+                     ,     #{item.REF_CD_GRP_NM        }  REF_CD_GRP_NM
+                     ,     #{item.USE_YN               }  USE_YN
+                     ,     #{item.MAND_YN              }  MAND_YN
+                     ,     #{item.REF_CD_CHG_TGT_CD    }  REF_CD_CHG_TGT_CD
+                     ,     #{item.REF_CD_EXPS_MTHD_CD  }  REF_CD_EXPS_MTHD_CD
+                     
+                     , NVL(#{regpsnId                  }, 'X0025958')  REGPSN_ID, SYSTIMESTAMP  REG_DTM
+                     , NVL(#{updpsnId                  }, 'X0025958')  UPDPSN_ID, SYSTIMESTAMP  UPD_DTM
+                  FROM DUAL
+               </foreach></trim>
+               )
+<!--          WHERE REF_CD_GRP_NM IS NOT NULL -->
+      )    INPT
+   ON (    INPT.CO_CD          = TRGT.CO_CD
+       AND INPT.BZPLC_ID       = TRGT.BZPLC_ID
+       AND INPT.OPR_UNIT_ID    = TRGT.OPR_UNIT_ID
+       AND INPT.REF_CD_GRP_SEQ = TRGT.REF_CD_GRP_SEQ
+      )
+ WHEN     MATCHED THEN
+      UPDATE SET
+             REF_CD_GRP_NM           = INPT.REF_CD_GRP_NM
+           , USE_YN                  = INPT.USE_YN
+           , MAND_YN                 = INPT.MAND_YN
+           , REF_CD_CHG_TGT_CD       = INPT.REF_CD_CHG_TGT_CD
+           , REF_CD_EXPS_MTHD_CD     = INPT.REF_CD_EXPS_MTHD_CD
+           
+           , UPDPSN_ID               = INPT.UPDPSN_ID
+           , UPD_DTM                 = INPT.UPD_DTM
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , BZPLC_ID
+           , OPR_UNIT_ID
+           , REF_CD_GRP_SEQ
+           , REF_CD_GRP_NM
+           , USE_YN
+           , MAND_YN
+           , REF_CD_CHG_TGT_CD
+           , REF_CD_EXPS_MTHD_CD
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.BZPLC_ID
+           , INPT.OPR_UNIT_ID
+           , INPT.REF_CD_GRP_SEQ
+           , INPT.REF_CD_GRP_NM
+           , INPT.USE_YN
+           , INPT.MAND_YN
+           , INPT.REF_CD_CHG_TGT_CD
+           , INPT.REF_CD_EXPS_MTHD_CD
+           , INPT.REGPSN_ID
+           , INPT.REG_DTM
+           , INPT.UPDPSN_ID
+           , INPT.UPD_DTM
+      )
+/* /com.ssp.bo.cc.custOprunit.saveRefCdGrp       */
+</insert>
+
+<update id="saveRefCdGrp4Post"      parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveRefCdGrp4Post  */
+<if test='REF_CD_USE_N != null and REF_CD_USE_N.size() > 0'>
+UPDATE TB_CC_CCO_REF_CD_DTL
+   SET USE_YN    = 'N'
+     , UPDPSN_ID = NVL(#{updpsnId                  }, 'X0025958')
+     , UPD_DTM   = SYSTIMESTAMP
+ WHERE (CO_CD, BZPLC_ID, OPR_UNIT_ID, REF_CD_GRP_SEQ, REF_CD_SEQ) IN (
+        <trim prefixOverrides="AND|OR|UNION ALL|," prefix=""><foreach collection="REF_CD_USE_N" item="item" >
+        , (#{item.CO_CD}, #{item.BZPLC_ID}, #{item.OPR_UNIT_ID}, #{item.REF_CD_GRP_SEQ}, #{item.REF_CD_SEQ})</foreach></trim>
+       )
+</if>
+/* /com.ssp.bo.cc.custOprunit.saveRefCdGrp4Post  */
+</update>
+
+
+
+<update id="saveOshtCd"      parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveOshtCd      */
+MERGE INTO TB_CC_CCO_OSHT_CD_INFO             TRGT
+USING (SELECT      R_INDEX       , OSHT_CD_ID_LAST
+            ,      CO_CD
+            ,      BZPLC_ID
+            ,      OPR_UNIT_ID
+            ,      OSHT_CD_SEQ
+            ,      OSHT_CD_ID||''  OSHT_CD_ID
+            ,      OSHT_CD_NM
+            ,      MAND_YN
+            , NVL2(MAX_IPT_LEN, MAX_IPT_LEN, 50 )  MAX_IPT_LEN
+            ,      NO_CHAR_SPR_CD
+            , NVL (USE_YN                             , 'Y')  USE_YN
+            , REGPSN_ID     , REG_DTM
+            , UPDPSN_ID     , UPD_DTM
+         FROM (
+               <trim prefixOverrides="AND|OR|UNION ALL|," prefix=""><foreach collection="OSHT_CD" item="item" index="index" >
+                UNION ALL
+               SELECT     #{index              , jdbcType=NUMERIC }  R_INDEX
+                    ,     #{item.CO_CD         , jdbcType=VARCHAR }  CO_CD
+                    ,     #{item.BZPLC_ID      , jdbcType=VARCHAR }  BZPLC_ID
+                    ,     #{item.OPR_UNIT_ID   , jdbcType=VARCHAR }  OPR_UNIT_ID
+                    ,     #{item.OSHT_CD_SEQ   , jdbcType=NUMERIC }  OSHT_CD_SEQ
+                    ,     #{item.OSHT_CD_ID    , jdbcType=VARCHAR }  OSHT_CD_ID
+                    ,     #{item.OSHT_CD_NM    , jdbcType=VARCHAR }  OSHT_CD_NM
+                    ,     #{item.MAND_YN       , jdbcType=VARCHAR }  MAND_YN
+                    ,     #{item.MAX_IPT_LEN   , jdbcType=NUMERIC }  MAX_IPT_LEN
+                    ,     #{item.NO_CHAR_SPR_CD, jdbcType=VARCHAR }  NO_CHAR_SPR_CD
+                    ,     #{item.USE_YN        , jdbcType=VARCHAR }  USE_YN
+                    , NVL(#{regpsnId           , jdbcType=VARCHAR }, 'X0025958')  REGPSN_ID, SYSTIMESTAMP  REG_DTM
+                    , NVL(#{updpsnId           , jdbcType=VARCHAR }, 'X0025958')  UPDPSN_ID, SYSTIMESTAMP  UPD_DTM
+                 FROM DUAL
+               </foreach></trim>
+              )
+            , (SELECT NVL(MAX(TO_NUMBER(OSHT_CD_ID  )), 7000000000)  OSHT_CD_ID_LAST  FROM TB_CC_CCO_OSHT_CD_INFO)
+<!--         WHERE OSHT_CD_NM IS NOT NULL -->
+      )    INPT
+   ON (    INPT.CO_CD           = TRGT.CO_CD
+       AND INPT.BZPLC_ID        = TRGT.BZPLC_ID
+       AND INPT.OPR_UNIT_ID     = TRGT.OPR_UNIT_ID
+       AND INPT.OSHT_CD_SEQ     = TRGT.OSHT_CD_SEQ
+      )
+ WHEN     MATCHED THEN
+      UPDATE SET
+             OSHT_CD_NM         = INPT.OSHT_CD_NM
+           , MAND_YN            = INPT.MAND_YN
+           , MAX_IPT_LEN        = TO_NUMBER(INPT.MAX_IPT_LEN)
+           , NO_CHAR_SPR_CD     = INPT.NO_CHAR_SPR_CD
+           , USE_YN             = INPT.USE_YN
+           
+           , UPDPSN_ID          = INPT.UPDPSN_ID
+           , UPD_DTM            = INPT.UPD_DTM
+ WHEN NOT MATCHED THEN
+      INSERT (
+             OSHT_CD_ID
+           , CO_CD
+           , BZPLC_ID
+           , OPR_UNIT_ID
+           , OSHT_CD_SEQ
+           , OSHT_CD_NM
+           , MAND_YN
+           , MAX_IPT_LEN
+           , NO_CHAR_SPR_CD
+           , USE_YN
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+      )
+      VALUES (
+             NVL(INPT.OSHT_CD_ID||''    , (INPT.OSHT_CD_ID_LAST+INPT.OSHT_CD_SEQ)||'')
+           ,     INPT.CO_CD
+           ,     INPT.BZPLC_ID
+           ,     INPT.OPR_UNIT_ID
+           ,     INPT.OSHT_CD_SEQ
+           ,     INPT.OSHT_CD_NM
+           ,     INPT.MAND_YN
+           ,     INPT.MAX_IPT_LEN
+           ,     INPT.NO_CHAR_SPR_CD
+           ,     INPT.USE_YN
+           ,     INPT.REGPSN_ID
+           ,     INPT.REG_DTM
+           ,     INPT.UPDPSN_ID
+           ,     INPT.UPD_DTM
+      )
+/* /com.ssp.bo.cc.custOprunit.saveOshtCd      */
+</update>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<!-- 운영단위 참조코드                                                                                                                 -->
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<select id="selectRefCd" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.cc.custOprunit.selectRefCd */
+<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />
+
+SELECT RFMS.REF_CD_GRP_NM
+     , RFDT.CO_CD
+     , RFDT.BZPLC_ID            , (SELECT BZPLC_NM    FROM TB_CC_BZPLC_BASIS    WHERE CO_CD=RFDT.CO_CD AND BZPLC_ID=RFDT.BZPLC_ID                                 )  BZPLC_NM
+     , RFDT.OPR_UNIT_ID         , (SELECT OPR_UNIT_NM FROM TB_CC_OPR_UNIT_BASIS WHERE CO_CD=RFDT.CO_CD AND BZPLC_ID=RFDT.BZPLC_ID AND OPR_UNIT_ID=RFDT.OPR_UNIT_ID)  OPR_UNIT_NM
+     , RFDT.DEPT_OPR_UNIT_ID
+     , DECODE(RFDT.DEPT_OPR_UNIT_SPR_CD, 'DEP',                                                                                                     RFDT.DEPT_OPR_UNIT_ID )  DEPT_ID
+     , DECODE(RFDT.DEPT_OPR_UNIT_SPR_CD, 'DEP', (SELECT DEPT_NM FROM TB_CC_DEPT_BASIS WHERE CO_CD=RFDT.CO_CD AND BZPLC_ID=RFDT.BZPLC_ID AND DEPT_ID=RFDT.DEPT_OPR_UNIT_ID))  DEPT_NM
+     , RFDT.REF_CD_GRP_SEQ
+     , RFDT.REF_CD_SEQ
+     , RFDT.DEPT_OPR_UNIT_SPR_CD, (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'DEPT_OPR_UNIT_SPR_CD' , RFDT.DEPT_OPR_UNIT_SPR_CD,  '-') FROM DUAL)  DEPT_OPR_UNIT_SPR_CD_NM
+     , RFDT.REF_CD
+     , RFDT.REF_CD_NM
+     , RFDT.USE_YN              , (SELECT SSP_APP.FN_COM_DTL_CDNM_NVL('KO', 'USE_YN'               , RFDT.USE_YN              ,  '-') FROM DUAL)  USE_YN_NM
+     , RFDT.REGPSN_ID
+     , RFDT.REG_DTM
+     , RFDT.UPDPSN_ID
+     , RFDT.UPD_DTM
+  FROM TB_CC_CCO_REF_CD_INFO       RFMS
+     , TB_CC_CCO_REF_CD_DTL        RFDT
+ WHERE RFMS.CO_CD                = RFDT.CO_CD
+   AND RFMS.BZPLC_ID             = RFDT.BZPLC_ID
+   AND RFMS.OPR_UNIT_ID          = RFDT.OPR_UNIT_ID
+   AND RFMS.REF_CD_GRP_SEQ       = RFDT.REF_CD_GRP_SEQ
+   
+   AND RFDT.CO_CD                = #{coCd            }
+   AND RFDT.BZPLC_ID             = #{bzplcId         }
+   AND RFDT.OPR_UNIT_ID          = #{oprUnitId       }
+   <if   test='refCdGrpSeq != null and !"".equals(refCdGrpSeq)'>AND RFDT.REF_CD_GRP_SEQ       = #{refCdGrpSeq     }</if>
+   
+   <if test='deptOprUnitSprCd != null and !"".equals(deptOprUnitSprCd)'>
+   AND RFDT.DEPT_OPR_UNIT_SPR_CD = #{deptOprUnitSprCd}
+   <if test='"OPU".equals(deptOprUnitSprCd)'><if test='oprUnitId != null and !"".equals(oprUnitId.trim())'>AND RFDT.DEPT_OPR_UNIT_ID = #{oprUnitId}</if></if>
+   <if test='"DEP".equals(deptOprUnitSprCd)'><if test='deptId    != null and !"".equals(deptId   .trim())'>AND RFDT.DEPT_OPR_UNIT_ID = #{deptId   }</if></if>
+   </if>
+   
+   <if   test='!(refGrpYCdN  != null and "Y".equals(refGrpYCdN ))'>
+   <if   test='deptOprUnitSprCd == null or   "".equals(deptOprUnitSprCd.trim())'>
+   <choose>
+   <when test='deptId == null or  "".equals(deptId)'>AND RFDT.DEPT_OPR_UNIT_SPR_CD = 'OPU' AND RFDT.DEPT_OPR_UNIT_ID = #{oprUnitId}</when>
+   <otherwise                                       >AND RFDT.DEPT_OPR_UNIT_SPR_CD = 'DEP' AND RFDT.DEPT_OPR_UNIT_ID = #{deptId   }</otherwise>
+   </choose>
+   </if>
+   </if>
+   
+   <if   test='  useYn       != null and !"".equals(useYn      ) '>AND RFDT.USE_YN               = #{useYn           }</if>
+   <if   test='  refCd       != null and !"".equals(refCd      ) '>AND RFDT.REF_CD               = #{refCd           }</if>
+   <if   test='  refCdNm     != null and !"".equals(refCdNm    ) '>AND RFDT.REF_CD_NM            = #{refCdNm         }</if>
+   
+   <if   test='  refGrpYCdN  != null and "Y".equals(refGrpYCdN ) '>AND RFMS.USE_YN='N'         AND RFDT.USE_YN='Y'    </if>
+   
+ ORDER BY
+       RFDT.REF_CD_GRP_SEQ
+     , RFDT.REF_CD_SEQ      DESC
+
+<include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+/* /com.ssp.bo.cc.custOprunit.selectRefCd */
+</select>
+
+
+<insert id="saveRefCd" parameterType="HashMap">
+<selectKey resultType="string" keyProperty="LAST_REF_CD_SEQ" order="BEFORE">
+SELECT NVL((SELECT MAX(TO_NUMBER(REF_CD_SEQ)) FROM TB_CC_CCO_REF_CD_DTL), 0)  LAST_REF_CD_SEQ FROM DUAL 
+</selectKey>
+
+/* com.ssp.bo.cc.custOprunit.saveRefCd */
+MERGE INTO TB_CC_CCO_REF_CD_DTL  TRGT
+USING (SELECT     CO_CD
+            ,     BZPLC_ID
+            ,     OPR_UNIT_ID
+            ,     REF_CD_GRP_SEQ
+            ,     DEPT_OPR_UNIT_SPR_CD
+            , NVL(DEPT_OPR_UNIT_ID, DECODE(DEPT_OPR_UNIT_SPR_CD, 'OPU', OPR_UNIT_ID))    DEPT_OPR_UNIT_ID
+            , NVL(REF_CD_SEQ      , TRIM(TO_CHAR((LAST_REF_CD_SEQ+1)+(COUNT(DECODE(REF_CD_SEQ, NULL, 1)) OVER() - ROW_NUMBER() OVER(PARTITION BY REF_CD_SEQ ORDER BY R_IDX DESC)), '0000000009')))  REF_CD_SEQ
+            ,     REF_CD
+            ,     REF_CD_NM
+            ,     USE_YN
+            ,     REGPSN_ID
+            ,     REG_DTM
+            ,     UPDPSN_ID
+            ,     UPD_DTM
+            
+            , NVL(REF_CD_SEQ      , TRIM(TO_CHAR((LAST_REF_CD_SEQ+1)+(COUNT(DECODE(REF_CD_SEQ, NULL, 1)) OVER() - ROW_NUMBER() OVER(PARTITION BY REF_CD_SEQ ORDER BY R_IDX DESC)), '0000000009')))  NUL_REF_CD_SEQ
+            , COUNT(DECODE(REF_CD_SEQ, NULL, 1)) OVER() - ROW_NUMBER() OVER(PARTITION BY REF_CD_SEQ ORDER BY R_IDX DESC)  NUL_IDX
+            , COUNT(DECODE(REF_CD_SEQ, NULL, 1)) OVER()  NUL_RCNT
+            
+         FROM (<trim prefixOverrides="AND|OR|UNION ALL|," prefix=""><foreach collection="REF_CD" item="item" index="index" >
+                UNION ALL
+               SELECT     #{index                     }  R_IDX
+                    ,     #{item.CO_CD                }  CO_CD
+                    ,     #{item.BZPLC_ID             }  BZPLC_ID
+                    , NVL(#{item.OPR_UNIT_ID          }, (SELECT OPR_UNIT_ID FROM TB_CC_DEPT_BASIS WHERE CO_CD=#{item.CO_CD} AND DEPT_ID=#{item.DEPT_ID}))  OPR_UNIT_ID
+                    ,     #{item.REF_CD_GRP_SEQ       }  REF_CD_GRP_SEQ
+                    ,     #{item.DEPT_OPR_UNIT_SPR_CD }  DEPT_OPR_UNIT_SPR_CD
+                    ,     #{item.DEPT_OPR_UNIT_ID     }  DEPT_OPR_UNIT_ID
+                    ,     #{item.REF_CD_SEQ           }  REF_CD_SEQ
+                    ,     #{item.REF_CD               }  REF_CD
+                    ,     #{item.REF_CD_NM            }  REF_CD_NM
+                    ,     #{item.USE_YN               }  USE_YN
+                    
+                    , NVL(#{regpsnId                  }, 'X0025958')  REGPSN_ID, SYSTIMESTAMP  REG_DTM
+                    , NVL(#{updpsnId                  }, 'X0025958')  UPDPSN_ID, SYSTIMESTAMP  UPD_DTM
+                 FROM DUAL
+               </foreach></trim>
+              )
+            , (SELECT NVL(#{LAST_REF_CD_SEQ}, NVL((SELECT MAX(TO_NUMBER(REF_CD_SEQ)) FROM TB_CC_CCO_REF_CD_DTL), 0))  LAST_REF_CD_SEQ FROM DUAL)
+      )  INPT
+   ON (
+           INPT.CO_CD                = TRGT.CO_CD
+       AND INPT.BZPLC_ID             = TRGT.BZPLC_ID
+       AND INPT.OPR_UNIT_ID          = TRGT.OPR_UNIT_ID
+       AND INPT.REF_CD_GRP_SEQ       = TRGT.REF_CD_GRP_SEQ
+       AND INPT.DEPT_OPR_UNIT_SPR_CD = TRGT.DEPT_OPR_UNIT_SPR_CD
+       AND INPT.DEPT_OPR_UNIT_ID     = TRGT.DEPT_OPR_UNIT_ID
+       AND INPT.REF_CD_SEQ           = TRGT.REF_CD_SEQ
+       AND INPT.REF_CD_SEQ IS NOT NULL
+      )
+ WHEN     MATCHED THEN
+      UPDATE SET
+              REF_CD                 = INPT.REF_CD
+            , REF_CD_NM              = INPT.REF_CD_NM
+            , USE_YN                 = INPT.USE_YN
+            , UPDPSN_ID              = INPT.UPDPSN_ID
+            , UPD_DTM                = INPT.UPD_DTM
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , BZPLC_ID
+           , OPR_UNIT_ID
+           , DEPT_OPR_UNIT_ID
+           , REF_CD_GRP_SEQ
+           , DEPT_OPR_UNIT_SPR_CD
+           , REF_CD_SEQ
+           , REF_CD
+           , REF_CD_NM
+           , USE_YN
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+      )
+      VALUES (
+                 INPT.CO_CD
+           ,     INPT.BZPLC_ID
+           ,     INPT.OPR_UNIT_ID
+           ,     INPT.DEPT_OPR_UNIT_ID
+           ,     INPT.REF_CD_GRP_SEQ
+           ,     INPT.DEPT_OPR_UNIT_SPR_CD
+           , NVL(INPT.REF_CD_SEQ          , NUL_REF_CD_SEQ)
+           ,     INPT.REF_CD
+           ,     INPT.REF_CD_NM
+           ,     INPT.USE_YN
+           ,     INPT.REGPSN_ID
+           ,     INPT.REG_DTM
+           ,     INPT.UPDPSN_ID
+           ,     INPT.UPD_DTM
+      )
+/* /com.ssp.bo.cc.custOprunit.saveRefCd */
+</insert>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<!-- 운영단위 제어권한                                                                                                                 -->
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<sql id="sqlCtlAuthDtl4MbrJoinApprr">
+/* com.ssp.bo.cc.custOprunit.sqlCtlAuthDtl4MbrJoinApprr */
+SELECT MJAP.CO_CD
+     , MJAP.BZPLC_ID
+     , MJAP.OPR_UNIT_ID
+     , LISTAGG(MBR_ID, ',') WITHIN GROUP(ORDER BY MBR_ID)  MBR_JOIN_APPRR_IDS
+     , LISTAGG(MBR_NM, ',') WITHIN GROUP(ORDER BY MBR_ID)  MBR_JOIN_APPRR_NMS
+  FROM TB_CC_MBR_JOIN_APPRR_INFO   MJAP
+     , TB_CC_MBR_BASIS             MBRB
+ WHERE MJAP.CO_CD                = MBRB.CO_CD         (+)
+   AND MJAP.BZPLC_ID             = MBRB.BZPLC_ID      (+)
+   AND MJAP.MBR_JOIN_DSGN_APPRR  = MBRB.MBR_ID        (+)
+
+   AND MJAP.CO_CD                = NVL(#{coCd           }, '1000')  <!-- '1000'       -->
+   AND MJAP.BZPLC_ID             =     #{bzplcId        }           <!-- 'S000000001' -->
+   AND MJAP.OPR_UNIT_ID          =     #{oprUnitId      }           <!-- 'S000006713' -->
+   
+ GROUP BY
+       MJAP.CO_CD
+     , MJAP.BZPLC_ID
+     , MJAP.OPR_UNIT_ID
+/* /com.ssp.bo.cc.custOprunit.sqlCtlAuthDtl4MbrJoinApprr */
+</sql>
+
+<select id="selectCtlAuthInfo" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.cc.custOprunit.selectCtlAuthInfo */
+SELECT     CTLA.CO_CD
+     ,     CTLA.BZPLC_ID                             , (SELECT BZPLC_NM    FROM TB_CC_BZPLC_BASIS    WHERE CO_CD=CTLA.CO_CD AND BZPLC_ID=CTLA.BZPLC_ID                                 )  BZPLC_NM
+     ,     CTLA.OPR_UNIT_ID                          , (SELECT OPR_UNIT_NM FROM TB_CC_OPR_UNIT_BASIS WHERE CO_CD=CTLA.CO_CD AND BZPLC_ID=CTLA.BZPLC_ID AND OPR_UNIT_ID=CTLA.OPR_UNIT_ID)  OPR_UNIT_NM
+     , NVL(CTLA.BGT_AUTH_USE_YN               , 'N' )  BGT_AUTH_USE_YN
+     , NVL(CTLA.BGT_FW_SPR_CD                 , '03')  BGT_FW_SPR_CD
+     , NVL(CTLA.QRT_BGT_USE_YN                , 'N' )  QRT_BGT_USE_YN
+     , NVL(CTLA.HRNK_BGT_USE_YN               , 'N' )  HRNK_BGT_USE_YN
+     ,     CTLA.BLNG_DEPT_USE_SPR_CD
+     , NVL(CTLA.COST_DEPT_CHG_PSB_YN          , 'N' )  COST_DEPT_CHG_PSB_YN
+     , NVL(CTLA.ACCT_CHG_PSB_YN          	  , 'Y' )  ACCT_CHG_PSB_YN
+     ,     CTLA.BGT_CLOS_DD_CD
+     , NVL(CTLA.BGT_OVER_AGD_YN               , 'N' )  BGT_OVER_AGD_YN
+     , NVL(CTLA.ACCT_USE_YN                   , 'N' )  ACCT_USE_YN
+     , NVL(CTLA.APRV_AUTH_USE_YN              , 'N' )  APRV_AUTH_USE_YN
+     , NVL(CTLA.ORD_AUTH_USE_YN               , 'N' )  ORD_AUTH_USE_YN
+     , NVL(CTLA.REFPSN_USE_YN                 , 'N' )  REFPSN_USE_YN
+     , NVL(CTLA.BASIS_APRV_CHG_PSB_YN         , 'N' )  BASIS_APRV_CHG_PSB_YN
+     , NVL(CTLA.CCO_PO_USE_SPR_CD             , 'N' )  CCO_PO_USE_SPR_CD
+     ,     CTLA.GI_LVL_CD
+     ,     CTLA.GI_VERF_PROC_CD
+     , NVL(CTLA.HDV_DLV_USE_YN                , 'N' )  HDV_DLV_USE_YN
+     , NVL(CTLA.SRVON_OCAR_UT_YN              , 'N' )  SRVON_OCAR_UT_YN
+     , NVL(CTLA.BASIS_OPSN_CHG_YN             , 'N' )  BASIS_OPSN_CHG_YN
+     , NVL(CTLA.CART_PURG_RSN_USE_SPR_CD      , 'N' )  CART_PURG_RSN_USE_SPR_CD
+     , NVL(CTLA.CART_PURG_RSN_MAND_SPR_CD     , 'N' )  CART_PURG_RSN_MAND_SPR_CD
+     
+     , NVL(CTLA.CART_USE_DIS_USEYN            , 'N' )  CART_USE_DIS_USEYN
+     , NVL(CTLA.CART_USE_DIS_DT_YN            , 'N' )  CART_USE_DIS_DT_YN
+     ,     CTLA.CART_USE_DIS_STR_DD
+     ,     CTLA.CART_USE_DIS_END_DD
+      
+	 , SUBSTR(CART_USE_DIS_REPT_BSS_YM, 1, 4) AS CART_USE_DIS_REPT_BSS_YM_YEAR
+	 , SUBSTR(CART_USE_DIS_REPT_BSS_YM, 5, 2) AS CART_USE_DIS_REPT_BSS_YM_MONTH
+     
+     , NVL(CTLA.CART_USE_DIS_AMT_YN           , 'N' )  CART_USE_DIS_AMT_YN
+     ,     CTLA.CART_USE_DIS_STR_AMT
+     ,     CTLA.CART_USE_DIS_END_AMT
+     , NVL(CTLA.CART_USE_DIS_REPT_YN          , 'N' )  CART_USE_DIS_REPT_YN
+     ,     CTLA.CART_PHS_CTS
+     , NVL(CTLA.ODR_DLGTE_USE_YN              , 'N' )  ODR_DLGTE_USE_YN
+     , NVL(CTLA.MBR_JOIN_DSGN_APPRR_USE_YN    , 'N' )  MBR_JOIN_DSGN_APPRR_USE_YN
+     , NVL(CTLA.NEW_PRD_REQ_YN                , 'N' )  NEW_PRD_REQ_YN
+     , NVL(CTLA.HRM_PRD_APRV_USE_YN           , 'N' )  HRM_PRD_APRV_USE_YN
+     ,     CTLA.HRM_PRD_APRV_PST_CD
+     ,     CTLA.REGPSN_ID
+     ,     CTLA.REG_DTM
+     ,     CTLA.UPDPSN_ID
+     ,     CTLA.UPD_DTM
+     
+     ,     MBAP.MBR_JOIN_APPRR_IDS
+     ,     MBAP.MBR_JOIN_APPRR_NMS
+     
+  FROM TB_CC_OPR_UNIT_CTL_AUTH_INFO    CTLA
+     , (
+<include refid="sqlCtlAuthDtl4MbrJoinApprr" />
+       )  MBAP
+ WHERE ROWNUM                    > 0
+   AND CTLA.CO_CD                = MBAP.CO_CD         (+)
+   AND CTLA.BZPLC_ID             = MBAP.BZPLC_ID      (+)
+   AND CTLA.OPR_UNIT_ID          = MBAP.OPR_UNIT_ID   (+)
+   
+   AND CTLA.CO_CD                = #{coCd            }
+   AND CTLA.BZPLC_ID             = #{bzplcId         }
+   AND CTLA.OPR_UNIT_ID          = #{oprUnitId       }
+/* /com.ssp.bo.cc.custOprunit.selectCtlAuthInfo */
+</select>
+
+<!-- /*
+SELECT MJAP.CO_CD
+     , MJAP.BZPLC_ID
+     , MJAP.OPR_UNIT_ID
+     , LISTAGG(MBR_ID, ',') WITHIN GROUP(ORDER BY MBR_ID)  MBR_JOIN_APPRR_IDS
+     , LISTAGG(MBR_NM, ',') WITHIN GROUP(ORDER BY MBR_ID)  MBR_JOIN_APPRR_NMS
+  FROM TB_CC_MBR_JOIN_APPRR_INFO   MJAP
+     , TB_CC_MBR_BASIS             MBRB
+ WHERE MJAP.CO_CD                = MBRB.CO_CD         (+)
+   AND MJAP.BZPLC_ID             = MBRB.BZPLC_ID      (+)
+   AND MJAP.MBR_JOIN_DSGN_APPRR  = MBRB.MBR_ID        (+)
+
+   AND MJAP.CO_CD                = '1000'
+   AND MJAP.BZPLC_ID             = 'S000000001'
+   AND MJAP.OPR_UNIT_ID          = 'S000006713'
+   
+ GROUP BY
+       MJAP.CO_CD
+     , MJAP.BZPLC_ID
+     , MJAP.OPR_UNIT_ID
+     
+S000000001  PM00001788
+S000000001  PM00001455
+S000000001  PM00041210
+
+*/ -->
+
+
+<update id="saveCtlAuthInfo" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveCtlAuthInfo */
+MERGE INTO TB_CC_OPR_UNIT_CTL_AUTH_INFO  TRGT
+USING (SELECT #{CO_CD                     }  CO_CD
+            , #{BZPLC_ID                  }  BZPLC_ID
+            , #{OPR_UNIT_ID               }  OPR_UNIT_ID
+            , #{BGT_AUTH_USE_YN           }  BGT_AUTH_USE_YN
+            , #{BGT_FW_SPR_CD             }  BGT_FW_SPR_CD
+            , #{QRT_BGT_USE_YN            }  QRT_BGT_USE_YN
+            , #{HRNK_BGT_USE_YN           }  HRNK_BGT_USE_YN
+            , #{BLNG_DEPT_USE_SPR_CD      }  BLNG_DEPT_USE_SPR_CD
+            , #{COST_DEPT_CHG_PSB_YN      }  COST_DEPT_CHG_PSB_YN
+            , #{BGT_CLOS_DD_CD            }  BGT_CLOS_DD_CD
+            , #{BGT_OVER_AGD_YN           }  BGT_OVER_AGD_YN
+            , #{ACCT_USE_YN               }  ACCT_USE_YN
+            , #{APRV_AUTH_USE_YN          }  APRV_AUTH_USE_YN
+            , #{ORD_AUTH_USE_YN           }  ORD_AUTH_USE_YN
+            , #{REFPSN_USE_YN             }  REFPSN_USE_YN
+            , #{BASIS_APRV_CHG_PSB_YN     }  BASIS_APRV_CHG_PSB_YN
+            , #{CCO_PO_USE_SPR_CD         }  CCO_PO_USE_SPR_CD
+            , #{GI_LVL_CD                 }  GI_LVL_CD
+            , #{GI_VERF_PROC_CD           }  GI_VERF_PROC_CD
+            , #{HDV_DLV_USE_YN            }  HDV_DLV_USE_YN
+            , #{SRVON_OCAR_UT_YN          }  SRVON_OCAR_UT_YN
+            , #{BASIS_OPSN_CHG_YN         }  BASIS_OPSN_CHG_YN
+            , #{CART_PURG_RSN_USE_SPR_CD  }  CART_PURG_RSN_USE_SPR_CD
+            , #{CART_PURG_RSN_MAND_SPR_CD }  CART_PURG_RSN_MAND_SPR_CD
+            , #{CART_USE_DIS_USEYN        }  CART_USE_DIS_USEYN
+            , #{CART_USE_DIS_DT_YN        }  CART_USE_DIS_DT_YN
+            , #{CART_USE_DIS_STR_DD       }  CART_USE_DIS_STR_DD
+            , #{CART_USE_DIS_END_DD       }  CART_USE_DIS_END_DD
+            , #{CART_USE_DIS_AMT_YN       }  CART_USE_DIS_AMT_YN
+            , #{CART_USE_DIS_STR_AMT      }  CART_USE_DIS_STR_AMT
+            , #{CART_USE_DIS_END_AMT      }  CART_USE_DIS_END_AMT
+            , #{CART_USE_DIS_REPT_YN      }  CART_USE_DIS_REPT_YN
+            , #{CART_PHS_CTS              }  CART_PHS_CTS
+            , #{ODR_DLGTE_USE_YN          }  ODR_DLGTE_USE_YN
+            , #{MBR_JOIN_DSGN_APPRR_USE_YN}  MBR_JOIN_DSGN_APPRR_USE_YN
+            , #{NEW_PRD_REQ_YN            }  NEW_PRD_REQ_YN
+            , #{HRM_PRD_APRV_USE_YN       }  HRM_PRD_APRV_USE_YN
+            , #{HRM_PRD_APRV_PST_CD       }  HRM_PRD_APRV_PST_CD
+            , #{ACCT_CHG_PSB_YN			  }  ACCT_CHG_PSB_YN
+            , #{CART_USE_DIS_REPT_BSS_YM_YEAR}||#{CART_USE_DIS_REPT_BSS_YM_MONTH}	CART_USE_DIS_REPT_BSS_YM
+            
+            , NVL(#{regpsnId }, 'X0025958')  REGPSN_ID, SYSTIMESTAMP  REG_DTM
+            , NVL(#{updpsnId }, 'X0025958')  UPDPSN_ID, SYSTIMESTAMP  UPD_DTM
+         FROM DUAL
+      )   INPT
+   ON (   INPT.CO_CD                    = TRGT.CO_CD
+      AND INPT.BZPLC_ID                 = TRGT.BZPLC_ID
+      AND INPT.OPR_UNIT_ID              = TRGT.OPR_UNIT_ID
+      )
+ WHEN     MATCHED THEN
+      UPDATE SET
+             BGT_AUTH_USE_YN            = INPT.BGT_AUTH_USE_YN
+           , BGT_FW_SPR_CD              = INPT.BGT_FW_SPR_CD
+           , QRT_BGT_USE_YN             = INPT.QRT_BGT_USE_YN
+           , HRNK_BGT_USE_YN            = INPT.HRNK_BGT_USE_YN
+           , BLNG_DEPT_USE_SPR_CD       = INPT.BLNG_DEPT_USE_SPR_CD
+           , COST_DEPT_CHG_PSB_YN       = INPT.COST_DEPT_CHG_PSB_YN
+           , BGT_CLOS_DD_CD             = INPT.BGT_CLOS_DD_CD
+           , BGT_OVER_AGD_YN            = INPT.BGT_OVER_AGD_YN
+           , ACCT_USE_YN                = INPT.ACCT_USE_YN
+           , APRV_AUTH_USE_YN           = INPT.APRV_AUTH_USE_YN
+           , ORD_AUTH_USE_YN            = INPT.ORD_AUTH_USE_YN
+           , REFPSN_USE_YN              = INPT.REFPSN_USE_YN
+           , BASIS_APRV_CHG_PSB_YN      = INPT.BASIS_APRV_CHG_PSB_YN
+           , CCO_PO_USE_SPR_CD          = INPT.CCO_PO_USE_SPR_CD
+           , GI_LVL_CD                  = INPT.GI_LVL_CD
+           , GI_VERF_PROC_CD            = INPT.GI_VERF_PROC_CD
+           , HDV_DLV_USE_YN             = INPT.HDV_DLV_USE_YN
+           , SRVON_OCAR_UT_YN           = INPT.SRVON_OCAR_UT_YN
+           , BASIS_OPSN_CHG_YN          = INPT.BASIS_OPSN_CHG_YN
+           , CART_PURG_RSN_USE_SPR_CD   = INPT.CART_PURG_RSN_USE_SPR_CD
+           , CART_PURG_RSN_MAND_SPR_CD  = INPT.CART_PURG_RSN_MAND_SPR_CD
+           , CART_USE_DIS_USEYN         = INPT.CART_USE_DIS_USEYN
+           , CART_USE_DIS_DT_YN         = INPT.CART_USE_DIS_DT_YN
+           , CART_USE_DIS_STR_DD        = INPT.CART_USE_DIS_STR_DD
+           , CART_USE_DIS_END_DD        = INPT.CART_USE_DIS_END_DD
+           , CART_USE_DIS_AMT_YN        = INPT.CART_USE_DIS_AMT_YN
+           , CART_USE_DIS_STR_AMT       = INPT.CART_USE_DIS_STR_AMT
+           , CART_USE_DIS_END_AMT       = INPT.CART_USE_DIS_END_AMT
+           , CART_USE_DIS_REPT_YN       = INPT.CART_USE_DIS_REPT_YN
+           , CART_USE_DIS_REPT_BSS_YM   = INPT.CART_USE_DIS_REPT_BSS_YM
+           , CART_PHS_CTS               = INPT.CART_PHS_CTS
+           , ODR_DLGTE_USE_YN           = INPT.ODR_DLGTE_USE_YN
+           , MBR_JOIN_DSGN_APPRR_USE_YN = INPT.MBR_JOIN_DSGN_APPRR_USE_YN
+           , NEW_PRD_REQ_YN             = INPT.NEW_PRD_REQ_YN
+           , HRM_PRD_APRV_USE_YN        = INPT.HRM_PRD_APRV_USE_YN
+           , HRM_PRD_APRV_PST_CD        = INPT.HRM_PRD_APRV_PST_CD
+           , ACCT_CHG_PSB_YN            = INPT.ACCT_CHG_PSB_YN
+           , UPDPSN_ID                  = INPT.UPDPSN_ID
+           , UPD_DTM                    = INPT.UPD_DTM
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , BZPLC_ID
+           , OPR_UNIT_ID
+           , BGT_AUTH_USE_YN
+           , BGT_FW_SPR_CD
+           , QRT_BGT_USE_YN
+           , HRNK_BGT_USE_YN
+           , BLNG_DEPT_USE_SPR_CD
+           , COST_DEPT_CHG_PSB_YN
+           , BGT_CLOS_DD_CD
+           , BGT_OVER_AGD_YN
+           , ACCT_USE_YN
+           , APRV_AUTH_USE_YN
+           , ORD_AUTH_USE_YN
+           , REFPSN_USE_YN
+           , BASIS_APRV_CHG_PSB_YN
+           , CCO_PO_USE_SPR_CD
+           , GI_LVL_CD
+           , GI_VERF_PROC_CD
+           , HDV_DLV_USE_YN
+           , SRVON_OCAR_UT_YN
+           , BASIS_OPSN_CHG_YN
+           , CART_PURG_RSN_USE_SPR_CD
+           , CART_PURG_RSN_MAND_SPR_CD
+           , CART_USE_DIS_USEYN
+           , CART_USE_DIS_DT_YN
+           , CART_USE_DIS_STR_DD
+           , CART_USE_DIS_END_DD
+           , CART_USE_DIS_AMT_YN
+           , CART_USE_DIS_STR_AMT
+           , CART_USE_DIS_END_AMT
+           , CART_USE_DIS_REPT_YN
+           , CART_USE_DIS_REPT_BSS_YM
+           , CART_PHS_CTS
+           , ODR_DLGTE_USE_YN
+           , MBR_JOIN_DSGN_APPRR_USE_YN
+           , NEW_PRD_REQ_YN
+           , HRM_PRD_APRV_USE_YN
+           , HRM_PRD_APRV_PST_CD
+           , ACCT_CHG_PSB_YN
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.BZPLC_ID
+           , INPT.OPR_UNIT_ID
+           , INPT.BGT_AUTH_USE_YN
+           , INPT.BGT_FW_SPR_CD
+           , INPT.QRT_BGT_USE_YN
+           , INPT.HRNK_BGT_USE_YN
+           , INPT.BLNG_DEPT_USE_SPR_CD
+           , INPT.COST_DEPT_CHG_PSB_YN
+           , INPT.BGT_CLOS_DD_CD
+           , INPT.BGT_OVER_AGD_YN
+           , INPT.ACCT_USE_YN
+           , INPT.APRV_AUTH_USE_YN
+           , INPT.ORD_AUTH_USE_YN
+           , INPT.REFPSN_USE_YN
+           , INPT.BASIS_APRV_CHG_PSB_YN
+           , INPT.CCO_PO_USE_SPR_CD
+           , INPT.GI_LVL_CD
+           , INPT.GI_VERF_PROC_CD
+           , INPT.HDV_DLV_USE_YN
+           , INPT.SRVON_OCAR_UT_YN
+           , INPT.BASIS_OPSN_CHG_YN
+           , INPT.CART_PURG_RSN_USE_SPR_CD
+           , INPT.CART_PURG_RSN_MAND_SPR_CD
+           , INPT.CART_USE_DIS_USEYN
+           , INPT.CART_USE_DIS_DT_YN
+           , INPT.CART_USE_DIS_STR_DD
+           , INPT.CART_USE_DIS_END_DD
+           , INPT.CART_USE_DIS_AMT_YN
+           , INPT.CART_USE_DIS_STR_AMT
+           , INPT.CART_USE_DIS_END_AMT
+           , INPT.CART_USE_DIS_REPT_YN
+           , INPT.CART_USE_DIS_REPT_BSS_YM
+           , INPT.CART_PHS_CTS
+           , INPT.ODR_DLGTE_USE_YN
+           , INPT.MBR_JOIN_DSGN_APPRR_USE_YN
+           , INPT.NEW_PRD_REQ_YN
+           , INPT.HRM_PRD_APRV_USE_YN
+           , INPT.HRM_PRD_APRV_PST_CD
+           , INPT.ACCT_CHG_PSB_YN
+           , INPT.REGPSN_ID
+           , INPT.REG_DTM
+           , INPT.UPDPSN_ID
+           , INPT.UPD_DTM
+      )
+/* /com.ssp.bo.cc.custOprunit.saveCtlAuthInfo */
+</update>
+
+<insert id="saveCtlAuthInfoHst" parameterType="Map">
+    <selectKey order="BEFORE" keyProperty="hstSeq" resultType="sspMap">
+      SELECT
+        NVL(MAX(HST_SEQ),0) + 1 HST_SEQ
+      FROM
+        TB_CC_OPR_UNIT_CTL_AUTH_INFO_HST
+      WHERE
+        CO_CD = #{CO_CD}
+        AND BZPLC_ID = #{BZPLC_ID}
+        AND OPR_UNIT_ID = #{OPR_UNIT_ID}
+    </selectKey>
+    /* CustCtl.insertOprUnitCtlHis */
+    INSERT INTO TB_CC_OPR_UNIT_CTL_AUTH_INFO_HST(
+        CO_CD
+      , BZPLC_ID
+      , OPR_UNIT_ID
+      , HST_SEQ
+      , MBR_JOIN_DSGN_APPRR_USE_YN /* 회원가입지정승인자사용여부 */
+      , APRV_AUTH_USE_YN           /* 결재권한사용여부 */
+      , BASIS_APRV_CHG_PSB_YN      /* 기본결재변경가능여부 */
+      , ORD_AUTH_USE_YN            /* 발주권한사용여부 */
+      , BASIS_OPSN_CHG_YN          /* 기본발주자변경여부 */
+      , ACCT_USE_YN                /* 계정사용여부 */
+      , COST_DEPT_CHG_PSB_YN       /* 비용부서변경가능여부 */
+      , ACCT_CHG_PSB_YN            /* 계정변경가능여부 */
+      , BGT_AUTH_USE_YN            /* 예산권한사용여부 */
+      , BGT_OVER_AGD_YN            /* 예산초과허용여부 */
+      , BGT_FW_SPR_CD              /* 예산이월구분코드 */
+      , HRNK_BGT_USE_YN            /* 상위예산사용여부 */
+      , QRT_BGT_USE_YN             /* 분기예산사용여부 */
+      , BLNG_DEPT_USE_SPR_CD       /* 귀속부서사용구분코드 */
+      , CART_PURG_RSN_USE_SPR_CD   /* 카트구매사유사용구분코드 */
+      , ODR_DLGTE_USE_YN           /* 주문대행자사용여부 */
+      , REFPSN_USE_YN              /* 참조자사용여부 */
+      , CART_PURG_RSN_MAND_SPR_CD  /* 카트구매사유필수구분코드 */
+      , CCO_PO_USE_SPR_CD          /* 고객사PO사용구분코드 */
+      , CART_USE_DIS_DT_YN         /* 카트사용불가일자여부 */
+      , CART_USE_DIS_STR_DD        /* 카트사용불가시작일 */
+      , CART_USE_DIS_END_DD        /* 카트사용불가종료일 */
+      , CART_USE_DIS_REPT_YN       /* 카트사용불가반복여부 */
+      , CART_USE_DIS_USEYN         /* 카트사용불가사용여부 */
+      , CART_USE_DIS_REPT_BSS_YM   /* 카트사용불가반복기준년월 */
+      , BGT_CLOS_DD_CD             /* 예산마감일코드 */
+      , GI_LVL_CD                  /* 입고레벨코드 */
+      , GI_VERF_PROC_CD            /* 입고검수처리코드 */
+      , CART_USE_DIS_AMT_YN        /* 카트사용불가금액여부 */
+      , CART_USE_DIS_STR_AMT       /* 카트사용불가시작금액 */
+      , CART_USE_DIS_END_AMT       /* 카트사용불가종료금액 */
+      , NEW_PRD_REQ_YN             /* 신규상품요청여부*/
+      , RPT_ID                     /* 보고서ID */
+      , CART_PHS_CTS               /* 카트문구내용 */
+      , HDV_DLV_USE_YN             /* 택배배송사용여부 */
+      , SRVON_OCAR_UT_YN           /* 서브원자차이용여부 */
+      , REGPSN_ID
+      , REG_DTM
+      , UPDPSN_ID
+      , UPD_DTM
+    ) 
+     SELECT CO_CD
+	      , BZPLC_ID
+	      , OPR_UNIT_ID
+	      , #{hstSeq}
+	      , MBR_JOIN_DSGN_APPRR_USE_YN /* 회원가입지정승인자사용여부 */
+	      , APRV_AUTH_USE_YN           /* 결재권한사용여부 */
+	      , BASIS_APRV_CHG_PSB_YN      /* 기본결재변경가능여부 */
+	      , ORD_AUTH_USE_YN            /* 발주권한사용여부 */
+	      , BASIS_OPSN_CHG_YN          /* 기본발주자변경여부 */
+	      , ACCT_USE_YN                /* 계정사용여부 */
+	      , COST_DEPT_CHG_PSB_YN       /* 비용부서변경가능여부 */
+	      , ACCT_CHG_PSB_YN            /* 계정변경가능여부 */
+	      , BGT_AUTH_USE_YN            /* 예산권한사용여부 */
+	      , BGT_OVER_AGD_YN            /* 예산초과허용여부 */
+	      , BGT_FW_SPR_CD              /* 예산이월구분코드 */
+	      , HRNK_BGT_USE_YN            /* 상위예산사용여부 */
+	      , QRT_BGT_USE_YN             /* 분기예산사용여부 */
+	      , BLNG_DEPT_USE_SPR_CD       /* 귀속부서사용구분코드 */
+	      , CART_PURG_RSN_USE_SPR_CD   /* 카트구매사유사용구분코드 */
+	      , ODR_DLGTE_USE_YN           /* 주문대행자사용여부 */
+	      , REFPSN_USE_YN              /* 참조자사용여부 */
+	      , CART_PURG_RSN_MAND_SPR_CD  /* 카트구매사유필수구분코드 */
+	      , CCO_PO_USE_SPR_CD          /* 고객사PO사용구분코드 */
+	      , CART_USE_DIS_DT_YN         /* 카트사용불가일자여부 */
+	      , CART_USE_DIS_STR_DD        /* 카트사용불가시작일 */
+	      , CART_USE_DIS_END_DD        /* 카트사용불가종료일 */
+	      , CART_USE_DIS_REPT_YN       /* 카트사용불가반복여부 */
+	      , CART_USE_DIS_USEYN         /* 카트사용불가사용여부 */
+	      , CART_USE_DIS_REPT_BSS_YM   /* 카트사용불가반복기준년월 */
+	  , BGT_CLOS_DD_CD             /* 예산마감일코드 */
+      , GI_LVL_CD                  /* 입고레벨코드 */
+      , GI_VERF_PROC_CD            /* 입고검수처리코드 */
+      , CART_USE_DIS_AMT_YN        /* 카트사용불가금액여부 */
+      , CART_USE_DIS_STR_AMT       /* 카트사용불가시작금액 */
+      , CART_USE_DIS_END_AMT       /* 카트사용불가종료금액 */
+      , NEW_PRD_REQ_YN             /* 신규상품요청여부*/
+      , RPT_ID                     /* 보고서ID */
+      , CART_PHS_CTS               /* 카트문구내용 */
+      , HDV_DLV_USE_YN             /* 택배배송사용여부 */
+      , SRVON_OCAR_UT_YN           /* 서브원자차이용여부 */
+	      , REGPSN_ID
+	      , REG_DTM
+	      , UPDPSN_ID
+	      , UPD_DTM
+	   FROM TB_CC_OPR_UNIT_CTL_AUTH_INFO A
+	  WHERE CO_CD 		= #{CO_CD}
+        AND BZPLC_ID 	= #{BZPLC_ID}
+        AND OPR_UNIT_ID = #{OPR_UNIT_ID}
+  </insert>
+
+<update id="saveCtlAuthInfo4MbrJoinApprr" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveCtlAuthInfo4MbrJoinApprr */
+MERGE INTO TB_CC_MBR_JOIN_APPRR_INFO  TRGT
+USING (<trim prefixOverrides="AND|OR|UNION ALL|," prefix=""><foreach collection="MBR_JOIN_APPRR" item="item" >
+        UNION ALL
+       SELECT #{CO_CD                     }  CO_CD
+            , #{BZPLC_ID                  }  BZPLC_ID
+            , #{OPR_UNIT_ID               }  OPR_UNIT_ID
+            , #{item                      }  MBR_JOIN_DSGN_APPRR
+            
+            , NVL(#{regpsnId }, 'X0025958')  REGPSN_ID, SYSTIMESTAMP  REG_DTM
+            , NVL(#{updpsnId }, 'X0025958')  UPDPSN_ID, SYSTIMESTAMP  UPD_DTM
+         FROM DUAL
+       </foreach></trim>
+      )    INPT
+   ON (    INPT.CO_CD                   = TRGT.CO_CD
+       AND INPT.BZPLC_ID                = TRGT.BZPLC_ID
+       AND INPT.OPR_UNIT_ID             = TRGT.OPR_UNIT_ID
+       AND INPT.MBR_JOIN_DSGN_APPRR     = TRGT.MBR_JOIN_DSGN_APPRR
+      )
+ WHEN     MATCHED THEN
+      UPDATE SET
+             UPDPSN_ID                  = INPT.UPDPSN_ID
+           , UPD_DTM                    = INPT.UPD_DTM
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , BZPLC_ID
+           , OPR_UNIT_ID
+           , MBR_JOIN_DSGN_APPRR
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.BZPLC_ID
+           , INPT.OPR_UNIT_ID
+           , INPT.MBR_JOIN_DSGN_APPRR
+           , INPT.REGPSN_ID
+           , INPT.REG_DTM
+           , INPT.UPDPSN_ID
+           , INPT.UPD_DTM
+      )
+/* /com.ssp.bo.cc.custOprunit.saveCtlAuthInfo4MbrJoinApprr */
+</update>
+<delete id="postSaveCtlAuthInfo4MbrJoinApprr" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.postSaveCtlAuthInfo4MbrJoinApprr */
+DELETE FROM TB_CC_MBR_JOIN_APPRR_INFO  TRGT
+ WHERE TRGT.CO_CD               = #{CO_CD      }
+   AND TRGT.BZPLC_ID            = #{BZPLC_ID   }
+   AND TRGT.OPR_UNIT_ID         = #{OPR_UNIT_ID}
+   <if test="MBR_JOIN_APPRR!=null and MBR_JOIN_APPRR.size()>0">AND TRGT.MBR_JOIN_DSGN_APPRR NOT IN (<foreach collection="MBR_JOIN_APPRR" item="item" separator=",">#{item}</foreach>)</if>
+/* /com.ssp.bo.cc.custOprunit.postSaveCtlAuthInfo4MbrJoinApprr */
+</delete>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<!-- 입고 책임자                                                                                                                       -->
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<!-- 운영단위 입고 책임자 조회 -->
+<select id="selectByoprunitGiChrpsn" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.cc.custOprunit.selectByoprunitGiChrpsn */
+<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />
+
+SELECT     GICP.CO_CD
+     ,     GICP.BZPLC_ID            , (SELECT BZPLC_NM    FROM TB_CC_BZPLC_BASIS    WHERE CO_CD=GICP.CO_CD AND BZPLC_ID=GICP.BZPLC_ID                                                          )  BZPLC_NM
+     ,     GICP.OPR_UNIT_ID         , (SELECT OPR_UNIT_NM FROM TB_CC_OPR_UNIT_BASIS WHERE CO_CD=GICP.CO_CD AND BZPLC_ID=GICP.BZPLC_ID AND OPR_UNIT_ID=GICP.OPR_UNIT_ID                         )  OPR_UNIT_NM
+     
+     , LISTAGG(                       GICP.GI_CHRPSN_ID , ',') WITHIN GROUP(ORDER BY GICP.GI_CHRPSN_ID)  GI_CHRPSN_ID
+     , LISTAGG(NVL(MBRB.MBR_NM      , GICP.GI_CHRPSN_ID), ',') WITHIN GROUP(ORDER BY GICP.GI_CHRPSN_ID)  GI_CHRPSN_NM
+  FROM TB_CC_BYOPRUNIT_GI_CHRPSN_INFO          GICP
+     , TB_CC_MBR_BASIS                         MBRB
+ WHERE GICP.CO_CD           = MBRB.CO_CD       (+)
+   AND GICP.GI_CHRPSN_ID    = MBRB.MBR_ID      (+)
+   
+   AND GICP.CO_CD           = #{coCd       }
+   AND GICP.BZPLC_ID        = #{bzplcId    }
+   AND GICP.OPR_UNIT_ID     = #{oprUnitId  }
+   
+ GROUP BY
+       GICP.CO_CD
+     , GICP.BZPLC_ID
+     , GICP.OPR_UNIT_ID
+     
+<include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+/* /com.ssp.bo.cc.custOprunit.selectByoprunitGiChrpsn */
+</select>
+
+<!-- 운영단위 입고 책임자 저장 -->
+<update id="saveByoprunitGiChrpsn" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveByoprunitGiChrpsn */
+MERGE INTO TB_CC_BYOPRUNIT_GI_CHRPSN_INFO  TRGT
+USING (<trim prefixOverrides="AND|OR|UNION ALL|," prefix=""><foreach collection="BYOPRUNIT_GI_CHRPSN" item="GI_CHRPSN" ><foreach collection="GI_CHRPSN.GI_CHRPSN_ID" item="item" ><if test='item!=null and !"".equals(item)'>
+        UNION ALL
+       SELECT #{GI_CHRPSN.CO_CD           }  CO_CD
+            , #{GI_CHRPSN.BZPLC_ID        }  BZPLC_ID
+            , #{GI_CHRPSN.OPR_UNIT_ID     }  OPR_UNIT_ID
+            , #{item                      }  GI_CHRPSN_ID
+            
+            , NVL(#{regpsnId }, 'X0025958')  REGPSN_ID, SYSTIMESTAMP  REG_DTM
+            , NVL(#{updpsnId }, 'X0025958')  UPDPSN_ID, SYSTIMESTAMP  UPD_DTM
+         FROM DUAL
+       </if></foreach></foreach></trim>
+      )    INPT
+   ON (    INPT.CO_CD                   = TRGT.CO_CD
+       AND INPT.BZPLC_ID                = TRGT.BZPLC_ID
+       AND INPT.OPR_UNIT_ID             = TRGT.OPR_UNIT_ID
+       AND INPT.GI_CHRPSN_ID            = TRGT.GI_CHRPSN_ID
+      )
+ WHEN     MATCHED THEN
+      UPDATE SET
+             UPDPSN_ID                  = INPT.UPDPSN_ID
+           , UPD_DTM                    = INPT.UPD_DTM
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , BZPLC_ID
+           , OPR_UNIT_ID
+           , GI_CHRPSN_ID
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.BZPLC_ID
+           , INPT.OPR_UNIT_ID
+           , INPT.GI_CHRPSN_ID
+           , INPT.REGPSN_ID
+           , INPT.REG_DTM
+           , INPT.UPDPSN_ID
+           , INPT.UPD_DTM
+      )
+/* /com.ssp.bo.cc.custOprunit.saveByoprunitGiChrpsn */
+</update>
+<delete id="savePostByoprunitGiChrpsn" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.savePostByoprunitGiChrpsn */
+DELETE
+  FROM TB_CC_BYOPRUNIT_GI_CHRPSN_INFO
+ WHERE CO_CD        = #{CO_CD        }
+   AND BZPLC_ID     = #{BZPLC_ID     }
+   AND OPR_UNIT_ID  = #{OPR_UNIT_ID  }
+   
+   <if test='BYOPRUNIT_GI_CHRPSN != null and BYOPRUNIT_GI_CHRPSN.size() > 0 and BYOPRUNIT_GI_CHRPSN[0].GI_CHRPSN_ID != null and BYOPRUNIT_GI_CHRPSN[0].GI_CHRPSN_ID.size() > 0'>
+   AND (CO_CD, BZPLC_ID, OPR_UNIT_ID, GI_CHRPSN_ID) NOT IN (
+        <trim prefixOverrides="AND|OR|UNION ALL|," prefix=""><foreach collection="BYOPRUNIT_GI_CHRPSN[0].GI_CHRPSN_ID" item="item">
+        , (#{CO_CD}, #{BZPLC_ID}, #{OPR_UNIT_ID}, #{item})</foreach></trim>
+       )
+   </if>
+/* /com.ssp.bo.cc.custOprunit.savePostByoprunitGiChrpsn */
+</delete>
+
+
+
+<!-- 부서 입고 책임자 조회 -->
+<select id="selectBydeptGiChrpsn" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.cc.custOprunit.selectBydeptGiChrpsn */
+<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />
+
+SELECT LEVEL    LVL
+     , LPAD(' ', (LEVEL-1)*4)||DEPT_NM   NM
+     , TRE.*
+  FROM (SELECT (SELECT BZPLC_NM    FROM TB_CC_BZPLC_BASIS    WHERE CO_CD=DPTB.CO_CD AND BZPLC_ID=DPTB.BZPLC_ID                                                          )  BZPLC_NM
+             , (SELECT OPR_UNIT_NM FROM TB_CC_OPR_UNIT_BASIS WHERE CO_CD=DPTB.CO_CD AND BZPLC_ID=DPTB.BZPLC_ID AND OPR_UNIT_ID=DPTB.OPR_UNIT_ID                         )  OPR_UNIT_NM
+             , DPTB.*
+             , GIPS.GI_CHRPSN_ID
+             , GIPS.GI_CHRPSN_NM
+          FROM TB_CC_DEPT_BASIS        DPTB
+             , (SELECT GICP.CO_CD
+                     , GICP.BZPLC_ID
+                     , GICP.OPR_UNIT_ID
+                     , GICP.DEPT_ID
+                     , LISTAGG(                       GICP.GI_CHRPSN_ID , ',') WITHIN GROUP(ORDER BY GICP.GI_CHRPSN_ID)  GI_CHRPSN_ID
+                     , LISTAGG(NVL(MBRB.MBR_NM      , GICP.GI_CHRPSN_ID), ',') WITHIN GROUP(ORDER BY GICP.GI_CHRPSN_ID)  GI_CHRPSN_NM
+                  FROM TB_CC_BYDEPT_GI_CHRPSN_INFO   GICP
+                     , TB_CC_MBR_BASIS               MBRB
+                 WHERE GICP.CO_CD           = MBRB.CO_CD       (+)
+                   AND GICP.GI_CHRPSN_ID    = MBRB.MBR_ID      (+)
+                 GROUP BY
+                       GICP.CO_CD
+                     , GICP.BZPLC_ID
+                     , GICP.OPR_UNIT_ID
+                     , GICP.DEPT_ID
+               )  GIPS
+         WHERE DPTB.CO_CD       = GIPS.CO_CD        (+)
+           AND DPTB.BZPLC_ID    = GIPS.BZPLC_ID     (+)
+           AND DPTB.OPR_UNIT_ID = GIPS.OPR_UNIT_ID  (+)
+           AND DPTB.DEPT_ID     = GIPS.DEPT_ID      (+)
+           
+           AND DPTB.USE_YN      = 'Y'
+           AND DPTB.CO_CD       = #{coCd       }
+           AND DPTB.BZPLC_ID    = #{bzplcId    }
+           AND DPTB.OPR_UNIT_ID = #{oprUnitId  }
+           
+         <!-- 
+         ORDER BY 
+              DPTB.CO_CD
+            , DPTB.BZPLC_ID
+            , DPTB.OPR_UNIT_ID
+            , DPTB.DEPT_ID
+          -->
+       )  TRE
+ START WITH HRNK_DEPT_ID IS NULL
+       CONNECT BY NOCYCLE PRIOR CO_CD   = CO_CD
+                      AND PRIOR DEPT_ID = HRNK_DEPT_ID
+ ORDER SIBLINGS BY
+       CO_CD
+     , BZPLC_ID
+     , OPR_UNIT_ID
+     , DEPT_SRT_SEQ
+     , DEPT_ID
+
+<include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+/* /com.ssp.bo.cc.custOprunit.selectByoprunitGiChrpsn */
+</select>
+
+<!-- 부서 입고 책임자 저장 -->
+<update id="saveBydeptGiChrpsn" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveBydeptGiChrpsn */
+MERGE INTO TB_CC_BYDEPT_GI_CHRPSN_INFO  TRGT
+USING (<trim prefixOverrides="AND|OR|UNION ALL|," prefix="">
+       <if test="BYDEPT_GI_CHRPSN != null and BYDEPT_GI_CHRPSN.size() > 0"><foreach collection="BYDEPT_GI_CHRPSN" item="GI_CHRPSN" >
+       <if test="GI_CHRPSN != null and GI_CHRPSN.GI_CHRPSN_ID != null and GI_CHRPSN.GI_CHRPSN_ID.size() > 0"><foreach collection="GI_CHRPSN.GI_CHRPSN_ID" item="item" >
+        UNION ALL
+       SELECT #{GI_CHRPSN.CO_CD           }  CO_CD
+            , #{GI_CHRPSN.BZPLC_ID        }  BZPLC_ID
+            , #{GI_CHRPSN.OPR_UNIT_ID     }  OPR_UNIT_ID
+            , #{GI_CHRPSN.DEPT_ID         }  DEPT_ID
+            , #{item                      }  GI_CHRPSN_ID
+            
+            , NVL(#{regpsnId }, 'X0025958')  REGPSN_ID, SYSTIMESTAMP  REG_DTM
+            , NVL(#{updpsnId }, 'X0025958')  UPDPSN_ID, SYSTIMESTAMP  UPD_DTM
+         FROM DUAL
+       </foreach></if></foreach></if>
+       </trim>
+      )    INPT
+   ON (    INPT.CO_CD                   = TRGT.CO_CD
+       AND INPT.BZPLC_ID                = TRGT.BZPLC_ID
+       AND INPT.OPR_UNIT_ID             = TRGT.OPR_UNIT_ID
+       AND INPT.DEPT_ID                 = TRGT.DEPT_ID
+       AND INPT.GI_CHRPSN_ID            = TRGT.GI_CHRPSN_ID
+      )
+ WHEN     MATCHED THEN
+      UPDATE SET
+             UPDPSN_ID                  = INPT.UPDPSN_ID
+           , UPD_DTM                    = INPT.UPD_DTM
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , BZPLC_ID
+           , OPR_UNIT_ID
+           , DEPT_ID
+           , GI_CHRPSN_ID
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.BZPLC_ID
+           , INPT.OPR_UNIT_ID
+           , INPT.DEPT_ID
+           , INPT.GI_CHRPSN_ID
+           , INPT.REGPSN_ID
+           , INPT.REG_DTM
+           , INPT.UPDPSN_ID
+           , INPT.UPD_DTM
+      )
+/* /com.ssp.bo.cc.custOprunit.saveBydeptGiChrpsn */
+</update>
+
+<delete id="savePostBydeptGiChrpsn" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.savePostBydeptGiChrpsn */
+DELETE
+  FROM TB_CC_BYDEPT_GI_CHRPSN_INFO
+ WHERE CO_CD        = #{CO_CD        }
+   AND BZPLC_ID     = #{BZPLC_ID     }
+   AND OPR_UNIT_ID  = #{OPR_UNIT_ID  }
+   
+   AND DEPT_ID IN (<trim prefixOverrides="AND|OR|UNION ALL|," prefix=""><foreach collection="BYDEPT_GI_CHRPSN" item="GI_CHRPSN" separator=",">#{GI_CHRPSN.DEPT_ID}</foreach></trim>)
+   
+   
+   <if test="BYDEPT_GI_CHRPSN != null and BYDEPT_GI_CHRPSN.size() > 0"><foreach collection="BYDEPT_GI_CHRPSN" item="GI_CHRPSN" >
+   <if test="GI_CHRPSN != null and GI_CHRPSN.GI_CHRPSN_ID != null and GI_CHRPSN.GI_CHRPSN_ID.size() > 0">
+   AND (CO_CD, BZPLC_ID, OPR_UNIT_ID, DEPT_ID, GI_CHRPSN_ID) NOT IN (<trim prefixOverrides="AND|OR|UNION ALL|," prefix=""><foreach collection="GI_CHRPSN.GI_CHRPSN_ID" item="item">
+        , (#{CO_CD}, #{BZPLC_ID}, #{OPR_UNIT_ID}, #{GI_CHRPSN.DEPT_ID}, #{item})</foreach></trim>
+   )
+   </if></foreach></if>
+   
+/* /com.ssp.bo.cc.custOprunit.savePostBydeptGiChrpsn */
+</delete>
+
+<!-- 입고레벨 변경 -->
+<update id="saveOprunitGiLvl" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveOprunitGiLvl */
+
+UPDATE TB_CC_OPR_UNIT_CTL_AUTH_INFO
+   SET GI_LVL_CD      =     #{GI_LVL_CD}
+     , UPDPSN_ID      = NVL(#{updpsnId }, 'X0025958')
+     , UPD_DTM        = SYSTIMESTAMP
+ WHERE CO_CD        = #{CO_CD        }
+   AND BZPLC_ID     = #{BZPLC_ID     }
+   AND OPR_UNIT_ID  = #{OPR_UNIT_ID  }
+
+/* /com.ssp.bo.cc.custOprunit.saveOprunitGiLvl */
+</update>
+
+
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<!-- 출고명세서 목록 팝업 ,	박재광,	2022. 05. 10.                                                                                                         -->
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<select id="selectGoStmList" parameterType="HashMap" resultType="HashMap">
+	/* 출고명세서 목록 팝업  com.ssp.cc.oprunit.selectGoStmList */
+	SELECT 
+		 RPT_ID	/*보고서ID*/
+		,RPT_NM	/*보고서명*/
+		,RPT_URL	/*보고서URL*/
+		,SALSPRC_YN	/*판매가여부*/
+		,CASE	WHEN SALSPRC_YN = 'Y' THEN '유'
+				WHEN SALSPRC_YN = 'N' THEN '무'
+				ELSE '' END		AS SALSPRC_YN_NM	/*판매가여부명*/
+	FROM TB_CO_GO_STM_MST /*출고명세서마스터*/
+	WHERE USE_YN = 'Y'
+	<if test="rptId != null and !rptId.equals('')">
+	AND RPT_ID LIKE #{rptId} || '%'
+	</if>
+	<if test="rptNm != null and !rptNm.equals('')">
+	AND RPT_NM LIKE '%' || #{rptNm} || '%'
+	</if>
+	<if test="salsprcYn != null and !salsprcYn.equals('')">
+	AND SALSPRC_YN = #{salsprcYn}
+	</if>
+	ORDER BY RPT_ID ASC
+	OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+</select>
+
+<select id="selectGoStmListCnt" parameterType="HashMap" resultType="Integer">
+	/* 출고명세서 목록 팝업 리스트 카운트 조회  com.ssp.cc.oprunit.selectGoStmListCnt */
+	SELECT COUNT(*)
+	FROM TB_CO_GO_STM_MST /*출고명세서마스터*/
+	WHERE USE_YN = 'Y'
+	<if test="rptId != null and !rptId.equals('')">
+	AND RPT_ID LIKE #{rptId} || '%'
+	</if>
+	<if test="rptNm != null and !rptNm.equals('')">
+	AND RPT_NM LIKE '%' || #{rptNm} || '%'
+	</if>
+	<if test="salsprcYn != null and !salsprcYn.equals('')">
+	AND SALSPRC_YN = #{salsprcYn}
+	</if>
+</select>
+
+<update id="saveDeptCtlAuthInfo" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveDeptCtlAuthInfo */
+UPDATE TB_CC_DEPT_CTL_AUTH_INFO
+SET BGT_OVER_AGD_YN = #{BGT_AUTH_USE_YN}
+  , BGT_TRNSF_AGD_YN= #{BGT_AUTH_USE_YN}
+  , UPDPSN_ID       = NVL(#{regpsnId }, 'X0025958')
+  , UPD_DTM         = SYSDATE
+WHERE CO_CD = #{CO_CD}
+  AND DEPT_ID IN (SELECT DEPT_ID FROM TB_CC_DEPT_BASIS WHERE CO_CD = #{CO_CD} AND OPR_UNIT_ID = #{OPR_UNIT_ID})
+/* /com.ssp.bo.cc.custOprunit.saveDeptCtlAuthInfo */
+</update>
+
+<insert id="saveDeptCtlAuthInfoHst" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.saveDeptCtlAuthInfoHst */
+      INSERT INTO TB_CC_DEPT_CTL_AUTH_INFO_HST 
+      ( 
+      	CO_CD
+      , DEPT_ID
+      , HST_SEQ
+      , HST_SPR_CD
+      , BGT_OVER_AGD_YN
+      , BGT_TRNSF_AGD_YN
+      , REGPSN_ID
+      , REG_DTM
+      , UPDPSN_ID
+      , UPD_DTM
+	  )
+      SELECT A.CO_CD
+      	   , A.DEPT_ID
+      	   , ( SELECT COUNT(*) + 1
+				 FROM TB_CC_DEPT_CTL_AUTH_INFO_HST H
+			    WHERE H.CO_CD   = A.CO_CD
+				  AND H.DEPT_ID = A.DEPT_ID )
+      	   , 'U'
+      	   , #{BGT_AUTH_USE_YN}
+      	   , #{BGT_AUTH_USE_YN}
+      	   , A.REGPSN_ID
+      	   , A.REG_DTM
+      	   , A.UPDPSN_ID
+      	   , A.UPD_DTM
+        FROM TB_CC_DEPT_CTL_AUTH_INFO A
+       WHERE A.CO_CD = #{CO_CD}
+   	     AND A.DEPT_ID IN ( SELECT D.DEPT_ID 
+  	   				         FROM TB_CC_DEPT_BASIS D
+  	   				        WHERE D.CO_CD = #{CO_CD} 
+  	   				          AND D.OPR_UNIT_ID = #{OPR_UNIT_ID} )
+/* /com.ssp.bo.cc.custOprunit.saveDeptCtlAuthInfoHst       */
+</insert>
+
+<select id="chkMbrJoinAppr" parameterType="HashMap" resultType="int">
+    /* com.ssp.bo.cc.custOprunit.chkMbrJoinAppr 회원가입 지정 승인자가 사용인 경우 승인자는 필수 입력값 체크 */
+    SELECT COUNT(*)
+    FROM SSP_APP.TB_CO_MBR_LOGN_INFO A
+    INNER JOIN SSP_APP.TB_CC_MBR_BASIS B
+            ON A.CO_CD = B.CO_CD
+           AND A.MBR_ID = B.MBR_ID
+    INNER JOIN SSP_APP.TB_CC_BZPLC_BASIS C
+           ON C.BZPLC_ID = A.BZPLC_ID
+          AND C.CO_CD = A.CO_CD
+    INNER JOIN SSP_APP.TB_CC_DEPT_BASIS D
+           ON D.CO_CD = B.CO_CD
+          AND D.BZPLC_ID = B.BZPLC_ID
+          AND D.DEPT_ID = B.DEPT_ID
+    INNER JOIN SSP_APP.TB_CC_OPR_UNIT_BASIS E
+           ON E.CO_CD = B.CO_CD
+          AND E.BZPLC_ID = B.BZPLC_ID
+          AND E.OPR_UNIT_ID = D.OPR_UNIT_ID
+    WHERE B.MBR_NM != '탈퇴'
+      AND A.CO_CD = #{coCd}
+      AND C.BZPLC_ID = #{bzplcId}
+      AND A.MBR_ID = #{mbrId}
+</select>
+
+
+<!-- /* [2022.07.05] 박성근 설정된 입고레벨 이외의 입고담당자 정보는 삭제처리 */ -->
+<delete id="deleteByoprunitGiChrpsn" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.deleteByoprunitGiChrpsn - 운영단위 입고책임자 삭제 */ 
+
+DELETE FROM TB_CC_BYOPRUNIT_GI_CHRPSN_INFO
+ WHERE CO_CD       = #{CO_CD      }
+   AND BZPLC_ID    = #{BZPLC_ID   }
+   AND OPR_UNIT_ID = #{OPR_UNIT_ID}
+
+/* com.ssp.bo.cc.custOprunit.deleteByoprunitGiChrpsn - 운영단위 입고책임자 삭제 */
+</delete>
+
+<delete id="deleteBydeptGiChrpsn" parameterType="HashMap">
+/* com.ssp.bo.cc.custOprunit.deleteBydeptGiChrpsn - 부서단위 입고책임자 삭제 */ 
+
+DELETE FROM TB_CC_BYDEPT_GI_CHRPSN_INFO
+ WHERE CO_CD       = #{CO_CD      }
+   AND BZPLC_ID    = #{BZPLC_ID   }
+   AND OPR_UNIT_ID = #{OPR_UNIT_ID}
+
+/* com.ssp.bo.cc.custOprunit.deleteBydeptGiChrpsn - 부서단위 입고책임자 삭제 */
+</delete>
+
+
+<select id="selectChkCcoDetail" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.cc.custOprunit.selectChkCcoDetail */
+SELECT 'CHK' AS CD
+	 , COUNT(*) AS NM
+  FROM (
+		SELECT A.CO_CD
+			 , A.BZPLC_ID
+			 , A.OPR_UNIT_ID
+			 , A.REF_CD_GRP_SEQ 
+			 , B.REF_CD_SEQ 
+		  FROM TB_CC_CCO_REF_CD_INFO A
+	LEFT OUTER JOIN TB_CC_CCO_REF_CD_DTL B
+			ON A.CO_CD = B.CO_CD 
+		   AND A.BZPLC_ID = B.BZPLC_ID 
+		   AND A.OPR_UNIT_ID = B.OPR_UNIT_ID
+		   AND A.REF_CD_GRP_SEQ = B.REF_CD_GRP_SEQ
+		 WHERE A.CO_CD 		 = #{coCd}
+		   AND A.BZPLC_ID 	 = #{bzplcId}
+		   AND A.OPR_UNIT_ID = #{oprUnitId}
+		   AND A.USE_YN		 = 'Y'
+		) LIST
+ WHERE REF_CD_SEQ IS NULL
+/* /com.ssp.bo.cc.custOprunit.selectChkCcoDetail */
+</select>
+
+
+</mapper>

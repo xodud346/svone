@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ProductNotice">
+
+	<!-- 고시정보관리 목록 -->
+    <select id="selectProductNoticeList" parameterType="HashMap" resultType="sspMap">
+        /* ProductNotice.selectProductNoticeList */
+        SELECT
+            NOTI_ID,
+            NOTI_NM,
+            USE_YN
+        FROM
+            TB_SG_NOTI
+        WHERE 1=1
+            <if test="searchUseYn != null and searchUseYn !=''">
+				AND USE_YN = #{searchUseYn}
+			</if>
+        ORDER BY NOTI_ID
+    </select>
+    
+    <!-- 고시정보관리 목록 -->
+    <select id="selectProductNoticeDetail" parameterType="HashMap" resultType="sspMap">
+        /* ProductNotice.selectProductNoticeDetail */
+        SELECT
+            NOTI_ID,
+            NOTI_NM,
+            USE_YN
+        FROM
+            TB_SG_NOTI
+        WHERE NOTI_ID = #{notiId}
+    </select>
+    
+    <!-- 고시정보항목 목록 -->
+    <select id="selectProductNoticeInfoList" parameterType="HashMap" resultType="sspMap">
+        /* ProductNotice.selectProductNoticeInfoList */
+        SELECT
+            NOTI_INFO_ID,
+			NOTI_ID,
+			SRT_SO,
+			NOTI_TTL,
+			NOTI_CTS,
+			USE_YN,
+			REG_DTM,
+			REGPSN_ID,
+			UPD_DTM,
+			UPDPSN_ID
+        FROM
+            TB_SG_NOTI_INFO
+        WHERE
+        	NOTI_ID = #{notiId}
+            AND USE_YN = 'Y'
+    </select>
+    
+    <!-- 고시정보관리 등록 -->
+    <insert id="insertProductNotice" parameterType="hashMap">
+    <selectKey keyProperty="notiId" resultType="String" order="BEFORE">
+        SELECT NVL2(MAX(NOTI_ID), 'A' || LPAD(REPLACE(MAX(NOTI_ID),'A')+1,4,'0'),'A0001') FROM TB_SG_NOTI
+    </selectKey>
+    	/* ProductNotice.insertProductNotice */
+    	INSERT INTO TB_SG_NOTI
+			(NOTI_ID, 
+			NOTI_NM, 
+			USE_YN, 
+			REG_DTM, 
+			REGPSN_ID)
+		VALUES(
+			#{notiId}
+			, #{notiNm}
+			, #{useYn}
+			, SYSDATE
+			, #{regpsnId}
+			)
+    </insert> 
+    
+    <!-- 고시정보관리 항목 등록 -->
+    <insert id="insertProductNoticeInfo" parameterType="hashMap">
+    <selectKey keyProperty="notiInfoId" resultType="String" order="BEFORE">
+        SELECT SQ_SG_NOTI_INFO.NEXTVAL FROM DUAL
+    </selectKey>
+    	/* ProductNotice.insertProductNotice */
+    	INSERT INTO TB_SG_NOTI_INFO(
+			NOTI_INFO_ID
+			, NOTI_ID
+			, SRT_SO
+			, NOTI_TTL
+			, NOTI_CTS
+			, USE_YN
+			, REG_DTM
+			, REGPSN_ID
+			) 
+			VALUES(
+			#{notiInfoId}
+			, #{notiId}
+			, #{srtSo}
+			, #{notiTtl}
+			, #{notiCts}
+			, 'Y'
+			, SYSDATE
+			, #{regpsnId}
+			)
+    </insert>    
+    
+    <!-- 고시정보관리 수정 -->
+    <update id="updateProductNotice" parameterType="HashMap">
+        /* ProductNotice.updateProductNotice */
+        UPDATE	TB_SG_NOTI 
+		SET	 
+			UPDPSN_ID = #{updpsnId}
+		 	,UPD_DTM = SYSDATE
+		<if test="notiNm != null and notiNm!= ''.toString()">
+		    , NOTI_NM = #{notiNm}
+		</if>
+		<if test="useYn != null and useYn!= ''.toString()">
+		    , USE_YN = #{useYn}
+		</if>
+		WHERE 
+			NOTI_ID = #{notiId}
+    </update>
+    
+    <!-- 고시정보관리 항목 수정 -->
+    <update id="updateProductNoticeInfo" parameterType="HashMap">
+        /* ProductNotice.updateProductNoticeInfo */
+        UPDATE	TB_SG_NOTI_INFO 
+		SET	 
+			UPDPSN_ID = #{updpsnId}
+			 ,UPD_DTM = SYSDATE
+		<if test="srtSo != null and srtSo!= ''.toString()">
+		    , SRT_SO = #{srtSo}
+		</if>
+		<if test="notiTtl != null">
+		    , NOTI_TTL = #{notiTtl}
+		</if>
+		<if test="notiCts != null">
+		    , NOTI_CTS = #{notiCts}
+		</if>
+		<if test="useYn != null and useYn!= ''.toString()">
+		    , USE_YN = #{useYn}
+		</if>
+		WHERE NOTI_INFO_ID = #{notiInfoId}
+    </update>
+    
+</mapper>

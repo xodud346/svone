@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="boBaBatPgmChgHst">
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 변경이력 등록
+	* 작성자 : spect22
+	* 작성 일자 : 2023-02-09
+	******************************************************************************
+	-->
+	<insert id="insertBatPgmChgHst" parameterType="com.ssp.core.ba.vo.BaBatPgmChgHstVo">
+		<selectKey keyProperty="batPgmChgHstSeq" resultType="Integer" order="BEFORE">
+            SELECT SQ_BA_BAT_PGM_CHG_HST_01.NEXTVAL FROM DUAL
+        </selectKey>
+		/* boBaBatPgmChgHst.insertBatPgmChgHst */
+		INSERT INTO TB_CO_BAT_PGM_CHG_HST (
+			BAT_PGM_CHG_HST_SEQ
+		,	BAT_PGM_SEQ
+		,	THME_DOMN_CD
+		,	BAT_SERVER_SEQ
+		,	BAT_PGM_ID
+		,	BAT_PGM_NM
+		,	RSRV_SPR_CD
+		,	RSRV_SCH
+		,	CLASS_METHOD_NM
+		,	USE_YN
+		,	RMKS
+		,	DATA_CHG_TP_CD
+		,	UPDPSN_ID
+		,	UPD_DTM
+		)
+		VALUES (
+			#{batPgmChgHstSeq}
+		,	#{batPgmSeq}
+		,	#{thmeDomnCd}
+		,	#{batServerSeq}
+		,	#{batPgmId}
+		,	#{batPgmNm}
+		,	#{rsrvSprCd}
+		,	#{rsrvSch}
+		,	#{classMethodNm}
+		,	#{useYn}
+		,	#{remark}
+		,	#{dataChgTpCd}
+		,	#{updpsnId}
+		,	SYSDATE
+		)
+	</insert>
+
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 변경이력 카운트
+	* 작성자 : spect22
+	* 작성 일자 : 2023-02-16
+	******************************************************************************
+	-->
+	<select id="selectBatPgmChgHstListCount" parameterType="com.ssp.core.ba.vo.BaBatPgmChgHstVo" resultType="integer">
+		/* boBaBatPgmChgHst.selectBatPgmLogListCount */
+		SELECT
+			COUNT(0)
+		FROM
+			SSP_APP.TB_CO_BAT_PGM_CHG_HST A			--배치프로그램 변경이력
+		,	SSP_APP.TB_CO_BAT_SERVER_INFO B				--배치서버
+		,	TB_CO_MBR_OPRTR_INFO C					--운영자 정보
+		<where>
+			A.BAT_SERVER_SEQ = B.BAT_SERVER_SEQ (+)
+		AND	A.UPDPSN_ID = C.OPRTR_ID (+)
+			<include refid="batPgmChgHstListWhere" />
+		</where>
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 변경이력 리스트
+	* 작성자 : spect22
+	* 작성 일자 : 2023-02-16
+	******************************************************************************
+	-->
+	<select id="selectBatPgmChgHstList" parameterType="com.ssp.core.ba.vo.BaBatPgmChgHstVo" resultType="com.ssp.core.ba.vo.BaBatPgmChgHstVo">
+		/* boBaBatPgmChgHst.selectBatPgmChgHstList */
+		SELECT
+			ROWNUM AS NO
+		,	S1.*
+		FROM (
+		   SELECT
+				A.THME_DOMN_CD											--주제영역코드
+			,	A.BAT_PGM_SEQ											--배치프로그램SEQ
+			,	B.BAT_SERVER_SEQ										--실행서버SEQ
+			,	B.SERVER_NM												--실행서버명
+			,	B.PRTCL_CD												--프로토콜
+			,	B.IP_ADDR												--실행서버IP
+			,	B.PORT													--포트
+			,	A.BAT_PGM_ID											--배치프로그램ID
+			,	A.BAT_PGM_NM											--배치프로그램명
+			,	A.RSRV_SPR_CD											--예약구분
+			,	A.RSRV_SCH												--예약일정
+			,	DECODE(A.USE_YN, 'Y', '사용', '미사용') AS USE_YN_TXT		--사용여부 텍스트값
+			,	A.CLASS_METHOD_NM										--클래스_메소드명
+			,	A.RMKS AS REMARK										--비고
+			,	A.UPDPSN_ID												--변경자ID
+			,	C.OPRTR_NM AS UPDPSN_NM									--변경자명
+			,	TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM	--변경일시
+			FROM
+				SSP_APP.TB_CO_BAT_PGM_CHG_HST A			--배치프로그램 변경이력
+			,	SSP_APP.TB_CO_BAT_SERVER_INFO B				--배치서버
+			,	TB_CO_MBR_OPRTR_INFO C					--운영자 정보
+			<where>
+				A.BAT_SERVER_SEQ = B.BAT_SERVER_SEQ (+)
+			AND	A.UPDPSN_ID = C.OPRTR_ID (+)
+				<include refid="batPgmChgHstListWhere"></include>
+			</where>
+		) S1
+		<if test="sortColumn != null and sortColumn != ''">
+			ORDER BY S1.${sortColumn} ${sortType}
+		</if>
+		<if test="sortColumn == null or sortColumn == ''">
+			ORDER BY ROWNUM ASC
+		</if>
+		<if test="startNum != null and startNum > -1">
+			OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+		</if>
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 변경이력 조건절
+	* 작성자 : spect22
+	* 작성 일자 : 2023-02-16
+	******************************************************************************
+	-->
+	<sql id="batPgmChgHstListWhere">
+		<if test="thmeDomnCd != null and !thmeDomnCd.equals('') ">
+			AND	A.THME_DOMN_CD = #{thmeDomnCd}
+		</if>
+		<if test="batServerSeq != null and !batServerSeq.equals('') and batServerSeq != 0 ">
+			AND A.BAT_SERVER_SEQ = #{batServerSeq}
+		</if>
+		<if test="batPgmNm != null and !batPgmNm.equals('') ">
+			AND A.BAT_PGM_NM LIKE '%' || #{batPgmNm} || '%'
+		</if>
+		<if test="batPgmId != null and !batPgmId.equals('')">
+			AND A.BAT_PGM_ID = #{batPgmId}
+		</if>
+		<if test="classMethodNm != null and !classMethodNm.equals('')">
+			AND A.CLASS_METHOD_NM LIKE '%' || #{classMethodNm} || '%'
+		</if>
+		<if test="updpsnId != null and !updpsnId.equals('') ">
+			AND A.UPDPSN_ID LIKE '%' || #{updpsnId} || '%'
+		</if>
+		<if test="strUpdDtm != null and !strUpdDtm.equals('') and endUpdDtm != null and !endUpdDtm.equals('')">
+			AND TO_CHAR(A.UPD_DTM, 'YYYYMMDD') &gt;= #{strUpdDtm} AND TO_CHAR(A.UPD_DTM, 'YYYYMMDD') &lt;= #{endUpdDtm}
+		</if>
+		<if test="updpsnNm != null and !updpsnNm.equals('') ">
+			AND C.OPRTR_NM LIKE '%' || #{updpsnNm} || '%'
+		</if>
+		ORDER BY A.BAT_PGM_CHG_HST_SEQ DESC
+	</sql>
+
+	<!--
+	******************************************************************************
+	* SELECT : 배치프로그램 변경점 확인
+	* 작성자 : spect22
+	* 작성 일자 : 2023-02-20
+	******************************************************************************
+	-->
+	<select id="findChgBatPgmChgHst" parameterType="com.ssp.core.ba.vo.BaBatPgmChgHstVo" resultType="integer">
+		/* boBaBatPgmChgHst.findChgBatPgmChgHst */
+		SELECT
+			COUNT(0) AS FIND_BAT_PGM_CHG_HST_SEQ
+		FROM
+		(
+			SELECT
+				S1.*
+			FROM
+			(
+				SELECT * FROM TB_CO_BAT_PGM_CHG_HST
+				WHERE BAT_PGM_ID = #{batPgmId}
+				ORDER BY BAT_PGM_CHG_HST_SEQ DESC
+			) S1
+			WHERE ROWNUM = '1'
+		)
+		WHERE
+			THME_DOMN_CD = #{thmeDomnCd}
+		AND	BAT_SERVER_SEQ = #{batServerSeq}
+		AND	BAT_PGM_NM = #{batPgmNm}
+		AND	RSRV_SPR_CD = #{rsrvSprCd}
+		AND	RSRV_SCH = #{rsrvSch}
+		AND	CLASS_METHOD_NM = #{classMethodNm}
+		AND	USE_YN = #{useYn}
+		AND DBMS_LOB.COMPARE(RMKS, #{remark}) = 0
+	</select>
+</mapper>

@@ -1,0 +1,1192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ExhbnInfo">
+
+	<!--
+	******************************************************************************
+	* 설명 : 기획전 목록 조회
+	* 작성자 : 박진원
+	* 작성일자 : 2022.03.04.
+	******************************************************************************
+	-->
+	<select id="selectExhbnInfoList" parameterType="HashMap" resultType="HashMap">
+	
+/* 기획전 목록 조회 - ExhbnInfo_SQL.selectExhbnInfoList */
+SELECT CO_CD
+     , EXHBN_SEQ
+     , EXHBN_NM
+     , EXHBN_SPR_CD
+     , PC_LST_VIEW_TYPE_CD
+     , MBL_LST_VIEW_TYPE_CD
+     , EXPS_NOTIC_SPR_CD		/* SSP-2971 | NOTIC_SPR_CD -> EXPS_NOTIC_SPR_CD*/
+     , MAIN_EXPS_YN
+     , DISP_STR_DT
+     , DISP_END_DT
+     , MALL_SPR_CD
+     , DISP_SO
+     , CPN_EVT_NO
+     , EXHBN_DESC
+     , USE_YN
+     , MAIN_PC_DOC_REG_ID
+     , MAIN_MBL_DOC_REG_ID
+     , BNR_PC_DOC_REG_ID
+     , BNR_MBL_DOC_REG_ID
+     , LPAGE_PC_DOC_REG_ID
+     , LPAGE_MBL_DOC_REG_ID
+     , CPN_PC_DOC_REG_ID
+     , CPN_MBL_DOC_REG_ID
+     , REGPSN_ID
+     , TO_CHAR(REG_DTM, 'YYYY.MM.DD') AS REG_DTM
+     , UPDPSN_ID
+     , TO_CHAR(UPD_DTM, 'YYYY.MM.DD') AS UPD_DTM
+     
+     , EXHBN_SPR_CD_NM
+     , EXPS_NOTIC_SPR_CD_NM		
+     , MAIN_EXPS_YN_NM
+     , MALL_SPR_CD_NM
+     , USE_YN_NM
+     , EXHBN_STATE_CD_NM
+
+     , REGPSN_ID_NM
+     , UPDPSN_ID_NM
+     
+  FROM (
+        SELECT A.CO_CD
+             , A.EXHBN_SEQ
+             , A.EXHBN_NM
+             , A.EXHBN_SPR_CD
+             , A.PC_LST_VIEW_TYPE_CD
+             , A.MBL_LST_VIEW_TYPE_CD
+             , A.EXPS_NOTIC_SPR_CD		
+             , A.MAIN_EXPS_YN
+             , TO_CHAR(TO_DATE(A.DISP_STR_DT, 'YYYYMMDD'), 'YYYY.MM.DD') AS DISP_STR_DT
+             , TO_CHAR(TO_DATE(A.DISP_END_DT, 'YYYYMMDD'), 'YYYY.MM.DD') AS DISP_END_DT
+             , A.MALL_SPR_CD
+             , A.DISP_SO
+             , A.CPN_EVT_NO
+             , A.EXHBN_DESC
+             , A.USE_YN
+             , A.MAIN_PC_DOC_REG_ID
+             , A.MAIN_MBL_DOC_REG_ID
+             , A.BNR_PC_DOC_REG_ID
+             , A.BNR_MBL_DOC_REG_ID
+             , A.LPAGE_PC_DOC_REG_ID
+             , A.LPAGE_MBL_DOC_REG_ID
+             , A.CPN_PC_DOC_REG_ID
+             , A.CPN_MBL_DOC_REG_ID
+             , A.REGPSN_ID
+             , A.REG_DTM
+             , A.UPDPSN_ID
+             , A.UPD_DTM
+     
+             , D.COM_DTL_CD_NM AS EXHBN_SPR_CD_NM
+             , E.COM_DTL_CD_NM AS EXPS_NOTIC_SPR_CD_NM		
+             , CASE WHEN A.MAIN_EXPS_YN = 'Y' THEN '노출'
+                    WHEN A.MAIN_EXPS_YN = 'N' THEN '미노출'
+                    ELSE ''
+                     END AS MAIN_EXPS_YN_NM
+             , F.COM_DTL_CD_NM AS MALL_SPR_CD_NM
+             , CASE WHEN A.USE_YN = 'Y' THEN '사용'
+                    WHEN A.USE_YN = 'N' THEN '미사용'
+                    ELSE ''
+                     END AS USE_YN_NM
+             , CASE WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.DISP_STR_DT THEN '대기'
+                    WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN A.DISP_STR_DT AND A.DISP_END_DT THEN '진행중'
+                    WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> A.DISP_END_DT THEN '종료'
+                    ELSE ''
+                     END AS EXHBN_STATE_CD_NM
+                     
+             , B.OPRTR_NM AS REGPSN_ID_NM
+             , C.OPRTR_NM AS UPDPSN_ID_NM
+     
+          FROM TB_SA_EXHBN_INFO A
+             , TB_CO_MBR_OPRTR_INFO B
+             , TB_CO_MBR_OPRTR_INFO C
+             , TB_CO_COM_CD_DTL D
+             , TB_CO_COM_CD_DTL E
+             , TB_CO_COM_CD_DTL F
+
+         WHERE A.CO_CD = B.CO_CD(+)
+           AND A.REGPSN_ID = B.OPRTR_ID(+)
+
+           AND A.CO_CD = C.CO_CD(+)
+           AND A.UPDPSN_ID = C.OPRTR_ID(+)
+   
+           AND A.EXHBN_SPR_CD = D.COM_DTL_CD
+
+           AND D.LANG_CD = 'KO'
+           AND D.COM_CLSF_CD =  'EXHBN_SPR_CD'
+           AND D.USE_YN = 'Y'
+   
+           AND A.EXPS_NOTIC_SPR_CD = E.COM_DTL_CD	
+
+           AND E.LANG_CD = 'KO'
+           AND E.COM_CLSF_CD =  'EXPS_NOTIC_SPR_CD'
+           AND E.USE_YN = 'Y'
+   
+           AND A.MALL_SPR_CD = F.COM_DTL_CD
+
+           AND F.LANG_CD = 'KO'
+           AND F.COM_CLSF_CD =  'MALL_SPR_CD'
+           AND F.USE_YN = 'Y'
+   
+		<if test="exhbnStateCd != null and exhbnStateCd != '' ">
+	
+            <choose>
+            
+                <when test='exhbnStateCd == "READY"'>
+
+           AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.DISP_STR_DT
+
+                </when>
+                
+                <when test='exhbnStateCd == "ING"'>
+
+           AND TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN A.DISP_STR_DT AND A.DISP_END_DT
+
+                </when>
+                
+                <when test='exhbnStateCd == "END"'>
+
+           AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> A.DISP_END_DT
+
+                </when>
+                
+                <otherwise>
+                </otherwise>
+                
+            </choose>
+		
+		</if>
+           
+		<if test="useYn != null and useYn != '' ">
+	
+           AND A.USE_YN = #{useYn}
+	
+		</if>
+	
+		<if test="exhbnNm != null and exhbnNm != '' ">
+	
+           AND A.EXHBN_NM LIKE '%' || #{exhbnNm} || '%'
+		
+		</if>
+	
+		<if test="startDate != null and startDate != '' and endDate != null and endDate != '' ">
+	
+           AND A.REG_DTM BETWEEN TO_DATE(#{startDate} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{endDate} || '235959', 'YYYYMMDDHH24MISS') 
+		
+		</if>
+	
+		<if test="mallSprCd != null and mallSprCd != '' ">
+	
+           AND A.MALL_SPR_CD = #{mallSprCd}
+		
+		</if>
+
+		<if test="exhbnSprCd != null and exhbnSprCd != '' ">
+	
+           AND A.EXHBN_SPR_CD = #{exhbnSprCd}
+		
+		</if>
+		
+		<if test="expsNoticSprCd != null and expsNoticSprCd != '' ">
+		
+           AND A.EXPS_NOTIC_SPR_CD = #{expsNoticSprCd}
+
+		</if>
+	
+		<if test="oprUnitIds != null and oprUnitIds.size > 0 ">
+		
+           AND (A.CO_CD, A.EXHBN_SEQ) IN (
+                                          SELECT CO_CD
+                                               , EXHBN_SEQ
+                                            FROM TB_SA_EXHBN_OPR_UNIT_DTL X
+                                               , TB_OD_ODR_INQ_TGT_DTLS T1
+                                               , TB_OD_ODR_INQ_TGT_DTLS T2
+                                           WHERE T1.SES_ID = #{sesId}
+                                             AND T1.INQ_COND_DTLS = #{inqCondDtls}
+                                             AND T1.COL_ITM = 'OPR_UNIT_ID'
+                                             AND T1.COND_DATA_VAL = X.OPR_UNIT_ID
+                                             AND T2.SES_ID = #{sesId}
+                                             AND T2.INQ_COND_DTLS = #{inqCondDtls}
+                                             AND T2.COL_ITM = 'BZPLC_ID'
+                                             AND T2.COND_DATA_VAL = X.BZPLC_ID
+                                         )
+
+		</if>
+
+       ) A
+  
+		<if test="sortColumn != null and sortColumn != ''">
+	
+ ORDER BY A.${sortColumn} ${sortType} ,EXHBN_SEQ DESC
+ 
+		</if>
+	
+		<if test="sortColumn == null or sortColumn == ''">
+	
+ ORDER BY A.USE_YN DESC
+     , A.EXHBN_STATE_CD_NM DESC
+     , A.UPD_DTM DESC
+ 
+		</if>
+
+		<if test="excelDownloadYn != null and excelDownloadYn != ''">
+
+			<if test='excelDownloadYn == "N"'>
+
+OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+ 
+			</if>
+
+		</if>
+
+	</select>
+
+	<!-- SSP-2111 : 엑셀용 기획전 목록 및 상세 조회 -->
+	<select id="selectExhbnInfoDtlForExcel" parameterType="HashMap" resultType="HashMap">
+	
+		SELECT A.EXHBN_SEQ 
+			 , B.EXHBN_CATG_SEQ
+			 , D.COM_DTL_CD_NM AS EXHBN_SPR_CD_NM
+			 , A.EXHBN_NM 	
+			 , A.DISP_STR_DT
+			 , A.DISP_END_DT
+			 , A.REG_DTM 
+			 , A.UPD_DTM	 
+			 , B.CATG_NM
+			 , A.DISP_SO
+			 , LTRIM(C.PRD_ID, '0') AS PRD_ID      
+			 , E.PRD_NM
+			 , FN_PR_ATTR_VAL_LIST(E.CO_CD, E.PRD_ID) AS ATTR_VAL
+			 , FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD', F.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM
+			 , FN_COM_DTL_CDNM('KO','REPR_PRD_SPR_CD', DECODE(H.REPR_PRD_SPR_YN, 'Y', H.REPR_PRD_SPR_RSN_CD, '3')) AS REPR_PRD_SPR_NM
+			 , CASE WHEN E.PRD_USE_YN = 'Y' THEN '사용'
+			        WHEN E.PRD_USE_YN = 'N' THEN '미사용'
+			        ELSE '미사용'
+			   END  AS PRD_USE_YN_NM
+			 , FN_COM_DTL_CDNM('KO','DISP_STATS_CD', G.DISP_STATS_CD) AS DISP_STATS_NM
+	  	
+		FROM TB_SA_EXHBN_INFO A
+		
+		JOIN TB_SA_EXHBN_CATG_DTL B 
+		ON A.EXHBN_SEQ = B.EXHBN_SEQ
+		
+		JOIN TB_SA_EXHBN_CATG_PRD_DTL C
+		ON B.EXHBN_CATG_SEQ = C.EXHBN_CATG_SEQ
+		
+		JOIN TB_CO_COM_CD_DTL D
+		ON D.LANG_CD = 'KO'
+		AND A.EXHBN_SPR_CD = D.COM_DTL_CD
+		AND D.COM_CLSF_CD = 'EXHBN_SPR_CD'
+		AND D.USE_YN = 'Y'
+		
+		JOIN TB_PR_PRD_INFO E 
+		ON C.CO_CD = E.CO_CD
+		AND C.PRD_ID = E.PRD_ID 
+		
+		JOIN TB_PR_MRO_PRD_INFO F 
+		ON E.CO_CD = F.CO_CD
+		AND E.PRD_ID = F.PRD_ID 
+		
+		JOIN TB_DP_PRD_DISP_STATS_INFO G        
+		ON E.CO_CD = G.CO_CD 
+		AND E.PRD_ID = G.PRD_ID 
+		AND F.PUB_ONLY_SPR_CD = 'P'
+		AND G.BZPLC_ID ='*' 
+		AND G.OPR_UNIT_ID ='*'
+		   		   
+		JOIN TB_PR_REPR_PRD_MNG_DTL H             
+		ON E.CO_CD = H.CO_CD 
+		AND E.PRD_ID = H.PRD_ID
+		AND H.SSP_PRD_YN = 'Y'   
+		   
+		WHERE A.EXHBN_SEQ = #{exhbnSeq}
+		
+		ORDER BY A.EXHBN_SEQ, B.CATG_NM
+		
+	</select>
+
+
+
+	<!--
+	******************************************************************************
+	* 설명 : 기획전 목록 건수 조회
+	* 작성자 : 박진원
+	* 작성일자 : 2022.03.04.
+	******************************************************************************
+	-->
+	<select id="selectExhbnInfoListCount" parameterType="HashMap" resultType="Integer">
+	
+/* 기획전 목록 건수 조회 - ExhbnInfo_SQL.selectExhbnInfoListCount */
+
+SELECT COUNT(1)
+     
+  FROM TB_SA_EXHBN_INFO A
+     , TB_CO_MBR_OPRTR_INFO B
+     , TB_CO_MBR_OPRTR_INFO C
+     , TB_CO_COM_CD_DTL D
+     , TB_CO_COM_CD_DTL E
+     , TB_CO_COM_CD_DTL F
+
+ WHERE A.CO_CD = B.CO_CD(+)
+   AND A.REGPSN_ID = B.OPRTR_ID(+)
+
+   AND A.CO_CD = C.CO_CD(+)
+   AND A.UPDPSN_ID = C.OPRTR_ID(+)
+   
+   AND A.EXHBN_SPR_CD = D.COM_DTL_CD
+
+   AND D.LANG_CD = 'KO'
+   AND D.COM_CLSF_CD =  'EXHBN_SPR_CD'
+   AND D.USE_YN = 'Y'
+   
+   AND A.EXPS_NOTIC_SPR_CD = E.COM_DTL_CD
+
+   AND E.LANG_CD = 'KO'
+   AND E.COM_CLSF_CD =  'EXPS_NOTIC_SPR_CD'
+   AND E.USE_YN = 'Y'
+   
+   AND A.MALL_SPR_CD = F.COM_DTL_CD
+
+   AND F.LANG_CD = 'KO'
+   AND F.COM_CLSF_CD =  'MALL_SPR_CD'
+   AND F.USE_YN = 'Y'
+   
+		<if test="exhbnStateCd != null and exhbnStateCd != '' ">
+	
+            <choose>
+            
+                <when test='exhbnStateCd == "READY"'>
+
+   AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.DISP_STR_DT
+
+                </when>
+                
+                <when test='exhbnStateCd == "ING"'>
+
+   AND TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN A.DISP_STR_DT AND A.DISP_END_DT
+
+                </when>
+                
+                <when test='exhbnStateCd == "END"'>
+
+   AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> A.DISP_END_DT
+
+                </when>
+                
+                <otherwise>
+                </otherwise>
+                
+            </choose>
+		
+		</if>
+           
+		<if test="useYn != null and useYn != '' ">
+	
+   AND A.USE_YN = #{useYn}
+	
+		</if>
+	
+		<if test="exhbnNm != null and exhbnNm != '' ">
+	
+   AND A.EXHBN_NM LIKE '%' || #{exhbnNm} || '%'
+		
+		</if>
+	
+		<if test="startDate != null and startDate != '' and endDate != null and endDate != '' ">
+	
+   AND A.REG_DTM BETWEEN TO_DATE(#{startDate} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{endDate} || '235959', 'YYYYMMDDHH24MISS') 
+		
+		</if>
+	
+		<if test="mallSprCd != null and mallSprCd != '' ">
+	
+   AND A.MALL_SPR_CD = #{mallSprCd}
+		
+		</if>
+
+		<if test="exhbnSprCd != null and exhbnSprCd != '' ">
+	
+   AND A.EXHBN_SPR_CD = #{exhbnSprCd}
+		
+		</if>
+		
+		<if test="expsNoticSprCd != null and expsNoticSprCd != '' ">
+		
+   AND A.EXPS_NOTIC_SPR_CD = #{expsNoticSprCd}
+   
+		</if>
+
+		<if test="oprUnitIds != null and oprUnitIds.size > 0 ">
+		
+   AND (A.CO_CD, A.EXHBN_SEQ) IN (
+                                  SELECT CO_CD
+                                       , EXHBN_SEQ
+                                    FROM TB_SA_EXHBN_OPR_UNIT_DTL X
+                                       , TB_OD_ODR_INQ_TGT_DTLS T1
+                                       , TB_OD_ODR_INQ_TGT_DTLS T2
+                                   WHERE T1.SES_ID = #{sesId}
+                                     AND T1.INQ_COND_DTLS = #{inqCondDtls}
+                                     AND T1.COL_ITM = 'OPR_UNIT_ID'
+                                     AND T1.COND_DATA_VAL = X.OPR_UNIT_ID
+                                     AND T2.SES_ID = #{sesId}
+                                     AND T2.INQ_COND_DTLS = #{inqCondDtls}
+                                     AND T2.COL_ITM = 'BZPLC_ID'
+                                     AND T2.COND_DATA_VAL = X.BZPLC_ID
+                                 )
+
+		</if>
+
+	</select>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 전시순서 수정
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<update id="updateExhbnInfoOrder" parameterType="hashMap">
+	
+	/* 기획전 전시순서 수정 - ExhbnInfo.updateExhbnInfoOrder */
+	
+	UPDATE TB_SA_EXHBN_INFO
+	
+	   SET DISP_SO = #{dispSo}
+	   
+	     , UPDPSN_ID = #{updpsnId}
+	     , UPD_DTM = SYSDATE
+	
+	 WHERE CO_CD = #{coCd}
+	   AND EXHBN_SEQ = #{exhbnSeq}
+
+	</update>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 정보 삭제
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<delete id="deleteExhbnInfo" parameterType="hashMap">
+	
+	/* 기획전 정보 삭제 - ExhbnInfo.deleteExhbnInfo */
+	
+	DELETE 
+	  
+	  FROM TB_SA_EXHBN_INFO
+	  
+	 WHERE CO_CD = #{coCd}
+	   AND EXHBN_SEQ = #{exhbnSeq}
+
+	</delete>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 운영단위 정보 삭제 (전체)
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<delete id="deleteExhbnOprUnitAll" parameterType="hashMap">
+	
+	/* 기획전 운영단위 정보 삭제 (전체) - ExhbnInfo.deleteExhbnOprUnitAll */
+	
+	DELETE 
+	  
+	  FROM TB_SA_EXHBN_OPR_UNIT_DTL
+	  
+	 WHERE CO_CD = #{coCd}
+	   AND EXHBN_SEQ = #{exhbnSeq}
+
+	</delete>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 기본 상품 카테고리 정보 삭제 (전체)
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<delete id="deleteExhbnCatgDtlAll" parameterType="hashMap">
+	
+	/* 기획전 기본 상품 카테고리 정보 삭제 (전체) - ExhbnInfo.deleteExhbnCatgDtlAll */
+	
+	DELETE 
+	  
+	  FROM TB_SA_EXHBN_CATG_DTL
+	  
+	 WHERE CO_CD = #{coCd}
+	   AND EXHBN_SEQ = #{exhbnSeq}
+
+	</delete>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 메인 노출 상품/기본 상품 정보 삭제 (전체)
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<delete id="deleteExhbnCatgPrdDtlAll" parameterType="hashMap">
+	
+	/* 기획전 메인 노출 상품/기본 상품 정보 삭제 (전체) - ExhbnInfo.deleteExhbnCatgPrdDtlAll */
+	
+	DELETE 
+	  
+	  FROM TB_SA_EXHBN_CATG_PRD_DTL
+	  
+	 WHERE CO_CD = #{coCd}
+	   AND EXHBN_SEQ = #{exhbnSeq}
+
+	</delete>
+
+	<!--
+	******************************************************************************
+	* 설명 : 기획전 상세
+	* 작성자 : 박진원
+	* 작성일자 : 2022.03.04.
+	******************************************************************************
+	-->
+	<select id="selectExhbnInfo" parameterType="HashMap" resultType="HashMap">
+	
+/* 기획전 상세 - ExhbnInfo_SQL.selectExhbnInfo */
+
+SELECT A.CO_CD
+     , A.EXHBN_SEQ
+     , A.EXHBN_NM
+     , A.EXHBN_SPR_CD
+     , A.PC_LST_VIEW_TYPE_CD
+     , A.MBL_LST_VIEW_TYPE_CD
+     , A.EXPS_NOTIC_SPR_CD
+     , A.MAIN_EXPS_YN
+     , A.DISP_STR_DT
+     , A.DISP_END_DT
+     , A.MALL_SPR_CD
+     , A.DISP_SO
+     , A.CPN_EVT_NO
+     , A.EXHBN_DESC
+     , A.USE_YN
+     , A.EXPS_YN
+     , A.NOTLOGN_INC_YN
+     , A.MAIN_PC_DOC_REG_ID
+     , A.MAIN_MBL_DOC_REG_ID
+     , A.BNR_PC_DOC_REG_ID
+     , A.BNR_MBL_DOC_REG_ID
+     , A.LPAGE_PC_DOC_REG_ID
+     , A.LPAGE_MBL_DOC_REG_ID
+     , A.CPN_PC_DOC_REG_ID
+     , A.CPN_MBL_DOC_REG_ID
+     , A.REGPSN_ID
+     , TO_CHAR(A.REG_DTM, 'YYYY.MM.DD HH24:MI:SS') AS REG_DTM
+     , A.UPDPSN_ID
+     , TO_CHAR(A.UPD_DTM, 'YYYY.MM.DD HH24:MI:SS') AS UPD_DTM
+     
+     , B.CPN_NM AS CPN_EVT_NO_NM
+     
+     , C.OPRTR_NM AS REGPSN_ID_NM
+     , D.OPRTR_NM AS UPDPSN_ID_NM
+
+     , E.ATFL_NM AS MAIN_PC_DOC_REG_ID_NM
+     , E.DOC_REG_SEQ AS MAIN_PC_DOC_REG_ID_REG_SEQ
+     , E.ATFL_STOR_PATH AS MAIN_PC_DOC_REG_ID_ATFL_STOR_PATH
+     , E.ORI_ATFL_NM AS MAIN_PC_DOC_REG_ID_ORI_ATFL_NM
+     
+     , F.ATFL_NM AS MAIN_MBL_DOC_REG_ID_NM
+     , F.DOC_REG_SEQ AS MAIN_MBL_DOC_REG_ID_REG_SEQ
+     , F.ATFL_STOR_PATH AS MAIN_MBL_DOC_REG_ID_ATFL_STOR_PATH
+     , F.ORI_ATFL_NM AS MAIN_MBL_DOC_REG_ID_ORI_ATFL_NM
+     
+     , G.ATFL_NM AS BNR_PC_DOC_REG_ID_NM
+     , G.DOC_REG_SEQ AS BNR_PC_DOC_REG_ID_REG_SEQ
+     , G.ATFL_STOR_PATH AS BNR_PC_DOC_REG_ID_ATFL_STOR_PATH
+     , G.ORI_ATFL_NM AS BNR_PC_DOC_REG_ID_ORI_ATFL_NM
+     
+     , H.ATFL_NM AS BNR_MBL_DOC_REG_ID_NM
+     , H.DOC_REG_SEQ AS BNR_MBL_DOC_REG_ID_REG_SEQ
+     , H.ATFL_STOR_PATH AS BNR_MBL_DOC_REG_ID_ATFL_STOR_PATH
+     , H.ORI_ATFL_NM AS BNR_MBL_DOC_REG_ID_ORI_ATFL_NM
+     
+     , I.ATFL_NM AS LPAGE_PC_DOC_REG_ID_NM
+     , I.DOC_REG_SEQ AS LPAGE_PC_DOC_REG_ID_REG_SEQ
+     , I.ATFL_STOR_PATH AS LPAGE_PC_DOC_REG_ID_ATFL_STOR_PATH
+     , I.ORI_ATFL_NM AS LPAGE_PC_DOC_REG_ID_ORI_ATFL_NM
+     
+     , J.ATFL_NM AS LPAGE_MBL_DOC_REG_ID_NM
+     , J.DOC_REG_SEQ AS LPAGE_MBL_DOC_REG_ID_REG_SEQ
+     , J.ATFL_STOR_PATH AS LPAGE_MBL_DOC_REG_ID_ATFL_STOR_PATH
+     , J.ORI_ATFL_NM AS LPAGE_MBL_DOC_REG_ID_ORI_ATFL_NM
+     
+     , K.ATFL_NM AS CPN_PC_DOC_REG_ID_NM
+     , K.DOC_REG_SEQ AS CPN_PC_DOC_REG_ID_REG_SEQ
+     , K.ATFL_STOR_PATH AS CPN_PC_DOC_REG_ID_ATFL_STOR_PATH
+     , K.ORI_ATFL_NM AS CPN_PC_DOC_REG_ID_ORI_ATFL_NM
+          
+     , L.ATFL_NM AS CPN_MBL_DOC_REG_ID_NM
+     , L.DOC_REG_SEQ AS CPN_MBL_DOC_REG_ID_REG_SEQ
+     , L.ATFL_STOR_PATH AS CPN_MBL_DOC_REG_ID_ATFL_STOR_PATH
+     , L.ORI_ATFL_NM AS CPN_MBL_DOC_REG_ID_ORI_ATFL_NM
+
+  FROM TB_SA_EXHBN_INFO A
+     , TB_SA_CPN_INFO B
+     , TB_CO_MBR_OPRTR_INFO C
+     , TB_CO_MBR_OPRTR_INFO D
+     , TB_CO_ATFL_DTLS E
+     , TB_CO_ATFL_DTLS F
+     , TB_CO_ATFL_DTLS G
+     , TB_CO_ATFL_DTLS H
+     , TB_CO_ATFL_DTLS I  
+     , TB_CO_ATFL_DTLS J 
+     , TB_CO_ATFL_DTLS K 
+     , TB_CO_ATFL_DTLS L     
+  
+ WHERE A.CO_CD = B.CO_CD(+)
+   AND A.CPN_EVT_NO = B.CPN_EVT_NO(+)
+   
+   AND A.CO_CD = C.CO_CD(+)
+   AND A.REGPSN_ID = C.OPRTR_ID(+)
+
+   AND A.CO_CD = D.CO_CD(+)
+   AND A.UPDPSN_ID = D.OPRTR_ID(+)
+   
+   AND A.MAIN_PC_DOC_REG_ID = E.DOC_REG_ID(+)
+   AND E.DOC_REG_SEQ(+) = '1'
+ 
+   AND A.MAIN_MBL_DOC_REG_ID = F.DOC_REG_ID(+)
+   AND F.DOC_REG_SEQ(+) = '1'
+ 
+   AND A.BNR_PC_DOC_REG_ID = G.DOC_REG_ID(+)
+   AND G.DOC_REG_SEQ(+) = '1'
+ 
+   AND A.BNR_MBL_DOC_REG_ID = H.DOC_REG_ID(+)
+   AND H.DOC_REG_SEQ(+) = '1'
+ 
+   AND A.LPAGE_PC_DOC_REG_ID = I.DOC_REG_ID(+)
+   AND I.DOC_REG_SEQ(+) = '1'
+  
+   AND A.LPAGE_MBL_DOC_REG_ID = J.DOC_REG_ID(+)
+   AND J.DOC_REG_SEQ(+) = '1'
+  
+   AND A.CPN_PC_DOC_REG_ID = K.DOC_REG_ID(+)
+   AND K.DOC_REG_SEQ(+) = '1'
+  
+   AND A.CPN_MBL_DOC_REG_ID = L.DOC_REG_ID(+)
+   AND L.DOC_REG_SEQ(+) = '1'
+
+   AND A.CO_CD = #{coCd}
+   AND A.EXHBN_SEQ = #{exhbnSeq}
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* 설명 : 기획전 운영단위상세
+	* 작성자 : 박진원
+	* 작성일자 : 2022.03.04.
+	******************************************************************************
+	-->
+	<select id="selectExhbnOprUnitList" parameterType="HashMap" resultType="HashMap">
+	
+	/* 기획전 운영단위상세 - ExhbnInfo_SQL.selectExhbnOprUnitList */
+	
+	SELECT A.CO_CD
+	     , A.EXHBN_SEQ
+	     , A.BZPLC_ID
+	     , A.OPR_UNIT_ID
+	     
+	     , B.OPR_UNIT_NM
+	
+	  FROM TB_SA_EXHBN_OPR_UNIT_DTL A
+	     , TB_CC_OPR_UNIT_BASIS B
+	  
+	 WHERE A.CO_CD = B.CO_CD(+)
+	   AND A.BZPLC_ID = B.BZPLC_ID(+)
+	   AND A.OPR_UNIT_ID = B.OPR_UNIT_ID(+)
+	 
+	   AND A.CO_CD = #{coCd}
+	   AND A.EXHBN_SEQ = #{exhbnSeq}
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* 설명 : 기획전 기본 상품 카테고리상세
+	* 작성자 : 박진원
+	* 작성일자 : 2022.03.04.
+	******************************************************************************
+	-->
+	<select id="selectExhbnCatgDtlList" parameterType="HashMap" resultType="HashMap">
+	
+	/* 기획전 기본 상품 카테고리상세 - ExhbnInfo_SQL.selectExhbnCatgDtlList */
+	
+	SELECT A.CO_CD
+	     , A.EXHBN_SEQ
+	     , A.EXHBN_CATG_SEQ
+	     , A.CATG_NM
+	     , A.CATG_DISP_SO
+	
+	  FROM TB_SA_EXHBN_CATG_DTL A
+	  
+	 WHERE A.CO_CD = #{coCd}
+	   AND A.EXHBN_SEQ = #{exhbnSeq}
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* 설명 : 기획전 메인 노출 상품/기본 상품 상세
+	* 작성자 : 박진원
+	* 작성일자 : 2022.03.04.
+	******************************************************************************
+	-->
+	<select id="selectExhbnCatgPrdDtlList" parameterType="HashMap" resultType="HashMap">
+	
+/* 기획전 메인 노출 상품/기본 상품 상세 - ExhbnInfo_SQL.selectExhbnCatgPrdDtlList */
+
+WITH TEMP_PRD_ID_INFO AS
+(
+    SELECT /*+ USE_NL(PRD MROPRD) INDEX(PRD TB_PR_PRD_INFO_PK) */
+           PRD.CO_CD
+         , PRD.PRD_ID
+         , TO_NUMBER(PRD.PRD_ID) PRD_ID_VIEW
+         , PRD.PRD_NM
+         , SSP_APP.FN_PR_ATTR_VAL_LIST(PRD.CO_CD, PRD.PRD_ID) ATTR_VAL
+         , MNFR.MNFR_NO
+         , MNFR.MNFR_NM
+         , FN_COM_DTL_CDNM_NVL('KO', 'MALL_SPR_CD', PRD.MALL_SPR_CD, '') AS MALL_SPR_CD_NM
+         , PRD.MALL_SPR_CD
+         , PRD.PRD_CLCD
+         , SSP_APP.FN_PR_FULL_CLSF_NM(PRD.CO_CD, PRD.PRD_CLCD) FULL_PRD_CLSF_NM
+         , PPCI.PRD_CLSF_NM
+         , PRD.PRD_USE_YN
+         , FN_COM_DTL_CDNM('KO', 'DISP_STATS_CD', DPDSI.DISP_STATS_CD) AS DISP_STATS_NM
+         , FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD', MROPRD.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM
+         , FN_COM_DTL_CDNM('KO','REPR_PRD_SPR_CD', DECODE(RPMD.REPR_PRD_SPR_YN, 'Y', RPMD.REPR_PRD_SPR_RSN_CD, '3')) AS REPR_PRD_SPR_NM
+           
+      FROM SSP_APP.TB_PR_PRD_INFO PRD                   -- 상품기본정보
+     INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO MROPRD       -- MRO상품기본정보
+        ON PRD.CO_CD = MROPRD.CO_CD 
+       AND PRD.PRD_ID = MROPRD.PRD_ID
+        
+     INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR            -- 제조원
+        ON MNFR.CO_CD = MROPRD.CO_CD 
+       AND MNFR.MNFR_NO = MROPRD.MNFR_NO
+       
+      LEFT JOIN TB_PR_PRD_CLSF_INFO PPCI                -- 카테고리 정보
+        ON (PRD.CO_CD = PPCI.CO_CD 
+       AND PRD.PRD_CLCD = PPCI.PRD_CLCD 
+       AND NVL(PPCI.USE_YN, '') = 'Y' 
+       AND NVL(PPCI.FRT_EXPS_YN, 'Y') = 'Y' 
+       AND NVL(PPCI.DEL_YN, 'N') = 'N')
+       
+      LEFT JOIN TB_DP_PRD_DISP_STATS_INFO DPDSI         -- 진열마스터
+        ON (PRD.CO_CD = DPDSI.CO_CD 
+       AND PRD.PRD_ID = DPDSI.PRD_ID 
+       AND MROPRD.PUB_ONLY_SPR_CD = 'P'
+       AND DPDSI.BZPLC_ID ='*' 
+       AND DPDSI.OPR_UNIT_ID ='*')
+       
+      LEFT JOIN TB_PR_REPR_PRD_MNG_DTL RPMD             --대표상품
+        ON (PRD.CO_CD = RPMD.CO_CD 
+       AND PRD.PRD_ID = RPMD.PRD_ID
+       AND RPMD.SSP_PRD_YN = 'Y')
+
+     WHERE PRD.CO_CD = #{coCd}
+       AND PRD.PRD_USE_YN = 'Y'
+       AND MROPRD.MRO_PRD_STATS_CD = '00'
+
+	<if test="mallSprCd != null and !mallSprCd.equals('') ">
+	
+       AND PRD.MALL_SPR_CD = #{mallSprCd}
+       
+	</if>
+)
+
+SELECT A.CO_CD
+     , A.EXHBN_SEQ
+     , A.EXHBN_CATG_SEQ
+     , A.PRD_ID
+     , TO_NUMBER(A.PRD_ID) AS PRD_ID_VIEW
+     
+     , B.PRD_NM
+     , B.ATTR_VAL
+     , B.MNFR_NM AS MNFR
+	 , B.PUB_ONLY_SPR_NM
+	 , B.REPR_PRD_SPR_NM
+     , B.PRD_USE_YN
+	 , CASE WHEN B.PRD_USE_YN = 'Y' THEN '사용'
+	        WHEN B.PRD_USE_YN = 'N' THEN '미사용'
+	        ELSE '미사용'
+	         END PRD_USE_YN_NM
+	 , B.DISP_STATS_NM
+	
+     , '' AS DELETE_ROW
+
+  FROM TB_SA_EXHBN_CATG_PRD_DTL A
+     , TEMP_PRD_ID_INFO B
+
+ WHERE A.CO_CD = B.CO_CD(+)	
+   AND A.PRD_ID = B.PRD_ID(+)
+ 
+   AND A.CO_CD = #{coCd}
+   AND A.EXHBN_SEQ = #{exhbnSeq}
+   
+		<if test="exhbnCatgSeq != null and exhbnCatgSeq != '' ">
+		
+   AND A.EXHBN_CATG_SEQ = #{exhbnCatgSeq}
+
+		</if>
+
+	</select>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 시퀀스 값 조회
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<select id="selectExhbnInfoSeq" parameterType="HashMap" resultType="HashMap">
+	
+	/* 기획전 시퀀스 값 조회 - ExhbnInfo_SQL.selectExhbnInfoSeq */
+	
+	SELECT SQ_SA_EXHBN_INFO_01.NEXTVAL AS EXHBN_SEQ
+	
+	  FROM DUAL
+
+	</select>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 기본 정보 등록
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+    <insert id="insertExhbnInfo" parameterType="HashMap">
+    
+/* 기획전 기본 정보 등록 - ExhbnInfo.insertExhbnInfo */
+
+INSERT INTO TB_SA_EXHBN_INFO
+     ( CO_CD
+     , EXHBN_SEQ
+     , EXHBN_NM
+     , EXHBN_SPR_CD
+     , PC_LST_VIEW_TYPE_CD
+     , MBL_LST_VIEW_TYPE_CD
+     , EXPS_NOTIC_SPR_CD
+     , MAIN_EXPS_YN
+     , DISP_STR_DT
+     , DISP_END_DT
+     , MALL_SPR_CD
+     , DISP_SO
+     , CPN_EVT_NO
+     , EXHBN_DESC
+     , USE_YN
+     , NOTLOGN_INC_YN		/* SSP-2971 */
+     , EXPS_YN
+     , MAIN_PC_DOC_REG_ID
+     , MAIN_MBL_DOC_REG_ID
+     , BNR_PC_DOC_REG_ID
+     , BNR_MBL_DOC_REG_ID
+     , LPAGE_PC_DOC_REG_ID
+     , LPAGE_MBL_DOC_REG_ID
+     , CPN_PC_DOC_REG_ID
+     , CPN_MBL_DOC_REG_ID
+     , REGPSN_ID
+     , REG_DTM
+     , UPDPSN_ID
+     , UPD_DTM
+     )
+VALUES
+     ( #{coCd}
+     , #{exhbnSeq}
+     , #{exhbnNm}
+     , #{exhbnSprCd}
+     , #{pcLstViewTypeCd}
+     , #{mblLstViewTypeCd}
+     , #{expsNoticSprCd}
+     , #{mainExpsYn}
+     , #{dispStrDt}
+     , #{dispEndDt}
+     , #{mallSprCd}
+     , #{dispSo}
+     , #{cpnEvtNo}
+     , #{exhbnDesc}
+     , #{useYn}
+     , #{notlognIncYn}		/* SSP-2971 */
+     , #{expsYn}
+     , #{mainPcDocRegId}
+     , #{mainMblDocRegId}
+     , #{bnrPcDocRegId}
+     , #{bnrMblDocRegId}
+     , #{lpagePcDocRegId}
+     , #{lpageMblDocRegId}
+     , #{cpnPcDocRegId}
+     , #{cpnMblDocRegId}
+     , #{regpsnId}
+     , SYSDATE
+     , #{updpsnId}
+     , SYSDATE
+     )
+
+    </insert>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 기본 정보 수정
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<update id="updateExhbnInfo" parameterType="hashMap">
+	
+	/* 기획전 기본 정보 수정 - ExhbnInfo.updateExhbnInfo */
+	
+	UPDATE TB_SA_EXHBN_INFO
+	
+	   SET EXHBN_NM = #{exhbnNm}
+	     , EXHBN_SPR_CD = #{exhbnSprCd}
+	     , PC_LST_VIEW_TYPE_CD = #{pcLstViewTypeCd}
+	     , MBL_LST_VIEW_TYPE_CD = #{mblLstViewTypeCd}
+	     , EXPS_NOTIC_SPR_CD = #{expsNoticSprCd} /* SSP-2971 */
+	     , MAIN_EXPS_YN = #{mainExpsYn}
+	     , DISP_STR_DT = #{dispStrDt}
+	     , DISP_END_DT = #{dispEndDt}
+	     , MALL_SPR_CD = #{mallSprCd}
+	     , CPN_EVT_NO = #{cpnEvtNo}
+	     , EXHBN_DESC = #{exhbnDesc}
+	     , USE_YN = #{useYn}
+	     , NOTLOGN_INC_YN = #{notlognIncYn}		/* SSP-2971 */
+	     , EXPS_YN = #{expsYn}
+	     , MAIN_PC_DOC_REG_ID = #{mainPcDocRegId}
+	     , MAIN_MBL_DOC_REG_ID = #{mainMblDocRegId}
+	     , BNR_PC_DOC_REG_ID = #{bnrPcDocRegId}
+	     , BNR_MBL_DOC_REG_ID = #{bnrMblDocRegId}
+	     , LPAGE_PC_DOC_REG_ID = #{lpagePcDocRegId}
+	     , LPAGE_MBL_DOC_REG_ID = #{lpageMblDocRegId}
+	     , CPN_PC_DOC_REG_ID = #{cpnPcDocRegId}
+	     , CPN_MBL_DOC_REG_ID = #{cpnMblDocRegId}
+	     , UPDPSN_ID = #{updpsnId}
+	     , UPD_DTM = SYSDATE
+	
+	 WHERE CO_CD = #{coCd}
+	   AND EXHBN_SEQ = #{exhbnSeq}
+
+	</update>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 운영단위 정보 삭제
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<delete id="deleteExhbnOprUnit" parameterType="hashMap">
+	
+	/* 기획전 운영단위 정보 삭제 - ExhbnInfo.deleteExhbnOprUnit */
+	
+	DELETE 
+	  
+	  FROM TB_SA_EXHBN_OPR_UNIT_DTL
+	  
+	 WHERE CO_CD = #{coCd}
+	   AND EXHBN_SEQ = #{exhbnSeq}
+	   AND BZPLC_ID = #{bzplcId}
+	   AND OPR_UNIT_ID = #{oprUnitId}
+
+	</delete>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 운영단위 정보 등록
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+    <insert id="insertExhbnOprUnit" parameterType="HashMap">
+    
+	/* 기획전 운영단위 정보 등록 - ExhbnInfo.insertExhbnOprUnit */
+	
+	INSERT INTO TB_SA_EXHBN_OPR_UNIT_DTL
+	     ( CO_CD
+	     , EXHBN_SEQ
+	     , BZPLC_ID
+	     , OPR_UNIT_ID
+	     , REGPSN_ID
+	     , REG_DTM
+	     , UPDPSN_ID
+	     , UPD_DTM
+	     )
+	VALUES
+	     ( #{coCd}
+	     , #{exhbnSeq}
+	     , #{bzplcId}
+	     , #{oprUnitId}
+	     , #{regpsnId}
+	     , SYSDATE
+	     , #{updpsnId}
+	     , SYSDATE
+	     )
+
+    </insert>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 메인 노출 상품/기본 상품 정보 삭제
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<delete id="deleteExhbnCatgPrdDtl" parameterType="hashMap">
+	
+	/* 기획전 메인 노출 상품/기본 상품 정보 삭제 - ExhbnInfo.deleteExhbnCatgPrdDtl */
+	
+	DELETE 
+	  
+	  FROM TB_SA_EXHBN_CATG_PRD_DTL
+	  
+	 WHERE CO_CD = #{coCd}
+	   AND EXHBN_SEQ = #{exhbnSeq}
+	   AND EXHBN_CATG_SEQ = #{exhbnCatgSeq}
+	   AND PRD_ID = #{prdId}
+
+	</delete>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 메인 노출 상품/기본 상품 정보 등록
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+    <insert id="insertExhbnCatgPrdDtl" parameterType="HashMap">
+    
+	/* 기획전 메인 노출 상품/기본 상품 정보 등록 - ExhbnInfo.insertExhbnCatgPrdDtl */
+	
+	INSERT INTO TB_SA_EXHBN_CATG_PRD_DTL
+	     ( CO_CD
+	     , EXHBN_SEQ
+	     , EXHBN_CATG_SEQ
+	     , PRD_ID
+	     , REGPSN_ID
+	     , REG_DTM
+	     , UPDPSN_ID
+	     , UPD_DTM
+	     )
+	VALUES
+	     ( #{coCd}
+	     , #{exhbnSeq}
+	     , #{exhbnCatgSeq}
+	     , #{prdId}
+	     , #{regpsnId}
+	     , SYSDATE
+	     , #{updpsnId}
+	     , SYSDATE
+	     )
+
+    </insert>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 기본 상품 카테고리 정보 삭제
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<delete id="deleteExhbnCatgDtl" parameterType="hashMap">
+	
+	/* 기획전 기본 상품 카테고리 정보 삭제 - ExhbnInfo.deleteExhbnCatgDtl */
+	
+	DELETE 
+	  
+	  FROM TB_SA_EXHBN_CATG_DTL
+	  
+	 WHERE CO_CD = #{coCd}
+	   AND EXHBN_SEQ = #{exhbnSeq}
+	   AND EXHBN_CATG_SEQ = #{exhbnCatgSeq}
+
+	</delete>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 기본 상품 카테고리 시퀀스 값 조회
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+	<select id="selectExhbnCatgDtlSeq" parameterType="HashMap" resultType="HashMap">
+	
+	/* 기획전 기본 상품 카테고리 시퀀스 값 조회 - ExhbnInfo_SQL.selectExhbnCatgDtlSeq */
+	
+	SELECT SQ_SA_EXHBN_CATG_DTL_01.NEXTVAL AS EXHBN_CATG_SEQ
+	
+	  FROM DUAL
+
+	</select>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 카테고리 정보 등록
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.04.
+    ******************************************************************************
+    -->
+    <insert id="insertExhbnCatgDtl" parameterType="HashMap">
+    
+	/* 기획전 카테고리 정보 등록 - ExhbnInfo.insertExhbnCatgDtl */
+	
+	INSERT INTO TB_SA_EXHBN_CATG_DTL
+	     ( CO_CD
+	     , EXHBN_SEQ
+	     , EXHBN_CATG_SEQ
+	     , CATG_NM
+	     , CATG_DISP_SO
+	     , REGPSN_ID
+	     , REG_DTM
+	     , UPDPSN_ID
+	     , UPD_DTM
+	     )
+	VALUES
+	     ( #{coCd}
+	     , #{exhbnSeq}
+	     , #{exhbnCatgSeq}
+	     , #{catgNm}
+	     , #{catgDispSo}
+	     , #{regpsnId}
+	     , SYSDATE
+	     , #{updpsnId}
+	     , SYSDATE
+	     )
+
+    </insert>
+
+    <!--
+    ******************************************************************************
+    * 설명 : 기획전 카테고리 정보 수정
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.23.
+    ******************************************************************************
+    -->
+	<update id="updateExhbnCatgDtl" parameterType="hashMap">
+	
+	/* 기획전 카테고리 정보 수정 - ExhbnInfo.updateExhbnCatgDtl */
+	
+	UPDATE TB_SA_EXHBN_CATG_DTL
+	
+	   SET CATG_NM = #{catgNm}
+	     , CATG_DISP_SO = #{catgDispSo}
+	   
+	     , UPDPSN_ID = #{updpsnId}
+	     , UPD_DTM = SYSDATE
+	
+	 WHERE CO_CD = #{coCd}
+	   AND EXHBN_SEQ = #{exhbnSeq}
+	   AND EXHBN_CATG_SEQ = #{exhbnCatgSeq}
+
+	</update>
+
+</mapper>

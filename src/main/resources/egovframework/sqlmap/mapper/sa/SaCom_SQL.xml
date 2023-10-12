@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="SaCom">
+
+	<!--
+	******************************************************************************
+	* SELECT : 영업마케팅 공통
+	* 작성자 : 87minho
+	* 작성 일자 : 2022.03.07.
+	******************************************************************************
+	-->
+	<select id="selectPrdInfo" parameterType="HashMap" resultType="HashMap">
+		/* 상품 상세 조회 - SaCom_SQL.selectPrdInfo */
+		SELECT A.PRD_ID
+				, A.PRD_NM
+				, C.PRD_CLCD
+				, C.PRD_CLSF_NM
+				, B.MNFR_NO
+				, D.MNFR_NM
+				, FN_PR_ATTR_VAL_LIST(#{coCd}, #{prdId}) AS ATTR_INFO
+				, B.PURG_CHRPSN_ID
+				, E.OPRTR_NM
+		FROM TB_PR_PRD_INFO A
+			, TB_PR_MRO_PRD_INFO B
+			, TB_PR_PRD_CLSF_INFO C
+			, TB_PR_MNFR_INFO D
+			, TB_CO_MBR_OPRTR_INFO E
+		WHERE A.CO_CD = B.CO_CD
+			AND A.PRD_ID = B.PRD_ID
+			AND A.CO_CD = C.CO_CD(+)
+			AND A.PRD_CLCD = C.PRD_CLCD(+)
+			AND B.CO_CD = D.CO_CD
+			AND B.MNFR_NO = D.MNFR_NO
+			AND B.CO_CD = E.CO_CD(+)
+			AND B.PURG_CHRPSN_ID = E.OPRTR_ID(+)
+			AND A.CO_CD = #{coCd}
+			AND A.PRD_ID = #{prdId}
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 상품ID 유효성 검사
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.04.11.
+	******************************************************************************
+	-->
+	<select id="selectPrdIdCheckList" parameterType="HashMap" resultType="HashMap">
+		/* 상품ID 유효성 검사 - SaCom_SQL.selectPrdIdCheckList */
+		
+		WITH TEMP_PRD_ID_CHECK_LIST AS
+		(
+			${queryString}
+		)
+		
+		, TEMP_PRD_ID_INFO AS
+		(
+		SELECT /*+ USE_NL(PRD MROPRD) INDEX(PRD TB_PR_PRD_INFO_PK) */
+				PRD.CO_CD
+				, PRD.PRD_ID 
+				, TO_NUMBER(PRD.PRD_ID) PRD_ID_VIEW 
+				, PRD.PRD_NM
+				, SSP_APP.FN_PR_ATTR_VAL_LIST(PRD.CO_CD, PRD.PRD_ID) ATTR_VAL
+				, MNFR.MNFR_NO 
+				, MNFR.MNFR_NM 
+				, FN_COM_DTL_CDNM_NVL('KO', 'MALL_SPR_CD', PRD.MALL_SPR_CD, '') AS MALL_SPR_CD_NM
+				, PRD.MALL_SPR_CD
+				, PRD.PRD_CLCD
+				, SSP_APP.FN_PR_FULL_CLSF_NM(PRD.CO_CD, PRD.PRD_CLCD) FULL_PRD_CLSF_NM
+				, TB.IDDT_NM
+				, PPCI.PRD_CLSF_NM
+				, PRD.PRD_USE_YN
+				, FN_COM_DTL_CDNM('KO', 'DISP_STATS_CD', DPDSI.DISP_STATS_CD) AS DISP_STATS_NM
+				, FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD', MROPRD.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM
+				<choose>
+					<when test="mallSprCd != null and mallSprCd.equals('10') ">
+						, FN_COM_DTL_CDNM('KO','REPR_PRD_SPR_CD', DECODE(RPMD.REPR_PRD_SPR_YN, 'Y', RPMD.REPR_PRD_SPR_RSN_CD, '3')) AS REPR_PRD_SPR_NM
+					</when>
+					<otherwise>
+						, NULL AS REPR_PRD_SPR_NM
+					</otherwise>
+				</choose>
+					
+		FROM SSP_APP.TB_PR_PRD_INFO PRD --상품기본정보
+		
+		INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO MROPRD    --MRO상품기본정보
+		ON PRD.CO_CD = MROPRD.CO_CD 
+		AND PRD.PRD_ID = MROPRD.PRD_ID
+			
+		INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR --제조원
+		ON MNFR.CO_CD = MROPRD.CO_CD 
+		AND MNFR.MNFR_NO = MROPRD.MNFR_NO
+			
+		<if test="mallSprCd != null and mallSprCd.equals('10') ">
+			INNER JOIN TB_PR_REPR_PRD_MNG_DTL RPMD  --대표상품
+	       	ON (PRD.CO_CD = RPMD.CO_CD 
+	       		AND PRD.PRD_ID = RPMD.PRD_ID)
+	        INNER JOIN TB_PR_REPR_PRD_MNG_BASIS PRPMB  -- 대표상품그룹정보
+    	    ON (PRPMB.CO_CD = RPMD.CO_CD 
+    	    	AND PRPMB.REPR_PRD_GRP_ID = RPMD.REPR_PRD_GRP_ID 
+    	    	AND PRPMB.REPR_PRD_GRP_USEYN = 'Y' 
+    	    	AND RPMD.SSP_PRD_YN = 'Y')
+    	</if>
+		LEFT JOIN TB_PR_PRD_CLSF_INFO PPCI     -- 카테고리 정보
+		ON (PRD.CO_CD = PPCI.CO_CD 
+			AND PRD.PRD_CLCD = PPCI.PRD_CLCD 
+			AND NVL(PPCI.USE_YN,'') = 'Y' 
+			AND NVL(PPCI.FRT_EXPS_YN,'Y') = 'Y' 
+			AND NVL(PPCI.DEL_YN,'N') = 'N')
+		
+		LEFT JOIN TB_DP_PRD_DISP_STATS_INFO DPDSI  -- 진열마스터
+		ON (PRD.CO_CD = DPDSI.CO_CD 
+			AND PRD.PRD_ID = DPDSI.PRD_ID 
+			AND MROPRD.PUB_ONLY_SPR_CD = 'P' 
+			AND DPDSI.BZPLC_ID ='*' 
+			AND DPDSI.OPR_UNIT_ID ='*')
+		
+		LEFT JOIN (										/* 산업군명들을 가져오기위한 테이블 */
+	       			SELECT LISTAGG(C.IDDT_NM, ',') WITHIN GROUP(ORDER BY C.IDDT_ID) AS IDDT_NM
+							, C.CO_CD
+							, C.PRD_CLCD
+	            	FROM ( SELECT B.IDDT_NM
+	            				   , B.IDDT_ID
+	            				   , A.PRD_CLCD 
+	            				   , A.CO_CD
+	            		   FROM TB_PR_PRD_CLSF_IDDT_MAPP A
+	            		   INNER JOIN TB_CC_IDDT_BASIS B
+	            		   ON 1=1
+	            		   AND B.IDDT_ID = A.IDDT_ID             		             		
+	            		   AND B.USE_YN = 'Y'            		  
+	            		 ) C	            		 
+	                GROUP BY C.PRD_CLCD, C.CO_CD
+	       		  ) TB
+        ON TB.CO_CD = PRD.CO_CD 
+        AND TB.PRD_CLCD = PRD.PRD_CLCD
+		
+		WHERE PRD.CO_CD = #{coCd}
+		AND PRD.PRD_USE_YN = 'Y'
+		AND MROPRD.MRO_PRD_STATS_CD = '00'
+		<if test="mallSprCd != null and !mallSprCd.equals('') ">
+			AND PRD.MALL_SPR_CD = #{mallSprCd}
+		</if>
+		
+		)
+		SELECT A.PRD_ID
+				, CASE WHEN FN_RD_NUMBER_YN(A.PRD_ID) = 'Y' THEN TO_NUMBER(A.PRD_ID) || ''
+					   ELSE A.PRD_ID
+				  END PRD_ID_VIEW
+				, B.PRD_NM
+				, FN_PR_ATTR_VAL_LIST(B.CO_CD, B.PRD_ID) AS ATTR_VAL
+				, B.MNFR_NM 
+				, B.MALL_SPR_CD
+				, FN_COM_DTL_CDNM_NVL('KO', 'MALL_SPR_CD', B.MALL_SPR_CD, '-') AS MALL_SPR_CD_NM
+				, B.PRD_CLCD
+				, B.PRD_CLSF_NM AS PRD_CLCD_NM
+				, B.PRD_USE_YN
+				, CASE WHEN B.PRD_USE_YN = 'Y' THEN '사용'
+				       WHEN B.PRD_USE_YN = 'N' THEN '미사용'
+				       ELSE '미사용'
+				  END PRD_USE_YN_NM
+				, B.DISP_STATS_NM
+				, B.PUB_ONLY_SPR_NM
+				, B.REPR_PRD_SPR_NM
+				, B.FULL_PRD_CLSF_NM
+				, B.IDDT_NM
+		FROM TEMP_PRD_ID_CHECK_LIST A
+				, TEMP_PRD_ID_INFO B
+		WHERE A.CO_CD = B.CO_CD(+)
+		AND A.PRD_ID = B.PRD_ID(+)
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 운영단위ID 유효성 검사
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.04.12.
+	******************************************************************************
+	-->
+	<select id="selectOprUnitCheckList" parameterType="HashMap" resultType="HashMap">
+		/* 운영단위ID 유효성 검사 - SaCom_SQL.selectOprUnitCheckList */
+		WITH TEMP_PRD_ID_CHECK_LIST AS
+		(
+			${queryString}
+		)
+		SELECT A.BZPLC_ID
+				, A.OPR_UNIT_ID
+				, B.OPR_UNIT_NM
+		FROM TEMP_PRD_ID_CHECK_LIST A
+				, TB_CC_OPR_UNIT_BASIS B
+		WHERE A.CO_CD = B.CO_CD(+)
+		AND A.BZPLC_ID = B.BZPLC_ID(+)
+		AND A.OPR_UNIT_ID = B.OPR_UNIT_ID(+)
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 상품군ID 유효성 검사
+	* 작성자 : 87minho
+	* 작성 일자 : 2022.04.14.
+	******************************************************************************
+	-->
+	<select id="selectPrdClcdCheckList" parameterType="HashMap" resultType="HashMap">
+		/* 상품군ID 유효성 검사 - SaCom_SQL.selectPrdClcdCheckList */
+		WITH TEMP_PRD_CLCD_CHECK_LIST AS
+		(
+			${queryString}
+		)
+		SELECT A.PRD_CLCD
+					, B.PRD_CLSF_NM AS PRD_CLCD_NM
+					, B.MALL_SPR_CD
+					, FN_COM_DTL_CDNM_NVL('KO', 'MALL_SPR_CD', B.MALL_SPR_CD, '-') AS MALL_SPR_CD_NM
+		FROM TEMP_PRD_CLCD_CHECK_LIST A
+				, TB_PR_PRD_CLSF_INFO B
+		WHERE A.CO_CD = B.CO_CD(+)
+		AND A.PRD_CLCD = B.PRD_CLCD(+)
+		AND B.USE_YN(+) = 'Y'
+		AND B.DEL_YN(+) = 'N'
+		AND B.LWST_CD_YN(+) = 'Y'
+	</select>
+
+</mapper>

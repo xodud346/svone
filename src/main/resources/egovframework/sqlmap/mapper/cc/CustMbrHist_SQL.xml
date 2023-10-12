@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="custMbrHist">
+
+   <!--
+    ******************************************************************************
+    * SELECT : custDept
+    * 작성자 : moonjooh
+    * 작성 일자 : 2022-02-24
+    ******************************************************************************
+    -->
+    <select id="selectCustDept" parameterType="HashMap" resultType="HashMap">
+        /* custMbrHist.selectCustDept 회원정보 전체 이력 조회 */
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+ 			SELECT LIST.CO_CD				/* 회사 코드 */
+	            ,LIST.MBR_ID				/* 회원 ID */
+	            ,LIST.HST_SPR_CD			/* 이력 상태 코드 */
+	            ,LIST.MBR_USE_CD			/* 회원 상태 코드 */
+	            ,ROW_NUMBER() over (ORDER BY UPD_DTM )AS HST_SEQ	/* 이력 순번 */
+	            ,CASE WHEN LIST.MBR_HST_SEQ_NO_CNT = 1 AND MBR_HST_UPD_INFO IS NOT NULL  
+	            		THEN (SELECT COM_DTL_CD_NM FROM SSP_APP.TB_CO_COM_CD_DTL WHERE COM_CLSF_CD='MBR_HST_CLCD' AND COM_DTL_CD=LIST.MBR_HST_CLCD) ||' ('||MBR_HST_UPD_CNT||')'
+                	WHEN  LIST.MBR_HST_SEQ_NO_CNT > 1 
+                		THEN LIST.MBR_HST_CLCD ||' ('||MBR_HST_UPD_CNT||')'  
+                		-- MBR_HST_SEQ_NO_CNT=1 AND MBR_HST_UPD_INFO IS NULL 인경우  등록 OR 변경없음 
+                 END AS MBR_HST_CLCD		/* 수정 항목 */
+	            ,LIST.MBR_HST_UPD_CNT		/* 수정 개수 */
+	            ,LIST.MBR_HST_UPD_INFO		/* 수정 정보 */
+	            ,LIST.UPD_DTM				/* 수정 일시 */
+	            ,LIST.UPDPSN_ID				/* 수정자 ID */
+	            ,(SELECT FN_CC_GET_MBR_NM(LIST.CO_CD, LIST.UPDPSN_ID) FROM DUAL) AS UPDPSN_NM	/* 수정자 이름 */
+            FROM(
+                SELECT CO_CD
+                ,MBR_ID
+                ,HST_SPR_CD
+                ,MBR_USE_CD
+                ,(SELECT COUNT(MBR_HST_SEQ_NO)FROM TB_CC_MBR_COM_HST A WHERE B.MBR_HST_SEQ=A.MBR_HST_SEQ) AS MBR_HST_SEQ_NO_CNT
+                ,CASE WHEN MBR_HST_SEQ IS NOT NULL THEN
+	                (SELECT
+	                    CASE WHEN COUNT(MBR_HST_SEQ_NO) >1 THEN '다중수정'
+	                    WHEN COUNT(MBR_HST_SEQ_NO)=1 AND MAX(MBR_HST_CLCD) IS NULL THEN '등록'
+	                    WHEN COUNT(MBR_HST_SEQ_NO)=1 AND MAX(MBR_HST_CLCD) IS NOT NULL THEN MAX(MBR_HST_CLCD) END AS MBR_HST_CLCD
+	                FROM SSP_APP.TB_CC_MBR_COM_HST A
+	                WHERE B.MBR_HST_SEQ=A.MBR_HST_SEQ)
+                ELSE TO_CHAR(MBR_HST_SEQ) END AS MBR_HST_CLCD
+                ,(SELECT  SUM(MBR_HST_UPD_CNT) FROM TB_CC_MBR_COM_HST A WHERE B.MBR_HST_SEQ=A.MBR_HST_SEQ) AS MBR_HST_UPD_CNT
+                ,(SELECT   LISTAGG(MBR_HST_UPD_INFO,',') FROM TB_CC_MBR_COM_HST A WHERE B.MBR_HST_SEQ=A.MBR_HST_SEQ) AS MBR_HST_UPD_INFO
+                ,UPD_DTM
+                ,UPDPSN_ID
+                FROM TB_CC_MBR_BASIS_HST B
+                WHERE B.CO_CD = #{coCd}
+                    AND B.MBR_ID = #{mbrId}
+                    ORDER BY UPD_DTM
+                )LIST
+             WHERE LIST.MBR_HST_CLCD !='99' OR LIST.MBR_HST_CLCD IS NULL
+			 <if test="sortColumn != null and sortColumn != ''"> 
+	         ORDER BY ${sortColumn} ${sortType} 
+	         </if> 
+	         <if test="sortColumn == null or sortColumn == ''"> 
+			 ORDER BY HST_SEQ DESC
+	         </if>
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+    </select>
+    
+</mapper>

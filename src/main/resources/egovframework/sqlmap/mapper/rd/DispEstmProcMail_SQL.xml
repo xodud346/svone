@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DispEstmProcMail">
+
+      <select id="selectCustMailRcvAgreYn" parameterType="HashMap" resultType="String">
+        /* DispEstmProcMail.selectCustMailRcvAgreYn 고객의 업무용메일수신동의여부 검증 */
+        SELECT  B.MAIL_RCV_AGRE_YN
+		FROM    TB_RD_RND_DISP_ESTM_REQ_DTLS A
+		INNER JOIN TB_CC_MBR_BASIS B
+                ON B.CO_CD = A.CO_CD
+                AND B.MBR_ID = A.REGPSN_ID
+		WHERE   A.CO_CD = #{CO_CD}
+		AND     A.ESTM_REQ_NO = #{ESTM_REQ_NO}
+    </select>
+
+      <select id="selectCprtcpMailRcvAgreYn" parameterType="HashMap" resultType="String">
+        /* DispEstmProcMail.selectCprtcpMailRcvAgreYn 협력사의 업무용메일수신동의여부 검증 */
+		SELECT  CHRPSN_EMAIL_RCV_YN
+        FROM    TB_CP_CPRTCP_BASIS
+        WHERE   CO_CD = #{CO_CD}
+        AND     CPRTCP_ID = #{CPRTCP_ID}
+    </select>
+
+</mapper>

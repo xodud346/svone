@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.cc.cust.helper">
+
+   <!--
+    ******************************************************************************
+    * SELECT : 
+    * 작성자 : 유창호
+    * 작성 일자 : 2022-04-25
+    ******************************************************************************
+    -->
+
+	<select id="selectCustHelperDetail" parameterType="HashMap" resultType="HashMap">
+    	/* 고객도우미 상세정보 조회 - com.ssp.bo.cc.cust.helper.selectCustHelperDetail */
+    	SELECT VHIF.CO_CD                                                                        /* 회사코드 */
+	         , VHIF.BZPLC_ID                                                                     /* 사업장ID */
+	         , TCBB.BZPLC_NM                                                                     /* 사업장명 */ 
+	         , VHIF.OPR_UNIT_ID                                                                  /* 운영단위ID */
+	         , TCOUB.OPR_UNIT_NM                                                                 /* 운영단위명 */
+	         , VHIF.OPR_UNIT_ID || ' | ' || TCOUB.OPR_UNIT_NM AS OPR_UNIT_DISPLAY                /* 운영단위 텍스트 */
+	         , TCOUB.SVC_CHRPSN_ID                                                               /* 서비스담당자ID */
+	         , NVL((SELECT ORG_NM 
+	                  FROM TB_CO_MBR_OPRTR_INFO 
+	                 WHERE CO_CD=TCOUB.CO_CD 
+	                   AND OPRTR_ID=TCOUB.SVC_CHRPSN_ID), '') 
+	           || ' | ' || 
+	           NVL((SELECT OPRTR_NM 
+	                  FROM TB_CO_MBR_OPRTR_INFO 
+	                 WHERE CO_CD=TCOUB.CO_CD 
+	                   AND OPRTR_ID=TCOUB.SVC_CHRPSN_ID), TCOUB.SVC_CHRPSN_ID)  SVC_CHRPSN_TEXT  /* 서비스담당자 텍스트 */
+	         , VHIF.USE_YN                                                                       /* 기본정보 사용여부 */
+	         , DECODE(VHIF.USE_YN, 'Y', '사용', 'N', '미사용', '-') AS USE_YN_NM                    /* 기본정보 사용여부명 */
+	         , ZINF.ZENDESK_GRP_ID                                                               /* 젠데스크 그룹ID */
+	         , ZBAS.ZENDESK_GRP_NM                                                               /* 젠데스크 그룹명 */
+	         , CASE WHEN ZINF.ZENDESK_GRP_ID IS NULL THEN ''
+	                ELSE ZINF.ZENDESK_GRP_ID || ' | ' || ZBAS.ZENDESK_GRP_NM
+                END ZENDESK_GRP_TEXT                                                             /* 젠데스크 그룹 화면표시용 */
+	         , HMST.CADDR_SPR_CD                                                                 /* 연락처 구분 */
+	         , (SELECT FN_COM_DTL_CDNM_NVL('KO', 'CADDR_SPR_CD', HMST.CADDR_SPR_CD, '-')
+	              FROM DUAL)  CADDR_SPR_NM                                                       /* 연락처 구분명 */
+	         , HMST.CADDR_DISP_NM                                                                /* FRONT표시명 */
+	         , HMST.CUST_HELPER_CADDR                                                            /* 담당자 연락처 */
+	         , ( SELECT LISTAGG(DISTINCT ZENDESK_CHRPSN_NM, ',') WITHIN GROUP(ORDER BY CO_CD, ZENDESK_GRP_ID, ZENDESK_CHRPSN_ID)  ZENDESK_CHRPSN_NMS
+                   FROM TB_VO_ZENDESK_CHRPSN_INFO
+                  WHERE CO_CD  = VHIF.CO_CD 
+                    AND ZENDESK_GRP_ID = ZBAS.ZENDESK_GRP_ID
+                    AND USE_YN = 'Y'
+               GROUP BY CO_CD, ZENDESK_GRP_ID ) AS ZENDESK_CHRPSN_NMS                            /* 그룹인원 */
+             , ZINF.DSP_ONLY_EMAIL_ADDR                                                          /* 발신전용 E-MAIL */
+             , ZBAS.CHAT_URL                                                                     /* 챗URL */
+             , NVL(HMST.USE_YN,'N') AS CADDAR_USE_YN                                             /* 연락처사용여부 */
+             , DECODE(NVL(HMST.USE_YN,'N'), 'Y', '사용', 'N', '미사용') AS CADDAR_USE_YN_NM
+             , NVL(HMST.USE_YN,'N') AS CHATBOT_USE_YN                                            /* 챗봇사용여부 */
+             , DECODE(NVL(HMST.USE_YN,'N'), 'Y', '사용', 'N', '미사용') AS CHATBOT_USE_YN_NM
+             , (SELECT NVL(EMAIL_ADDR,'')
+                  FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL
+                 WHERE CO_CD = VHIF.CO_CD 
+                   AND CUST_HELPER_CADDR_REG_NO = VHIF.CUST_HELPER_CADDR_REG_NO
+                   AND CADDR_CHN_SPR_CD = '10'
+               ) AS EMAIL_ADDR_ALL                                                                /* 전체 이메일 */
+             , (SELECT NVL(EMAIL_ADDR,'')
+                  FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL
+                 WHERE CO_CD = VHIF.CO_CD 
+                   AND CUST_HELPER_CADDR_REG_NO = VHIF.CUST_HELPER_CADDR_REG_NO
+                   AND CADDR_CHN_SPR_CD = '20'
+               ) AS EMAIL_ADDR_DLV                                                                /* 배송 이메일 */
+             , (SELECT NVL(EMAIL_ADDR,'')
+                  FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL
+                 WHERE CO_CD = VHIF.CO_CD 
+                   AND CUST_HELPER_CADDR_REG_NO = VHIF.CUST_HELPER_CADDR_REG_NO
+                   AND CADDR_CHN_SPR_CD = '30'
+               ) AS EMAIL_ADDR_ORD                                                                /* 주문 이메일 */
+             , (SELECT NVL(EMAIL_ADDR,'')
+                  FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL
+                 WHERE CO_CD = VHIF.CO_CD 
+                   AND CUST_HELPER_CADDR_REG_NO = VHIF.CUST_HELPER_CADDR_REG_NO
+                   AND CADDR_CHN_SPR_CD = '40'
+               ) AS EMAIL_ADDR_AS                                                                 /* 반품/교환/취소/AS */
+             , (SELECT NVL(EMAIL_ADDR,'')
+                  FROM TB_VO_OPR_UNIT_CUST_HELPER_CADDR_DTL
+                 WHERE CO_CD = VHIF.CO_CD 
+                   AND CUST_HELPER_CADDR_REG_NO = VHIF.CUST_HELPER_CADDR_REG_NO
+                   AND CADDR_CHN_SPR_CD = '50'
+               ) AS EMAIL_ADDR_ETC                                                                /* 회원/정산/기타 */
+             , VHIF.CUST_HELPER_CADDR_REG_NO                                                      /* 고객도우미연락처 등록번호 */
+             , NVL(VHIF.CHAT_BOT_USE_YN, 'N') AS CHAT_BOT_USE_YN                                  /* 챗봇사용여부 */
+             , CASE WHEN VHIF.CHAT_BOT_USE_YN = 'Y' THEN '사용'
+                    ELSE '미사용'
+                END CHAT_BOT_USE_YN_TEXT                                                          /* 챗봇사용여부 텍스트*/
+             , VHIF.CUST_HELPER_SPR_CD                                                            /* 고객도우미 구분코드 [1:비로그인, 2:일반(공통), 3:일반(개별)] */
+	      FROM TB_VO_OPR_UNIT_CUST_HELPER_INFO VHIF
+     LEFT JOIN TB_CC_BZPLC_BASIS TCBB                    ON VHIF.CO_CD = TCBB.CO_CD  AND VHIF.BZPLC_ID = TCBB.BZPLC_ID 
+     LEFT JOIN TB_CC_OPR_UNIT_BASIS TCOUB                ON VHIF.CO_CD = TCOUB.CO_CD AND VHIF.BZPLC_ID = TCOUB.BZPLC_ID AND VHIF.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID
+     LEFT JOIN TB_VO_OPR_UNIT_ZENDESK_INFO ZINF          ON VHIF.CO_CD = ZINF.CO_CD  AND VHIF.BZPLC_ID = ZINF.BZPLC_ID  AND VHIF.OPR_UNIT_ID = ZINF.OPR_UNIT_ID 
+     LEFT JOIN TB_VO_ZENDESK_BASIS ZBAS                  ON ZINF.CO_CD = ZBAS.CO_CD  AND ZINF.ZENDESK_GRP_ID           = ZBAS.ZENDESK_GRP_ID 
+     LEFT JOIN TB_VO_OPR_UNIT_CUST_HELPER_CADDR_MST HMST ON VHIF.CO_CD = HMST.CO_CD  AND VHIF.CUST_HELPER_CADDR_REG_NO = HMST.CUST_HELPER_CADDR_REG_NO
+         WHERE VHIF.CO_CD       = #{coCd}
+           AND VHIF.BZPLC_ID    = #{bzplcId}
+           AND VHIF.OPR_UNIT_ID = #{oprUnitId}
+	</select>
+	<update id="updateOprUnitCustHelperCaddrRegNo" parameterType="HashMap">
+		/* 고객도우미 고객도우미연락처등록번호 매핑정보 수정 - com.ssp.bo.cc.cust.helper.updateOprUnitCustHelperCaddrRegNo */
+		UPDATE TB_VO_OPR_UNIT_CUST_HELPER_INFO
+		   SET CUST_HELPER_CADDR_REG_NO = #{custHelperCaddrRegNo}
+		     , USE_YN                   = #{useYn}
+		     , CHAT_BOT_USE_YN          = #{chatBotUseYn}
+		     , CUST_HELPER_SPR_CD		= #{custHelperSprCd}
+		     , UPDPSN_ID                = #{updpsnId}
+		     , UPD_DTM                  = SYSDATE
+		 WHERE CO_CD                    = #{coCd}
+		   AND BZPLC_ID                 = #{bzplcId}
+		   AND OPR_UNIT_ID              = #{oprUnitId}
+	</update>
+	<update id="updtaeOprUnitZendeskGrpId" parameterType="HashMap">
+		/* 고객도우미 고객도우미연락처등록번호 매핑정보 및 발신전용 이메일정보 수정 - com.ssp.bo.cc.cust.helper.updtaeOprUnitZendeskGrpId */
+		MERGE INTO TB_VO_OPR_UNIT_ZENDESK_INFO A
+	    USING DUAL
+	       ON (     A.CO_CD       = #{coCd}
+			    AND A.BZPLC_ID    = #{bzplcId}
+			    AND A.OPR_UNIT_ID = #{oprUnitId}
+			  )
+	     WHEN MATCHED THEN
+	          UPDATE 
+	             SET ZENDESK_GRP_ID      = #{zendeskGrpId}
+			       , DSP_ONLY_EMAIL_ADDR = #{dspOnlyEmailAddr}
+			       , CUST_HELPER_SPR_CD	 = #{custHelperSprCd}
+			       , UPDPSN_ID           = #{updpsnId}
+			       , UPD_DTM             = SYSDATE
+	     WHEN NOT MATCHED THEN
+	          INSERT ( A.CO_CD
+	                 , A.BZPLC_ID
+	                 , A.OPR_UNIT_ID 
+	                 , A.ZENDESK_GRP_ID 
+	                 , A.DSP_ONLY_EMAIL_ADDR 
+	                 , A.CUST_HELPER_SPR_CD 
+	                 , REGPSN_ID 
+	                 , REG_DTM 
+	                 , UPDPSN_ID 
+	                 , UPD_DTM 
+	                 )
+	          VALUES ( #{coCd}
+	                 , #{bzplcId}
+	                 , #{oprUnitId}
+	                 , #{zendeskGrpId}
+	                 , #{dspOnlyEmailAddr}
+	                 , #{custHelperSprCd}                      -- 일반개별 : 3
+	                 , #{regpsnId}
+	                 , SYSDATE
+	                 , #{updpsnId}
+	                 , SYSDATE
+	                 )
+	</update>
+	<select id="selectOprUnitChk" parameterType="HashMap" resultType="Integer">
+		/* 고객도우미 등록 전 현재 존재하는 고객도우미 인지 확인 - com.ssp.bo.cc.cust.helper.selectOprUnitChk */
+		SELECT (SELECT COUNT(*)
+		          FROM TB_VO_OPR_UNIT_CUST_HELPER_INFO
+		         WHERE CO_CD       = #{coCd}
+		           AND BZPLC_ID    = #{bzplcId}
+		           AND OPR_UNIT_ID = #{oprUnitId})
+               +
+               (SELECT COUNT(*)
+                  FROM TB_VO_OPR_UNIT_ZENDESK_INFO
+                 WHERE CO_CD       = #{coCd}
+                   AND BZPLC_ID    = #{bzplcId}
+                   AND OPR_UNIT_ID = #{oprUnitId})
+               AS CHK_CNT
+          FROM DUAL
+	</select>
+	<insert id="insertOprUnitCustHelperInfo" parameterType="HashMap">
+		/* 고객도우미 운영단위고객도우미정보 등록 - com.ssp.bo.cc.cust.helper.insertOprUnitCustHelperInfo */
+		INSERT INTO TB_VO_OPR_UNIT_CUST_HELPER_INFO
+		          ( CO_CD
+		          , BZPLC_ID
+		          , OPR_UNIT_ID
+		          , CUST_HELPER_CADDR_REG_NO
+		          , CUST_HELPER_SPR_CD
+		          , CHAT_BOT_USE_YN
+		          , USE_YN
+		          , REGPSN_ID
+		          , REG_DTM
+		          , UPDPSN_ID
+		          , UPD_DTM
+		          ) VALUES (
+		            #{coCd}
+		          , #{bzplcId}
+		          , #{oprUnitId}
+		          , #{custHelperCaddrRegNo}
+		          , #{custHelperSprCd}
+		          , #{chatBotUseYn}
+		          , #{useYn}
+		          , #{regpsnId}
+		          , SYSDATE
+		          , #{updpsnId}
+		          , SYSDATE
+		          )
+		
+   </insert>
+   <insert id="insertOprUnitZendeskInfo" parameterType="HashMap">
+		/* 고객도우미 운영단위젠데스크정보 등록 - com.ssp.bo.cc.cust.helper.insertOprUnitZendeskInfo */
+		INSERT INTO TB_VO_OPR_UNIT_ZENDESK_INFO
+	         ( CO_CD
+	         , BZPLC_ID
+	         , OPR_UNIT_ID
+	         , ZENDESK_GRP_ID
+	         , CUST_HELPER_SPR_CD
+	         , DSP_ONLY_EMAIL_ADDR
+	         , REGPSN_ID
+	         , REG_DTM
+	         , UPDPSN_ID
+	         , UPD_DTM
+	         ) VALUES (
+	           #{coCd}
+	         , #{bzplcId}
+	         , #{oprUnitId}
+	         , #{zendeskGrpId}
+	         , #{custHelperSprCd}
+	         , #{dspOnlyEmailAddr}
+	         , #{regpsnId}
+	         , SYSDATE
+	         , #{updpsnId}
+	         , SYSDATE
+	         )
+		
+   </insert>
+   <delete id="deleteOprUnitCustHelperCaddrRegNo" parameterType="HashMap">
+		/* 고객도우미 운영단위젠데스크정보 등록 - com.ssp.bo.cc.cust.helper.deleteOprUnitCustHelperCaddrRegNo */
+		DELETE 
+		  FROM TB_VO_OPR_UNIT_CUST_HELPER_INFO
+		 WHERE CO_CD        = #{coCd}
+		   AND BZPLC_ID     = #{bzplcId}
+		   AND OPR_UNIT_ID  = #{oprUnitId}
+   </delete>
+   <delete id="deleteOprUnitZendeskGrpId" parameterType="HashMap">
+		/* 고객도우미 운영단위젠데스크정보 등록 - com.ssp.bo.cc.cust.helper.deleteOprUnitZendeskGrpId */
+		DELETE 
+		  FROM TB_VO_OPR_UNIT_ZENDESK_INFO
+		 WHERE CO_CD        = #{coCd}
+		   AND BZPLC_ID     = #{bzplcId}
+		   AND OPR_UNIT_ID  = #{oprUnitId}
+   </delete>   
+</mapper>

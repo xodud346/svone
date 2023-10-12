@@ -1,0 +1,635 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Prepackage">
+
+	<select id="selectPrepackageListId" parameterType="hashMap" resultType="String">
+		/* Prepackage.selectPrepackageListId */
+		SELECT
+			DISTINCT TSPP.PRE_PKG_ID
+		FROM
+			TB_SG_PRE_PKG TSPP
+		LEFT JOIN
+			TB_SG_PRE_PKG_IDDT TSPPI
+		ON TSPPI.PRE_PKG_ID = TSPP.PRE_PKG_ID
+		LEFT JOIN
+			TB_SC_IDDT_BASIS TSIB
+		ON TSIB.IDDT_ID = TSPPI.IDDT_ID
+		LEFT JOIN
+			TB_SG_PRE_PKG_PRD TSPPP
+		ON TSPPP.PRE_PKG_ID = TSPP.PRE_PKG_ID
+		LEFT JOIN
+			TB_SG_PRD TSP
+		ON TSP.PRD_ID = TSPPP.PRD_ID
+		LEFT JOIN
+			TB_FV_PRD TFP
+		ON TFP.PRD_ID = TSP.PRD_ID
+		WHERE
+			1 = 1
+		<if test="useYn != '' and useYn != null">
+			AND
+				TSPP.USE_YN = #{useYn}
+		</if>
+		<if test="iddtId != '' and iddtId != null">
+			AND
+				TSPPI.IDDT_ID = #{iddtId}
+			AND
+				TSPPI.USE_YN = 'Y'
+		</if>
+		<if test="prePkgId != '' and prePkgId != null">
+			AND
+				TSPP.PRE_PKG_ID = #{prePkgId}
+		</if>
+		<if test="prdId != null and prdId.size > 0">
+			AND
+				TSPPP.PRD_ID IN
+					<foreach collection="prdId" item="prdId"  open="(" close=")" separator=",">
+						#{prdId}
+					</foreach> 
+			AND
+				TSPPP.USE_YN = 'Y'
+		</if>
+		<if test="regpsnId != '' and regpsnId != null">
+			AND
+				TSPP.REGPSN_ID = #{regpsnId}
+		</if>
+		<if test="updpsnId != '' and updpsnId != null">
+			AND
+				TSPP.UPDPSN_ID = #{updpsnId}
+			</if>
+		<if test="searchStartDt != '' and searchStartDt != null">
+			<if test="searchEndDt != '' and searchEndDt != null">
+				<if test="dateType == 'regDtm'">
+					AND
+						TO_CHAR(TSPP.REG_DTM, 'YYYYMMDD') BETWEEN #{searchStartDt} AND #{searchEndDt}
+				</if>
+				<if test="dateType == 'updDtm'">
+					AND
+						TO_CHAR(TSPP.UPD_DTM, 'YYYYMMDD') BETWEEN #{searchStartDt} AND #{searchEndDt}
+				</if>
+			</if>
+		</if>
+	</select>
+
+	<select id="selectPrepackageList" parameterType="hashMap" resultType="sspMap">
+	/* Prepackage.selectPrepackageList */
+		SELECT
+	    	S2.*
+	    FROM
+	        (
+	        SELECT
+	        	ROWNUM RNUM,
+	            S1.*,
+	            ( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = S1.REGPSN_ID ) REGPSN_NM,
+	            ( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = S1.UPDPSN_ID ) UPDPSN_NM
+		    FROM (
+				SELECT
+					PRE_PKG_ID,
+					USE_YN,
+					PRE_PKG_NM,
+					REG_DTM,
+					REGPSN_ID,
+					UPD_DTM,
+					UPDPSN_ID
+				FROM
+					TB_SG_PRE_PKG
+				WHERE
+					1 = 1
+				<if test="prePkgIdArr != null and prePkgIdArr.size > 0">
+				AND
+					PRE_PKG_ID IN 
+						<foreach collection="prePkgIdArr" item="prePkgIdArr"  open="(" close=")" separator=",">
+							#{prePkgIdArr}
+						</foreach>
+				</if>
+				ORDER BY 
+					REG_DTM DESC
+			)S1
+		)S2
+		WHERE
+			1=1
+		<if test="excelDown == null or !excelDown.equals('Y'.toString())">
+            AND S2.RNUM BETWEEN #{startNum} AND #{endNum}
+        </if>
+	</select>
+
+	<select id="selectPrepackageCount" parameterType="hashMap" resultType="integer">
+	/* Prepackage.selectPrepackageCount */
+		SELECT
+			COUNT(DISTINCT TSPP.PRE_PKG_ID)
+		FROM
+			TB_SG_PRE_PKG TSPP
+		LEFT JOIN
+			TB_SG_PRE_PKG_IDDT TSPPI
+		ON TSPPI.PRE_PKG_ID = TSPP.PRE_PKG_ID
+		LEFT JOIN
+			TB_SC_IDDT_BASIS TSIB
+		ON TSIB.IDDT_ID = TSPPI.IDDT_ID
+		LEFT JOIN
+			TB_SG_PRE_PKG_PRD TSPPP
+		ON TSPPP.PRE_PKG_ID = TSPP.PRE_PKG_ID
+		LEFT JOIN
+			TB_SG_PRD TSP
+		ON TSP.PRD_ID = TSPPP.PRD_ID
+		LEFT JOIN
+			TB_FV_PRD TFP
+		ON TFP.PRD_ID = TSP.PRD_ID
+		WHERE
+			1 = 1
+		<if test="useYn != '' and useYn != null">
+		AND
+			TSPP.USE_YN = #{useYn}
+		</if>
+		<if test="iddtId != '' and iddtId != null">
+		AND
+			TSPPI.IDDT_ID = #{iddtId}
+		AND
+			TSPPI.USE_YN = 'Y'
+		</if>
+		<if test="prePkgId != '' and prePkgId != null">
+		AND
+			TSPP.PRE_PKG_ID = #{prePkgId}
+		</if>
+		<if test="prdId != null and prdId.size > 0">
+		AND
+ 			TSPPP.PRD_ID IN
+				<foreach collection="prdId" item="prdId"  open="(" close=")" separator=",">
+					#{prdId}
+				</foreach>
+		AND
+			TSPPP.USE_YN = 'Y'
+		</if>
+		<if test="regpsnId != '' and regpsnId != null">
+		AND
+			TSPP.REGPSN_ID = #{regpsnId}
+		</if>
+		<if test="updpsnId != '' and updpsnId != null">
+		AND
+			TSPP.UPDPSN_ID = #{updpsnId}
+		</if>
+		<if test="searchStartDt != '' and searchStartDt != null">
+			<if test="searchEndDt != '' and searchEndDt != null">
+				<if test="dateType == 'regDtm'">
+					AND
+						TO_CHAR(TSPP.REG_DTM, 'YYYYMMDD') BETWEEN #{searchStartDt} AND #{searchEndDt}
+				</if>
+				<if test="dateType == 'updDtm'">
+					AND
+						TO_CHAR(TSPP.UPD_DTM, 'YYYYMMDD') BETWEEN #{searchStartDt} AND #{searchEndDt}
+				</if>
+			</if>
+		</if>
+	</select>
+
+	<select id="selectPrepackageListExcel" parameterType="hashMap" resultType="hashMap">
+	/* Prepackage.selectPrepackageListExcel */
+		SELECT
+			ROWNUM RNUM,
+			S1.*,
+			( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = S1.REGPSN_ID ) AS PLN_MST_REG_NM
+		FROM
+			(
+			SELECT
+				TSPP.PRE_PKG_ID,
+				TFP.PRD_ID,
+				TSIB.IDDT_ID,
+				TSPP.PRE_PKG_NM,
+				TSIB.IDDT_NM,
+				TFP.PRD_NM,
+				TSPP.REG_DTM,
+				TSPP.REGPSN_ID,
+				TSPP.UPD_DTM,
+				TSPP.UPDPSN_ID,
+				CASE
+					WHEN TSPP.USE_YN = 'Y' THEN '사용'
+					ELSE '미사용'
+				END AS USE_YN
+			FROM
+				TB_SG_PRE_PKG TSPP
+			LEFT JOIN
+				TB_SG_PRE_PKG_IDDT TSPPI
+			ON TSPPI.PRE_PKG_ID = TSPP.PRE_PKG_ID
+			LEFT JOIN
+				TB_SC_IDDT_BASIS TSIB
+			ON TSIB.IDDT_ID = TSPPI.IDDT_ID
+			LEFT JOIN
+				TB_SG_PRE_PKG_PRD TSPPP
+			ON TSPPP.PRE_PKG_ID = TSPP.PRE_PKG_ID
+			LEFT JOIN
+				TB_SG_PRD TSP
+			ON TSP.PRD_ID = TSPPP.PRD_ID
+			LEFT JOIN
+				TB_FV_PRD TFP
+			ON TFP.PRD_ID = TSP.PRD_ID
+			WHERE
+			1 = 1
+			<if test="useYn != '' and useYn != null">
+				AND
+					TSPP.USE_YN = #{useYn}
+			</if>
+			<if test="iddtId != '' and iddtId != null">
+				AND
+					TSPPI.IDDT_ID = #{iddtId}
+			</if>
+			<if test="prePkgId != '' and prePkgId != null">
+				AND
+					TSPP.PRE_PKG_ID = #{prePkgId}
+			</if>
+			<if test="prdId != null and prdId.size > 0">
+				AND
+					TSPPP.PRD_ID IN
+				<foreach collection="prdId" item="prdId"  open="(" close=")" separator=",">
+					#{prdId}
+				</foreach>
+			</if>
+			<if test="regpsnId != '' and regpsnId != null">
+				AND
+					TSPP.REGPSN_ID = #{regpsnId}
+			</if>
+			<if test="updpsnId != '' and updpsnId != null">
+				AND
+					TSPP.UPDPSN_ID = #{updpsnId}
+			</if>
+			<if test="searchStartDt != '' and searchStartDt != null">
+				<if test="searchEndDt != '' and searchEndDt != null">
+					AND
+						TO_CHAR(TSPP.REG_DTM, 'YYYYMMDD') BETWEEN #{searchStartDt} AND #{searchEndDt}
+				</if>
+			</if>
+				ORDER BY TSPP.REG_DTM
+			) S1
+		ORDER BY RNUM DESC
+	</select>
+	
+	<select id="selectPrepackageListIddt" parameterType="hashMap" resultType="sspMap">
+		/* Prepackage.selectPrepackageListIddt */
+		SELECT
+			TSPP.PRE_PKG_ID,
+			TSIB.IDDT_ID,
+			TSIB.IDDT_NM,
+			TSIB.DEL_YN,
+			TSIB.USE_YN
+		FROM
+			TB_SG_PRE_PKG TSPP
+		LEFT JOIN
+			TB_SG_PRE_PKG_IDDT TSPPI
+		ON TSPPI.PRE_PKG_ID = TSPP.PRE_PKG_ID
+		LEFT JOIN
+			TB_SC_IDDT_BASIS TSIB
+		ON TSIB.IDDT_ID = TSPPI.IDDT_ID
+		WHERE 
+			TSPP.PRE_PKG_ID = #{prePkgId2}
+		AND
+			TSPPI.USE_YN = 'Y'
+		ORDER BY 
+			TSPPI.REG_DTM DESC
+	</select>
+	
+	<select id="selectPrepackageListIddtCount" parameterType="hashMap" resultType="integer">
+		/* Prepackage.selectPrepackageListIddtCount */
+			SELECT
+				COUNT(TSPPI.PRE_PKG_ID) -1 AS IDDT_CNT
+			FROM
+				TB_SG_PRE_PKG TSPP
+			LEFT JOIN
+				TB_SG_PRE_PKG_IDDT TSPPI
+			ON TSPPI.PRE_PKG_ID = TSPP.PRE_PKG_ID
+			LEFT JOIN
+				TB_SC_IDDT_BASIS TSIB
+			ON TSIB.IDDT_ID = TSPPI.IDDT_ID
+			WHERE 
+				TSPP.PRE_PKG_ID = #{prePkgId2}
+			AND
+				TSPPI.USE_YN = 'Y'
+	</select>
+	
+	<select id="selectPrepackageListPrd" parameterType="hashMap" resultType="sspMap">
+		/* Prepackage.selectPrepackageListPrd */
+		SELECT
+			LISTAGG(TSPPP.PRD_ID, '/') WITHIN GROUP(ORDER BY TSPPP.REG_DTM) AS PRD_ID,
+			LISTAGG(TFP.PRD_NM, '/') WITHIN GROUP(ORDER BY TSPPP.REG_DTM) AS PRD_NM
+		FROM
+			TB_SG_PRE_PKG TSPP
+		LEFT JOIN
+			TB_SG_PRE_PKG_PRD TSPPP
+		ON TSPPP.PRE_PKG_ID = TSPP.PRE_PKG_ID
+		LEFT JOIN
+			TB_SG_PRD TSP
+		ON TSP.PRD_ID = TSPPP.PRD_ID
+		LEFT JOIN
+			TB_FV_PRD TFP
+		ON TFP.PRD_ID = TSP.PRD_ID
+		WHERE
+			TSPP.PRE_PKG_ID = #{prePkgId2}
+		AND
+			TSPPP.USE_YN = 'Y'
+	</select>
+
+	<!-- 프리패키지관리 프리패키지 등록 -->
+	<insert id="insertPrepackage" parameterType="hashMap">
+		/* Prepackage.insertPrepackage */
+		<selectKey keyProperty="PRE_PKG_ID" resultType="String" order="BEFORE">
+			SELECT NVL2(MAX(PRE_PKG_ID), 'PK' || LPAD(REPLACE(MAX(PRE_PKG_ID),'PK')+1,4,'0'),'PK0001') FROM TB_SG_PRE_PKG
+		</selectKey>
+		INSERT INTO TB_SG_PRE_PKG
+			(
+			PRE_PKG_ID,
+			PRE_PKG_NM,
+			SRWR,
+			ALL_INC_YN,
+			PRE_PKG_DESC,
+			PC_IMG_FILE_ID,
+			USE_YN,
+			REG_DTM,
+			REGPSN_ID,
+			UPD_DTM,
+			UPDPSN_ID
+			)
+		VALUES
+			(
+			#{PRE_PKG_ID},
+			#{prePkgNm},
+			#{srwr},
+			#{allIncYn},
+			#{prePkgDesc},
+			#{atflId},
+			#{useYn},
+			SYSDATE,
+			#{regpsnId},
+			SYSDATE,
+			#{updpsnId}
+			)
+	</insert>
+
+	<!-- 프리패키지관리 프리패키지 운영단위 등록 -->
+	<insert id="insertPrepackageIddt" parameterType="hashMap">
+		/* Prepackage.insertPrepackageIddt */
+		<selectKey keyProperty="PRE_PKG_IDDT_SEQ" resultType="Integer" order="BEFORE">
+			SELECT SQ_SG_PRE_PKG_IDDT.NEXTVAL AS PRE_PKG_IDDT_SEQ FROM DUAL
+		</selectKey>
+		INSERT INTO TB_SG_PRE_PKG_IDDT
+			(
+			PRE_PKG_IDDT_SEQ,
+			PRE_PKG_ID,
+			IDDT_ID,
+			USE_YN,
+			REG_DTM,
+			REGPSN_ID,
+			UPD_DTM,
+			UPDPSN_ID
+			)
+		VALUES
+			(
+			#{PRE_PKG_IDDT_SEQ},
+			#{PRE_PKG_ID},
+			#{iddtId},
+			'Y',
+			SYSDATE,
+			#{regpsnId},
+			SYSDATE,
+			#{updpsnId}
+			)
+	</insert>
+
+	<!-- 프리패키지관리 프리패키지 상품 등록 -->
+	<insert id="insertPrepackagePrd" parameterType="hashMap">
+		/* Prepackage.insertPrepackagePrd */
+		<selectKey keyProperty="PRE_PKG_PRD_SEQ" resultType="Integer" order="BEFORE">
+			SELECT SQ_SG_PRE_PKG_PRD.NEXTVAL AS PRE_PKG_PRD_SEQ FROM DUAL
+		</selectKey>
+		INSERT INTO TB_SG_PRE_PKG_PRD
+			(
+			PRE_PKG_PRD_SEQ,
+			PRE_PKG_ID,
+			PRD_ID,
+			USE_YN,
+			REG_DTM,
+			REGPSN_ID,
+			UPD_DTM,
+			UPDPSN_ID
+			)
+		VALUES
+			(
+			#{PRE_PKG_PRD_SEQ},
+			#{PRE_PKG_ID},
+			#{prdId},
+			'Y',
+			SYSDATE,
+			#{regpsnId},
+			SYSDATE,
+			#{updpsnId}
+			)
+	</insert>
+	
+	<!-- 프리패키지관리 프리패키지 수정 -->
+	<update id="updatePrepackage" parameterType="hashMap">
+		/* Prepackage.updatePrepackage */
+		UPDATE 
+			TB_SG_PRE_PKG
+		SET
+			USE_YN = #{useYn},
+			ALL_INC_YN = #{allIncYn},
+			PRE_PKG_NM = #{prePkgNm},
+			SRWR = #{srwr},
+			PRE_PKG_DESC = #{prePkgDesc},
+			UPD_DTM = SYSDATE,
+			UPDPSN_ID = #{updpsnId}
+		WHERE
+			PRE_PKG_ID = #{prePkgId}
+	</update>
+	
+	<!-- 프리패키지관리 프리패키지 기존 산업군 삭제 -->
+	<update id="deletePrepackageIddt" parameterType="hashMap">
+		/* Prepackage.deletePrepackageIddt */
+		UPDATE 
+			TB_SG_PRE_PKG_IDDT
+		SET
+			USE_YN = 'N'
+		WHERE
+			PRE_PKG_ID = #{prePkgId}
+	</update>
+	
+		<!-- 프리패키지관리 프리패키지 운영단위 등록 -->
+	<insert id="updatePrepackageIddt" parameterType="hashMap">
+		/* Prepackage.updatePrepackageIddt */
+		INSERT INTO TB_SG_PRE_PKG_IDDT
+			(
+			PRE_PKG_IDDT_SEQ,
+			PRE_PKG_ID,
+			IDDT_ID,
+			USE_YN,
+			REG_DTM,
+			REGPSN_ID,
+			UPD_DTM,
+			UPDPSN_ID
+			)
+		VALUES
+			(
+			SQ_SG_PRE_PKG_IDDT.NEXTVAL,
+			#{prePkgId},
+			#{iddtId},
+			'Y',
+			SYSDATE,
+			#{regpsnId},
+			SYSDATE,
+			#{updpsnId}
+			)
+	</insert>
+	
+	<!-- 프리패키지관리 프리패키지 기존 상품 삭제 -->
+	<update id="deletePrepackagePrd" parameterType="hashMap">
+		/* Prepackage.deletePrepackagePrd */
+		UPDATE 
+			TB_SG_PRE_PKG_PRD
+		SET
+			USE_YN = 'N'
+		WHERE
+			PRE_PKG_ID = #{prePkgId}
+	</update>
+	
+			<!-- 프리패키지관리 프리패키지 운영단위 등록 -->
+	<insert id="updatePrepackagePrd" parameterType="hashMap">
+		/* Prepackage.updatePrepackagePrd */
+		INSERT INTO TB_SG_PRE_PKG_PRD
+			(
+			PRE_PKG_PRD_SEQ,
+			PRE_PKG_ID,
+			PRD_ID,
+			USE_YN,
+			REG_DTM,
+			REGPSN_ID,
+			UPD_DTM,
+			UPDPSN_ID
+			)
+		VALUES
+			(
+			SQ_SG_PRE_PKG_PRD.NEXTVAL,
+			#{prePkgId},
+			#{prdId},
+			'Y',
+			SYSDATE,
+			#{regpsnId},
+			SYSDATE,
+			#{updpsnId}
+			)
+	</insert>
+
+	<select id="selectPrepackage" parameterType="hashMap" resultType="sspMap">
+		/* Prepackage.selectPrepackage */
+		SELECT
+			PRE_PKG_ID,
+			USE_YN,
+			ALL_INC_YN,
+			PRE_PKG_NM,
+			SRWR,
+			PRE_PKG_DESC,
+			PC_IMG_FILE_ID AS ATFL_ID
+		FROM
+			TB_SG_PRE_PKG
+		WHERE
+			PRE_PKG_ID  = #{pkgId}
+	</select>
+
+	<select id="selectPrepackageImageList" parameterType="hashMap" resultType="sspMap">
+		/* Prepackage.selectPrepackageImageList */
+		SELECT
+			TSAFD.ATFL_ID,
+			TSAFD.FILE_SEQ,
+			TSAFD.ORIGNL_FILE_NM,
+			DBMS_LOB.SUBSTR(FILE_CTS, 4000, 1) AS FILE_CTS,
+			TSAFD.FILE_SZ,
+			TSAFD.FILE_CD_ID,
+			TSAFD.FILE_USE_YN
+		FROM
+			TB_SG_PRE_PKG TSPP
+		LEFT JOIN
+			TB_SB_ATCH_FILE_DTL TSAFD
+		ON TSAFD.ATFL_ID = TSPP.PC_IMG_FILE_ID
+		WHERE
+			TSPP.PRE_PKG_ID  = #{pkgId}
+		AND
+			TSAFD.FILE_USE_YN = 'Y'
+		ORDER BY
+			TSAFD.FILE_SEQ
+	</select>
+
+	<select id="selectPrepackageIddtList" parameterType="hashMap" resultType="sspMap">
+		/* Prepackage.selectPrepackageIddtList */
+		SELECT
+			LISTAGG(TSPPI.IDDT_ID, ', ') WITHIN GROUP(ORDER BY TSIB.REG_DTM) AS IDDT_ID,
+			LISTAGG(TSIB.IDDT_NM, ', ') WITHIN GROUP(ORDER BY TSIB.REG_DTM) AS IDDT_NM
+		FROM
+			TB_SG_PRE_PKG TSPP
+		LEFT JOIN
+			TB_SG_PRE_PKG_IDDT TSPPI
+		ON TSPPI.PRE_PKG_ID = TSPP.PRE_PKG_ID
+		LEFT JOIN
+			TB_SC_IDDT_BASIS TSIB
+		ON TSIB.IDDT_ID = TSPPI.IDDT_ID
+		WHERE
+			TSPPI.USE_YN = 'Y'
+		AND
+			TSPP.PRE_PKG_ID  = #{pkgId}
+	</select>
+
+	<select id="selectPrepackagePrdList" parameterType="hashMap" resultType="sspMap">
+		/* Prepackage.selectPrepackagePrdList */
+		SELECT
+			LISTAGG(TSPPP.PRD_ID, ', ') WITHIN GROUP(ORDER BY TSP.REG_DTM) AS PRD_ID,
+			LISTAGG(TFP.PRD_NM, ', ') WITHIN GROUP(ORDER BY TSP.REG_DTM) AS PRD_NM
+		FROM
+			TB_SG_PRE_PKG TSPP
+		LEFT JOIN
+			TB_SG_PRE_PKG_PRD TSPPP
+		ON TSPPP.PRE_PKG_ID = TSPP.PRE_PKG_ID
+		LEFT JOIN
+			TB_SG_PRD TSP
+		ON TSP.PRD_ID = TSPPP.PRD_ID
+		LEFT JOIN
+			TB_FV_PRD TFP
+		ON TFP.PRD_ID = TSP.PRD_ID
+		WHERE
+			TSPPP.USE_YN = 'Y'
+		AND
+			TSPP.PRE_PKG_ID  = #{pkgId}
+	</select>
+	
+	<select id="selectAllIddt" resultType="sspMap">
+		/* Prepackage.selectAllIddt */
+		SELECT
+			IDDT_ID,
+			IDDT_NM,
+			USE_YN
+		FROM
+			TB_SC_IDDT_BASIS
+		WHERE
+			DEL_YN = 'N'
+		AND USE_YN = 'Y'
+		ORDER BY 
+			REG_DTM DESC
+	</select>
+	
+	<select id="selectPrepackageIddt" parameterType="hashMap" resultType="sspMap">
+		/* Prepackage.selectPrepackageIddt */
+		SELECT 
+			TSPPI.IDDT_ID,
+			TSIB.IDDT_NM,
+			TSIB.USE_YN
+		FROM
+			TB_SG_PRE_PKG_IDDT TSPPI
+		JOIN 
+			TB_SC_IDDT_BASIS TSIB
+		ON TSPPI.IDDT_ID = TSIB.IDDT_ID
+		WHERE 
+			TSPPI.USE_YN = 'Y'
+			<if test="allIddtList != null and allIddtList.size > 0">
+			AND 
+				TSPPI.IDDT_ID NOT IN 
+					<foreach collection="allIddtList" item="item" open="(" close=")" separator=",">
+						#{item.iddtId}
+					</foreach>
+			</if>
+		ORDER BY 
+			TSPPI.REG_DTM DESC
+	</select>
+</mapper>

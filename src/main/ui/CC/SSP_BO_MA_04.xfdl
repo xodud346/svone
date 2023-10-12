@@ -1,0 +1,271 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="samplePage01" width="1020" height="645" titletext="고객등급 이력조회" onload="fn_onLoad" onkeyup="samplePage01_onkeyup">
+    <Layouts>
+      <Layout height="645" mobileorientation="landscape" width="1020">
+        <Static id="sta_totCount" taborder="1" text="(총 0건 1/1)" left="20" usedecorate="true" width="180" height="17" top="105"/>
+        <Div id="Div00" taborder="0" text="Div01" left="20" top="sta_totCount:10" height="422" right="20">
+          <Layouts>
+            <Layout>
+              <Grid id="grd_mainList" taborder="0" left="0" top="0" right="0" autofittype="col" fillareatype="none" binddataset="ds_custGrd" oncellclick="grd_mainList_oncellclick" oncelldblclick="Div01_grd_mainList_oncelldblclick" height="352" selecttype="area">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="37"/>
+                      <Column size="56"/>
+                      <Column size="61"/>
+                      <Column size="90"/>
+                      <Column size="65"/>
+                      <Column size="102"/>
+                      <Column size="102"/>
+                      <Column size="80"/>
+                      <Column size="80"/>
+                      <Column size="102"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="30" band="head"/>
+                      <Row size="32"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell text="번호"/>
+                      <Cell col="1" text="상태"/>
+                      <Cell col="2" text="등급코드"/>
+                      <Cell col="3" text="등급명"/>
+                      <Cell col="4" text="적용 할인율"/>
+                      <Cell col="5" text="유효기간 시작일시"/>
+                      <Cell col="6" text="유효기간 종료일시"/>
+                      <Cell col="7" text="수정자ID"/>
+                      <Cell col="8" text="수정자 명"/>
+                      <Cell col="9" text="수정일시"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="bind:SEQ"/>
+                      <Cell col="1" text="bind:STATE" displaytype="combotext" combodataset="ds_useYn" combodatacol="COL_NM" combocodecol="COL_VALUE"/>
+                      <Cell col="2" text="bind:BZPLC_GRD_ID"/>
+                      <Cell col="3" text="bind:BZPLC_GRD_NM"/>
+                      <Cell col="4" text="bind:APLY_DCRT" textAlign="right"/>
+                      <Cell col="5" text="bind:VLD_PERD_STR_DTM" edittype="none" calendardisplaynulltype="none" maskedittype="string" maskeditformat="yyyy-MM-dd hh:mm:ss" displaytype="date" calendardateformat="yyyy-MM-dd HH:mm:ss" calendareditformat="yyyy-MM-dd HH:mm:ss"/>
+                      <Cell col="6" text="bind:VLD_PERD_END_DTM" edittype="none" calendardisplaynulltype="none" maskedittype="string" maskeditformat="yyyy-MM-dd hh:mm:ss" displaytype="date" calendardateformat="yyyy-MM-dd HH:mm:ss" calendareditformat="yyyy-MM-dd HH:mm:ss"/>
+                      <Cell col="7" text="bind:UPDPSN_ID"/>
+                      <Cell col="8" text="bind:UPDPSN_NM"/>
+                      <Cell col="9" text="bind:UPD_DTM" edittype="none" calendardisplaynulltype="none" maskedittype="string" maskeditformat="yyyy-MM-dd hh:mm:ss" displaytype="date" calendardateformat="yyyy-MM-dd HH:mm:ss" calendareditformat="yyyy-MM-dd HH:mm:ss"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Div id="div_paging" taborder="1" left="0" height="38" formscrollbartype="none none" right="0" url="COMM::cmmPaging.xfdl" bottom="0"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btn_close" taborder="2" text="닫기" onclick="btn_close_onclick" left="476" height="30" width="70" top="Div00:30"/>
+        <Div id="Div00_00" taborder="3" text="Div00" left="0" top="0" height="80" right="0" cssclass="div_WF_SearchArea">
+          <Layouts>
+            <Layout>
+              <Static id="Static27" taborder="0" left="20" top="20" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+              <Static id="Static26" taborder="1" text="상태" left="20" top="20" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Combo id="cbo_useYn" taborder="2" text="" left="Static26:10" top="24" width="160" height="24" index="-1" innerdataset="ds_useYn" datacolumn="COL_NM" codecolumn="COL_VALUE" onitemchanged="Div00_00_cbo_useYn_onitemchanged"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : SSP_BO
+  CREATION DATES : 
+*******************************************************/
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//부모창 데이터 처리
+	this.fn_checkData();
+	
+	this.resetScroll();
+	
+	this.copyPaste.addGrid(this.Div00.form.grd_mainList);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+	// 조회 
+	this.fn_search = function()	{
+		var sSvcId = "selectMbrHistPop";    
+		var sUrl = "/bo/cust/grade/select-cust-grade-hst.do";
+		var inDs = "ds_search=ds_search";
+		var outDs = "ds_custGrd=ds_output1";
+		var arg = "";
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_received");
+	}
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+	//조회 트랜잭션 콜백함수
+	this.fn_received = function(svcID, errorCode, errorMsg)	{
+		this.preSelectRowPosition = 0;		
+		
+		if( this.ds_custGrd.rowcount == 0 ) {
+			this.Div00.form.grd_mainList.set_nodatatext("조회 결과가 없습니다.");
+			this.Div00.form.div_paging.form.cfn_createPage(this.Div00.form.div_paging, 0, 10, "fn_pageCallback");
+			return;
+		}
+		
+		//paging 처리
+		this.totalCount = this.ds_custGrd.getColumn(0,"TOT_CUNT");
+		this.Div00.form.div_paging.form.cfn_createPage(this.Div00.form.div_paging, this.totalCount, 10, "fn_pageCallback");
+	}
+	
+	this.fn_pageCallback = function(sFlag){
+		var oPaging = this.Div00.form.div_paging;
+		if(sFlag){
+			this.ds_search.setColumn(0,"START_NUM",oPaging.uPageNum);
+			this.ds_search.setColumn(0,"ROW_COUNT",10);	
+			this.fn_search();
+		}
+		
+		var sTotText = "(<b v='true'>총 "+ this.gfn_appendComma(oPaging.uTotCount)+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+		this.sta_totCount.set_text(sTotText);
+		
+		if(oPaging.uTotCount < 10){ this.Div00.form.div_paging.set_visible(false); }
+		else{ this.Div00.form.div_paging.set_visible(true); }
+	};
+	
+	this.fn_sortCallback = function(sGridId){
+		var oGrid=null;
+		if(sGridId == "grd_mainList"){
+			oSortInfo = this.Div00.form.grd_mainList.uaSortInfo;
+			this.ds_search.setColumn(0,"SORT_COLUMN",oSortInfo.bindCol);
+			this.ds_search.setColumn(0,"SORT_TYPE",oSortInfo.status);
+			this.fn_search();
+		}
+	};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+	//화면 설정 함수
+	this.cfn_formInit = function(){
+		//grid 초기 설정
+		this.Div00.form.grd_mainList.uSortFlag = "false";
+		this.Div00.form.grd_mainList.uServerSortFlag = "false";
+		this.Div00.form.grd_mainList.uSortCallback = "fn_sortCallback";
+		this.Div00.form.grd_mainList.uCellSizeType = "true";
+		
+		//페이징 초기 설정
+		this.Div00.form.div_paging.uPage = 1;
+		this.Div00.form.div_paging.uPageNum = 0;
+		this.Div00.form.div_paging.uPageRowCnt = 10;
+		this.Div00.form.div_paging.uPageCnt = 0;
+		this.Div00.form.div_paging.uTotCount = 0;
+	};
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+	this.fn_checkData = function(){
+		var bzplcGrdId = this.parent.bzplcGrdId;
+		
+		// 파라미터 값 ds setcolumn
+		this.ds_search.setColumn(0, "BZPLC_GRD_ID", bzplcGrdId);
+		
+		// 조회
+		this.fn_search();
+	}
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/	
+	this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+	{
+		this.close();
+	};
+	
+	// 고객등급 조회
+	this.Div00_00_cbo_useYn_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+	{
+		this.ds_search.setColumn(0, "STATE", this.Div00_00.form.cbo_useYn.value);
+		
+		this.Div00.form.div_paging.uPage = 1;
+		this.ds_search.setColumn(0, "START_NUM", 0);
+		
+		this.fn_search();
+	};
+
+	this.samplePage01_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+	{
+		//ESC : 닫기기능
+		if(e.keycode == 27){
+			this.close();
+		}
+	};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_GRD_ID" type="STRING" size="256"/>
+          <Column id="STATE" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="BZPLC_GRD_ID"/>
+            <Col id="START_NUM">0</Col>
+            <Col id="ROW_COUNT">10</Col>
+            <Col id="CO_CD"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_useYn">
+        <ColumnInfo>
+          <Column id="COL_VALUE" type="STRING" size="256"/>
+          <Column id="COL_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COL_VALUE"/>
+            <Col id="COL_NM">전체</Col>
+          </Row>
+          <Row>
+            <Col id="COL_VALUE">Y</Col>
+            <Col id="COL_NM">사용</Col>
+          </Row>
+          <Row>
+            <Col id="COL_VALUE">N</Col>
+            <Col id="COL_NM">만료</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_custGrd" oncolumnchanged="ds_custGrd_oncolumnchanged" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="SEQ" type="STRING" size="256"/>
+          <Column id="STATE" type="STRING" size="256"/>
+          <Column id="BZPLC_GRD_ID" type="STRING" size="256"/>
+          <Column id="BZPLC_GRD_NM" type="STRING" size="256"/>
+          <Column id="APLY_DCRT" type="STRING" size="256"/>
+          <Column id="VLD_PERD_STR_DTM" type="STRING" size="256"/>
+          <Column id="VLD_PERD_END_DTM" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="UPDPSN_NM" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+          <Column id="TOT_CUNT" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="Div00_00.form.cbo_useYn" propid="text" datasetid="ds_useYn" columnid="COL_NM"/>
+    </Bind>
+  </Form>
+</FDL>

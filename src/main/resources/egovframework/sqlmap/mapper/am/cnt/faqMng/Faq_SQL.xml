@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Faq">
+	<!-- 고객센터관리 > 자주하는질문 > 자주하는질문 조건절 -->
+	<sql id="faqWhere">
+		<if test="searchBrdCmnComIdx != null and searchBrdCmnComIdx != ''">
+			AND BRD_CMN_COM_IDX = #{searchBrdCmnComIdx}
+		</if>
+		<if test="searchText != null and searchText !=''">
+			AND ((BRD_FAQ_TITLE LIKE '%' || #{searchText} || '%') OR (BRD_FAQ_CONTENTS LIKE '%' || #{searchText} || '%'))
+		</if>
+		<if test="searchStrDt != null and searchStrDt != '' and searchEndDt != null and searchEndDt != ''">
+			AND BRD_FAQ_REG_DT BETWEEN REPLACE(#{searchStrDt},'-', '')||'000000' AND REPLACE(#{searchEndDt},'-', '')||'235959'
+		</if>
+	</sql>
+
+	<!-- 고객센터관리 > 자주하는질문 > 자주하는질문 상세정보  -->
+	<resultMap id="resultFaqDetail" type="HashMap">
+		<result property="BRD_FAQ_IDX"		column="BRD_FAQ_IDX"/>
+		<result property="BRD_FAQ_TITLE"	column="BRD_FAQ_TITLE"/>
+		<result property="BRD_FAQ_CONTENTS"	column="BRD_FAQ_CONTENTS" jdbcType="CLOB" javaType="java.lang.String"/>
+		<result property="BRD_CMN_COM_IDX"	column="BRD_CMN_COM_IDX"/>
+		<result property="BRD_FAQ_READ_CNT"	column="BRD_FAQ_READ_CNT"/>
+		<result property="BRD_FAQ_USE_YN"	column="BRD_FAQ_USE_YN"/>
+		<result property="BRD_FAQ_REG_DT"	column="BRD_FAQ_REG_DT"/>
+		<!-- <result property="BRD_FAQ_REG_IP"	column="BRD_FAQ_REG_IP"/> -->
+		<result property="BRD_FAQ_REG_ID"	column="BRD_FAQ_REG_ID"/>
+		<result property="BRD_FAQ_UPD_DT"	column="BRD_FAQ_UPD_DT"/>
+		<!-- <result property="BRD_FAQ_UPD_IP"	column="BRD_FAQ_UPD_IP"/> -->
+		<result property="BRD_FAQ_UPD_ID"	column="BRD_FAQ_UPD_ID"/>
+	</resultMap>
+
+	<!-- 자주하는질문 목록 총 건수 -->
+	<select id="selectFaqCount" parameterType="hashMap" resultType="Integer">
+		/* Notice.selectFaqCount */
+		SELECT
+			COUNT(BRD_FAQ_IDX) AS CNT
+		FROM T_BRD_FAQ
+		INNER JOIN T_CMM_COM CMM_COM_NM
+			ON CMM_COM_NM.CMN_COM_IDX = BRD_CMN_COM_IDX AND CMM_COM_NM.CMN_COM_USE_YN = 'Y'
+		WHERE 1=1
+			<include refid="faqWhere"/>
+	</select>
+
+	<!-- 자주하는질문 목록 -->
+	<select id="selectFaqList" parameterType="hashMap" resultType="hashMap">
+		/* Faq.selectFaqList */
+		SELECT
+			S2.*
+		FROM
+			( 	SELECT
+					ROWNUM AS RNUM
+					, S1.*
+				FROM
+					(	SELECT
+							BRD_FAQ_IDX
+							, BRD_CMN_COM_IDX
+							, BRD_FAQ_TITLE
+							, BRD_FAQ_CONTENTS
+							, NVL(BRD_FAQ_READ_CNT, 0) 			AS BRD_FAQ_READ_CNT
+							, BRD_FAQ_USE_YN
+							, BRD_FAQ_REG_DT
+							, BRD_FAQ_REG_IP
+							, BRD_FAQ_REG_ID
+							, BRD_FAQ_UPD_DT
+							, BRD_FAQ_UPD_IP
+							, BRD_FAQ_UPD_ID
+							, CMM_COM_NM.CMN_COM_NM				AS BRD_CMN_COM_NM
+							, ADM_REG_NM.ADM_MST_NM				AS BRD_FAQ_REG_NM
+						FROM T_BRD_FAQ
+						INNER JOIN T_CMM_COM CMM_COM_NM
+							ON CMM_COM_NM.CMN_COM_IDX = BRD_CMN_COM_IDX AND CMM_COM_NM.CMN_COM_USE_YN = 'Y'
+						LEFT OUTER JOIN T_ADM_MST ADM_REG_NM
+							ON ADM_REG_NM.ADM_MST_ID = BRD_FAQ_REG_ID
+						WHERE
+							1=1
+							<include refid="faqWhere"/>
+						ORDER BY BRD_FAQ_REG_DT DESC
+					) S1
+			) S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+
+	<!-- 자주하는질문 등록 -->
+	<insert id="insertFaq" parameterType="hashMap">
+		<selectKey keyProperty="BRD_FAQ_IDX" resultType="Integer" order="BEFORE">
+			SELECT SEQ_BRD_FAQ_IDX.NEXTVAL AS BRD_FAQ_IDX FROM DUAL
+		</selectKey>
+		/* Faq.insertFaq */
+		INSERT INTO
+			T_BRD_FAQ
+			(
+					BRD_FAQ_IDX
+				,	BRD_FAQ_TITLE
+				,	BRD_FAQ_CONTENTS
+				,	BRD_CMN_COM_IDX
+				,	BRD_FAQ_READ_CNT
+				,	BRD_FAQ_REG_DT
+				,	BRD_FAQ_REG_IP
+				,	BRD_FAQ_REG_ID
+			)
+		VALUES
+			(
+					#{BRD_FAQ_IDX}
+				,	#{BRD_FAQ_TITLE}
+				,	#{BRD_FAQ_CONTENTS}
+				,	#{BRD_CMN_COM_IDX}
+				,	0
+				,	TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+				,	#{BRD_FAQ_REG_IP}
+				,	#{BRD_FAQ_REG_ID}
+			)
+	</insert>
+
+	<!-- 자주하는질문 상세 -->
+	<select id="selectFaqDetail" parameterType="hashMap" resultMap="resultFaqDetail">
+		/* Faq.selectFaqDetail */
+		SELECT
+			BRD_FAQ_IDX
+			, BRD_CMN_COM_IDX
+			, BRD_FAQ_TITLE
+			, BRD_FAQ_CONTENTS
+			, NVL(BRD_FAQ_READ_CNT, 0) 			AS BRD_FAQ_READ_CNT
+			, BRD_FAQ_USE_YN
+			, BRD_FAQ_REG_DT
+			, BRD_FAQ_REG_ID
+			, ADM_REG_NM.ADM_MST_NM													AS BRD_FAQ_REG_NM
+			, NVL(BRD_FAQ_UPD_DT,BRD_FAQ_REG_DT)									AS BRD_FAQ_UPD_DT
+			, BRD_FAQ_UPD_ID														AS BRD_FAQ_UPD_ID
+			, ADM_UPD_NM.ADM_MST_NM													AS BRD_FAQ_UPD_NM
+		FROM T_BRD_FAQ
+		LEFT OUTER JOIN T_ADM_MST ADM_REG_NM
+			ON ADM_REG_NM.ADM_MST_ID = BRD_FAQ_REG_ID
+		LEFT OUTER JOIN T_ADM_MST ADM_UPD_NM
+			ON ADM_UPD_NM.ADM_MST_ID = BRD_FAQ_UPD_ID
+		WHERE BRD_FAQ_IDX = #{BRD_FAQ_IDX}
+	</select>
+
+	<!-- 자주하는질문 수정 -->
+	<update id="updateFaq" parameterType="hashMap">
+		/* Faq.updateFaq */
+		UPDATE
+			T_BRD_FAQ
+		SET
+			BRD_FAQ_TITLE = #{BRD_FAQ_TITLE}
+			, BRD_FAQ_CONTENTS = #{BRD_FAQ_CONTENTS}
+			, BRD_CMN_COM_IDX = #{BRD_CMN_COM_IDX}
+			, BRD_FAQ_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, BRD_FAQ_UPD_IP = #{BRD_FAQ_UPD_IP}
+			, BRD_FAQ_UPD_ID = #{BRD_FAQ_UPD_ID}
+		WHERE
+			BRD_FAQ_IDX = #{BRD_FAQ_IDX}
+	</update>
+
+	<!-- 자주하는질문 삭제 -->
+	<delete id="deleteFaq" parameterType="hashMap">
+		/* Faq.deleteFaq */
+		DELETE FROM T_BRD_FAQ
+		WHERE BRD_FAQ_IDX = #{BRD_FAQ_IDX}
+	</delete>
+
+	<!-- 유형관리 목록 -->
+	<select id="selectFaqTypCode" parameterType="String" resultType="hashMap">
+		/* Faq.selectFaqTypCode */
+		SELECT
+			CMN.CMN_COM_IDX
+		, CMN.CMN_COM_NM
+		, CMN.CMN_COM_LEVEL
+		, CMN.CMN_COM_UP_IDX
+		, CMN.CMN_COM_TOP_IDX
+		, CMN.CMN_COM_ETC1
+		, CMN.CMN_COM_ETC2
+		, CMN.CMN_COM_ETC3
+		, CMN.CMN_COM_SORT
+		, CMN.CMN_COM_USE_YN
+		, CMN.CMN_COM_REG_DT
+		, CMN.CMN_COM_REG_IP
+		, CMN.CMN_COM_REG_ID
+		, CMN.CMN_COM_UPD_DT
+		, CMN.CMN_COM_UPD_IP
+		, CMN.CMN_COM_UPD_ID
+		, ATTD.ATFL_ID									AS ATFL_ID
+		, ATTD.FILE_SEQ									AS FILE_SEQ
+		, ATTD.ORIGNL_FILE_NM							AS ORIGNL_FILE_NM
+		, ATTD.FILE_SZ									AS FILE_SZ
+		, ATTD.FILE_STOR_PATH || ATTD.STOR_FILE_NM	 	AS ATTACH_FILE_SAVE_PATH
+		FROM
+			T_CMM_COM CMN
+		LEFT OUTER JOIN TB_SB_ATCH_FILE ATTM
+			ON ATTM.ATFL_ID = CMN.CMN_COM_ETC1 AND ATTM.USE_YN = 'Y'
+		LEFT OUTER JOIN TB_SB_ATCH_FILE_DTL ATTD
+			ON ATTD.ATFL_ID = ATTM.ATFL_ID AND ATTD.FILE_USE_YN = 'Y'
+		WHERE
+			CMN.CMN_COM_UP_IDX = #{CMN_COM_UP_IDX}
+		ORDER BY CMN.CMN_COM_SORT ASC
+	</select>
+
+	<!-- 유형관리 등록 -->
+	<insert id="insertFaqTypCode" parameterType="hashMap">
+		/* Faq.insertFaqTypCode */
+		INSERT INTO T_CMM_COM
+		(
+			CMN_COM_IDX
+		, CMN_COM_NM
+		, CMN_COM_LEVEL
+		, CMN_COM_UP_IDX
+		, CMN_COM_TOP_IDX
+		, CMN_COM_ETC1
+		, CMN_COM_SORT
+		, CMN_COM_USE_YN
+		, CMN_COM_REG_DT
+		, CMN_COM_REG_IP
+		, CMN_COM_REG_ID
+		)
+		VALUES
+		(
+			SEQ_CMM_COM_IDX.NEXTVAL
+		, #{cmnComNm}
+		, '1'
+		, #{cmnComUpIdx}
+		, #{cmnComUpIdx}
+		, #{atflId}
+		, #{cmnComSort}
+		, #{cmnComUseYn}
+		, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		, #{cmnComRegIp}
+		, #{cmnComRegId}
+		)
+	</insert>
+
+	<!-- 유형관리 수정 -->
+	<update id="updateFaqTypCode" parameterType="hashMap">
+		/* Faq.updateFaqTypCode */
+		UPDATE T_CMM_COM
+		SET
+			CMN_COM_NM = #{cmnComNm}
+			, CMN_COM_ETC1 = #{atflId}
+			, CMN_COM_SORT = #{cmnComSort}
+			, CMN_COM_USE_YN = #{cmnComUseYn}
+			, CMN_COM_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, CMN_COM_UPD_IP = #{cmnComUpdIp}
+			, CMN_COM_UPD_ID = #{cmnComUpdId}
+		WHERE
+			CMN_COM_IDX = #{cmnComIdx}
+	</update>
+
+
+	<!-- 첨부파일 상세정보  -->
+	<resultMap id="resultFileInfo" type="HashMap">
+		<result property="ATFL_ID"			column="ATFL_ID"/>
+		<result property="FILE_SEQ"			column="FILE_SEQ"/>
+		<result property="FILE_STOR_PATH"	column="FILE_STOR_PATH"/>
+		<result property="ORIGINL_FILE_NM"	column="ORIGINL_FILE_NM"/>
+		<result property="FILE_EXT"			column="FILE_EXTSN"/>
+		<result property="FILE_SEQ"			column="FILE_CN" jdbcType="CLOB" javaType="java.lang.String"/>
+		<result property="FILE_SZ"			column="FILE_SIZE"/>
+		<result property="FILE_CD_ID"		column="FILE_CD_ID"/>
+		<result property="FILE_USE_YN"		column="FILE_USE_YN"/>
+	</resultMap>
+
+	<!-- 첨부파일 정보 조회 -->
+	<select id="selectAttachFileInfo" parameterType="hashMap" resultMap="resultFileInfo">
+		/* Faq.selectAttachFileInfo */
+		SELECT
+			ATTD.*
+		, 	ATTD.FILE_STOR_PATH || ATTD.STOR_FILE_NM 		AS ATTACH_FILE_SAVE_PATH
+		FROM
+			TB_SB_ATCH_FILE_DTL ATTD
+		WHERE
+			ATTD.ATFL_ID = #{ATFL_ID}
+		AND ATTD.FILE_SEQ = #{ATTACH_FILE_SEQ}
+	</select>
+
+</mapper>

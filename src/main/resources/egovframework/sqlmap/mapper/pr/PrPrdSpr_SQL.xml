@@ -1,0 +1,924 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PrPrdSpr">
+<!--
+    ******************************************************************************
+    * resultMap
+    * 작성자 : 박성진
+    * 작성 일자 : 2022.04.25
+    ******************************************************************************
+    -->
+	<!-- 옵션 -->
+	<resultMap id="OptListMap" type="HashMap">
+        <result property="CO_CD"         column="CO_CD" />
+        <result property="PRD_CLCD"      column="PRD_CLCD" />
+        <result property="OPTN_ITM_NO"   column="OPTN_ITM_NO" />
+        <result property="OPT_NM"        column="OPTN_NM" />
+        <result property="NCE_YN"        column="MAND_YN" />
+        <result property="IPT_TYPE"      column="IPT_TYPE_CD" />
+        <result property="SRT_SO"        column="SRT_SO" />
+        <result property="REGPSN_ID"     column="REGPSN_ID" />
+        <result property="REG_DTM"       column="REG_DTM" />
+        <result property="UPDPSN_ID"     column="UPDPSN_ID" />
+        <result property="UPD_DTM"       column="UPD_DTM" />
+    </resultMap>
+    
+    <!-- 상세 옵션 -->
+    <resultMap id="AddListMap" type="HashMap">
+        <result property="CO_CD"             column="CO_CD" />
+        <result property="PRD_CLCD"          column="PRD_CLCD" />
+        <result property="OPT_NM"            column="OPTN_NM" />
+        <result property="OPT_CNT"           column="CNT" />
+        <result property="NCE_YN"            column="MAND_YN" />
+        <result property="OPTN_ITM_NO"       column="OPTN_ITM_NO" />
+        <result property="OPTN_DTL_ITM_NO"   column="OPTN_DTL_ITM_NO" />
+        <result property="OPT_PRT"           column="OPTN_DTL_NM" />
+        <result property="SRT_SO"            column="SRT_SO" />
+        <result property="OPT_DTLS"          column="OPTN_DTL_CTS" />
+        <result property="OPT_IMG"           column="DOC_REG_ID" />
+        <result property="IPT_TYPE"          column="IPT_TYPE_CD" />
+        <result property="REGPSN_ID"         column="REGPSN_ID" />
+        <result property="REG_DTM"           column="REG_DTM" />
+        <result property="UPDPSN_ID"         column="UPDPSN_ID" />
+        <result property="UPD_DTM"           column="UPD_DTM" />
+    </resultMap>
+    
+    <!-- 연결 상품 -->
+    <resultMap id="ConnListMap" type="HashMap">
+        <result property="product0"     column="PRD_ID" />
+        <result property="product3"     column="CO_CD" />
+        <result property="product4"     column="PRD_CLCD" />
+        <result property="product5"     column="OPTN_DTL_MAPP_ITM_NO" />
+        <result property="REGPSN_ID"    column="REGPSN_ID" />
+        <result property="REG_DTM"      column="REG_DTM" />
+        <result property="UPDPSN_ID"    column="UPDPSN_ID" />
+        <result property="UPD_DTM"      column="UPD_DTM" />
+    </resultMap>
+    
+    <!-- 추가 정보 -->
+    <resultMap id="StgListMap" type="HashMap">
+        <result property="CO_CD"             column="CO_CD" />
+        <result property="PRD_CLCD"          column="PRD_CLCD" />
+        <result property="ADD_OPTN_ITM_NO"   column="ADD_OPTN_ITM_NO" />
+        <result property="STG_INFO"          column="ADD_OPTN_NM" />
+        <result property="IPT_TYPE"          column="IPT_TYPE_CD" />
+        <result property="STG_YN"            column="MAND_YN" />
+        <result property="STG_FILE"          column="ATFL_YN" />
+        <result property="SRT_SO"            column="SRT_SO" />
+        <result property="REGPSN_ID"         column="REGPSN_ID" />
+        <result property="REG_DTM"           column="REG_DTM" />
+        <result property="UPDPSN_ID"         column="UPDPSN_ID" />
+        <result property="UPD_DTM"           column="UPD_DTM" />
+    </resultMap>
+    
+    <!-- 상세 추가 정보 -->
+    <resultMap id="StgDtlListMap" type="HashMap">
+        <result property="CO_CD"                 column="CO_CD" />
+        <result property="PRD_CLCD"              column="PRD_CLCD" />
+        <result property="STG_INFO"              column="ADD_OPTN_NM" />
+        <result property="STG_INFO_CNT"          column="CNT" />
+        <result property="ADD_OPTN_ITM_NO"       column="ADD_OPTN_ITM_NO" />
+        <result property="ADD_OPTN_DTL_ITM_NO"   column="ADD_OPTN_DTL_ITM_NO" />
+        <result property="STG_ADD_INFO"          column="ADD_OPTN_DTL_NM" />
+        <result property="SRT_SO"                column="SRT_SO" />
+        <result property="STG_YN"                column="DOC_REG_ID" />
+        <result property="IPT_TYPE"              column="IPT_TYPE_CD" />
+        <result property="REGPSN_ID"             column="REGPSN_ID" />
+        <result property="REG_DTM"               column="REG_DTM" />
+        <result property="UPDPSN_ID"             column="UPDPSN_ID" />
+        <result property="UPD_DTM"               column="UPD_DTM" />
+    </resultMap>
+
+<!--
+    ******************************************************************************
+    * SELECT :전시 상품 목록 조회
+    * 작성자 : 박성진
+    * 작성 일자 : 2022.04.25
+    ******************************************************************************
+    -->
+    <select id="selectPrdSprList" parameterType="HashMap" resultType="HashMap">
+        /* PrdSpr.selectPrdSprList */
+		SELECT 
+    		A.CO_CD,
+    		LTRIM(A.REPR_PRD_ID, '0') PRD_ID,
+    		A.REPR_PRD_ID,
+    		A.PRD_CLCD,
+    		E.PRD_CLSF_NM,
+    		D.PRD_NM,
+    		A.PRFRT,
+    		SSP_APP.FN_PR_ATTR_VAL_LIST(A.CO_CD, A.REPR_PRD_ID) ATTR_VAL,
+    		C.MNFR_NO,
+    		C.MNFR_NM,
+    		C.ORGPLC_CTRY_CD,
+    		F.CTRY_NM,
+    		C.SELL_UNIT_CD,
+    		A.DISP_PRD_SPR_CD,
+    		A.DISP_PRD_NM,
+    		A.ADD_INFO_SET_YN,
+    		B.ORG_CD,
+    		B.ORG_NM,
+    		B.OPRTR_ID,
+    		B.OPRTR_NM,
+    		TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') REG_DTM,   --등록일
+            TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') UPD_DTM,     --수정일
+    		A.USE_YN,
+			G.PRD_USE_YN,
+			A.SRT_SO
+		FROM TB_PR_DISP_BASIS A
+    		LEFT JOIN (SELECT A.CO_CD , A.OPRTR_ID, A.OPRTR_NM, A.ORG_CD, A.ORG_NM, B.PRD_CLCD FROM TB_CO_MBR_OPRTR_INFO A LEFT JOIN TB_PR_PRD_CLSF_CHRPSN_INFO B ON A.CO_CD = B.CO_CD AND A.OPRTR_ID = B.PRD_CLSF_CHRPSN_ID
+                WHERE B.PRD_CLSF_CHRPSN_TP_CD = '20' AND B.PRD_CLSF_CHRPSN_SPR_CD = '10' AND B.PRD_CLSF_CHRPSN_USEYN = 'Y') B
+		        ON A.CO_CD = B.CO_CD  AND A.PRD_CLCD = B.PRD_CLCD
+		    LEFT JOIN (SELECT A.CO_CD , A.PRD_ID, A.ORGPLC_CTRY_CD, A.SELL_UNIT_CD, A.MNFR_NO, B.MNFR_NM FROM TB_PR_MRO_PRD_INFO A LEFT JOIN TB_PR_MNFR_INFO B ON A.CO_CD = B.CO_CD AND A.MNFR_NO = B.MNFR_NO) C
+		        ON A.CO_CD = C.CO_CD AND A.REPR_PRD_ID = C.PRD_ID
+		    LEFT JOIN TB_PR_PRD_INFO D
+		        ON A.CO_CD = D.CO_CD AND A.REPR_PRD_ID = D.PRD_ID
+		    INNER JOIN TB_PR_PRD_CLSF_INFO E
+		        ON A.CO_CD = E.CO_CD AND A.PRD_CLCD = E.PRD_CLCD AND E.MALL_SPR_CD = #{MALL_SPR_CD}
+		    LEFT JOIN (SELECT A.CO_CD , A.PRD_ID, A.ORGPLC_CTRY_CD, B.CTRY_NM FROM TB_PR_MRO_PRD_INFO A LEFT JOIN TB_CO_CTRY_INFO B ON A.CO_CD = B.CO_CD AND A.ORGPLC_CTRY_CD = B.CTRY_SPR_CD) F
+		        ON A.CO_CD = F.CO_CD AND A.REPR_PRD_ID = F.PRD_ID
+		    LEFT JOIN (SELECT A.CO_CD , A.PRD_ID, B.PRD_USE_YN FROM TB_PR_MRO_PRD_INFO A LEFT JOIN TB_PR_PRD_INFO B ON A.CO_CD = B.CO_CD AND A.PRD_ID = B.PRD_ID) G
+		        ON A.CO_CD = G.CO_CD AND A.REPR_PRD_ID = G.PRD_ID
+        WHERE 1 = 1
+			AND A.CO_CD = #{CO_CD}
+		<!-- 대표 상품 ID -->
+		<if test="PRD_ID != null and PRD_ID != '' ">
+			AND REGEXP_LIKE(LTRIM(A.REPR_PRD_ID, '0'), #{PRD_ID})
+		</if>
+        <!-- 사용여부 -->
+        <if test="USE_YN != null and USE_YN != ''">
+           AND A.USE_YN = #{USE_YN}
+        </if>
+        <!-- 전시상품타입 -->
+        <if test="DISP_PRD_SPR_CD != null and DISP_PRD_SPR_CD != ''">
+           AND A.DISP_PRD_SPR_CD = #{DISP_PRD_SPR_CD}
+        </if>
+        <!-- 기간 -->
+        <if test="DATE_TERM != null and DATE_TERM != ''">
+			<choose>
+				<when test="CAL_GUBUN == '10'">
+					AND TO_CHAR(A.REG_DTM,'YYYYMMDD') BETWEEN #{FROM_DATE} AND #{TO_DATE}
+				</when>
+				<otherwise>
+					AND TO_CHAR(A.UPD_DTM,'YYYYMMDD') BETWEEN #{FROM_DATE} AND #{TO_DATE}
+				</otherwise>
+			</choose>
+		</if>
+		<!-- 제조원 -->
+		<if test="MNFR_NO != null and MNFR_NO != '' ">
+           AND C.MNFR_NO = #{MNFR_NO}
+        </if>
+		<!-- 제조원명 -->
+		<if test="MNFR_NM != null and MNFR_NM != '' ">
+           AND C.MNFR_NM = #{MNFR_NM}
+        </if>
+		<!-- 담당자 -->
+		<if test="REGPSN_ID != null and REGPSN_ID != '' ">
+           AND B.OPRTR_ID = #{REGPSN_ID}
+        </if>
+		<!-- 담당자명 -->
+		<if test="REGPSN_NM != null and REGPSN_NM != '' ">
+           AND B.OPRTR_NM = #{REGPSN_NM}
+        </if>
+		<!-- 담당팀 -->
+		<if test="TEAM_CD != null and TEAM_CD != '' ">
+           AND B.ORG_CD = #{TEAM_CD}
+        </if>
+		<!-- 담당팀명 -->
+		<if test="TEAM_NM != null and TEAM_NM != '' ">
+           AND B.ORG_NM = #{TEAM_NM}
+        </if>
+		<!-- 상품군 -->
+		<if test="PRD_CLCD != null and PRD_CLCD != '' ">
+           AND A.PRD_CLCD = #{PRD_CLCD}
+        </if>
+		<!-- 상품군명 -->
+		<if test="PRD_CLSF_NM != null and PRD_CLSF_NM != '' ">
+           AND E.PRD_CLSF_NM = #{PRD_CLSF_NM}
+        </if>
+		ORDER BY A.SRT_SO ASC
+    </select>
+    
+    <select id="selectPrdSprCount" parameterType="HashMap" resultType="integer">
+        /* PrdSpr.selectPrdSprCount */
+        SELECT COUNT(0) FROM 
+			(SELECT 
+				A.CO_CD,
+				LTRIM(A.REPR_PRD_ID, '0') PRD_ID,
+				A.REPR_PRD_ID,
+				A.PRD_CLCD,
+				E.PRD_CLSF_NM,
+				D.PRD_NM,
+				A.PRFRT,
+				SSP_APP.FN_PR_ATTR_VAL_LIST(A.CO_CD, A.REPR_PRD_ID) ATTR_VAL,
+				C.MNFR_NO,
+				C.MNFR_NM,
+				F.CTRY_NM,
+				C.ORGPLC_CTRY_CD,
+				C.SELL_UNIT_CD,
+				A.DISP_PRD_SPR_CD,
+				A.DISP_PRD_NM,
+				A.ADD_INFO_SET_YN,
+				B.ORG_CD,
+				B.ORG_NM,
+				B.OPRTR_ID,
+				B.OPRTR_NM,
+				A.REG_DTM,
+				A.UPD_DTM,
+				A.USE_YN,
+				G.PRD_USE_YN,
+				A.SRT_SO
+			FROM TB_PR_DISP_BASIS A
+				LEFT JOIN (SELECT A.CO_CD , A.OPRTR_ID, A.OPRTR_NM, A.ORG_CD, A.ORG_NM, B.PRD_CLCD FROM TB_CO_MBR_OPRTR_INFO A LEFT JOIN TB_PR_PRD_CLSF_CHRPSN_INFO B ON A.CO_CD = B.CO_CD AND A.OPRTR_ID = B.PRD_CLSF_CHRPSN_ID
+	                WHERE B.PRD_CLSF_CHRPSN_TP_CD = '20' AND B.PRD_CLSF_CHRPSN_SPR_CD = '10' AND B.PRD_CLSF_CHRPSN_USEYN = 'Y') B
+	                ON A.CO_CD = B.CO_CD  AND A.PRD_CLCD = B.PRD_CLCD
+	            LEFT JOIN (SELECT A.CO_CD , A.PRD_ID, A.ORGPLC_CTRY_CD, A.SELL_UNIT_CD, A.MNFR_NO, B.MNFR_NM FROM TB_PR_MRO_PRD_INFO A LEFT JOIN TB_PR_MNFR_INFO B ON A.CO_CD = B.CO_CD AND A.MNFR_NO = B.MNFR_NO) C
+	                ON A.CO_CD = C.CO_CD AND A.REPR_PRD_ID = C.PRD_ID
+	            LEFT JOIN TB_PR_PRD_INFO D
+	                ON A.CO_CD = D.CO_CD AND A.REPR_PRD_ID = D.PRD_ID
+	            INNER JOIN TB_PR_PRD_CLSF_INFO E
+	                ON A.CO_CD = E.CO_CD AND A.PRD_CLCD = E.PRD_CLCD AND E.MALL_SPR_CD = #{MALL_SPR_CD}
+	            LEFT JOIN (SELECT A.CO_CD , A.PRD_ID, A.ORGPLC_CTRY_CD, B.CTRY_NM FROM TB_PR_MRO_PRD_INFO A LEFT JOIN TB_CO_CTRY_INFO B ON A.CO_CD = B.CO_CD AND A.ORGPLC_CTRY_CD = B.CTRY_SPR_CD) F
+	                ON A.CO_CD = F.CO_CD AND A.REPR_PRD_ID = F.PRD_ID
+	            LEFT JOIN (SELECT A.CO_CD , A.PRD_ID, B.PRD_USE_YN FROM TB_PR_MRO_PRD_INFO A LEFT JOIN TB_PR_PRD_INFO B ON A.CO_CD = B.CO_CD AND A.PRD_ID = B.PRD_ID) G
+	                ON A.CO_CD = G.CO_CD AND A.REPR_PRD_ID = G.PRD_ID) A
+		WHERE 1 = 1
+			AND A.CO_CD = #{CO_CD}
+		<!-- 대표 상품 ID -->
+		<if test="PRD_ID != null and PRD_ID != '' ">
+			AND REGEXP_LIKE(LTRIM(A.REPR_PRD_ID, '0'), #{PRD_ID})
+		</if>
+        <!-- 사용여부 -->
+        <if test="USE_YN != null and USE_YN != ''">
+           AND A.USE_YN = #{USE_YN}
+        </if>
+        <!-- 전시상품타입 -->
+        <if test="DISP_PRD_SPR_CD != null and DISP_PRD_SPR_CD != ''">
+           AND A.DISP_PRD_SPR_CD = #{DISP_PRD_SPR_CD}
+        </if>
+        <!-- 기간 -->
+        <if test="DATE_TERM != null and DATE_TERM != ''">
+			<choose>
+				<when test="CAL_GUBUN == '10'">
+					AND TO_CHAR(A.REG_DTM,'YYYYMMDD') BETWEEN #{FROM_DATE} AND #{TO_DATE}
+				</when>
+				<otherwise>
+					AND TO_CHAR(A.UPD_DTM,'YYYYMMDD') BETWEEN #{FROM_DATE} AND #{TO_DATE}
+				</otherwise>
+			</choose>
+		</if>
+		<!-- 제조원 -->
+		<if test="MNFR_NO != null and MNFR_NO != '' ">
+           AND A.MNFR_NO = #{MNFR_NO}
+        </if>
+		<!-- 제조원명 -->
+		<if test="MNFR_NM != null and MNFR_NM != '' ">
+           AND A.MNFR_NM = #{MNFR_NM}
+        </if>
+		<!-- 담당자 -->
+		<if test="REGPSN_ID != null and REGPSN_ID != '' ">
+           AND A.OPRTR_ID = #{REGPSN_ID}
+        </if>
+		<!-- 담당자명 -->
+		<if test="REGPSN_NM != null and REGPSN_NM != '' ">
+           AND A.OPRTR_NM = #{REGPSN_NM}
+        </if>
+		<!-- 담당팀 -->
+		<if test="TEAM_CD != null and TEAM_CD != '' ">
+           AND A.ORG_CD = #{TEAM_CD}
+        </if>
+		<!-- 담당팀명 -->
+		<if test="TEAM_NM != null and TEAM_NM != '' ">
+           AND A.ORG_NM = #{TEAM_NM}
+        </if>
+		<!-- 상품군 -->
+		<if test="PRD_CLCD != null and PRD_CLCD != '' ">
+           AND A.PRD_CLCD = #{PRD_CLCD}
+        </if>
+		<!-- 상품군명 -->
+		<if test="PRD_CLSF_NM != null and PRD_CLSF_NM != '' ">
+           AND A.PRD_CLSF_NM = #{PRD_CLSF_NM}
+        </if>
+		ORDER BY A.SRT_SO ASC
+    </select>
+    
+    <!-- 상품군 중복 검색 -->
+    <select id="selectPrdClcdCount" parameterType="HashMap" resultType="integer">
+        /* PrdSpr.selectPrdClcdCount */
+		SELECT COUNT(*) FROM TB_PR_DISP_BASIS WHERE PRD_CLCD = #{PRD_CLCD}
+    </select>
+    
+    <!-- 옵션 -->
+    <select id="selectSearchDisp" parameterType="HashMap" resultType="HashMap">
+        /* PrdSpr.selectSearchDisp */
+		SELECT 
+    		A.CO_CD,
+    		LTRIM(A.REPR_PRD_ID, '0') PRD_ID,
+    		A.REPR_PRD_ID,
+    		A.PRD_CLCD,
+    		E.PRD_CLSF_NM,
+    		D.PRD_NM,
+    		A.PRFRT,
+    		SSP_APP.FN_PR_ATTR_VAL_LIST(A.CO_CD, A.REPR_PRD_ID) ATTR_VAL,
+    		C.MNFR_NO,
+    		C.MNFR_NM,
+    		C.ORGPLC_CTRY_CD,
+    		F.CTRY_NM,
+    		C.SELL_UNIT_CD,
+    		A.DISP_PRD_SPR_CD,
+    		A.DISP_PRD_NM,
+    		A.ADD_INFO_SET_YN,
+    		B.ORG_CD,
+    		B.ORG_NM,
+    		B.OPRTR_ID,
+    		B.OPRTR_NM,
+    		A.REG_DTM,
+    		A.UPD_DTM,
+    		A.USE_YN,
+			G.PRD_USE_YN,
+			A.SRT_SO,
+			FN_PC_EXPS_SALSPRC(H.PRD_ID, H.CO_CD, H.BZPLC_ID, H.OPR_UNIT_ID, H.CUST_SPR_CD) SALSPRC
+		FROM TB_PR_DISP_BASIS A
+    		LEFT JOIN (SELECT A.OPRTR_ID, A.OPRTR_NM, A.ORG_CD, A.ORG_NM, B.PRD_CLCD FROM TB_CO_MBR_OPRTR_INFO A LEFT JOIN TB_PR_PRD_CLSF_CHRPSN_INFO B ON A.OPRTR_ID = B.PRD_CLSF_CHRPSN_ID
+						WHERE B.PRD_CLSF_CHRPSN_TP_CD = '20' AND B.PRD_CLSF_CHRPSN_SPR_CD = '10' AND B.PRD_CLSF_CHRPSN_USEYN = 'Y') B
+        		ON A.PRD_CLCD = B.PRD_CLCD
+    		LEFT JOIN (SELECT A.PRD_ID, A.ORGPLC_CTRY_CD, A.SELL_UNIT_CD, A.MNFR_NO, B.MNFR_NM FROM TB_PR_MRO_PRD_INFO A LEFT JOIN TB_PR_MNFR_INFO B ON A.MNFR_NO = B.MNFR_NO) C
+        		ON A.REPR_PRD_ID = C.PRD_ID
+    		LEFT JOIN TB_PR_PRD_INFO D
+        		ON A.REPR_PRD_ID = D.PRD_ID
+    		LEFT JOIN TB_PR_PRD_CLSF_INFO E
+        		ON A.PRD_CLCD = E.PRD_CLCD
+			LEFT JOIN (SELECT A.PRD_ID, A.ORGPLC_CTRY_CD, B.CTRY_NM FROM TB_PR_MRO_PRD_INFO A LEFT JOIN TB_CO_CTRY_INFO B ON A.ORGPLC_CTRY_CD = B.CTRY_SPR_CD) F
+				ON A.REPR_PRD_ID = F.PRD_ID
+			LEFT JOIN (SELECT A.PRD_ID, B.PRD_USE_YN FROM TB_PR_MRO_PRD_INFO A LEFT JOIN TB_PR_PRD_INFO B ON A.PRD_ID = B.PRD_ID) G
+				ON A.REPR_PRD_ID = G.PRD_ID
+			LEFT JOIN (SELECT B.PRD_ID, A.CO_CD, A.BZPLC_ID, A.OPR_UNIT_ID, A.CUST_SPR_CD FROM TB_CC_OPR_UNIT_BASIS A LEFT JOIN TB_DP_PRD_DISP_STATS_INFO B ON A.BZPLC_ID = B.BZPLC_ID) H
+				ON A.REPR_PRD_ID = H.PRD_ID
+        WHERE 1 = 1
+			AND A.CO_CD = #{CO_CD}
+            AND A.PRD_CLCD = #{PRD_CLCD}
+    </select>
+    
+    <!-- 옵션 -->
+    <select id="selectPrdSprOptList" parameterType="HashMap" resultType="HashMap" resultMap="OptListMap">
+        /* PrdSpr.selectPrdSprOptList */
+		SELECT
+			CO_CD
+			, PRD_CLCD
+			, OPTN_ITM_NO
+			, OPTN_NM
+			, MAND_YN
+			, IPT_TYPE_CD
+			, SRT_SO
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+		FROM TB_PR_DISP_OPTN_BASIS
+		WHERE 1 = 1
+			AND CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+		ORDER BY OPTN_ITM_NO ASC
+    </select>
+    
+    <!-- 옵션 -->
+    <select id="selectPrdSprOptCount" parameterType="HashMap" resultType="integer">
+        /* PrdSpr.selectPrdSprOptCount */
+		SELECT
+			COUNT(0) 
+		FROM TB_PR_DISP_OPTN_BASIS
+		WHERE 1 = 1
+			AND CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+        ORDER BY OPTN_ITM_NO ASC
+    </select>
+    
+    <!-- 상세 옵션 -->
+    <select id="selectPrdSprAddList" parameterType="HashMap" resultType="HashMap" resultMap="AddListMap">
+        /* PrdSpr.selectPrdSprAddList */
+		SELECT 
+			PRD_CLCD
+			, OPTN_ITM_NO
+			, (SELECT OPTN_NM
+				FROM tb_pr_disp_optn_basis
+				WHERE CO_CD = A.CO_CD
+				AND PRD_CLCD = A.PRD_CLCD
+				AND OPTN_ITM_NO = A.OPTN_ITM_NO
+			) OPTN_NM
+			, (SELECT COUNT (OPTN_ITM_NO)
+				FROM TB_PR_DISP_OPTN_DTL
+				WHERE CO_CD = A.CO_CD
+				AND PRD_CLCD = A.PRD_CLCD
+				AND OPTN_ITM_NO = A.OPTN_ITM_NO
+			) CNT
+			, (SELECT IPT_TYPE_CD 
+				FROM TB_PR_DISP_OPTN_BASIS 
+				WHERE CO_CD = A.CO_CD 
+				AND PRD_CLCD = A.PRD_CLCD 
+				AND OPTN_ITM_NO = A.OPTN_ITM_NO
+			) IPT_TYPE_CD
+			, (SELECT MAND_YN 
+				FROM TB_PR_DISP_OPTN_BASIS 
+				WHERE CO_CD = A.CO_CD 
+				AND PRD_CLCD = A.PRD_CLCD 
+				AND OPTN_ITM_NO = A.OPTN_ITM_NO
+			) MAND_YN
+			, OPTN_DTL_ITM_NO
+			, OPTN_DTL_NM
+			, SRT_SO
+			, OPTN_DTL_CTS
+			, DOC_REG_ID
+		FROM TB_PR_DISP_OPTN_DTL A
+		WHERE 1 = 1
+			AND CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+		ORDER BY OPTN_ITM_NO ASC, OPTN_DTL_ITM_NO ASC
+    </select>
+    
+    <!-- 상세 옵션 -->
+    <select id="selectPrdSprAddCount" parameterType="HashMap" resultType="integer">
+        /* PrdSpr.selectPrdSprAddCount */
+		SELECT
+			COUNT(0) 
+		FROM TB_PR_DISP_OPTN_DTL
+		WHERE 1 = 1
+			AND CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+        ORDER BY OPTN_ITM_NO ASC, OPTN_DTL_ITM_NO ASC
+    </select>
+    
+    <!-- 연결 상품 -->
+    <select id="selectPrdSprConnList" parameterType="HashMap" resultType="HashMap" resultMap="ConnListMap">
+        /* PrdSpr.selectPrdSprConnList */
+		SELECT 
+			CO_CD
+			, PRD_CLCD
+			, OPTN_DTL_MAPP_ITM_NO
+			, OPTN_DTL_ITM_MAPP_CTS
+			, LTRIM(MAPP_PRD_ID, '0') PRD_ID
+			, MAPP_PRD_ID
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+		FROM TB_PR_DISP_OPTN_DTL_MAPP
+			WHERE 1 = 1
+				AND CO_CD = #{CO_CD}
+				AND PRD_CLCD = #{PRD_CLCD}
+		ORDER BY OPTN_DTL_MAPP_ITM_NO ASC, OPTN_DTL_ITM_MAPP_CTS ASC
+    </select>
+    
+    <!-- 연결 상품 -->
+    <select id="selectPrdSprConnCount" parameterType="HashMap" resultType="integer">
+        /* PrdSpr.selectPrdSprConnCount */
+		SELECT
+			COUNT(0) 
+		FROM TB_PR_DISP_OPTN_DTL_MAPP
+		WHERE 1 = 1
+			AND CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+        ORDER BY OPTN_DTL_MAPP_ITM_NO ASC, OPTN_DTL_ITM_MAPP_CTS ASC
+    </select>
+    
+    <!-- 추가 정보 -->
+    <select id="selectPrdSprStgList" parameterType="HashMap" resultType="HashMap" resultMap="StgListMap">
+        /* PrdSpr.selectPrdSprStgList */
+		SELECT 
+			CO_CD
+			, PRD_CLCD
+			, ADD_OPTN_ITM_NO
+			, ADD_OPTN_NM
+			, IPT_TYPE_CD
+			, MAND_YN
+			, ATFL_YN
+			, SRT_SO
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+		FROM TB_PR_DISP_ADD_OPTN_BASIS
+			WHERE 1 = 1
+				AND CO_CD = #{CO_CD}
+				AND PRD_CLCD = #{PRD_CLCD}
+		ORDER BY ADD_OPTN_ITM_NO ASC
+    </select>
+    
+    <!-- 추가 정보 -->
+    <select id="selectPrdSprStgCount" parameterType="HashMap" resultType="integer">
+        /* PrdSpr.selectPrdSprStgCount */
+		SELECT
+			COUNT(0) 
+		FROM TB_PR_DISP_ADD_OPTN_BASIS
+		WHERE 1 = 1
+			AND CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+        ORDER BY ADD_OPTN_ITM_NO ASC
+    </select>
+    
+    <!-- 상세 추가 정보 -->
+    <select id="selectPrdSprStgDtlList" parameterType="HashMap" resultType="HashMap" resultMap="StgDtlListMap">
+        /* PrdSpr.selectPrdSprStgDtlList */
+		SELECT
+			CO_CD
+			, PRD_CLCD
+			, ADD_OPTN_ITM_NO
+			, (SELECT ADD_OPTN_NM 
+				FROM TB_PR_DISP_ADD_OPTN_BASIS 
+				WHERE CO_CD = A.CO_CD 
+				AND PRD_CLCD = A.PRD_CLCD 
+				AND ADD_OPTN_ITM_NO = A.ADD_OPTN_ITM_NO
+			) ADD_OPTN_NM
+			, (SELECT COUNT (ADD_OPTN_ITM_NO) 
+				FROM TB_PR_DISP_ADD_OPTN_DTL 
+				WHERE CO_CD = A.CO_CD 
+				AND PRD_CLCD = A.PRD_CLCD 
+				AND ADD_OPTN_ITM_NO = A.ADD_OPTN_ITM_NO
+			) CNT
+			, (SELECT IPT_TYPE_CD 
+				FROM TB_PR_DISP_ADD_OPTN_BASIS 
+				WHERE CO_CD = A.CO_CD 
+				AND PRD_CLCD = A.PRD_CLCD 
+				AND ADD_OPTN_ITM_NO = A.ADD_OPTN_ITM_NO
+			) IPT_TYPE_CD
+			, ADD_OPTN_DTL_ITM_NO
+			, ADD_OPTN_DTL_NM
+			, SRT_SO
+			, DOC_REG_ID
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+		FROM TB_PR_DISP_ADD_OPTN_DTL A
+			WHERE 1 = 1
+				AND CO_CD = #{CO_CD}
+				AND PRD_CLCD = #{PRD_CLCD}
+		ORDER BY ADD_OPTN_ITM_NO ASC, ADD_OPTN_DTL_ITM_NO ASC
+    </select>
+    
+    <!-- 상세 추가 정보 -->
+    <select id="selectPrdSprStgDtlCount" parameterType="HashMap" resultType="integer">
+        /* PrdSpr.selectPrdSprStgDtlCount */
+		SELECT
+			COUNT(0) 
+		FROM TB_PR_DISP_ADD_OPTN_DTL
+		WHERE 1 = 1
+			AND CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+		ORDER BY ADD_OPTN_ITM_NO ASC, ADD_OPTN_DTL_ITM_NO ASC
+    </select>
+    
+    <!-- 기본 정보 추가 검색 -->
+    <select id="selectPrdSpr" parameterType="HashMap" resultType="HashMap">
+        /* PrdSpr.selectPrdSpr */
+		SELECT 
+			  A.PRD_CLCD
+			, A.PRD_CLSF_NM
+			, A.HRNK_PRD_CLCD
+			, B.OPRTR_ID
+			, B.OPRTR_NM
+			, SUBSTR(SYS_CONNECT_BY_PATH(A.PRD_CLSF_NM, '>'),2) AS FULL_PRD_CLSF_NM
+		FROM (SELECT
+				CO_CD,
+    			PRD_CLCD,
+    			PRD_CLSF_NM,
+				HRNK_PRD_CLCD,
+    			SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLSF_NM, '>'),2) AS FULL_PRD_CLSF_NM
+			  FROM SSP_APP.TB_PR_PRD_CLSF_INFO
+				WHERE USE_YN = 'Y' AND CO_CD = #{CO_CD} AND MALL_SPR_CD = '10' AND <![CDATA[ ROWNUM <=  '1000' ]]>
+					AND LWST_CD_YN = 'Y' AND SEL_MTHD_CD = '40'
+				START WITH HIER_LVL = 1
+			  CONNECT BY PRIOR PRD_CLCD = HRNK_PRD_CLCD
+			  ORDER SIBLINGS BY CO_CD, PRD_CLCD, SRT_SO ASC) A
+		LEFT JOIN (SELECT A.CO_CD, A.OPRTR_ID, A.OPRTR_NM, A.EMP_NO, B.PRD_CLCD FROM TB_CO_MBR_OPRTR_INFO A LEFT JOIN TB_PR_PRD_CLSF_CHRPSN_INFO B ON A.OPRTR_ID = B.PRD_CLSF_CHRPSN_ID
+					WHERE B.PRD_CLSF_CHRPSN_TP_CD = '20' AND B.PRD_CLSF_CHRPSN_SPR_CD = '10' AND B.PRD_CLSF_CHRPSN_USEYN = 'Y') B
+			ON A.CO_CD = B.CO_CD AND A.PRD_CLCD = B.PRD_CLCD
+		WHERE 1 = 1
+			AND A.PRD_CLCD = #{PRD_CLCD}
+		CONNECT BY PRIOR A.PRD_CLCD = A.HRNK_PRD_CLCD
+    </select>
+    
+    <!-- 상품 정보 추가 검색 -->
+    <select id="selectPrdId" parameterType="HashMap" resultType="HashMap">
+        /* PrdSpr.selectPrdId */
+		SELECT
+			A.PRD_ID,
+			TO_NUMBER(A.PRD_ID) PRD_ID_VIEW,
+			A.SELL_UNIT_CD,
+			A.PRD_USE_YN,
+			B.CTRY_NM,
+			FN_PC_EXPS_SALSPRC(C.PRD_ID, C.CO_CD, C.BZPLC_ID, C.OPR_UNIT_ID, C.CUST_SPR_CD) SALSPRC
+		FROM (SELECT A.PRD_ID, A.PRD_CLCD, A.PRD_CLSF_NM, B.SELL_UNIT_CD, B.PRD_USE_YN FROM (SELECT A.PRD_ID, A.PRD_CLCD, B.PRD_CLSF_NM FROM TB_PR_PRD_INFO A LEFT JOIN TB_PR_PRD_CLSF_INFO B ON A.PRD_CLCD = B.PRD_CLCD) A
+				LEFT JOIN (SELECT A.CO_CD, A.PRD_ID, A.SELL_UNIT_CD, B.PRD_USE_YN FROM TB_PR_MRO_PRD_INFO A LEFT JOIN TB_PR_PRD_INFO B ON A.PRD_ID = B.PRD_ID) B
+					ON A.PRD_ID = B.PRD_ID) A
+		LEFT JOIN (SELECT A.CTRY_NM, B.PRD_ID FROM TB_CO_CTRY_INFO A LEFT JOIN TB_PR_MRO_PRD_INFO B ON A.CTRY_SPR_CD = B.ORGPLC_CTRY_CD) B
+			ON A.PRD_ID = B.PRD_ID
+		LEFT JOIN (SELECT B.PRD_ID, A.CO_CD, A.BZPLC_ID, A.OPR_UNIT_ID, A.CUST_SPR_CD FROM TB_CC_OPR_UNIT_BASIS A LEFT JOIN TB_DP_PRD_DISP_STATS_INFO B ON A.BZPLC_ID = B.BZPLC_ID) C
+			ON A.PRD_ID = C.PRD_ID
+		WHERE 1 = 1
+			AND A.PRD_ID = #{PRD_ID}
+    </select>
+    
+    <!-- 기본 정보 상품 정보 입력 -->
+    <insert id="insertPrdSpr" parameterType="HashMap">
+		/* PrdSpr.insertPrdSpr */
+		INSERT INTO TB_PR_DISP_BASIS
+		(
+			CO_CD,
+			PRD_CLCD,
+			REPR_PRD_ID,
+			DISP_PRD_NM,
+			USE_YN,
+			DISP_PRD_SPR_CD,
+			ADD_INFO_SET_YN,
+			PRFRT,
+			SRT_SO,
+			REGPSN_ID,
+			REG_DTM
+		)
+		VALUES
+		(
+			#{CO_CD},
+			#{PRD_CLCD},
+			#{PRD_ID},
+			#{DISP_PRD_NM},
+			#{USE_YN},
+			#{DISP_PRD_SPR_CD},
+			#{ADD_INFO_SET_YN},
+			#{PRFRT},
+			(SELECT COUNT(0) FROM TB_PR_DISP_BASIS)+1,
+			#{USER_ID},
+			SYSDATE
+		)
+    </insert>
+    
+    <!-- 옵션 입력 -->
+    <insert id="insertPrdSprTwo" parameterType="HashMap">
+		/* PrdSpr.insertPrdSprTwo */
+		INSERT INTO TB_PR_DISP_OPTN_BASIS
+		(
+			CO_CD,
+			PRD_CLCD,
+			OPTN_ITM_NO,
+			OPTN_NM,
+			MAND_YN,
+			IPT_TYPE_CD,
+			SRT_SO,
+			REGPSN_ID,
+			REG_DTM
+		)
+		VALUES
+		(
+			#{CO_CD},
+			#{PRD_CLCD},
+			#{OPTN_ITM_NO},
+			#{OPT_NM},
+			#{NCE_YN},
+			#{IPT_TYPE},
+			#{SRT_SO},
+			#{USER_ID},
+			SYSDATE
+		)
+    </insert>
+    
+    <!-- 상세 옵션 입력 -->
+    <insert id="insertPrdSprAddInfo" parameterType="HashMap">
+		/* PrdSpr.insertPrdSprAddInfo */
+		INSERT INTO TB_PR_DISP_OPTN_DTL
+		(
+			CO_CD,
+			PRD_CLCD,
+			OPTN_ITM_NO,
+			OPTN_DTL_ITM_NO,
+			OPTN_DTL_NM,
+			SRT_SO,
+			OPTN_DTL_CTS,
+			DOC_REG_ID,
+			REGPSN_ID,
+			REG_DTM
+		)
+		VALUES
+		(
+			#{CO_CD},
+			#{PRD_CLCD},
+			#{OPTN_ITM_NO},
+			#{OPTN_DTL_ITM_NO},
+			#{OPT_PRT},
+			#{SRT_SO},
+			#{OPT_DTLS},
+			#{OPT_IMG},
+			#{USER_ID},
+			SYSDATE
+		)
+    </insert>
+    
+    <!-- 상품 연결 입력 -->
+    <insert id="insertPrdSprConn" parameterType="HashMap">
+		/* PrdSpr.insertPrdSprConn */
+		INSERT INTO TB_PR_DISP_OPTN_DTL_MAPP
+		(
+			CO_CD,
+			PRD_CLCD,
+			OPTN_DTL_MAPP_ITM_NO,
+			OPTN_DTL_ITM_MAPP_CTS,
+			MAPP_PRD_ID,
+			REGPSN_ID,
+			REG_DTM
+		)
+		VALUES
+		(
+			#{product4},
+			#{product5},
+			#{product6},
+			#{OPTN_DTL_ITM_MAPP_CTS},
+			#{product0},
+			#{USER_ID},
+			SYSDATE
+		)
+    </insert>
+    
+    <!-- 추가 정보 입력 -->
+    <insert id="insertPrdSprStg" parameterType="HashMap">
+		/* PrdSpr.insertPrdSprStg */
+		INSERT INTO TB_PR_DISP_ADD_OPTN_BASIS
+		(
+			CO_CD,
+			PRD_CLCD,
+			ADD_OPTN_ITM_NO,
+			ADD_OPTN_NM,
+			IPT_TYPE_CD,
+			MAND_YN,
+			ATFL_YN,
+			SRT_SO,
+			REGPSN_ID,
+			REG_DTM
+		)
+		VALUES
+		(
+			#{CO_CD},
+			#{PRD_CLCD},
+			#{ADD_OPTN_ITM_NO},
+			#{STG_INFO},
+			#{IPT_TYPE},
+			#{STG_YN},
+			#{STG_FILE},
+			#{SRT_SO},
+			#{USER_ID},
+			SYSDATE
+		)
+    </insert>
+    
+    <!-- 상세 추가 정보 입력 -->
+    <insert id="insertPrdSprStgDtl" parameterType="HashMap">
+		/* PrdSpr.insertPrdSprStgDtl */
+		INSERT INTO TB_PR_DISP_ADD_OPTN_DTL
+		(
+			CO_CD,
+			PRD_CLCD,
+			ADD_OPTN_ITM_NO,
+			ADD_OPTN_DTL_ITM_NO,
+			ADD_OPTN_DTL_NM,
+			SRT_SO,
+			REGPSN_ID,
+			REG_DTM
+		)
+		VALUES
+		(
+			#{CO_CD},
+			#{PRD_CLCD},
+			#{ADD_OPTN_ITM_NO},
+			#{ADD_OPTN_DTL_ITM_NO},
+			#{STG_ADD_INFO},
+			#{SRT_SO},
+			#{USER_ID},
+			SYSDATE
+		)
+    </insert>
+    
+    <!-- 변경 사유 -->
+    <insert id="insertPrdSprRsn" parameterType="HashMap">
+		/* PrdSpr.updatePrdSprRsn */
+		UPDATE TB_PR_DISP_BASIS
+		SET UPD_RSN = #{UPD_RSN}
+		WHERE PRD_CLCD = #{PRD_CLCD}
+    </insert>
+    
+    <!-- 기본 정보 상품 정보 수정 -->
+    <update id="updatePrdSpr" parameterType="HashMap">
+        /* PrdSpr.updatePrdSpr */ 
+		UPDATE TB_PR_DISP_BASIS
+		SET USE_YN = #{USE_YN}
+		  ,	DISP_PRD_NM = #{DISP_PRD_NM}
+		  ,	DISP_PRD_SPR_CD = #{DISP_PRD_SPR_CD}
+		  ,	PRFRT = #{PRFRT}
+		  ,	ADD_INFO_SET_YN = #{ADD_INFO_SET_YN}
+		  ,	REPR_PRD_ID = #{PRD_ID}
+		  ,	UPDPSN_ID = #{UPDPSN_ID}
+		  ,	UPD_DTM = SYSDATE
+		WHERE CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+    </update>
+    
+    <!-- 진열 순서 변경 -->
+    <update id="updateSrtSo" parameterType="HashMap">
+        /* PrdSpr.updateSrtSo */ 
+		UPDATE TB_PR_DISP_BASIS
+		SET SRT_SO = #{SRT_SO}
+		WHERE CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+    </update>
+    
+    <!-- 옵션 수정 -->
+    <update id="updatePrdSprOpt" parameterType="HashMap">
+        /* PrdSpr.updatePrdSprOpt */ 
+		UPDATE TB_PR_DISP_OPTN_BASIS
+		SET OPTN_NM = #{OPT_NM}
+		  ,	MAND_YN = #{NCE_YN}
+		  ,	IPT_TYPE_CD = #{IPT_TYPE}
+		  ,	UPDPSN_ID = #{UPDPSN_ID}
+		  ,	UPD_DTM = SYSDATE
+		WHERE CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+			AND OPTN_ITM_NO = #{OPTN_ITM_NO}
+    </update>
+    
+    <!-- 상세 옵션 수정 -->
+    <update id="updatePrdSprOptDtl" parameterType="HashMap">
+        /* PrdSpr.updatePrdSprOptDtl */ 
+		UPDATE TB_PR_DISP_OPTN_DTL
+		SET DOC_REG_ID = #{OPT_IMG}
+		  ,	OPTN_DTL_NM = #{OPT_PRT}
+		  ,	OPTN_DTL_CTS = #{OPT_DTLS}
+		  ,	UPDPSN_ID = #{UPDPSN_ID}
+		  ,	UPD_DTM = SYSDATE
+		WHERE CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+			AND OPTN_ITM_NO = #{OPTN_ITM_NO}
+			AND OPTN_DTL_ITM_NO = #{OPTN_DTL_ITM_NO}
+    </update>
+    
+    <!-- 추가 정보 수정 -->
+    <update id="updatePrdSprStg" parameterType="HashMap">
+        /* PrdSpr.updatePrdSprStg */ 
+		UPDATE TB_PR_DISP_ADD_OPTN_BASIS
+		SET ADD_OPTN_NM = #{STG_INFO}
+		  ,	MAND_YN = #{STG_YN}
+		  ,	ATFL_YN = #{STG_FILE}
+		  ,	IPT_TYPE_CD = #{IPT_TYPE}
+		  ,	UPDPSN_ID = #{UPDPSN_ID}
+		  ,	UPD_DTM = SYSDATE
+		WHERE CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+			AND ADD_OPTN_ITM_NO = #{ADD_OPTN_ITM_NO}
+    </update>
+    
+    <!-- 상세 추가 정보 수정 -->
+    <update id="updatePrdSprStgDtl" parameterType="HashMap">
+        /* PrdSpr.updatePrdSprStgDtl */ 
+		UPDATE TB_PR_DISP_ADD_OPTN_DTL
+		SET ADD_OPTN_DTL_NM = #{STG_ADD_INFO}
+		  ,	UPDPSN_ID = #{UPDPSN_ID}
+		  ,	UPD_DTM = SYSDATE
+		WHERE CO_CD = #{CO_CD}
+			AND PRD_CLCD = #{PRD_CLCD}
+			AND ADD_OPTN_ITM_NO = #{ADD_OPTN_ITM_NO}
+			AND ADD_OPTN_DTL_ITM_NO = #{ADD_OPTN_DTL_ITM_NO}
+    </update>
+    
+    <!-- 옵션 삭제 -->
+    <delete id="deletePrdSprOpt" parameterType="HashMap">
+        /* PrdSpr.deletePrdSprOpt */
+		DELETE FROM
+			TB_PR_DISP_OPTN_BASIS
+		WHERE PRD_CLCD = #{PRD_CLCD}
+			AND OPTN_ITM_NO = #{OPTN_ITM_NO}
+    </delete>
+    
+    <!-- 상세 옵션 삭제 -->
+    <delete id="deletePrdSprOptDtl" parameterType="HashMap">
+        /* PrdSpr.deletePrdSprOptDtl */
+		DELETE FROM
+			TB_PR_DISP_OPTN_DTL
+		WHERE PRD_CLCD = #{PRD_CLCD}
+			AND OPTN_ITM_NO = #{OPTN_ITM_NO}
+			AND OPTN_DTL_ITM_NO = #{OPTN_DTL_ITM_NO}
+    </delete>
+    
+    <!-- 추가 정보 삭제 -->
+    <delete id="deletePrdSprStg" parameterType="HashMap">
+        /* PrdSpr.deletePrdSprStg */
+		DELETE FROM
+			TB_PR_DISP_ADD_OPTN_BASIS
+		WHERE PRD_CLCD = #{PRD_CLCD}
+			AND ADD_OPTN_ITM_NO = #{ADD_OPTN_ITM_NO}
+    </delete>
+    
+    <!-- 추가 상세 정보 삭제 -->
+    <delete id="deletePrdSprStgDtl" parameterType="HashMap">
+        /* PrdSpr.deletePrdSprStgDtl */
+		DELETE FROM
+			TB_PR_DISP_ADD_OPTN_DTL
+		WHERE PRD_CLCD = #{PRD_CLCD}
+			AND ADD_OPTN_ITM_NO = #{ADD_OPTN_ITM_NO}
+			AND ADD_OPTN_DTL_ITM_NO = #{ADD_OPTN_DTL_ITM_NO}
+    </delete>
+</mapper>

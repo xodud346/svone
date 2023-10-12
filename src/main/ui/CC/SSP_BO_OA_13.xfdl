@@ -1,0 +1,251 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_OA_13" width="540" height="540" titletext="고객사 참조코드 조회" onload="fn_onLoad" onkeyup="SSP_BO_OA_13_onkeyup">
+    <Layouts>
+      <Layout height="540" mobileorientation="landscape" width="540">
+        <Static id="lblRefCdNm" taborder="0" text="고객사 참조코드" left="20" top="8" width="155" height="37" font="bold 14pt &quot;Arial&quot;"/>
+        <Static id="Static21_00" taborder="1" left="20" top="44" height="32" cssclass="sta_cm_box01L_tdt" text="상세관리 코드ID" width="130"/>
+        <Static id="Static21_00_01" taborder="2" left="140" top="44" height="32" cssclass="sta_cm_box02L_tdt" text="" right="20"/>
+        <Edit id="edtRefCdDtlId" taborder="3" left="150" top="49" width="370" height="21"/>
+        <Static id="Static21_00_00" taborder="4" left="20" top="74" height="32" cssclass="sta_cm_box01L" text="상세코드" width="130"/>
+        <Static id="Static21_00_01_00" taborder="5" left="140" top="74" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Edit id="edtRefCdDtlId00" taborder="6" left="150" top="79" width="370" height="21"/>
+        <Static id="Static21_00_00_00" taborder="7" left="20" top="105" height="32" cssclass="sta_cm_box01L" text="상세코드명" width="130"/>
+        <Static id="Static21_00_01_00_00" taborder="8" left="140" top="105" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Edit id="edtRefCdDtlId00_00" taborder="9" left="150" top="110" width="370" height="21"/>
+        <Static id="Static21_00_00_00_00" taborder="10" left="20" top="136" height="32" cssclass="sta_cm_box01L" text="관리코드명" width="130"/>
+        <Static id="Static21_00_01_00_00_00" taborder="11" left="140" top="136" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Edit id="edtRefCdDtlId00_00_00" taborder="12" left="150" top="141" width="370" height="21"/>
+        <Button id="btnSrch" taborder="14" text="조회" top="173" height="24" left="441" cssclass="btn_WF_select" right="20" onclick="btnSrch_onclick"/>
+        <Button id="btnReset4Opru" taborder="13" text="초기화" left="345" top="173" height="24" visible="true" onclick="divSrch_btnInitSrchForm_onclick" right="btnSrch:6"/>
+        <Grid id="grdRslt" taborder="15" left="20" top="242" height="220" autofittype="col" binddataset="dsRefCd" right="20">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="160"/>
+                <Column size="160"/>
+                <Column size="160"/>
+                <Column size="160"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="상세 관리 코드 ID"/>
+                <Cell col="1" text="상세 코드"/>
+                <Cell col="2" text="상세 코드명"/>
+                <Cell col="3" text="관리 코드명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:REF_CD_SEQ"/>
+                <Cell col="1" text="bind:REF_CD"/>
+                <Cell col="2" text="bind:REF_CD_NM"/>
+                <Cell col="3" text="bind:REF_CD_GRP_NM"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="divPaging" taborder="16" left="10" height="30" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="462" right="10"/>
+        <Static id="lblPageInfo" taborder="17" text="(총 0건 1/1)" left="20" top="212" width="120" height="24"/>
+        <Combo id="cmbPageSz" taborder="18" text="20개씩" left="440" top="212" height="24" index="1" innerdataset="innerdataset" codecolumn="cd" datacolumn="nm" value="20" right="20">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="cd" size="256"/>
+              <Column id="nm" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="cd">2</Col>
+                <Col id="nm">2개씩</Col>
+              </Row>
+              <Row>
+                <Col id="cd">20</Col>
+                <Col id="nm">20개씩</Col>
+              </Row>
+              <Row>
+                <Col id="cd">50</Col>
+                <Col id="nm">50개씩</Col>
+              </Row>
+              <Row>
+                <Col id="cd">100</Col>
+                <Col id="nm">100개씩</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Combo>
+        <Button id="btnTstO" taborder="19" text="테스트 OPU" left="18" top="178" width="87" height="27" onclick="btnTstO_onclick"/>
+        <Button id="btnTstD" taborder="20" text="테스트 DEP" left="113" top="178" width="87" height="27" onclick="btnTstD_onclick"/>
+        <Button id="btnSele" taborder="21" text="선택" top="502" width="80" height="28" right="230" onclick="btnSele_onclick"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT NAME : SSP
+  CREATION DATES : 
+*******************************************************/
+
+// 공통형 스크립트 인클루드
+include "CO::coUtils.xjs";
+include "CC::CcUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.page= {
+	  lbl: this.lblPageInfo
+	, siz: this.cmbPageSz
+	, div: this.divPaging
+	, dst: this.dsRefCd
+};
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo) {
+	this.gfn_formOnLoad(this);  //공통 함수 호출(필수)
+	
+	this.newDsParam();
+	this.cmbPageSz.set_value(20);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fnRefCdDtl=function(sPage) {
+	trace("<sPage:"+ sPage +"/>");
+	
+	var sSvc  = 'refCdDtl';
+	var sUrl  = '/bo/cust/oprunit/ref-cd/list.do';
+	var inDs  = 'dsParam=dsParam'; // 'dsParams=dsParams';  // + dsParams.id;
+	var outDs = 'dsRefCd=dsRefCd'  ;
+	var arg   = '';
+	
+	// Paging
+	var pg = this.page;
+	pg.siz.value = pg.siz.value == undefined ? 20 : pg.siz.value;
+	if( sPage == 0 || sPage == undefined ) {
+		pg.div.uPage    = 1 ;
+		pg.div.uPageNum = 0 ;
+		this.dsParam.setColumn(0, "startNum", pg.div.uPageNum);
+		this.dsParam.setColumn(0, "rowCount", pg.siz.value   );
+	}
+	
+	trace('this.fnRefCdDtl[sPage:'+ sPage +'][dsParam.startNum:'+ this.dsParam.getColumn(0, 'startNum') +'][dsParam.rowCount:'+ this.dsParam.getColumn(0, 'rowCount') +']');
+	this.gfn_transaction(sSvc, sUrl, inDs, outDs, arg, 'fnRefCdDtlClbk');
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fnRefCdDtlClbk=function(rCodes, rCode, rMesg) {
+	var pg = this.page, totCunt = pg.dst.getColumn(0, 'TOT_CUNT');
+	pg.div.uTotCunt = totCunt == undefined ? 0 : totCunt;  //this.uPaging.uTotCount = this.dsBzplc.getColumn(0, "TOT_CUNT");
+	
+	pg.div.form.cfn_createPage(pg.div, pg.div.uTotCunt, pg.siz.value, 'fnPageClbk');
+}
+
+this.fnPageClbk= function(flg) {
+	var pg = this.page;
+	
+	if (flg) {
+		pg.div.uPage    = 1 ;
+		pg.div.uPageNum = 0 ;
+		this.dsParam.setColumn(0, 'startNum', pg.div.uPageNum);
+		this.dsParam.setColumn(0, 'rowCount', pg.siz.value   );
+		
+		this.fnRefCdDtl(pg.div.uPageNum);
+	}
+	
+	pg.lbl.set_text("(총 "+ pg.div.uTotCunt +"건, "+ pg.div.uPage +" / "+ pg.div.uPageCnt +")");
+}
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.newDsParam=function(dsId, oPrm) {
+	dsId = dsId == undefined ? 'dsParam' : dsId;
+	
+	var prop=[ 'coCd', 'bzplcId', 'oprUnitId', 'deptId', 'startNum', 'rowCount' ];
+	var ds=new Dataset(dsId);
+	for (var i in prop) {
+		ds.addColumn(prop[i], 'String');
+	}
+	
+	var rIx=ds.addRow();
+	if (oPrm != undefined) {
+		var props = Object.keys(oPrm);
+		for (var i in props) {
+			var k=props[i], v=oPrm[k];
+			ds.setColumn(rIx, k,  v);
+		}
+	}
+	ds.setColumn(rIx, 'startNum',  0);
+	ds.setColumn(rIx, 'rowCount', 20);
+	
+	this[dsId]=ds;
+	return ds;
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btnSrch_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo) {
+	this.fnRefCdDtl();
+};
+
+this.btnTstO_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.newDsParam('dsParam', { coCd: '1000', bzplcId: 'S000000001', oprUnitId: 'S000006713' });
+	this.fnRefCdDtl();
+};
+
+this.btnTstD_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.newDsParam('dsParam', { coCd: '1000', bzplcId: 'S000000001', oprUnitId: 'S000006713', deptId: 'D000297053' });
+	this.fnRefCdDtl();
+};
+
+this.btnSele_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var seleRow=this.fnDatasetRow2Object(this.dsRefCdDtl);
+	if (seleRow==undefined) { alert('선택된 항목이 없습니다.'); return; }
+	
+	// trace('[rown:'+ seleRow.rown +']<seleRow: '+JSON.stringify( seleRow )+' />');
+	this.close(seleRow);
+};
+
+
+this.SSP_BO_OA_13_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	//ESC : 닫기기능
+	if(e.keycode == 27){
+		this.close();
+	}
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="cmbPageSz" propid="value" datasetid="dsParam" columnid="rowCount"/>
+    </Bind>
+    <Objects>
+      <Dataset id="dsParam">
+        <ColumnInfo>
+          <Column id="cdCd" type="STRING" size="256"/>
+          <Column id="bzplcId" type="STRING" size="256"/>
+          <Column id="oprUnitId" type="STRING" size="256"/>
+          <Column id="deptId" type="STRING" size="256"/>
+          <Column id="startNum" type="STRING" size="256"/>
+          <Column id="rowCount" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="dsRefCd"/>
+    </Objects>
+  </Form>
+</FDL>

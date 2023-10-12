@@ -1,0 +1,834 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="work04" width="1336" height="846" titletext="운영자 이관등록" onload="fn_onload">
+    <Layouts>
+      <Layout height="846" mobileorientation="landscape" width="1336">
+        <Div id="Div00" taborder="0" text="Div00" left="0" top="0" height="109" cssclass="div_WF_SearchArea" right="0">
+          <Layouts>
+            <Layout>
+              <Static id="Static21" taborder="4" left="20" top="21" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+              <Static id="Static20" taborder="0" text="조직코드" left="20" top="21" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static24" taborder="1" text="사용여부" left="532" top="21" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Combo id="Combo50" taborder="5" text="Combo00" left="159" top="-73" width="150" height="24" index="-1"/>
+              <Combo id="Combo51" taborder="6" text="Combo00" left="1021" top="-73" width="150" height="24" index="-1"/>
+              <Combo id="USE_YN" taborder="2" text="Combo00" left="672" top="25" height="24" index="-1" innerdataset="ds_useYn" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" width="139"/>
+              <Button id="Button58" taborder="3" text="조회" top="63" width="60" height="26" cssclass="btn_WF_require" onclick="Button58_onclick" right="120"/>
+              <Button id="btnClear" taborder="7" text="초기화" top="63" width="60" height="26" right="184" onclick="Div00_btnClear_onclick"/>
+              <Button id="btn_search_all" taborder="8" text="전체 조회" top="63" width="96" height="26" cssclass="btn_WF_require" right="20" onclick="Div00_btn_search_all_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Div id="Div01" taborder="1" text="Div01" left="0" top="139" right="0" bottom="2">
+          <Layouts>
+            <Layout>
+              <Button id="Button62" taborder="5" text="저장" top="0" width="81" height="28" right="332" onclick="Div01_Button62_onclick" visible="false" cssclass="btn_WF_select"/>
+              <Button id="Button01" taborder="0" text="엑셀다운로드" top="0" height="28" cssclass="btn_WF_excel" textPadding="0px" width="110" right="218" onclick="Div01_Button01_onclick"/>
+              <Grid id="grd_L" taborder="1" left="20" top="37" width="210" bottom="20" binddataset="ds_list_L" autofittype="col" nodatatext="조회 결과가 없습니다." oncellposchanged="Div01_grd_L_oncellposchanged">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="48"/>
+                      <Column size="162"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="31" band="head"/>
+                      <Row size="31"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell text="순번"/>
+                      <Cell col="1" text="조직명"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="expr:currow+1"/>
+                      <Cell col="1" text="bind:ORG_NM"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Grid id="grd_T" taborder="2" left="245" top="37" right="20" bottom="390" binddataset="ds_list_T" autofittype="col" nodatatext="조회 결과가 없습니다." oncellclick="Div01_grd_T_oncellclick" cellsizingtype="both">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="48" band="left"/>
+                      <Column size="51"/>
+                      <Column size="108"/>
+                      <Column size="81"/>
+                      <Column size="112"/>
+                      <Column size="80"/>
+                      <Column size="118"/>
+                      <Column size="111"/>
+                      <Column size="101"/>
+                      <Column size="88"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="31" band="head"/>
+                      <Row size="31"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                      <Cell col="1" text="순번"/>
+                      <Cell col="2" text="조직명"/>
+                      <Cell col="3" text="사원번호"/>
+                      <Cell col="4" text="운영자명"/>
+                      <Cell col="5" text="운영자 ID"/>
+                      <Cell col="6" text="담당업무"/>
+                      <Cell col="7" text="직위명"/>
+                      <Cell col="8" text="직급명"/>
+                      <Cell col="9" text="사용여부"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell displaytype="checkboxcontrol" edittype="checkbox" text="bind:COL_CHK"/>
+                      <Cell col="1" text="expr:currow+1"/>
+                      <Cell col="2" text="bind:ORG_NM"/>
+                      <Cell col="3" text="bind:EMP_NO"/>
+                      <Cell col="4" text="bind:OPRTR_NM"/>
+                      <Cell col="5" text="bind:OPRTR_ID"/>
+                      <Cell col="6" text="bind:CHR_TASK_NM"/>
+                      <Cell col="7" text="bind:PSTN_NM"/>
+                      <Cell col="8" text="bind:JBPOS_NM"/>
+                      <Cell col="9" text="expr:USE_YN == 'Y' ? '사용' : '미사용'"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Div id="Div00" taborder="4" left="18.34%" top="grd_T:5" height="46" onsize="Div01_Div00_onsize" text="" width="1071">
+                <Layouts>
+                  <Layout>
+                    <Button id="btnDown00" taborder="1" left="577" top="11" width="70" height="24" cssclass="btn_Move_Down" onclick="Div01_Div00_btnDown00_onclick"/>
+                    <Button id="btnUp" taborder="0" left="498" top="11" height="24" cssclass="btn_Move_Up" onclick="Div01_Div00_Div00_btnUp_onclick" right="btnDown00:4"/>
+                  </Layout>
+                </Layouts>
+              </Div>
+              <Grid id="grd_B" taborder="3" left="245" top="Div00:3" right="20" bottom="20" binddataset="ds_list_B" autofittype="col" nodatatext="조회 결과가 없습니다." oncellclick="Div01_grd_B_oncellclick" cellsizingtype="both">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="48" band="left"/>
+                      <Column size="51"/>
+                      <Column size="108"/>
+                      <Column size="81"/>
+                      <Column size="112"/>
+                      <Column size="80"/>
+                      <Column size="118"/>
+                      <Column size="111"/>
+                      <Column size="101"/>
+                      <Column size="88"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="31" band="head"/>
+                      <Row size="31"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                      <Cell col="1" text="순번"/>
+                      <Cell col="2" text="조직명" displaytype="normal" edittype="none"/>
+                      <Cell col="3" text="사원번호"/>
+                      <Cell col="4" text="운영자명"/>
+                      <Cell col="5" text="운영자 ID"/>
+                      <Cell col="6" text="담당업무"/>
+                      <Cell col="7" text="직위명"/>
+                      <Cell col="8" text="직급명"/>
+                      <Cell col="9" text="사용여부"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell displaytype="checkboxcontrol" edittype="checkbox" text="bind:COL_CHK"/>
+                      <Cell col="1" text="expr:currow+1"/>
+                      <Cell col="2" text="bind:ORG_NM"/>
+                      <Cell col="3" text="bind:EMP_NO"/>
+                      <Cell col="4" text="bind:OPRTR_NM"/>
+                      <Cell col="5" text="bind:OPRTR_ID"/>
+                      <Cell col="6" text="bind:CHR_TASK_NM"/>
+                      <Cell col="7" text="bind:PSTN_NM"/>
+                      <Cell col="8" text="bind:JBPOS_NM"/>
+                      <Cell col="9" text="expr:USE_YN == 'Y' ? '사용' : '미사용'"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Edit id="ORG_CD" taborder="2" left="159" top="25" width="146" height="24"/>
+        <Edit id="ORG_NM" taborder="3" left="309" top="25" width="186" height="24"/>
+        <Button id="btnOrgSearch" taborder="4" left="499" top="25" width="24" height="24" cssclass="btn_WF_search02" text="" onclick="Div00_btnOrgSearch_onclick"/>
+        <Button id="btnClearLayout" taborder="5" text="레이아웃 초기화" top="138" height="28" width="110" right="0" onclick="btnClearLayout_onclick" enable="false"/>
+        <Button id="btnSaveLayout" taborder="6" text="레이아웃 저장" top="138" height="28" right="114" width="100" onclick="btnSaveLayout_onclick" enable="false"/>
+        <Grid id="grid_excel" taborder="7" left="184" top="1110" width="898" height="100" binddataset="ds_list_excel" enable="true" visible="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="48"/>
+                <Column size="197"/>
+                <Column size="118"/>
+                <Column size="112"/>
+                <Column size="102"/>
+                <Column size="131"/>
+                <Column size="113"/>
+                <Column size="113"/>
+                <Column size="86"/>
+                <Column size="101"/>
+              </Columns>
+              <Rows>
+                <Row size="24" band="head"/>
+                <Row size="24"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="순번"/>
+                <Cell col="1" text="조직명"/>
+                <Cell col="2" text="사원번호"/>
+                <Cell col="3" text="운영자명"/>
+                <Cell col="4" text="운영자ID"/>
+                <Cell col="5" text="담당업무"/>
+                <Cell col="6" text="직위명"/>
+                <Cell col="7" text="직급명"/>
+                <Cell col="8" text="사용여부"/>
+                <Cell col="9" text="이관여부"/>
+              </Band>
+              <Band id="body">
+                <Cell text="expr:currow+1"/>
+                <Cell col="1" text="bind:ORG_NM"/>
+                <Cell col="2" text="bind:EMP_NO"/>
+                <Cell col="3" text="bind:OPRTR_NM"/>
+                <Cell col="4" text="bind:OPRTR_ID"/>
+                <Cell col="5" text="bind:CHR_TASK_NM"/>
+                <Cell col="6" text="bind:PSTN_NM"/>
+                <Cell col="7" text="bind:JBPOS_NM"/>
+                <Cell col="8" text="bind:USE_YN"/>
+                <Cell col="9" text="bind:INF_YN"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_useYn">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_L">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_T">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="CHR_TASK_NM" type="STRING" size="256"/>
+          <Column id="MSSGR_ADDR" type="STRING" size="256"/>
+          <Column id="EMAIL_ADDR" type="STRING" size="256"/>
+          <Column id="USR_SPR_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="PSTN_NM" type="STRING" size="256"/>
+          <Column id="SEX_SPR_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="DIV_CD" type="STRING" size="256"/>
+          <Column id="ENCRP_USR_INFO_DTLS" type="STRING" size="256"/>
+          <Column id="DTY_NM" type="STRING" size="256"/>
+          <Column id="JBPOS_NM" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="HP_NO" type="STRING" size="256"/>
+          <Column id="USR_STATS_CD" type="STRING" size="256"/>
+          <Column id="SALS_TEAM_CD" type="STRING" size="256"/>
+          <Column id="SALS_CHR_CD" type="STRING" size="256"/>
+          <Column id="PLNT_ID" type="STRING" size="256"/>
+          <Column id="ACNT_CERT_AUTH_YN" type="STRING" size="256"/>
+          <Column id="JB_CD" type="STRING" size="256"/>
+          <Column id="JB_NM" type="STRING" size="256"/>
+          <Column id="ENT_DT" type="STRING" size="256"/>
+          <Column id="RTCO_DT" type="STRING" size="256"/>
+          <Column id="COL_CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_B">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="CHR_TASK_NM" type="STRING" size="256"/>
+          <Column id="MSSGR_ADDR" type="STRING" size="256"/>
+          <Column id="EMAIL_ADDR" type="STRING" size="256"/>
+          <Column id="USR_SPR_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="PSTN_NM" type="STRING" size="256"/>
+          <Column id="SEX_SPR_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="DIV_CD" type="STRING" size="256"/>
+          <Column id="ENCRP_USR_INFO_DTLS" type="STRING" size="256"/>
+          <Column id="DTY_NM" type="STRING" size="256"/>
+          <Column id="JBPOS_NM" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="HP_NO" type="STRING" size="256"/>
+          <Column id="USR_STATS_CD" type="STRING" size="256"/>
+          <Column id="SALS_TEAM_CD" type="STRING" size="256"/>
+          <Column id="SALS_CHR_CD" type="STRING" size="256"/>
+          <Column id="PLNT_ID" type="STRING" size="256"/>
+          <Column id="ACNT_CERT_AUTH_YN" type="STRING" size="256"/>
+          <Column id="JB_CD" type="STRING" size="256"/>
+          <Column id="JB_NM" type="STRING" size="256"/>
+          <Column id="ENT_DT" type="STRING" size="256"/>
+          <Column id="RTCO_DT" type="STRING" size="256"/>
+          <Column id="COL_CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search_detail">
+        <ColumnInfo>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list_L_copy">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_T_copy">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="CHR_TASK_NM" type="STRING" size="256"/>
+          <Column id="MSSGR_ADDR" type="STRING" size="256"/>
+          <Column id="EMAIL_ADDR" type="STRING" size="256"/>
+          <Column id="USR_SPR_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="PSTN_NM" type="STRING" size="256"/>
+          <Column id="SEX_SPR_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="DIV_CD" type="STRING" size="256"/>
+          <Column id="ENCRP_USR_INFO_DTLS" type="STRING" size="256"/>
+          <Column id="DTY_NM" type="STRING" size="256"/>
+          <Column id="JBPOS_NM" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="HP_NO" type="STRING" size="256"/>
+          <Column id="USR_STATS_CD" type="STRING" size="256"/>
+          <Column id="SALS_TEAM_CD" type="STRING" size="256"/>
+          <Column id="SALS_CHR_CD" type="STRING" size="256"/>
+          <Column id="PLNT_ID" type="STRING" size="256"/>
+          <Column id="ACNT_CERT_AUTH_YN" type="STRING" size="256"/>
+          <Column id="JB_CD" type="STRING" size="256"/>
+          <Column id="JB_NM" type="STRING" size="256"/>
+          <Column id="ENT_DT" type="STRING" size="256"/>
+          <Column id="RTCO_DT" type="STRING" size="256"/>
+          <Column id="COL_CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_B_copy">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="CHR_TASK_NM" type="STRING" size="256"/>
+          <Column id="MSSGR_ADDR" type="STRING" size="256"/>
+          <Column id="EMAIL_ADDR" type="STRING" size="256"/>
+          <Column id="USR_SPR_CD" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="PSTN_NM" type="STRING" size="256"/>
+          <Column id="SEX_SPR_CD" type="STRING" size="256"/>
+          <Column id="ORG_CD" type="STRING" size="256"/>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="DIV_CD" type="STRING" size="256"/>
+          <Column id="ENCRP_USR_INFO_DTLS" type="STRING" size="256"/>
+          <Column id="DTY_NM" type="STRING" size="256"/>
+          <Column id="JBPOS_NM" type="STRING" size="256"/>
+          <Column id="TEL_NO" type="STRING" size="256"/>
+          <Column id="HP_NO" type="STRING" size="256"/>
+          <Column id="USR_STATS_CD" type="STRING" size="256"/>
+          <Column id="SALS_TEAM_CD" type="STRING" size="256"/>
+          <Column id="SALS_CHR_CD" type="STRING" size="256"/>
+          <Column id="PLNT_ID" type="STRING" size="256"/>
+          <Column id="ACNT_CERT_AUTH_YN" type="STRING" size="256"/>
+          <Column id="JB_CD" type="STRING" size="256"/>
+          <Column id="JB_NM" type="STRING" size="256"/>
+          <Column id="ENT_DT" type="STRING" size="256"/>
+          <Column id="RTCO_DT" type="STRING" size="256"/>
+          <Column id="COL_CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_list_excel">
+        <ColumnInfo>
+          <Column id="ORG_NM" type="STRING" size="256"/>
+          <Column id="EMP_NO" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="OPRTR_ID" type="STRING" size="256"/>
+          <Column id="CHR_TASK_NM" type="STRING" size="256"/>
+          <Column id="PSTN_NM" type="STRING" size="256"/>
+          <Column id="JBPOS_NM" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="INF_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_YA_10
+/* 작 성 일 자 : 2022/03/04
+/* 작  성   자 : 이성민
+/* 설       명 : 운영자 이관등록
+/***********************************************************/
+
+include "OD::odUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+
+this.selectOrgCount = 0;
+this.selectOrgCd = "";
+this.selectOrgNm= "";
+	
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+
+	//공통코드 조회
+	this.fn_commonCodeSearch();
+
+	//초기조회
+	this.ds_search.setColumn(0, "USE_YN", "Y");
+	this.fn_search("L");
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "Button58_onclick",
+		SHIFT_ENTER : "",
+		SHIFT_S : "",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+};
+
+
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function(type) {
+	
+	var sSvcId = "";    
+	var sUrl = "";  
+	var inDs = "";
+	var outDs = "";
+	var arg = "";
+
+	
+	if( type == "L" ) {
+		//좌측 그리드 조회
+		sSvcId = "selectCoMbrOprtrOrgInfoList";    
+		sUrl = "/co/select-co-mbr-oprtr-org-info-list.do";
+		inDs = "ds_search=ds_search";
+		outDs = "ds_list_L=ds_output";
+		arg = "";
+		
+	} else if( type == "T" ) {
+		//우측 상단 그리드 조회
+		sSvcId = "selectCoMbrOprtrInfoInfList";    
+		sUrl = "/co/select-co-mbr-oprtr-info-inf-list.do";
+		inDs = "ds_search=ds_search_detail";
+		outDs = "ds_list_T=ds_output";
+		arg = "";
+		
+	} if( type == "B" ) {
+		//우측 하단 그리드 조회
+		sSvcId = "selectCoMbrOprtrInfoList";    
+		sUrl = "/co/select-co-mbr-oprtr-info-list.do";
+		inDs = "ds_search=ds_search_detail";
+		outDs = "ds_list_B=ds_output";
+		arg = "";
+		
+	} else if( type == "ALL" ) { 
+		//전체조회
+		sSvcId = "selectCoMbrOprtrInfoAllList";    
+		sUrl = "/co/select-co-mbr-oprtr-info-all-list.do";
+		inDs = "ds_search=ds_search_detail";
+		outDs = "ds_list_T=ds_output1 ds_list_B=ds_output2";
+		arg = "";
+		
+	} else if( type == "EXCEL" ) {
+		// 엑셀 다운로드
+		sSvcId = "selectCoMbrOprtrInfoExcelList";    
+		sUrl = "/co/select-co-mbr-oprtr-info-excel-list.do";
+		inDs = "ds_search=ds_search_detail";
+		outDs = "ds_list_excel=ds_output";
+		arg = "";
+	}
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	
+}
+
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_useYn=ds_output1";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "CODE_LIST", "USE_YN");
+	this.ds_search.setColumn(0, "LANG_CD", "KO");
+
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+
+//저장
+this.fn_save = function() {
+	
+	var sSvcId = "saveOperatorTransfer";    
+	var sUrl = "/co/save-operator-transfer.do";
+	var inDs = "ds_save=ds_list_T:U ds_save2=ds_list_B:U";
+	var outDs = "";
+	var arg = "";
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+}
+
+
+
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg){
+	if(svcID == "selectCoMbrOprtrOrgInfoList") { 			
+		if( this.ds_list_L.rowcount == 0 ) {
+			this.ds_list_L.copyData(this.ds_list_L_copy);
+			
+			this.ds_list_T.clearData();
+			this.ds_list_B.clearData();
+		}
+		
+		if( this.ds_list_L.rowcount > 0 ) {
+			this.fn_getMbnOptrInfo();
+		}		
+		
+	} else if(svcID == "selectCoMbrOprtrInfoList") { 	
+		if( this.ds_list_T.rowcount == 0 ) this.ds_list_T.copyData(this.ds_list_T_copy);
+		
+	} else if(svcID == "selectCoMbrOprtrInfoInfList") { 
+		if( this.ds_list_B.rowcount == 0 ) this.ds_list_B.copyData(this.ds_list_B_copy);
+		
+	} else if( svcID == "commonCodeSearch" ) { 
+		//사용여부 전체값 추가
+		this.ds_useYn.insertRow(0);
+		this.ds_useYn.setColumn(0, "COM_DTL_CD", "");
+		this.ds_useYn.setColumn(0, "COM_DTL_CD_NM", "전체");
+		this.Div00.form.USE_YN.set_index(1);		
+		
+	} else if( svcID == "saveOperatorTransfer" ) {
+		if( errorCode == 0 ) {
+			alert("저장되었습니다.");
+			this.fn_search("T");
+			this.fn_search("B");
+			return;
+		} else {
+			alert("errorMsg");
+			return;
+		}
+	} else if( svcID == "selectOprtrOrgInfoList" ) {  //조직조회(엔터입력) 콜백
+		if( this.selectOrgCount > 1 ) {
+			this.fn_popup("SSP_BO_PP_43");
+		} else if( this.selectOrgCount == 1 ) {
+			this.ds_search.setColumn(0, "ORG_CD", this.selectOrgCd);
+			this.ds_search.setColumn(0, "ORG_NM", this.selectOrgNm);
+		} else {
+			//this.gfn_alert_null("MSGIDIDIDIDIDID", "", "MSGIDIDIDIDIDID", "검색된 내용이 없습니다", "A", "");
+			alert("검색된 내용이 없습니다.");;
+			return false;
+		}
+		
+	} else if( svcID == "selectCoMbrOprtrInfoExcelList" ) {	
+		this.ofn_exportExcel({ form:this, grid:this.grid_excel, fileName:"운영자 이관등록" });
+	}
+};
+
+
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+//우측 데이터 조회
+this.fn_getMbnOptrInfo = function() {
+
+	this.ds_search_detail.setColumn(0, "ORG_CD", this.ds_list_L.getColumn(this.ds_list_L.rowposition, "ORG_CD"));	
+	
+	this.fn_search("T");
+	this.fn_search("B");
+};
+
+//데이터 이동
+this.fn_moveData = function(dsMain, dsCopy) {
+
+	//체크박스 선택여부 확인
+	var chkCnt = dsMain.getCaseCount("COL_CHK==1");	
+	if( chkCnt == 0 ) {
+		alert("선택된 행이 없습니다.");
+		return false;
+	}
+	
+	var chkDsChange1 = this.gfn_dsIsUpdated(this.ds_list_T); //this.fn_dataCheck(this.ds_comCdList);
+	var chkDsChange2 = this.gfn_dsIsUpdated(this.ds_list_B); //this.fn_dataCheck(this.ds_comCdDtlList);
+	
+	if( !chkDsChange1 && !chkDsChange2) {		
+		alert("수정된 내용이 없습니다");
+	} else {
+		if( this.confirm("선택된 데이터를 이관 하시겠습니까?") ) {
+			//체크된 데이터만 이관.
+			var delArr = [];
+			for(var i=0; i < dsMain.rowcount; i++){
+				var checkbox = dsMain.getColumn(i, "COL_CHK");
+				if( checkbox == 1 ) {
+					var idx = dsCopy.addRow();
+					dsCopy.copyRow(idx, dsMain, i);	
+					
+					delArr.push(i);
+					
+				}
+			}	
+			dsMain.deleteMultiRows(delArr);	
+			
+			//저장
+			this.fn_save();
+		}
+	}	
+}
+
+
+// 그리드 클릭시 체크박스 체크되도록
+this.fn_autoGridCheck = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo) {
+
+	var dataSet = obj.getBindDataset();
+	var chkValue = obj.getCellText(e.row, 0);
+		
+	if( e.col != 0 ) {
+		chkValue = (chkValue == "1" ? "0" : "1");
+	}
+	
+	dataSet.setColumn(e.row, "COL_CHK", chkValue);
+}
+
+
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//조회버튼
+this.Button58_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	//변경된 데이터 존재하는지 체크
+	if( this.gfn_dsIsUpdated(this.ds_list_T) || this.gfn_dsIsUpdated(this.ds_list_B)) {
+		if( !this.confirm("변경된 내용이 존재합니다. 조회 하시겠습니까?") ) return;
+	}
+	this.fn_search("L");
+};
+
+//아래버튼 클릭
+this.Div01_Div00_btnDown00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_moveData(this.ds_list_T, this.ds_list_B);
+	//this.ds_list_B.addRow();
+};
+
+// div 사이즈 리사이징
+this.Div01_Div00_onsize = function(obj:nexacro.Div,e:nexacro.SizeEventInfo)
+{
+	var nX = e.cx;
+	var nCompWidth = this.Div01.form.Div00.form.Div00.getOffsetWidth();
+	var nCompX = (e.cx/2) - (nCompWidth/2);
+	this.Div01.form.Div00.form.Div00.setOffsetLeft(nCompX);
+};
+
+//검색 div 엔터
+/*this.Div00_onkeyup = function(obj:nexacro.Div,e:nexacro.KeyEventInfo)
+{
+	if( e.keycode == 13 ) {
+		if( e.fromobject.valueOf() == "[object Edit]" ) {			
+			if( e.fromobject.id == "ORG_CD" || e.fromobject.id == "ORG_NM") {
+				this.fn_popupAutoSearch("selectOprtrOrgInfoList", "/co/select-oprtr-org-info-list.do");
+			} else {
+				this.fn_search(0);
+			}			
+		}
+	}	
+};*/
+
+//저장버튼
+this.Div01_Button62_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	// 저장하지 않고 위 아래로 데이터를 왔다갔다 할 시 삭제된 일부의 데이터 셋을 복구 할 수 없음. 버튼 숨김.
+	/*
+	var chkDsChange1 = this.fn_dataChangeCheck(this.ds_list_T); //this.fn_dataCheck(this.ds_comCdList);
+	var chkDsChange2 = this.fn_dataChangeCheck(this.ds_list_B); //this.fn_dataCheck(this.ds_comCdDtlList);
+	
+	if( !chkDsChange1 && !chkDsChange2) {		
+		alert("수정된 내용이 없습니다");
+	} else {
+		if( this.confirm("저장 하시겠습니까?") ) {
+			this.fn_save();
+		}
+	}
+	*/
+};
+
+//위로 이동 버튼
+this.Div01_Div00_Div00_btnUp_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_moveData(this.ds_list_B, this.ds_list_T);
+};
+
+//상단 그리드 클릭
+this.Div01_grd_T_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	this.fn_autoGridCheck(obj, e);
+};
+
+//하단 그리드 클릭
+this.Div01_grd_B_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	this.fn_autoGridCheck(obj, e);
+};
+
+//초기화 버튼
+this.Div00_btnClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.ds_search.setColumn(0, "CO_CD", "");
+	this.ds_search.setColumn(0, "ORG_CD", "");
+	this.ds_search.setColumn(0, "ORG_NM", "");
+	this.ds_search.setColumn(0, "USE_YN", "Y");
+};
+
+// 셀 포커싱 이벤트
+this.Div01_grd_L_oncellposchanged = function(obj:nexacro.Grid,e:nexacro.GridSelectEventInfo)
+{
+	if( this.ds_list_L.rowcount > 0 ) {
+		this.fn_getMbnOptrInfo();
+	}
+};
+
+
+this.Div00_btnOrgSearch_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_popup("SSP_BO_PP_43");
+};
+
+
+
+//팝업 콜백
+this.fn_popupCallback = function(sPopupId, sRetValue) {
+	var resData = "";
+	var sIdList = "";
+	var sNmList = "";
+	
+	if(sRetValue == undefined){
+		return;
+	}else{
+		resData = JSON.parse(sRetValue);
+	}
+	
+	if( sPopupId == "SSP_BO_PP_43" ) {
+		// 조직명 조회 리턴
+		this.ds_search.setColumn(0, "ORG_CD", resData.ORG_CD);
+		this.ds_search.setColumn(0, "ORG_NM", resData.ORG_NM);
+	} else if( sPopupId == "SSP_BO_PP_44" ) {
+		// 조직명 조회 리턴
+		this.ds_search.setColumn(0, "OPRTR_ID", resData.OPRTR_ID);
+		this.ds_search.setColumn(0, "OPRTR_NM", resData.OPRTR_NM);
+	} 
+};
+
+//팝업 호출 함수
+this.fn_popup = function(popupId) {
+	var objParam = {};
+	
+	if( popupId == "SSP_BO_PP_43" ){
+		// 조직명 조회 팝업
+		objParam.orgCd = this.ds_search.getColumn(0, "ORG_CD");
+		objParam.orgNm = this.ds_search.getColumn(0, "ORG_NM");		
+	} else if( popupId == "SSP_BO_PP_44" ){
+		// 운영자명 조회 팝업
+		objParam.oprtrId = this.ds_search.getColumn(0, "OPRTR_ID");
+		objParam.oprtrNm = this.ds_search.getColumn(0, "OPRTR_NM");
+	}	
+	
+	this.gfn_openPopup(popupId, "CO_POP::" + popupId + ".xfdl", objParam, "fn_popupCallback");
+};
+
+//팝업 입력창에 입력 후 엔터 칠 경우.
+this.fn_popupAutoSearch = function(id, url) {
+	if( "selectOprtrOrgInfoList" == id ) {
+		var sSvcId = id;    
+		var sUrl = url;  
+		var inDs = "ds_search=ds_search";
+		var outDs = "";
+		var arg = "";
+		
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	}
+}
+
+this.Div00_btn_search_all_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_search("ALL");
+};
+
+this.Div01_Button01_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_search.getRowType(0) == Dataset.ROWTYPE_UPDATE) {
+		alert('조회 조건이 변경 되었습니다.\n다시 조회하시기 바랍니다.');
+		return false;
+	}
+	this.fn_search("EXCEL");
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="Div00.form.USE_YN" propid="value" datasetid="ds_search" columnid="USE_YN"/>
+      <BindItem id="item1" compid="ORG_CD" propid="value" datasetid="ds_search" columnid="ORG_CD"/>
+      <BindItem id="item2" compid="ORG_NM" propid="value" datasetid="ds_search" columnid="ORG_NM"/>
+    </Bind>
+  </Form>
+</FDL>

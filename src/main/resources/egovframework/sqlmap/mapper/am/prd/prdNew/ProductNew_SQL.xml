@@ -1,0 +1,844 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ProductNew">
+
+	<select id="selectProductNewCount" parameterType="hashMap" resultType="integer">
+		/* ProductNew.selectProductNewCount */
+		 SELECT  
+	      	 COUNT(*)
+	      FROM TB_SG_PRD_RQST A  /** SG 상품 **/
+ 			   LEFT JOIN (
+				 	SELECT 
+				 	     Z.RQST_NO
+				 		,Z.PROC_STATS_CD
+				 		,(SELECT CMN_COM_NM FROM T_CMM_COM WHERE CMN_COM_IDX = Z.PROC_STATS_CD) PROC_STATS_NM 
+				 	  FROM 
+					(
+						SELECT 
+							 X.*
+							,ROW_NUMBER() OVER (ORDER BY REG_DTM DESC) as RN
+						FROM TB_SG_RQST_PROC X
+					) Z
+					WHERE  RN=1			   
+				 			   
+ 			    ) B  /** 신규요청 처리 **/	
+ 			   ON (A.RQST_NO = B.RQST_NO)        
+	     WHERE A.CO_CD = #{coCd}
+		    <if test="rqstNoArr != null and rqstNoArr != '' ">	
+		   AND (A.RQST_NO IN	   	   
+		  <foreach collection="rqstNoArr" item="rqstNo" open="(" separator="," close=")" >
+		  	  #{rqstNo}
+		  </foreach>
+		</if>	
+		<!-- 상품번호 multi -->   
+		<if test="prdIdArr != null and prdIdArr != '' ">	
+		   OR A.PRD_ID IN	   	   
+		  <foreach collection="prdIdArr" item="prdId" open="(" separator="," close=")" >
+		  	  #{prdId}
+		  </foreach>
+		  )
+		</if>			    
+		    
+		<!-- 몰구분 -->			    
+		<if test="mallSprCd != null and mallSprCd != ''">
+ 			AND A.MALL_SPR_CD = #{mallSprCd}
+		</if>	
+		<!-- 공용전용구분 -->			    
+		<if test="pubDvrsSpr != null and pubDvrsSpr != ''">
+ 			AND A.PUB_DVRS_SPR = #{pubDvrsSpr}
+		</if>			 
+		<!-- 사업장 -->		
+		<if test="selBzpOpr == 'bzplc'.toString() ">	    
+			<if test="bzplcId != null and bzplcId != ''">
+	 			AND A.BZPLC_ID  = #{bzplcId}
+			</if>	
+			
+			<if test="bzplcNm != null and bzplcNm != ''">
+	 			AND A.BZPLC_NM  like '%' || #{bzplcNm} || '%'
+			</if>	
+		</if>	
+		<!-- 운영단위 -->	
+		<if test="selBzpOpr == 'oprUnt'.toString() ">		    
+			<if test="bzplcId != null and bzpId != ''">
+	 			AND A.BZPLC_ID  = #{bzplcId}
+			</if>	
+			<if test="bzplcNm!= null and bzplcNm!= != ''">
+	 			AND A.BZPLC_NM  like '%' || #{bzplcNm} || '%'
+			</if>	
+		</if>
+				     
+		<!-- 상품 분류 코드 -->			    
+		<if test="prdClsCd != null and prdClsCd != ''">
+ 			AND A.PRD_CLS_CD = #{prdClsCd}
+		</if>					    
+		<!-- 상품 분류명 -->		 	    
+		<if test="prdClsNm != null and prdClsNm != ''">
+ 			AND A.PRD_CLS_NM like '%' || #{prdClsNm} || '%'
+		</if>	
+		<!-- 요청일자 -->			    
+		<if test="selRqstCmpl == 'rqstDtm'.toString() ">
+ 			AND A.RQST_DTM BETWEEN TO_DATE(REPLACE(#{searchStartDate},'-','') || '000000','YYYYMMDDHH24MISS')
+			AND TO_DATE(REPLACE(#{searchEndDate},'-','') || '235959','YYYYMMDDHH24MISS')  
+		</if>	
+		<!-- 완료일자 -->			    
+		<if test="selRqstCmpl == 'cmplDtm'.toString() ">
+ 			AND A.CMPL_DTM BETWEEN TO_DATE(REPLACE(#{searchStartDate},'-','') || '000000','YYYYMMDDHH24MISS')
+			AND TO_DATE(REPLACE(#{searchEndDate},'-','') || '235959','YYYYMMDDHH24MISS')  
+		</if>	
+		<!-- 대표상품구분(통합가격,통합품질,피통합) -->			    
+		<if test="reprPrdSpr != null and reprPrdSpr != ''">
+ 			AND A.REPR_PRD_SPR = #{reprPrdSpr}
+		</if>		
+		<!-- 제안상태(제안중,성공,거부) -->			    
+		<if test="prpsStats != null and prpsStats != ''">
+ 			AND A.PRPS_STATS = #{prpsStats}
+		</if>			
+		<!-- 담당자ID -->			    
+		<if test="chrpsnId != null and chrpsnId != ''">
+ 			AND A.CHRPSN_ID = #{chrpsnId}
+		</if>					    
+		<!-- 담당자명 -->			    
+		<if test="chrpsnNm != null and chrpsnNm != ''">
+ 			AND A.CHRPSN_NM like '%' || #{chrpsnNm} || '%'
+		</if>	
+		<!-- 처리자ID -->			    
+		<if test="dealrId != null and dealrId != ''">
+ 			AND A.DEALR_ID = #{dealrId}
+		</if>					    
+		<!-- 처리자명 -->			    
+		<if test="dealrNm != null and dealrNm != ''">
+ 			AND A.DEALR_NM like '%' || #{dealrNm} || '%'
+		</if>	
+		<!-- 요청자ID -->			    
+		<if test="reqrId != null and reqrId != ''">
+ 			AND A.REQR_ID = #{reqrId}
+		</if>					    
+		<!-- 요청자명 -->			    
+		<if test="reqrNm != null and reqrNm != ''">
+ 			AND A.REQR_NM like '%' || #{reqrNm} || '%'
+		</if>	
+		<!-- 제조사번호 -->			    
+		<if test="mnfrId != null and mnfrId != ''">
+ 			AND A.MNFR_NO = #{mnfrId}
+		</if>					    
+		<!-- 제조사명 -->			    
+		<if test="mnfrNm != null and mnfrNm != ''">
+ 			AND A.MNFR_NM like '%' || #{mnfrNm} || '%'
+		</if>		
+		
+		<!-- 요청속성(규격) - ALL -->			    
+		<if test="rqstAllAttr != null and rqstAllAttr != ''">
+ 			AND A.RQST_ALL_ATTR like '%' || #{rqstAllAttr} || '%'
+		</if>		
+		
+		<!-- 요청상품명 -->		
+		<if test="rqstPrdNm != null and rqstPrdNm != ''">
+		    
+			<if test="rqstPrdNmChk == 'Y'.toString() ">
+	 			AND A.RQST_PRD_NM = #{rqstPrdNm}
+			</if>	
+			<if test="rqstPrdNmChk != 'Y'.toString() ">
+	 			AND A.RQST_PRD_NM like '%' || #{rqstPrdNm} || '%'
+			</if>	
+		</if>		
+			  
+	</select>
+
+	<select id="selectProductNewList" parameterType="hashMap" resultType="hashMap">
+		/* ProductNew.selectProductNewList */
+		SELECT  AA.* 
+		FROM 
+		( SELECT   
+		<if test="selSort == 'rtDn'.toString() or selSort == null or selSort == '' ">
+ 			ROW_NUMBER() OVER (ORDER BY A.RQST_NO DESC, B.PROC_STATS_CD DESC) AS RN
+		</if>	
+		<if test="selSort == 'rtUp'.toString() ">
+ 			ROW_NUMBER() OVER (ORDER BY A.RQST_NO ASC, B.PROC_STATS_CD DESC) AS RN
+		</if>	
+		<if test="selSort == 'rdtDn'.toString() ">
+ 			ROW_NUMBER() OVER (ORDER BY RQST_DT DESC, B.PROC_STATS_CD DESC) AS RN
+		</if>			
+		<if test="selSort == 'rdtUp'.toString() ">
+ 			ROW_NUMBER() OVER (ORDER BY RQST_DT ASC, B.PROC_STATS_CD DESC) AS RN
+		</if>			
+		<if test="selSort == 'cdtDn'.toString() ">
+ 			ROW_NUMBER() OVER (ORDER BY CMPL_DT DESC, B.PROC_STATS_CD DESC) AS RN
+		</if>			
+		<if test="selSort == 'cdtUp'.toString() ">
+ 			ROW_NUMBER() OVER (ORDER BY CMPL_DT ASC, B.PROC_STATS_CD DESC) AS RN
+		</if>			
+			,A.RQST_NO /* 요청번호 */ 
+			,A.CO_CD /* 회사코드 */ 
+			,A.BZPLC_ID /* 사업장아이디 */ 
+			,A.OPR_UNT_ID /* 운영단위ID */ 
+			,A.DEPT_ID /* 부서코드 */ 
+			,A.EMP_NO /* 사원번호 */ 
+			,A.MEM_ID /* 회원ID */ 
+			,A.PRD_CLS_CD /* 상품 분류 코드 */ 
+			,A.PRD_CLS_NM /* 상품 분류명 */ 
+			,A.SMRO_MAPP_ID /* S-MRO분류코드 매핑 ID */ 
+			,A.PRD_ID /* 상품ID */
+			,A.RQST_PRD_NM /* 요청상품명 */ 
+			,A.ENG_RQST_PRD_NM /* 영문요청상품명 */ 
+			,A.BASIS_UNT /* 기본단위 */ 
+			,A.BASIS_UNT_QTY /* 기본단위수량 */ 
+			,A.ODR_UNT /* 주문단위 */ 
+			,A.ODR_UNT_QTY /* 주문단위수량 */ 
+			,A.STP_PRD_YN /* 표준품구분 */ 
+			,A.OSHT_SPR_CD /* 일회성구분코드 */ 
+			,A.STRA_MNG_SPR /* 전략/관리상품 구분 */ 
+			,A.SVC_PRD_YN /* 서비스상품분류 */ 
+			,A.SMTL_PRD_YN /* 부자재상품여부 */ 
+			,A.HPE_QTY /* 희망수량 */ 
+			,A.HPE_UPRC /* 희망단가 */ 
+			,A.HPE_UNT /* 희망단위 */ 
+			,A.CUR_UNT_CD /* 통화단위코드 */ 
+			,A.HUB_HNL_PSS_CD /* HUB취급가능여부 코드 */ 
+			,A.HRM_CHM_YN /* 화학물질 여부 */ 
+			,A.STOCK_NO /* STOCK_NO */ 
+			,A.RQST_UNT_CD /* 요청단위코드 */ 
+			,A.MNFR_NO /* 제조사번호 */ 
+			,A.MNFR_NM /* 제조원명 */ 
+			,A.CTRY_SPR_CD /* 국가구분코드 */ 
+			,A.CTRY_NM /* 국가명 */ 
+			,A.ATFL_ID /* 첨부파일ID */ 
+			,A.PUB_DVRS_SPR /* 공용전용구분 */ 
+			,A.RQST_SBJ /* 요청주체(S0:영업담당자) */ 
+			,A.PRD_SPR /* 상품구분(10:MRO) */ 
+			,A.RQST_RSN /* 요청사유 */ 
+			,A.RQST_ALL_ATTR /* 요청속성 */ 
+			,A.MALL_SPR_CD /* 몰구분(SSP,RD,DISP) */ 
+			,A.REPR_PRD_SPR /* 대표상품구분(통합가격,통합품질,피통합) */
+			,A.PRPS_STATS /* 제안상태(제안중,성공,거부) */ 
+			,A.PRPS_YN /* 제안여부 */ 
+			,A.PRPS_SPR /* 제안구분 */ 
+			,A.REG_DIS_TP /* 등록불가유형 */ 
+			,A.REG_DIS_RSN /* 등록불가사유 */ 
+			,A.RPLC_PRD_ID /* 대체상품ID */ 
+			,A.CUST_RJT_RSN /* 고객거부사유 */ 
+			,A.USE_YN /* 사용여부 */ 
+			,A.REG_DTM /* 등록일시 */ 
+			,A.REGPSN_ID /* 등록자ID */ 
+			,A.UPD_DTM /* 수정일시 */ 
+			,A.UPDPSN_ID /* 수정자ID */ 
+			/* ,A.INTG_PRD_ID 통합상품ID */ 
+			,A.BZPLC_NM    /* 사업장명   */
+			,A.OPR_UNT_NM  /* 운영단위명   */
+		    ,B.PROC_STATS_SEQ                       /* 처리상태 순번  */
+		    ,B.PROC_STATS_CD                       /* 처리상태 코드  */
+		    ,B.PROC_STATS_NM                       /* 처리상태  */
+		    ,B.REQR_ID                            /*  요청자 */
+		    ,(SELECT MEM_NM FROM TB_FC_MEM_BASIS WHERE CO_CD =#{coCd}  AND MEM_ID= B.REQR_ID) REQR_NM /*  요청자명 */
+		    ,(SELECT LOGIN_ID FROM TB_FC_MEM_LOGIN_INFO WHERE CO_CD =#{coCd}  AND MEM_ID= B.REQR_ID) LOGIN_ID /*  로그인ID */
+		    ,B.CHRPSN_ID                           /* 담당자 */
+		    ,B.DEALR_ID                            /*  처리자 */
+		    ,TO_CHAR(A.RQST_DTM, 'YYYY-MM-DD')  RQST_DTM       /* 요청일 */
+		    ,TO_CHAR(A.CMPL_DTM, 'YYYY-MM-DD')  CMPL_DTM       /* 완료일 */
+		    ,(SELECT DTL_CD_NM FROM TB_FC_COM_CD_DTL 
+		       WHERE LANG_CD = #{langCd} AND CLS_CD = 'SALS_UNT_CD' AND DTL_CD = A.HPE_UNT) AS HPE_UNT_NM /* 단위명 */
+		       
+		  FROM (SELECT 
+		  			 X.*
+		  			,TO_DATE(X.RQST_DTM,'YYYY-MM-DD') RQST_DT
+		  			,TO_DATE(X.CMPL_DTM,'YYYY-MM-DD') CMPL_DT
+		  			,(SELECT CTS_1 FROM TB_FC_BZPLC_ADD_INFO WHERE CO_CD = #{coCd} AND BZPLC_ID = X.BZPLC_ID) AS BZPLC_NM
+		  			,(SELECT OPR_UNT_NM FROM TB_FC_BZPLC_OPR_UNT WHERE CO_CD = #{coCd} AND OPR_UNT_ID = X.OPR_UNT_ID ) OPR_UNT_NM
+		  		  FROM TB_SG_PRD_RQST X
+		  	    ) A  		   /** 신규요청 **/
+	 		    LEFT JOIN (
+				 	SELECT 
+				 	     Z.*
+				 		,(SELECT CMN_COM_NM FROM T_CMM_COM WHERE CMN_COM_IDX = Z.PROC_STATS_CD) PROC_STATS_NM 
+				 	FROM 
+					(
+						SELECT 
+							 Y.*
+						FROM TB_SG_RQST_PROC Y
+						WHERE Y.PROC_STATS_SEQ = (SELECT MAX(V.PROC_STATS_SEQ)
+                             						FROM TB_SG_RQST_PROC V
+                            						WHERE 1=1
+                            						 AND Y.CO_CD  = V.CO_CD
+                            						 AND Y.RQST_NO = V.RQST_NO
+                            						 AND V.PROC_STATS_CD IS NOT NULL OR V.PROC_STATS_CD != ''
+												 )
+					) Z			 	 
+	 		    ) B             /** 신규요청 처리 **/
+				ON (A.RQST_NO = B.RQST_NO )   
+		  WHERE 1=1
+		    AND A.CO_CD   =#{coCd}
+		<!-- 요청번호 multi -->    
+		<if test="rqstNoArr != null and rqstNoArr != '' ">	
+		   AND (A.RQST_NO IN	   	   
+		  <foreach collection="rqstNoArr" item="rqstNo" open="(" separator="," close=")" >
+		  	  #{rqstNo}
+		  </foreach>
+		</if>	
+		<!-- 상품번호 multi -->   
+		<if test="prdIdArr != null and prdIdArr != '' ">	
+		   OR A.PRD_ID IN	   	   
+		  <foreach collection="prdIdArr" item="prdId" open="(" separator="," close=")" >
+		  	  #{prdId}
+		  </foreach>
+		  )
+		</if>			    
+		    
+		<!-- 몰구분 -->			    
+		<if test="mallSprCd != null and mallSprCd != ''">
+ 			AND A.MALL_SPR_CD = #{mallSprCd}
+		</if>	
+		<!-- 공용전용구분 -->			    
+		<if test="pubDvrsSpr != null and pubDvrsSpr != ''">
+ 			AND A.PUB_DVRS_SPR = #{pubDvrsSpr}
+		</if>			 
+		<!-- 사업장 -->		
+		<if test="selBzpOpr == 'bzplc'.toString() ">	    
+			<if test="bzplcId != null and bzplcId != ''">
+	 			AND A.BZPLC_ID  = #{bzplcId}
+			</if>	
+			
+			<if test="bzplcNm != null and bzplcNm != ''">
+	 			AND A.BZPLC_NM  like '%' || #{bzplcNm} || '%'
+			</if>	
+		</if>	
+		<!-- 운영단위 -->	
+		<if test="selBzpOpr == 'oprUnt'.toString() ">		    
+			<if test="bzplcId != null and bzpId != ''">
+	 			AND A.BZPLC_ID  = #{bzplcId}
+			</if>	
+			<if test="bzplcNm!= null and bzplcNm!= != ''">
+	 			AND A.BZPLC_NM  like '%' || #{bzplcNm} || '%'
+			</if>	
+		</if>
+				     
+		<!-- 상품 분류 코드 -->			    
+		<if test="prdClsCd != null and prdClsCd != ''">
+ 			AND A.PRD_CLS_CD = #{prdClsCd}
+		</if>					    
+		<!-- 상품 분류명 -->		 	    
+		<if test="prdClsNm != null and prdClsNm != ''">
+ 			AND A.PRD_CLS_NM like '%' || #{prdClsNm} || '%'
+		</if>	
+		<!-- 요청일자 -->			    
+		<if test="selRqstCmpl == 'rqstDtm'.toString() ">
+ 			AND A.RQST_DTM BETWEEN TO_DATE(REPLACE(#{searchStartDate},'-','') || '000000','YYYYMMDDHH24MISS')
+			AND TO_DATE(REPLACE(#{searchEndDate},'-','') || '235959','YYYYMMDDHH24MISS')  
+		</if>	
+		<!-- 완료일자 -->			    
+		<if test="selRqstCmpl == 'cmplDtm'.toString() ">
+ 			AND A.CMPL_DTM BETWEEN TO_DATE(REPLACE(#{searchStartDate},'-','') || '000000','YYYYMMDDHH24MISS')
+			AND TO_DATE(REPLACE(#{searchEndDate},'-','') || '235959','YYYYMMDDHH24MISS')  
+		</if>	
+		<!-- 대표상품구분(통합가격,통합품질,피통합) -->			    
+		<if test="reprPrdSpr != null and reprPrdSpr != ''">
+ 			AND A.REPR_PRD_SPR = #{reprPrdSpr}
+		</if>		
+		<!-- 제안상태(제안중,성공,거부) -->			    
+		<if test="prpsStats != null and prpsStats != ''">
+ 			AND A.PRPS_STATS = #{prpsStats}
+		</if>			
+		<!-- 담당자ID -->			    
+		<if test="chrpsnId != null and chrpsnId != ''">
+ 			AND A.CHRPSN_ID = #{chrpsnId}
+		</if>					    
+		<!-- 담당자명 -->			    
+		<if test="chrpsnNm != null and chrpsnNm != ''">
+ 			AND A.CHRPSN_NM like '%' || #{chrpsnNm} || '%'
+		</if>	
+		<!-- 처리자ID -->			    
+		<if test="dealrId != null and dealrId != ''">
+ 			AND A.DEALR_ID = #{dealrId}
+		</if>					    
+		<!-- 처리자명 -->			    
+		<if test="dealrNm != null and dealrNm != ''">
+ 			AND A.DEALR_NM like '%' || #{dealrNm} || '%'
+		</if>	
+		<!-- 요청자ID -->			    
+		<if test="reqrId != null and reqrId != ''">
+ 			AND A.REQR_ID = #{reqrId}
+		</if>					    
+		<!-- 요청자명 -->			    
+		<if test="reqrNm != null and reqrNm != ''">
+ 			AND A.REQR_NM like '%' || #{reqrNm} || '%'
+		</if>	
+		<!-- 제조사번호 -->			    
+		<if test="mnfrId != null and mnfrId != ''">
+ 			AND A.MNFR_NO = #{mnfrId}
+		</if>					    
+		<!-- 제조사명 -->			    
+		<if test="mnfrNm != null and mnfrNm != ''">
+ 			AND A.MNFR_NM like '%' || #{mnfrNm} || '%'
+		</if>		
+		
+		<!-- 요청속성(규격) - ALL -->			    
+		<if test="rqstAllAttr != null and rqstAllAttr != ''">
+ 			AND A.RQST_ALL_ATTR like '%' || #{rqstAllAttr} || '%'
+		</if>		
+		
+		<!-- 요청상품명 -->		
+		<if test="rqstPrdNm != null and rqstPrdNm != ''">
+		    
+			<if test="rqstPrdNmChk == 'Y'.toString() ">
+	 			AND A.RQST_PRD_NM = #{rqstPrdNm}
+			</if>	
+			<if test="rqstPrdNmChk != 'Y'.toString() ">
+	 			AND A.RQST_PRD_NM like '%' || #{rqstPrdNm} || '%'
+			</if>	
+		</if>		
+				    
+		) AA
+		WHERE AA.RN BETWEEN #{startNum} AND #{endNum} 			    
+			    
+	</select>
+
+
+	<select id="selectNewRqstDetail" parameterType="hashMap" resultType="hashMap">
+		/* ProductNew.selectNewRqstDetail */
+		 SELECT  
+			 A.RQST_NO /* 요청번호 */ 
+			,A.CO_CD /* 회사코드 */ 
+			,A.BZPLC_ID /* 사업장아이디 */ 
+			,A.OPR_UNT_ID /* 운영단위ID */ 
+			,A.DEPT_ID /* 부서코드 */ 
+			,A.EMP_NO /* 사원번호 */ 
+			,A.MEM_ID /* 회원ID */ 
+			,A.PRD_CLS_CD /* 상품 분류 코드 */ 
+			,A.PRD_CLS_NM /* 상품 분류명 */ 
+			,A.SMRO_MAPP_ID /* S-MRO분류코드 매핑 ID */ 
+			,A.PRD_ID /* 상품ID */ 
+			,A.RQST_PRD_NM /* 요청상품명 */ 
+			,A.ENG_RQST_PRD_NM /* 영문요청상품명 */ 
+			,A.BASIS_UNT /* 기본단위 */ 
+			,A.BASIS_UNT_QTY /* 기본단위수량 */ 
+			,A.ODR_UNT /* 주문단위 */ 
+			,A.ODR_UNT_QTY /* 주문단위수량 */ 
+			,A.STP_PRD_YN /* 표준품구분 */ 
+			,A.OSHT_SPR_CD /* 일회성구분코드 */ 
+			,A.STRA_MNG_SPR /* 전략/관리상품 구분 */ 
+			,A.SVC_PRD_YN /* 서비스상품분류 */ 
+			,A.SMTL_PRD_YN /* 부자재상품여부 */ 
+			,A.HPE_QTY /* 희망수량 */ 
+			,A.HPE_UPRC /* 희망단가 */ 
+			,A.HPE_UNT /* 희망단위 */ 
+			,A.CUR_UNT_CD /* 통화단위코드 */ 
+			,A.HUB_HNL_PSS_CD /* HUB취급가능여부 코드 */ 
+			,A.HRM_CHM_YN /* 화학물질 여부 */ 
+			,A.STOCK_NO /* STOCK_NO */ 
+			,A.RQST_UNT_CD /* 요청단위코드 */ 
+			,A.MNFR_NO /* 제조사번호 */ 
+			,A.MNFR_NM /* 제조원명 */ 
+			,A.CTRY_SPR_CD /* 국가구분코드 */ 
+			,A.CTRY_NM /* 국가명 */ 
+			,A.ATFL_ID /* 첨부파일ID */ 
+			,A.PUB_DVRS_SPR /* 공용전용구분 */ 
+			,A.RQST_SBJ /* 요청주체(S0:영업담당자) */ 
+			,A.PRD_SPR /* 상품구분(10:MRO) */ 
+			,A.RQST_RSN /* 요청사유 */ 
+			,A.RQST_ALL_ATTR /* 요청속성 */ 
+			,A.MALL_SPR_CD /* 몰구분(SSP,RD,DISP) */ 
+			,A.REPR_PRD_SPR /* 대표상품구분(통합가격,통합품질,피통합) */ 
+			,A.PRPS_STATS /* 제안상태(제안중,성공,거부) */ 
+			,A.PRPS_YN /* 제안여부 */ 
+			,A.PRPS_SPR /* 제안구분 */ 
+			,A.REG_DIS_TP /* 등록불가유형 */ 
+			,A.REG_DIS_RSN /* 등록불가사유 */ 
+			,A.RPLC_PRD_ID /* 대체상품ID */ 
+			,A.CUST_RJT_RSN /* 고객거부사유 */ 
+			,A.USE_YN /* 사용여부 */ 
+			,A.REG_DTM /* 등록일시 */ 
+			,A.REGPSN_ID /* 등록자ID */ 
+			,A.UPD_DTM /* 수정일시 */ 
+			,A.UPDPSN_ID /* 수정자ID */ 
+			/* ,A.INTG_PRD_ID  통합상품ID */ 
+			,A.BZPLC_NM    /* 사업장명   */
+			,A.OPR_UNT_NM  /* 운영단위명   */			
+		    ,B.PROC_STATS_SEQ                       /* 처리상태 순번  */
+		    ,B.PROC_STATS_CD                       /* 처리상태 코드  */
+		    ,B.PROC_STATS_NM                       /* 처리상태  */
+		    ,B.REQR_ID                            /*  요청자 */
+		    ,(SELECT MEM_NM FROM TB_FC_MEM_BASIS WHERE CO_CD =#{coCd}  AND MEM_ID= B.REQR_ID) REQR_NM /*  요청자명 */
+		    ,(SELECT LOGIN_ID FROM TB_FC_MEM_LOGIN_INFO WHERE CO_CD =#{coCd}  AND MEM_ID= B.REQR_ID) LOGIN_ID /*  로그인ID */		    
+		    
+		    ,B.CHRPSN_ID                           /* 담당자 */
+		    ,B.DEALR_ID                            /*  처리자 */
+		    ,TO_CHAR(A.RQST_DTM, 'YYYY-MM-DD')  RQST_DTM       /* 요청일 */
+		    ,TO_CHAR(A.CMPL_DTM, 'YYYY-MM-DD')  CMPL_DTM       /* 완료일 */		    
+		    ,(SELECT DTL_CD_NM FROM TB_FC_COM_CD_DTL 
+		       WHERE LANG_CD = #{langCd} AND CLS_CD = 'SALS_UNT_CD' AND DTL_CD = A.HPE_UNT) AS HPE_UNT_NM /* 단위명 */
+		  FROM (SELECT 
+		  			 X.*
+		  			,TO_DATE(X.RQST_DTM,'YYYY-MM-DD') RQST_DT
+		  			,TO_DATE(X.CMPL_DTM,'YYYY-MM-DD') CMPL_DT
+		  			,(SELECT CTS_1 FROM TB_FC_BZPLC_ADD_INFO WHERE CO_CD = #{coCd} AND BZPLC_ID = X.BZPLC_ID) AS BZPLC_NM
+		  			,(SELECT OPR_UNT_NM FROM TB_FC_BZPLC_OPR_UNT WHERE CO_CD = #{coCd} AND OPR_UNT_ID = X.OPR_UNT_ID ) OPR_UNT_NM
+		  		  FROM TB_SG_PRD_RQST X
+		  	    ) A  		   /** 신규요청 **/
+	 		   LEFT JOIN (
+				 	SELECT 
+				 	     Z.*
+				 		,(SELECT CMN_COM_NM FROM T_CMM_COM WHERE CMN_COM_IDX = Z.PROC_STATS_CD) PROC_STATS_NM 
+				 	  FROM TB_SG_RQST_PROC Z
+	 		   ) B             /** 신규요청 처리 **/
+				 ON (A.RQST_NO = B.RQST_NO AND B.PROC_STATS_SEQ  = (SELECT MAX(V.PROC_STATS_SEQ)
+				                             						FROM TB_SG_RQST_PROC V
+				                            						WHERE 1=1
+				                            						 AND B.CO_CD  = V.CO_CD
+				                            						 AND B.RQST_NO = V.RQST_NO
+				                            						 AND V.PROC_STATS_CD IS NOT NULL OR V.PROC_STATS_CD != ''
+												 				   )
+					)    
+		  WHERE 1=1
+		    AND A.CO_CD   = #{coCd}
+       		AND	A.RQST_NO = #{rqstNo}    
+	</select>
+	
+
+	<select id="selectRqstProcList" parameterType="hashMap" resultType="hashMap">
+		SELECT  
+			 A.RQST_NO /* 요청번호 */ 
+			,A.PROC_STATS_CD /* 처리상태코드 */ 
+			,A.PROC_STATS_SEQ /* 처리상태순번 */ 
+			,A.USE_YN /* 사용여부 */ 
+			,TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI') REG_DTM /* 등록일시 */ 
+			,A.REGPSN_ID /* 등록자ID */ 
+			,A.REQR_ID /* 요청자ID */ 
+			,A.CHRPSN_ID /* 담당자ID */ 
+			,A.DEALR_ID /* 처리자ID */ 
+			,(SELECT CMN_COM_NM FROM T_CMM_COM WHERE CMN_COM_IDX = A.PROC_STATS_CD) PROC_STATS_NM 
+		FROM TB_SG_RQST_PROC A
+	    WHERE 1=1
+	      AND A.RQST_NO = #{rqstNo}
+		  AND A.PROC_STATS_CD IS NOT NULL OR A.PROC_STATS_CD != ''
+		ORDER BY A.PROC_STATS_SEQ DESC   
+       
+    </select>	
+
+ 	<select id="selectRqstProductSpecList" parameterType="hashMap" resultType="hashMap">
+    	 /*  newProductRequest.selectRqstProductSpecList  */
+    	 SELECT 
+			 A.RQST_NO /* 요청번호 */ 
+			,A.SPEC_SEQ /* 규격순번 */ 
+			,A.ATTR_CD /* 속성코드 */ 
+			,A.PRNM /* 속성명 */ 
+			,A.PRVL /* 속성값 */ 
+			,A.USE_YN /* 사용여부 */ 		
+    	  FROM  TB_SG_RQST_ATTR A                   /** SG 상품 속성 **/
+     	 WHERE 1=1
+    	   AND A.RQST_NO = #{rqstNo}
+    
+    </select>	
+    
+  	<select id="selectRqstProductAttachList" parameterType="hashMap" resultType="hashMap">
+    	 /*  newProductRequest.selectRqstProductAttachList  */
+    	 SELECT 
+			 A.SAP_DOC_ID
+			,B.DOC_REG_ID
+			,B.FILE_NM		
+		 FROM      TB_SB_ATCH_FILE_DTL A
+		 LEFT JOIN TB_FC_COM_ATFL_MNG B
+	   	 ON (A.SAP_DOC_ID = B.SAP_DOC_ID)
+    	WHERE 1=1
+    	  AND A.ATFL_ID=#{atflId}
+    
+    </select>	   
+    
+    
+    
+	<select id="selectPrdClsNm" parameterType="hashMap" resultType="hashMap">    
+   		SELECT 
+		    PRD_CLS_CD,
+		    SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM         
+		FROM 
+		    TB_SG_PRD_CLS
+		WHERE
+			  USE_YN = 'Y'
+		  AND PRD_CLS_CD = #{prdClsCd} 
+		START WITH PRD_CLS_LVL = 1
+		CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+		ORDER SIBLINGS BY SEQ ASC 
+    
+    </select>
+    
+	<select id="selectProductRQST" parameterType="hashMap" resultType="hashMap">
+		SELECT  
+	     ROWNUM AS ODR_NO , A.* 
+      	,A.PRD_ID                                /* 상품ID  */
+        ,A.RQST_RSN                              /* 요청사유 */
+        ,A.PRD_CLS_NM                            /* 상품분류 */
+        ,TO_CHAR(A.RQST_DTM, 'YYYY-MM-DD')         /* 요청일 */
+        ,TO_CHAR(A.CMPL_DTM, 'YYYY-MM-DD')         /* 완료일 */
+        ,A.RQST_PRD_NM                           /* 요청상품명 */
+        ,A.MNFR_NM                               /* 제조원명 */
+        ,A.HPE_QTY                               /* 희망수량 */
+        ,A.HPE_UPRC                              /* 단가 */
+        ,A.PUB_DVRS_SPR                          /* 전용상품구분 */
+        ,A.PROC_STATS_CD                         /* 처리상태 */
+        ,A.MNFR_NM                             /* 제조원명 */
+        ,A.REPR_PRD_SPR                         /* 대표상품구분 */
+        ,A.HRM_CHM_YN                          /* 화학물질여부 */
+        ,A.RQST_ALL_ATTR                           /* 규격 */
+      	,A.CTRY_NM                             /* 국가명 */
+      	,SG.REQR_ID                              /* 요청자 */
+      	,SG.DEALR_ID                             /* 처리자 */
+		
+      FROM TB_SG_PRD_RQST A  
+		   LEFT JOIN (                           /** SG 규격 **/
+						SELECT 
+						   CO_CD
+						  ,PRD_ID
+						  ,RQST_NO
+						FROM TB_SG_PRD_RQST        
+						GROUP BY CO_CD, PRD_ID, RQST_NO
+				      ) B
+				        ON (A.CO_CD = B.CO_CD AND A.PRD_ID = B.PRD_ID)      
+ 		   LEFT JOIN TB_SG_RQST_PROC SG
+		                ON (A.RQST_NO = SG.RQST_NO)
+     WHERE A.CO_CD = #{coCd}
+      
+	ORDER BY ODR_NO DESC
+	</select>
+<select id="selectProductListExcel" parameterType="hashMap" resultType="hashMap">
+		/* ProductNew.selectProductListExcel */
+SELECT  AA.* 
+		FROM 
+		( SELECT   
+		<if test="selSort == 'rtDn'.toString() or selSort == null or selSort == '' ">
+ 			ROW_NUMBER() OVER (ORDER BY A.RQST_NO DESC, B.PROC_STATS_CD DESC) AS RN
+		</if>	
+		<if test="selSort == 'rtUp'.toString() ">
+ 			ROW_NUMBER() OVER (ORDER BY A.RQST_NO ASC, B.PROC_STATS_CD DESC) AS RN
+		</if>	
+		<if test="selSort == 'rdtDn'.toString() ">
+ 			ROW_NUMBER() OVER (ORDER BY RQST_DT DESC, B.PROC_STATS_CD DESC) AS RN
+		</if>			
+		<if test="selSort == 'rdtUp'.toString() ">
+ 			ROW_NUMBER() OVER (ORDER BY RQST_DT ASC, B.PROC_STATS_CD DESC) AS RN
+		</if>			
+		<if test="selSort == 'cdtDn'.toString() ">
+ 			ROW_NUMBER() OVER (ORDER BY CMPL_DT DESC, B.PROC_STATS_CD DESC) AS RN
+		</if>			
+		<if test="selSort == 'cdtUp'.toString() ">
+ 			ROW_NUMBER() OVER (ORDER BY CMPL_DT ASC, B.PROC_STATS_CD DESC) AS RN
+		</if>			
+			,A.RQST_NO /* 요청번호 */ 
+			,A.CO_CD /* 회사코드 */ 
+			,A.BZPLC_ID /* 사업장아이디 */ 
+			,A.OPR_UNT_ID /* 운영단위ID */ 
+			,A.DEPT_ID /* 부서코드 */ 
+			,A.EMP_NO /* 사원번호 */ 
+			,A.MEM_ID /* 회원ID */ 
+			,A.PRD_CLS_CD /* 상품 분류 코드 */ 
+			,A.PRD_CLS_NM /* 상품 분류명 */ 
+			,A.SMRO_MAPP_ID /* S-MRO분류코드 매핑 ID */ 
+			,A.PRD_ID /* 상품ID */
+			,A.RQST_PRD_NM /* 요청상품명 */ 
+			,A.ENG_RQST_PRD_NM /* 영문요청상품명 */ 
+			,A.BASIS_UNT /* 기본단위 */ 
+			,A.BASIS_UNT_QTY /* 기본단위수량 */
+			,A.ODR_UNT /* 주문단위 */
+			,A.ODR_UNT_QTY /* 주문단위수량 */ 
+			,A.STP_PRD_YN /* 표준품구분 */ 
+			,A.OSHT_SPR_CD /* 일회성구분코드 */ 
+			,A.STRA_MNG_SPR /* 전략/관리상품 구분 */ 
+			,A.SVC_PRD_YN /* 서비스상품분류 */ 
+			,A.SMTL_PRD_YN /* 부자재상품여부 */ 
+			,A.HPE_QTY /* 희망수량 */ 
+			,A.HPE_UPRC /* 희망단가 */ 
+			,A.HPE_UNT /* 희망단위 */ 
+			,A.CUR_UNT_CD /* 통화단위코드 */ 
+			,A.HUB_HNL_PSS_CD /* HUB취급가능여부 코드 */ 
+			,A.HRM_CHM_YN /* 화학물질 여부 */ 
+			,A.STOCK_NO /* STOCK_NO */ 
+			,A.RQST_UNT_CD /* 요청단위코드 */ 
+			,A.MNFR_NO /* 제조사번호 */ 
+			,A.MNFR_NM /* 제조원명 */ 
+			,A.CTRY_SPR_CD /* 국가구분코드 */ 
+			,A.CTRY_NM /* 국가명 */ 
+			,A.ATFL_ID /* 첨부파일ID */ 
+			,A.PUB_DVRS_SPR /* 공용전용구분 */ 
+			,A.RQST_SBJ /* 요청주체(S0:영업담당자) */ 
+			,A.PRD_SPR /* 상품구분(10:MRO) */ 
+			,A.RQST_RSN /* 요청사유 */ 
+			,A.RQST_ALL_ATTR /* 요청속성 */ 
+			,A.MALL_SPR_CD /* 몰구분(SSP,RD,DISP) */ 
+			,A.REPR_PRD_SPR /* 대표상품구분(통합가격,통합품질,피통합) */
+			,A.PRPS_STATS /* 제안상태(제안중,성공,거부) */ 
+			,A.PRPS_YN /* 제안여부 */ 
+			,A.PRPS_SPR /* 제안구분 */ 
+			,A.REG_DIS_TP /* 등록불가유형 */ 
+			,A.REG_DIS_RSN /* 등록불가사유 */ 
+			,A.RPLC_PRD_ID /* 대체상품ID */ 
+			,A.CUST_RJT_RSN /* 고객거부사유 */ 
+			,A.USE_YN /* 사용여부 */ 
+			,A.REG_DTM /* 등록일시 */ 
+			,A.REGPSN_ID /* 등록자ID */ 
+			,A.UPD_DTM /* 수정일시 */ 
+			,A.UPDPSN_ID /* 수정자ID */ 
+			/* ,A.INTG_PRD_ID 통합상품ID */ 
+			,A.BZPLC_NM    /* 사업장명   */
+			,A.OPR_UNT_NM  /* 운영단위명   */
+		    ,B.PROC_STATS_CD                       /* 처리상태 코드  */
+		    ,B.PROC_STATS_NM                       /* 처리상태  */
+		    ,B.REQR_ID                            /*  요청자 */
+		    ,B.CHRPSN_ID                           /* 담당자 */
+		    ,B.DEALR_ID                            /*  처리자 */
+		    ,TO_CHAR(A.RQST_DTM, 'YYYY-MM-DD')  RQST_DTM       /* 요청일 */
+		    ,TO_CHAR(A.CMPL_DTM, 'YYYY-MM-DD')  CMPL_DTM       /* 완료일 */
+		    ,(SELECT DTL_CD_NM FROM TB_FC_COM_CD_DTL 
+		       WHERE LANG_CD = #{langCd} AND CLS_CD = 'SALS_UNT_CD' AND DTL_CD = A.HPE_UNT) AS HPE_UNT_NM /* 단위명 */
+		  FROM (SELECT 
+		  			 X.*
+		  			,TO_DATE(X.RQST_DTM,'YYYY-MM-DD') RQST_DT
+		  			,TO_DATE(X.CMPL_DTM,'YYYY-MM-DD') CMPL_DT
+		  			,(SELECT CTS_1 FROM TB_FC_BZPLC_ADD_INFO WHERE CO_CD = #{coCd} AND BZPLC_ID = X.BZPLC_ID) AS BZPLC_NM
+		  			,(SELECT OPR_UNT_NM FROM TB_FC_BZPLC_OPR_UNT WHERE CO_CD = #{coCd} AND OPR_UNT_ID = X.OPR_UNT_ID ) OPR_UNT_NM
+		  		  FROM TB_SG_PRD_RQST X
+		  	    ) A  		   /** 신규요청 **/
+	 		    LEFT JOIN (
+				 	SELECT 
+				 	     Z.*
+				 		,(SELECT CMN_COM_NM FROM T_CMM_COM WHERE CMN_COM_IDX = Z.PROC_STATS_CD) PROC_STATS_NM 
+				 	  FROM TB_SG_RQST_PROC Z
+	 		    ) B             /** 신규요청 처리 **/
+				ON (A.RQST_NO = B.RQST_NO)    
+		  WHERE 1=1
+		    AND A.CO_CD   =#{coCd}
+		<!-- 요청번호 -->
+ 			<!-- AND A.RQST_NO = #{rqstNo} -->
+		    
+		) AA
+		WHERE AA.RN BETWEEN #{startNum} AND #{endNum} 			    
+			    
+	</select> 
+	
+	 <update id="updateRqstRegister" parameterType="hashMap" >
+		UPDATE TB_SG_PRD_RQST
+		  SET
+			UPD_DTM = SYSDATE /* 수정일시 */ 
+		   ,UPDPSN_ID = #{updpsnId} /* 수정자ID */ 
+		<if test="rqstPrdNm != null and rqstPrdNm != ''">
+ 		   ,RQST_PRD_NM = #{rqstPrdNm} /* 요청상품명 */ 
+		</if>	   		   
+		<if test="pubDvrsSpr != null and pubDvrsSpr != ''">
+		   ,PUB_DVRS_SPR =#{pubDvrsSpr} /* 공용전용구분 */ 
+		</if>			   
+		<if test="prdClsCd != null and prdClsCd != ''">
+		   ,PRD_CLS_CD = #{prdClsCd} /* 상품분류ID */ 
+		</if>	
+		<if test="prdClsNm != null and prdClsNm != ''">
+           ,PRD_CLS_NM = #{prdClsNm} /* 상품 분류명 */ 
+		</if>	
+		<if test="intgMthdCd != null and intgMthdCd != ''">
+           ,INTG_MTHD_CD = #{intgMthdCd} /* 선정방식코드 */
+		</if>	
+		<if test="smroMappId != null and smroMappId != ''">
+           ,SMRO_MAPP_ID = #{smroMappId} /* S-MRO분류코드 매핑 ID */ 
+		</if>	
+		<if test="rqstAllAttr != null and rqstAllAttr != ''">
+ 		   ,RQST_ALL_ATTR = #{rqstAllAttr} /* 요청속성 */ 
+		</if>			
+		<if test="basisUntQty != null and basisUntQty != ''">
+           ,BASIS_UNT_QTY = #{basisUntQty} /* 기본단위수량 */ 
+		</if>									
+		<if test="basisUnt != null and basisUnt != ''">
+           ,BASIS_UNT = #{basisUnt} /* 기본단위 */ 
+		</if>	
+		<if test="odrUnt != null and odrUnt != ''">
+           ,ODR_UNT = #{odrUnt} /* 주문단위 */ 
+		</if>	
+		<if test="odrUntQty != null and odrUntQty != ''">
+           ,ODR_UNT_QTY = #{odrUntQty} /* 주문단위수량 */
+		</if>	
+		<if test="mnfrNo != null and mnfrNo != ''">
+           ,MNFR_NO = #{mnfrNo} /* 제조사번호 */  
+		</if>	
+		<if test="mnfrNm != null and mnfrNm != ''">
+           ,MNFR_NM = #{mnfrNm} /* 제조원명 */ 
+		</if>			
+		<if test="ctrySprCd != null and ctrySprCd != ''">
+           ,CTRY_SPR_CD = #{ctrySprCd} /* 국가구분코드 */ 
+		</if>			
+		<if test="ctryNm != null and ctryNm != ''">
+		   ,CTRY_NM = #{ctryNm} /* 국가명 */   
+		</if>	
+		
+		<if test="regDisTp != null and regDisTp != ''">
+		   ,REG_DIS_TP = #{regDisTp} /* 등록불가유형 */   
+		</if>			
+		<if test="prpsSpr != null and prpsSpr != ''">
+		   ,PRPS_SPR = #{prpsSpr} /* 제안구분 */   
+		</if>			
+		<if test="prpsStats != null and prpsStats != ''">
+		   ,PRPS_STATS = #{prpsStats} /* 제안상태 */   
+		</if>			
+		<if test="rplcPrdId != null and rplcPrdId != ''">
+		   ,RPLC_PRD_ID = #{rplcPrdId} /* 대체상품ID */   
+		</if>			
+		<if test="custRjtRsn != null and custRjtRsn != ''">
+		   ,CUST_RJT_RSN = #{custRjtRsn} /* 고객거부사유 */   
+		</if>			
+		<if test="regDisRsn != null and regDisRsn != ''">
+		   ,REG_DIS_RSN = #{regDisRsn} /* 등록불가사유 */   
+		</if>	
+		<if test="regDisRsn == '3040'.toString() or regDisRsn = '3042'.toString() or regDisRsn = '3043'.toString()  or regDisRsn = '3044'.toString()  or regDisRsn = '3068'.toString() or regDisRsn = '3069'.toString()">
+		   ,CMPL_DTM = SYSDATE     /* 완료일자 */   
+		</if>
+        WHERE 1=1
+          AND RQST_NO = #{rqstNo}
+ 	 </update>	
+	
+	<select id="selectFileImage" parameterType="hashMap" resultType="hashMap">
+    	 /*  newProductRequest.selectFileName  */
+    	       SELECT  
+	                SB.FILE_SEQ
+	               ,SB.FILE_STOR_PATH || SB.STOR_FILE_NM AS FILE_IMAGE
+	               ,SB.STOR_FILE_NM 
+	               ,SB.ORIGNL_FILE_NM
+	               ,A.ATFL_ID
+	               ,A.RQST_NO 
+		
+                 FROM TB_SG_PRD_RQST A 
+                 LEFT JOIN TB_SB_ATCH_FILE_DTL SB
+                   ON (A.ATFL_ID =SB.ATFL_ID) 
+                   
+                    WHERE 1=1
+                 AND RQST_NO = #{rqstNo}
+    </select>	
+	<!--  12121212 -->
+    <!-- 사용안함 
+    <select id="selectProcStatsSeq" parameterType="hashMap" resultType="sspMap">   
+    	/* newProductRequest.selectProcStatsSeq */      
+        SELECT TO_NUMBER(NVL(MAX(PROC_STATS_SEQ),'0'))+1 AS PROC_STATS_SEQ 
+          FROM TB_SG_RQST_PROC
+    </select>	
+	-->
+	<!-- 사용안함 
+	<insert id ="insertProductRQST" parameterType="hashMap">
+	INSERT INTO TB_SG_RQST_PROC
+	(
+		 RQST_NO
+		,PROC_STATS_SEQ
+		,PROC_STATS_CD
+		,FILE_USE_YN
+		,REG_DTM
+		,REGPSN_ID
+		,REQR_ID
+		,CHRPSN_ID
+		,DEALR_ID
+	
+		) VALUES (
+	
+		 #{rqstNo}
+		,#{procStatsSeq}
+		,#{procStatsCd}
+		,#{useYn}
+		,TO_CHAR(#{REG_DTM}, 'YYYY-MM-DD')
+		,#{regpsnId}
+		,#{reqrId}
+		,#{chrpsnId}
+		,#{dealrId}
+	)
+	</insert>
+	-->
+	
+</mapper>

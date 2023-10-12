@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="sampleForm" width="1280" height="720" titletext="New Form">
+    <Layouts>
+      <Layout height="720" width="1280">
+        <Button id="Button00" taborder="0" text="에러로그 조회 화면 이동" left="12" top="12" width="178" height="39" onclick="Button00_onclick"/>
+        <Button id="Button01" taborder="1" text="팝업샘플화면 이동" left="12" top="61" width="130" height="35" onclick="Button01_onclick"/>
+        <Button id="Button02" taborder="2" text="멀티 텍스트" left="180" top="105" width="120" height="27" onclick="Button02_onclick"/>
+        <Edit id="multiText" taborder="3" left="12" top="105" width="165" height="27"/>
+        <Button id="Button01_00" taborder="4" text="트리 샘플화면 이동" left="152" top="61" width="130" height="35" onclick="Button01_00_onclick"/>
+        <Button id="Button01_00_00" taborder="5" text="코드관리 화면 이동" left="290" top="61" width="130" height="35" onclick="Button01_00_00_onclick"/>
+        <Button id="Button01_00_00_00" taborder="6" text="메뉴관리" left="430" top="61" width="130" height="35" onclick="Button01_00_00_00_onclick"/>
+        <Button id="Button01_00_00_00_00" taborder="7" text="공지사항" left="570" top="61" width="130" height="35" onclick="Button01_00_00_00_00_onclick"/>
+        <Div id="Div00" taborder="8" left="5" top="141" width="200" height="30" url="COMM::cmmEdit.xfdl"/>
+        <Edit id="Edit00" taborder="9" left="10" top="193" oninput="Edit00_oninput" width="200" height="30"/>
+        <Button id="btn_clear" taborder="10" left="188" top="199" width="18" height="18" text="X" visible="false" onclick="btn_clear_onclick"/>
+        <Button id="Button01_00_00_00_00_00" taborder="11" text="운영자이관등록" left="710" top="61" width="130" height="35" onclick="Button01_00_00_00_00_00_onclick"/>
+        <Button id="Button01_00_00_00_00_00_00" taborder="12" text="시스템메세지관리" left="850" top="60" width="130" height="35" onclick="Button01_00_00_00_00_00_00_onclick"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[
+this.Button00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.go("CO::SSP_BO_YA_08.xfdl");
+};
+
+this.Button01_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.go("sample::samplePopUpPage.xfdl");
+};
+
+this.Button02_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = {
+		textId : this.multiText
+	};
+	
+	var options = {};
+	options.title = "멀티 텍스트 팝업";
+
+	this.gfn_openPopup("multiTextPopup", "CO_POP::multiTextPopup.xfdl", params,  "fn_multiTextPopupCallback", options);
+	
+	//this.multiTextPopup("multiText", "fn_multiTextPopupCallback");
+};
+
+this.multiTextPopup = function(id, callBack) {
+
+	var params = {
+		  textId : this[id]
+	};
+	
+	var objChildFrame = new ChildFrame();
+		objChildFrame.init("multiTextPopup"
+						  , 0
+						  , 0
+						  , 0
+						  , 0
+						  , null
+						  , null
+						  , "CO_POP::multiTextPopup.xfdl");
+
+		objChildFrame.set_dragmovetype("all");
+		objChildFrame.set_openalign("center middle");
+		objChildFrame.set_overlaycolor("RGBA(196,196,196,0.5)")		
+		
+		objChildFrame.showModal(this.getOwnerFrame()
+							  , params
+							  , this
+							  , callBack);
+}
+
+
+this.fn_multiTextPopupCallback = function(objID, rtnValue) {	
+	var resParam = JSON.parse(rtnValue);
+	
+	if( objID == "multiTextPopup" ) {		
+		this[resParam.textId].set_value(resParam.textValue);
+	}
+}
+
+
+this.Button01_00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.go("sample::sampleTreeForm.xfdl");
+};
+
+this.Button01_00_00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.go("CO::SSP_BO_YA_06.xfdl");
+};
+
+this.Button01_00_00_00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.go("CO::SSP_BO_YA_01.xfdl");
+};
+
+this.Button01_00_00_00_00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	location.href = "/ui/quickview.html?screenid=Desktop_screen&formname=CO::SSP_BO_CN_00.xfdl";
+};
+
+
+this.Edit00_oninput = function(obj:nexacro.Edit,e:nexacro.InputEventInfo)
+{
+	if(this.gfn_isNull(obj.value)){
+		//데이터가 빈값이면
+		this.btn_clear.set_visible(false);
+	} else {
+		this.btn_clear.set_visible(true);
+	}
+};
+
+this.btn_clear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.Edit00.set_value("");
+	this.btn_clear.set_visible(false);
+};
+
+
+this.Button01_00_00_00_00_00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	location.href = "/ui/quickview.html?screenid=Desktop_screen&formname=CO::SSP_BO_YA_10.xfdl";
+};
+
+this.Button01_00_00_00_00_00_00_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	location.href = "/ui/quickview.html?screenid=Desktop_screen&formname=CO::SSP_BO_YA_18.xfdl";
+};
+]]></Script>
+    <Objects>
+      <Dataset id="Dataset00" onvaluechanged="Dataset00_onvaluechanged">
+        <ColumnInfo>
+          <Column id="Column0" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="Edit00" propid="value" datasetid="Dataset00" columnid="Column0"/>
+    </Bind>
+  </Form>
+</FDL>

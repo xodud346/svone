@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+******************************************************************************
+* SELECT : 제조원관리
+* 작성자 : 
+* 작성 일자 : 2022.02.22
+******************************************************************************
+-->
+<mapper namespace="PrManufacturer">
+    
+    <select id="selectManufacturerCount" parameterType="HashMap" resultType="Integer">
+        /* PrManufacturer.selectManufacturerCount */
+        SELECT
+            COUNT(*)
+        FROM
+            SSP_APP.TB_PR_MNFR_INFO A
+            LEFT OUTER JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO B
+            ON A.CO_CD = B.CO_CD AND A.UPDPSN_ID = B.OPRTR_ID
+        <include refid="manufacturerWhere"/>
+    </select>
+    
+    <!-- 제조원 목록 -->
+    <select id="selectManufacturerList" parameterType="HashMap" resultType="HashMap">
+        /* PrManufacturer.selectManufacturerList */
+        SELECT
+            A.CO_CD,
+            A.MNFR_NO,
+            A.MRO_MNFR_NM,
+            A.FRT_EXPS_YN,
+            A.MNFR_SYM_UNN_NM,
+            A.MNFR_NM,
+            A.REGPSN_ID,
+            TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') REG_DTM,
+            A.UPDPSN_ID,
+            B.OPRTR_NM UPDPSN_NM,
+            TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') UPD_DTM,
+            0 CHK,
+            DECODE(A.MRO_MNFR_NM, A.MNFR_NM, 'N', 'Y') MNFR_NM_DIFF_YN
+        FROM
+            SSP_APP.TB_PR_MNFR_INFO A
+            LEFT OUTER JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO B
+                ON A.CO_CD = B.CO_CD AND A.UPDPSN_ID = B.OPRTR_ID
+        <include refid="manufacturerWhere"/>
+        <if test="SORT_COLUMN != null and SORT_COLUMN != ''">
+            ORDER BY ${SORT_COLUMN} ${SORT_TYPE}
+        </if>
+        OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+    
+    <sql id="manufacturerWhere">
+        WHERE 1=1 AND A.CO_CD = #{CO_CD}
+        <if test="MNFR_NO != null and MNFR_NO != ''">
+            AND MNFR_NO = #{MNFR_NO}
+        </if>
+        <if test="MNFR_NM != null and MNFR_NM != ''">
+            AND (
+               		MNFR_NM LIKE '%' || UPPER(#{MNFR_NM}) || '%'
+              	 	OR MNFR_SYM_UNN_NM LIKE '%'||UPPER(#{MNFR_NM})||'%'
+              	)
+        </if>
+        <if test="UPDPSN_ID != null and UPDPSN_ID != ''">
+           AND A.UPDPSN_ID = #{UPDPSN_ID}
+        </if>
+        <if test="OPRTR_NM != null and OPRTR_NM != ''">
+            AND B.OPRTR_NM = #{OPRTR_NM}
+        </if>
+        <if test="DATE_UNIT != null and DATE_UNIT != ''">
+            <if test="DATE_UNIT != 0">
+                AND A.UPD_DTM BETWEEN TO_DATE(#{UPD_DTM_START}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{UPD_DTM_END}||'235959', 'YYYYMMDDHH24MISS')
+            </if>
+        </if>
+        <if test="MNFR_NM_DIFF_YN != null and MNFR_NM_DIFF_YN != ''">
+            <if test="MNFR_NM_DIFF_YN == 'true'">
+                AND DECODE(MRO_MNFR_NM, MNFR_NM, 'N', 'Y') = 'Y' 
+            </if>
+        </if>
+    </sql>
+    
+    <!-- ssp제조원명 저장 -->
+    <update id="updateManufacturer" parameterType="HashMap">
+        /* PrManufacturer.updateManufacturer */
+        UPDATE SSP_APP.TB_PR_MNFR_INFO
+        SET
+            MNFR_NM = #{MNFR_NM},
+            UPDPSN_ID = #{SESSION_OPRTR_ID},
+            UPD_DTM = SYSDATE
+        WHERE CO_CD = #{CO_CD}
+            AND MNFR_NO = #{MNFR_NO}
+    </update>
+    
+</mapper>

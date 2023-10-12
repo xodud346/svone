@@ -1,0 +1,364 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_MA_68" width="720" height="520" titletext="부서 입고 책임자 설정" onload="fn_onLoad" onkeyup="SSP_BO_MA_68_onkeyup">
+    <Layouts>
+      <Layout height="520" mobileorientation="landscape" width="720">
+        <Static id="lblBzplc" taborder="0" left="20" top="20" height="32" cssclass="sta_cm_box01L_tdt" text="사업장" width="130"/>
+        <Static id="txtBzplcInfo" taborder="1" left="140" top="20" height="32" cssclass="sta_cm_box02L_tdt" text="" right="20"/>
+        <Static id="lblOprunit" taborder="2" text="운영단위" left="20" top="52" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Static id="txtOprunitInfo" taborder="3" top="52" height="32" cssclass="sta_cm_box02L" left="140" right="20"/>
+        <Static id="lblPageInfo" taborder="4" text="(총 -건 -/-)" left="20" top="95" width="121" height="25" visible="true"/>
+        <Grid id="grdBydeptGi" taborder="5" left="20" top="120" height="300" right="20" autofittype="col" binddataset="dsBydeptGiChrpsn" oncellclick="grdBydeptGi_oncellclick" selecttype="area">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="100"/>
+                <Column size="140"/>
+                <Column size="140"/>
+                <Column size="140"/>
+                <Column size="24"/>
+                <Column size="24"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="부서ID"/>
+                <Cell col="1" text="부서명"/>
+                <Cell col="2" colspan="4" text="부서 입고 책임자"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:DEPT_ID"/>
+                <Cell col="1" text="bind:DEPT_NM" textAlign="left" tooltiptext="bind:DEPT_NM"/>
+                <Cell col="2" displaytype="editcontrol" edittype="text" text="bind:GI_CHRPSN_ID"/>
+                <Cell col="3" displaytype="editcontrol" edittype="text" text="bind:GI_CHRPSN_NM"/>
+                <Cell col="4" displaytype="imagecontrol" edittype="none" cssclass="btn_WF_search02" text="expr:'theme://images/btn_WF_multi.png'"/>
+                <Cell col="5" displaytype="imagecontrol" text="expr:'theme://images/btn_WF_document.png'"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="divPaging" taborder="6" left="20" height="29" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="421" right="20"/>
+        <Div id="divCtrl" taborder="7" left="20" top="460" height="51" right="20">
+          <Layouts>
+            <Layout>
+              <Button id="btnSave" taborder="0" text="저장" left="345" top="10" width="70" height="30" cssclass="btn_WF_select" textAlign="center" onclick="divCtrl_btnSave_onclick"/>
+              <Button id="btnCncl" taborder="1" text="취소" top="10" width="70" height="30" left="270" ondblclick="btnCncl_ondblclick" textAlign="center" onclick="divCtrl_btnCncl_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Edit id="edtTmpId" taborder="8" left="203" top="88" width="113" height="27" visible="false"/>
+        <Edit id="edtTmpNm" taborder="9" left="320" top="88" width="113" height="27" visible="false"/>
+        <Edit id="edtTmpRn" taborder="10" left="86" top="88" width="113" height="27" visible="false"/>
+        <Combo id="cmbPageSz" taborder="11" text="20개씩" top="90" height="24" index="1" innerdataset="innerdataset" codecolumn="cd" datacolumn="nm" value="20" width="100" right="20" onitemchanged="cmbPageSz_onitemchanged">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="cd" size="256"/>
+              <Column id="nm" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="cd">20</Col>
+                <Col id="nm">20개씩</Col>
+              </Row>
+              <Row>
+                <Col id="cd">30</Col>
+                <Col id="nm">30개씩</Col>
+              </Row>
+              <Row>
+                <Col id="cd">50</Col>
+                <Col id="nm">50개씩</Col>
+              </Row>
+              <Row>
+                <Col id="cd">100</Col>
+                <Col id="nm">100개씩</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Combo>
+        <Button id="btn_excel" taborder="12" text="엑셀다운로드" top="90" height="24" cssclass="btn_WF_excel" textPadding="0px" onclick="btn_excel_onclick" width="110" right="cmbPageSz:4"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+  PROJECT  NAME  : SSP
+  PROGRAM  NAME  : CC [SSP_BO_MA_68] 부서 입고 책임자 설정
+  CREATION DATES : 2022.03.08
+  CREATER        : 박성근
+*******************************************************/
+
+// 공통형 스크립트 인클루드
+include "CO::coUtils.xjs";
+include "CC::CcUtils.xjs";
+include "OD::odUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+
+this.extParamKeys = [ 'coCd', 'bzplcId', 'bzplcNm', 'oprUnitId', 'oprUnitNm' ];
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo) {
+	this.gfn_formOnLoad(this);  //공통 함수 호출(필수)
+	
+	this.copyPaste.addGrid(this.grdBydeptGi, this);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fnSelectGiChrspnInfo=function(page) {
+	trace('this.fnSrchGiChrspnInfo()');
+
+	//	this.$page.preSearch(page);  // Paging
+ 	if( page==0 || page==undefined ) {
+ 		this.divPaging.uPage    = 1 ;
+ 		this.divPaging.uPageNum = 0 ;
+ 		this.dsParam.setColumn (0, 'startNum', this.divPaging.uPageNum);
+ 		this.dsParam.setColumn (0, 'rowCount', this.cmbPageSz.value   );
+ 	}
+	
+	var sSvc  = 'selectGiChrspnInfo';
+	var sUrl  = '/bo/cust/oprunit/gi/chrpsn.do';
+	var inDs  = 'dsParam=dsParam';
+	var outDs = 'dsByoprunitGiChrpsn=dsByoprunitGiChrpsn dsBydeptGiChrpsn=dsBydeptGiChrpsn'  ;
+	var arg   = '';
+	
+	trace('[sUrl:'+ sUrl +']');
+	this.gfn_transaction(sSvc, sUrl, inDs, outDs, arg, 'fnSelectGiChrspnInfoClbk');
+}
+
+this.fnSaveGiChrspnInfo=function() {
+	trace('this.fnSaveGiChrspnInfo()');
+	
+	var sSvc  = 'saveGiChrspnInfo';
+	var sUrl  = '/bo/cust/oprunit/gi/chrpsn/save.do';
+	var inDs  = 'dsParam=dsParam dsBydeptGiChrpsn=dsSaveBydeptGiChrpsn';
+	var outDs = '';
+	var arg   = '';
+	
+	trace('[sUrl:'+ sUrl +']');
+	this.gfn_transaction(sSvc, sUrl, inDs, outDs, arg, 'fnSaveGiChrspnInfoClbk');
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+// 입고 책임자 조회 콜백
+this.fnSelectGiChrspnInfoClbk = function(rCodes, rCode, rMesg) {
+	trace('this.fnSelectGiChrspnInfoClbk()');
+	var totCunt = this.dsBydeptGiChrpsn.getColumn(0, 'TOT_CUNT');
+	
+ 	this.divPaging.uTotCunt = totCunt              == undefined ? 0 : totCunt;
+	this.divPaging.uPage    = this.divPaging.uPage == undefined ? 1 : this.divPaging.uPage;
+ 	this.divPaging.form.cfn_createPage(this.divPaging, this.divPaging.uTotCunt, this.cmbPageSz.value, 'fnPageClbk');
+}
+// Page Callback
+this.fnPageClbk = function(flg){
+	trace("<flg:"+ flg +"/>");
+ 	if (flg) {
+		var startNum=this.divPaging.uPageNum, rowCount=this.cmbPageSz.value;
+ 		this.dsParam.setColumn(0, "START_NUM", startNum);  this.dsParam.setColumn(0, "startNum", startNum);
+ 		this.dsParam.setColumn(0, "ROW_COUNT", rowCount);  this.dsParam.setColumn(0, "rowCount", rowCount);
+ 		this.fnSelectGiChrspnInfo(this.divPaging.uPageNum);
+ 	}
+ 	this.lblPageInfo.set_text("(총 "+ this.divPaging.uTotCunt +"건, "+ this.divPaging.uPage +" / "+ this.divPaging.uPageCnt +")");
+}
+
+
+this.fnSaveGiChrspnInfoClbk = function(rCodes, rCode, rMesg) {
+	trace('this.fnSaveGiChrspnInfoClbk(rCodes:'+rCodes+', rCode:'+rCode+', rMesg:'+rMesg+')');
+	if (rCode != 0) { return; }
+	
+	alert('저장하였습니다.');
+	this.close(); // 22-05-11 단위테스트 문주환
+}
+
+this.fnCcPopMultiMbrClbk=function(rID, rJSON) {
+	trace('[rID:'+ rID +'][rOBJ:'+ rOBJ +']');
+	if (rJSON == undefined) { return; }
+	
+	var vRN=this.edtTmpRn.value, rOBJ=JSON.parse(rJSON), vID=rOBJ.textValue, vNM=rOBJ.nameValue;
+	
+	this.edtTmpId.set_value( vID );
+	this.edtTmpNm.set_value( vNM );
+	this.dsBydeptGiChrpsn.setColumn(vRN, 'GI_CHRPSN_ID', vID);
+	this.dsBydeptGiChrpsn.setColumn(vRN, 'GI_CHRPSN_NM', vNM);
+}
+
+this.fnCcPopMultiTextClbk=function(rID, rJSON) {
+	trace('[rID:'+ rID +'][rOBJ:'+ rOBJ +']');
+	if (rJSON == undefined) { return; }
+	
+	var vRN=this.edtTmpRn.value, rOBJ=JSON.parse(rJSON), vID=rOBJ.textValue, vNM=this.edtTmpNm.value;
+	trace('[rID:'+ rID +'][vRN:'+ vRN +'][vID:'+ vID +'][vNM:'+ vNM +'][rOBJ:'+ rOBJ +']');
+	
+	this.edtTmpId.set_value( vID );
+	this.dsBydeptGiChrpsn.setColumn(vRN, 'GI_CHRPSN_ID', vID);
+	//this.dsBydeptGiChrpsn.setColumn(vRN, 'GI_CHRPSN_NM', vNM);
+}
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function() {
+	//trace('this.cfn_formInit() > [refCdGrpNm:'+ this.parent['refCdGrpNm'] +']');
+	
+// 	// 화면에서 사용하는 공통코드 호출
+// 	this.ccComCodes([
+// 		  '선택:CURR_DD'
+// 		, 'USE_YN'
+// 		, 'BGT_FW_SPR_CD'
+// 		, 'BGT_CLOS_DD_CD'
+// 		, 'GI_LVL_CD'
+// 		, 'APRVL_PST_CD'
+// 		, 'BLNG_DEPT_USE_SPR_CD'
+// 		, 'CTL_AUTH_USE_SPR_CD'
+// 		, 'GI_VERF_PROC_CD'
+// 	], 'fnCcComCodesClbk');
+	
+	// Parent Parameter 생성
+	if (this.parent != undefined) {
+		var p={ startNum: 0, rowCount: 20, giChrpsnType: 'DEP' };
+		
+		for (var i in this.extParamKeys) {
+			var k=this.extParamKeys[i], v=this.parent[k];  //trace('ext['+ k +':'+ v +']');
+			p[k]=v;
+		}
+		if (p.bzplcNm   != undefined) { p['bzplcInf'  ]=p.bzplcId   +' | '+ p.bzplcNm  ; this.txtBzplcInfo  .set_text(p.bzplcInf  ); }
+		if (p.oprUnitNm != undefined) { p['oprUnitInf']=p.oprUnitId +' | '+ p.oprUnitNm; this.txtOprunitInfo.set_text(p.oprUnitInf); }
+		
+		this.cnvtObject2Dataset('dsParam', p);  // trace('  p >>> '+ JSON.stringify(p));
+		this.fnSelectGiChrspnInfo();
+	}
+};
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.testCtlAuth=function() {
+	this.cnvtObject2Dataset('dsParam', { coCd: '1000', bzplcId: 'S000013507', oprUnitId: 'S000013644', startNum: 0, rowCount: 20 });
+	this.fnSelectCtlAuthDtl();
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.popConf = {
+	  4: { func: 'ccPopMultiMbr' , clbk: 'fnCcPopMultiMbrClbk'  }
+	, 5: { func: 'ccPopMultiText', clbk: 'fnCcPopMultiTextClbk' }
+};
+this.grdBydeptGi_oncellclick = function(obj:nexacro.Grid, e:nexacro.GridClickEventInfo) {
+	var evtColID=this.getBindColumnIDByIndex(obj, e.cell), eRix=e.row;
+	
+	var actvPopup = this.popConf[e.cell];
+	if (actvPopup != undefined) {
+		trace('[e.cell:'+ e.cell +'] >> '+ actvPopup +' >> func:'+ this[actvPopup.func] +'>');
+		
+		//var pickIds
+		var pick={
+			  ids: this.dsBydeptGiChrpsn.getColumn(eRix, 'GI_CHRPSN_ID')
+			, nms: this.dsBydeptGiChrpsn.getColumn(eRix, 'GI_CHRPSN_NM')
+		};
+		this.edtTmpRn.set_value( eRix );
+		this.edtTmpId.set_value( this.dsBydeptGiChrpsn.getColumn(eRix, 'GI_CHRPSN_ID') );
+		this.edtTmpNm.set_value( this.dsBydeptGiChrpsn.getColumn(eRix, 'GI_CHRPSN_NM') );
+		
+		switch (e.cell) {
+			case 4:
+				var popParam={ giAuthUseYn: 'Y' }, aProp=[ 'coCd', 'bzplcId', 'oprUnitId' ];
+				for (var i in aProp) { var prop=aProp[i]; popParam[prop]=this.dsParam.getColumn(0, prop); }
+				
+				this.gfn_openPopup("", "CC::SSP_BO_PP_25_1.xfdl", popParam, function(sPopupId, sRetValue) {
+					const cmpObj = JSON.parse(sRetValue);
+					var sIdList = "";
+					var sNmList = "";
+					for(var i=0; i<cmpObj.length; i++){
+						var rowData = JSON.parse(cmpObj[i]);
+						if(i == (cmpObj.length-1)){
+							sIdList += rowData.MBR_ID;
+							sNmList += rowData.MBR_NM;
+						}else{
+							sIdList += rowData.MBR_ID +",";
+							sNmList += rowData.MBR_NM +",";
+						}
+					}
+					this.dsBydeptGiChrpsn.setColumn(eRix, 'GI_CHRPSN_ID', sIdList);
+					this.dsBydeptGiChrpsn.setColumn(eRix, 'GI_CHRPSN_NM', sNmList);
+				}, {title : '부서 입고 책임자 조회', titlebar:"true"});
+				break;
+				
+			case 5:
+				this.fn_showTareaInput(this.name, 'GI_CHRPSN_ID;'+eRix, pick.ids, 'fnTextMultiClbk', 120, 300);
+				break;
+		}
+	}
+}
+this.fnTextMultiClbk = function(sPopId, sRetVal) {
+	var aPopId=sPopId.split(';'), rPopId=aPopId[0]+';'+aPopId[1], rIdx=aPopId[2], oRetVal=JSON.parse(sRetVal), rVl='';
+	for (var i in oRetVal) {
+		var r = JSON.parse( oRetVal[i] );
+		rVl += (''==rVl ? '' : ',') + r.VALUE;
+	}
+	trace('fnTextMultiClbk > [sPopId:'+ sPopId +'][sRetVal:'+ sRetVal +'] > [rPopId:'+ rPopId +'][rIdx:'+ rIdx +']');
+	
+	switch (rPopId) {
+		case this.name+';GI_CHRPSN_ID':
+			this.dsBydeptGiChrpsn.setColumn(rIdx, 'GI_CHRPSN_ID', rVl );
+			this.dsBydeptGiChrpsn.setColumn(rIdx, 'GI_CHRPSN_NM', null);
+			break;
+	}
+}
+
+
+this.divCtrl_btnSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	// Step01] Validation
+	
+	// Step03] Check Modified
+	var  dsSavNm  = 'dsSaveBydeptGiChrpsn';
+	this[dsSavNm] = this.getChgdRowsDataset(this.dsBydeptGiChrpsn);  trace('ds changed row count:'+ this[dsSavNm].rowcount);
+	if ( this[dsSavNm].rowcount < 1) { alert('변경된 정보가 없습니다.'); return; }
+	
+	// Step03] Confirm
+	if (!confirm('저장하시겠습니까?')) { return; }
+	this.fnSaveGiChrspnInfo();
+};
+
+this.divCtrl_btnCncl_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+this.cmbPageSz_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.fnSelectGiChrspnInfo();
+};
+
+this.btn_excel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ofn_exportExcel({form:this, grid:this.grdBydeptGi, fileName:"부서입고책임자목록"});
+};
+
+this.SSP_BO_MA_68_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	//ESC : 닫기기능
+	if(e.keycode == 27){
+		this.close();
+	}
+};
+]]></Script>
+    <Objects>
+      <Dataset id="dsParam"/>
+      <Dataset id="dsByoprunitGiChrpsn"/>
+      <Dataset id="dsBydeptGiChrpsn"/>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="cmbPageSz" propid="value" datasetid="dsParam" columnid="rowCount"/>
+    </Bind>
+  </Form>
+</FDL>

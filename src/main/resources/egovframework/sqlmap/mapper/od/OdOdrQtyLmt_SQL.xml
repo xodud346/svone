@@ -1,0 +1,1163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.od.odr.qty.lmt">
+
+<select id="selectQtyLmtUseYn" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.selectQtyLmtUseYn */
+
+SELECT CO_CD, ODR_LMT_SEQ, USE_YN
+  FROM TB_OD_ODR_LMT_INFO
+ WHERE CO_CD=#{CO_CD}
+   AND ODR_LMT_SEQ=0
+
+/* /com.ssp.bo.od.odr.qty.lmt.selectQtyLmtUseYn */
+</select>
+
+<update id="updateQtyLmtUseYn" parameterType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.updateQtyLmtUseYn */
+
+UPDATE TB_OD_ODR_LMT_INFO
+   SET USE_YN    =  NVL(#{USE_YN  }, 'N')  -- 사용여부
+     , UPD_DTM   =      SYSDATE            -- 수정일시
+     , UPDPSN_ID =      #{UPDPSN_ID     }  -- 수정자ID
+ WHERE CO_CD=#{CO_CD}
+   AND ODR_LMT_SEQ=0
+
+/* /com.ssp.bo.od.odr.qty.lmt.updateQtyLmtUseYn */
+</update>
+
+
+
+
+<sql id="sqlOdrQtyLmt">
+SELECT 0      CHK
+     , TMST.*
+     , DECODE(TMST.CUST_SPR_CD, '*', '전체', (SELECT FN_COM_DTL_CDNM_NVL('KO', 'CUST_SPR_CD'    , TMST.CUST_SPR_CD    , TMST.CUST_SPR_CD    ) FROM DUAL))  CUST_SPR_CD_NM
+     ,                                       (SELECT FN_COM_DTL_CDNM_NVL('KO', 'ODR_LMT_DOMN_CD', TMST.ODR_LMT_DOMN_CD, TMST.ODR_LMT_DOMN_CD) FROM DUAL)   ODR_LMT_DOMN_CD_NM
+     ,                                       (SELECT FN_COM_DTL_CDNM_NVL('KO', 'USE_YN'         , TMST.USE_YN         , TMST.USE_YN         ) FROM DUAL)   USE_YN_NM
+     
+     , ODR_LMT_STR_DT  STR_DT, DECODE(ODR_LMT_STR_DT, NULL, '', SUBSTR(ODR_LMT_STR_DT, 1, 4) ||'.'|| SUBSTR(ODR_LMT_STR_DT, 5, 2)  ||'.'|| SUBSTR(ODR_LMT_STR_DT, 7, 2))  STR_DATE
+     , ODR_LMT_END_DT  END_DT, DECODE(ODR_LMT_END_DT, NULL, '', SUBSTR(ODR_LMT_END_DT, 1, 4) ||'.'|| SUBSTR(ODR_LMT_END_DT, 5, 2)  ||'.'|| SUBSTR(ODR_LMT_END_DT, 7, 2))  END_DATE
+     , ODR_LMT_MAX_QTY        MAX_QTY
+     , ODR_LMT_APLY_DCNT      APLY_DCNT
+     
+     , TO_CHAR(TMST.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS')                   UPD_DTTM
+     , (SELECT FN_CC_GET_MBR_NM(TMST.CO_CD, TMST.UPDPSN_ID) FROM DUAL)  UPDPSN_NM
+     ,                            PRD_NMS
+     ,                            EXCEPT_BZPLC_NMS
+  FROM TB_OD_ODR_LMT_INFO          TMST
+     , (SELECT TGTP.CO_CD, TGTP.ODR_LMT_SEQ
+             , MIN(PRDI.PRD_NM) KEEP(DENSE_RANK FIRST ORDER BY TGTP.ODR_LMT_PRD_SEQ)  PRD_NM,   COUNT(*)                                   PRD_CUNT
+             , MIN(PRDI.PRD_NM) KEEP(DENSE_RANK FIRST ORDER BY TGTP.ODR_LMT_PRD_SEQ) || DECODE((COUNT(*)-1), 0, '', ' 외 '||(COUNT(*)-1))  PRD_NMS
+          FROM TB_OD_ODR_LMT_TGT_PRD_DTLS       TGTP
+             , TB_PR_PRD_INFO                   PRDI
+         WHERE TGTP.CO_CD=PRDI.CO_CD(+) AND TGTP.PRD_ID=PRDI.PRD_ID(+)
+         GROUP BY
+               TGTP.CO_CD, TGTP.ODR_LMT_SEQ
+       )       PRIF
+     , (SELECT EXPB.CO_CD, EXPB.ODR_LMT_SEQ
+             , MIN(BZPB.BZPLC_NM) KEEP(DENSE_RANK FIRST ORDER BY EXPB.EXCEPT_BZPLC_SEQ)  EXCEPT_BZPLC_NM, COUNT(*)                                   BZPLC_CUNT
+             ,        MIN(BZPB.BZPLC_NM) KEEP(DENSE_RANK FIRST ORDER BY EXPB.EXCEPT_BZPLC_SEQ)        
+            || DECODE(MIN(BZPB.BZPLC_NM) KEEP(DENSE_RANK FIRST ORDER BY EXPB.EXCEPT_BZPLC_SEQ), NULL, LISTAGG(EXPB.BZPLC_ID, ','), DECODE((COUNT(*)-1), 0, '', ' 외 '||(COUNT(*)-1)))  EXCEPT_BZPLC_NMS
+          FROM TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS  EXPB
+             , TB_CC_BZPLC_BASIS                BZPB
+         WHERE EXPB.CO_CD=BZPB.CO_CD(+) AND EXPB.BZPLC_ID=BZPB.BZPLC_ID(+)
+         GROUP BY
+               EXPB.CO_CD, EXPB.ODR_LMT_SEQ
+       )       EBIF
+ WHERE TMST.ODR_LMT_SEQ!=0
+   AND TMST.CO_CD=PRIF.CO_CD(+) AND TMST.ODR_LMT_SEQ=PRIF.ODR_LMT_SEQ(+)
+   AND TMST.CO_CD=EBIF.CO_CD(+) AND TMST.ODR_LMT_SEQ=EBIF.ODR_LMT_SEQ(+)
+   
+   <if test='CO_CD           != null and !"".equals( CO_CD           .trim())'>AND TMST.CO_CD           = #{CO_CD          }</if>
+   <if test='CUST_SPR_CD     != null and !"".equals( CUST_SPR_CD     .trim())'>AND TMST.CUST_SPR_CD     = #{CUST_SPR_CD    }</if>
+   <if test='ODR_LMT_DOMN_CD != null and !"".equals( ODR_LMT_DOMN_CD .trim())'>AND TMST.ODR_LMT_DOMN_CD = #{ODR_LMT_DOMN_CD}</if>
+   <if test='USE_YN          != null and !"".equals( USE_YN          .trim())'>AND TMST.USE_YN          = #{USE_YN         }</if>
+   <if test='ODR_LMT_SEQ     != null and !"".equals( ODR_LMT_SEQ     .trim())'>AND TMST.ODR_LMT_SEQ     = #{ODR_LMT_SEQ    }</if>
+   <if test="PRD_ID > 0">
+   AND EXISTS (  -- 주문수량 제한 상품
+        SELECT CO_CD, ODR_LMT_SEQ FROM TB_OD_ODR_LMT_TGT_PRD_DTLS
+         WHERE CO_CD=TMST.CO_CD AND ODR_LMT_SEQ=TMST.ODR_LMT_SEQ
+           AND PRD_ID IN (
+                SELECT LPAD(COND_DATA_VAL, 18, '0')  PRD_ID FROM TB_OD_ODR_INQ_TGT_DTLS
+                 WHERE SES_ID=#{SES_ID}
+                   AND INQ_COND_DTLS=#{INQ_COND_DTLS}
+                   AND COL_ITM='PRD_ID'
+       )       )
+   </if>
+   <if test="EXCEPT_BZPLC_ID > 0">
+   AND EXISTS (  -- 주문수량 제한 예외사업장
+        SELECT CO_CD, ODR_LMT_SEQ FROM TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS
+         WHERE CO_CD=TMST.CO_CD AND ODR_LMT_SEQ=TMST.ODR_LMT_SEQ
+           AND BZPLC_ID IN (
+                SELECT COND_DATA_VAL  BZPLC_ID FROM TB_OD_ODR_INQ_TGT_DTLS
+                 WHERE SES_ID=#{SES_ID}
+                   AND INQ_COND_DTLS=#{INQ_COND_DTLS}
+                   AND COL_ITM='EXCEPT_BZPLC_ID'
+       )       )
+   </if>
+</sql>
+
+<select id="listOdrQtyLmt" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.listOdrQtyLmt */
+<include refid="com.ssp.bo.cc.common.sqlPrefixPaging" />
+
+<include refid="sqlOdrQtyLmt" />
+ ORDER BY
+ <choose>
+       <when test='SORT_COLUMN != null'>${SORT_COLUMN}  <if test='SORT_TYPE != null'>${SORT_TYPE}</if></when>
+       <otherwise>TMST.ODR_LMT_SEQ  DESC</otherwise>
+ </choose>
+
+
+<include refid="com.ssp.bo.cc.common.sqlPostfixPaging"/>
+/* /com.ssp.bo.od.odr.qty.lmt.listOdrQtyLmt */
+</select>
+
+
+<select id="infoOdrQtyLmt" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.infoOdrQtyLmt */
+
+<include refid="sqlOdrQtyLmt" />
+   AND ROWNUM=1
+
+/* /com.ssp.bo.od.odr.qty.lmt.infoOdrQtyLmt */
+</select>
+
+<select id="infoOdrQtyLmt4TgtPrd" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.infoOdrQtyLmt4TgtPrd */
+
+SELECT 0    CHK
+     , TGTP.*
+     , TO_CHAR(TO_NUMBER(TGTP.PRD_ID))  PRD_ID_VW
+     , PRD_NM
+  FROM TB_OD_ODR_LMT_TGT_PRD_DTLS   TGTP
+     , TB_PR_PRD_INFO               PRDI
+ WHERE TGTP.CO_CD=PRDI.CO_CD(+) AND TGTP.PRD_ID=PRDI.PRD_ID(+)
+
+   <if test='CO_CD       != null and !"".equals( CO_CD       .trim())'>AND TGTP.CO_CD      =#{CO_CD      }</if>
+   <if test='ODR_LMT_SEQ != null and !"".equals( ODR_LMT_SEQ .trim())'>AND TGTP.ODR_LMT_SEQ=#{ODR_LMT_SEQ}</if>
+   
+ ORDER BY TGTP.CO_CD, TGTP.ODR_LMT_SEQ, TGTP.ODR_LMT_PRD_SEQ
+
+/* com.ssp.bo.od.odr.qty.lmt.infoOdrQtyLmt4TgtPrd */
+</select>
+
+<select id="infoOdrQtyLmt4ExceptBzplc" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.infoOdrQtyLmt4ExceptBzplc */
+
+SELECT 0    CHK
+     , EXBZ.*
+     , BZPB.BZPLC_NM
+  FROM TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS  EXBZ
+     , TB_CC_BZPLC_BASIS                BZPB
+ WHERE EXBZ.CO_CD=BZPB.CO_CD(+) AND EXBZ.BZPLC_ID=BZPB.BZPLC_ID(+)
+
+   <if test='CO_CD       != null and !"".equals( CO_CD       .trim())'>AND EXBZ.CO_CD      =#{CO_CD      }</if>
+   <if test='ODR_LMT_SEQ != null and !"".equals( ODR_LMT_SEQ .trim())'>AND EXBZ.ODR_LMT_SEQ=#{ODR_LMT_SEQ}</if>
+   
+ ORDER BY EXBZ.CO_CD, EXBZ.ODR_LMT_SEQ, EXBZ.EXCEPT_BZPLC_SEQ
+
+/* com.ssp.bo.od.odr.qty.lmt.infoOdrQtyLmt4ExceptBzplc */
+</select>
+
+
+<sql id="sqlWithOdrLmtMst">
+WITH
+WITH_ODR_LMT_INFO  AS (
+SELECT     #{CO_CD           }             CO_CD              -- 회사코드
+     ,     #{ODR_LMT_SEQ     }             ODR_LMT_SEQ        -- 주문제한순번
+     ,     #{CUST_SPR_CD     }             CUST_SPR_CD        -- 고객구분코드
+     ,     #{ODR_LMT_DOMN_CD }             ODR_LMT_DOMN_CD    -- 주문제한영역코드
+     ,     #{MAX_QTY         }             ODR_LMT_MAX_QTY    -- 최대주문수량
+     ,     #{STR_DT          }             ODR_LMT_STR_DT     -- 적용시작일
+     ,     #{END_DT          }             ODR_LMT_END_DT     -- 적용종료일
+     ,     #{APLY_DCNT       }             ODR_LMT_APLY_DCNT  -- 적용일수
+     , NVL(#{USE_YN          }, 'N')       USE_YN             -- 사용여부
+     ,     SYSDATE                         REG_DTM            -- 등록일시
+     ,     #{REGPSN_ID       }             REGPSN_ID          -- 등록자ID
+     ,     SYSDATE                         UPD_DTM            -- 수정일시
+     ,     #{UPDPSN_ID       }             UPDPSN_ID          -- 수정자ID
+  FROM DUAL
+)  -- SELECT * FROM WITH_ODR_LMT_INFO;
+</sql>
+
+<sql id="sqlAnlsOdrLmtMst">
+<include refid="sqlWithOdrLmtMst" />
+,
+LIST_ODR_LMT_INFO  AS (
+SELECT ORGL.*
+  FROM TB_OD_ODR_LMT_INFO  ORGL
+ WHERE <if test='ODR_LMT_SEQ != null'>
+       ODR_LMT_SEQ=#{ODR_LMT_SEQ}
+       </if>
+       <if test='ODR_LMT_SEQ == null'>
+       EXISTS (
+        SELECT 1 FROM WITH_ODR_LMT_INFO
+         WHERE CO_CD             = ORGL.CO_CD
+           AND CUST_SPR_CD       = ORGL.CUST_SPR_CD
+           AND ODR_LMT_DOMN_CD   = ORGL.ODR_LMT_DOMN_CD
+           AND ODR_LMT_MAX_QTY   = ORGL.ODR_LMT_MAX_QTY
+           AND ODR_LMT_STR_DT    = ORGL.ODR_LMT_STR_DT
+           AND ODR_LMT_END_DT    = ORGL.ODR_LMT_END_DT
+           AND ODR_LMT_APLY_DCNT = ORGL.ODR_LMT_APLY_DCNT
+--           AND USE_YN          = ORGL.USE_YN
+       )
+       </if>
+)  --SELECT * FROM LIST_ODR_LMT_INFO;
+,
+ANLS_ODR_LMT_INFO  AS (
+SELECT ANL.*
+     , (SELECT LISTAGG(DISTINCT ODR_LMT_SEQ, ',') WITHIN GROUP(ORDER BY ODR_LMT_SEQ) FROM LIST_ODR_LMT_INFO WHERE ODR_LMT_SEQ!=TGT_ODR_LMT_SEQ)  OTH_ODR_LMT_SEQ
+  FROM (SELECT CO_CD
+             , MIN(ODR_LMT_SEQ)   TGT_ODR_LMT_SEQ
+             , COUNT(*)           DUP_ODR_LMT_CNT
+          FROM LIST_ODR_LMT_INFO
+         GROUP BY
+               CO_CD
+       )   ANL
+)
+</sql>
+
+
+<insert id="saveOdrQtyLmt" parameterType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.saveOdrQtyLmt */
+DECLARE
+V_CO_CD            TB_OD_ODR_LMT_INFO.CO_CD%TYPE;
+V_TGT_ODR_LMT_SEQ  TB_OD_ODR_LMT_INFO.ODR_LMT_SEQ%TYPE;
+V_CNT_ODR_LMT_SEQ  TB_OD_ODR_LMT_INFO.ODR_LMT_SEQ%TYPE;
+V_NXT_ODR_LMT_SEQ  TB_OD_ODR_LMT_INFO.ODR_LMT_SEQ%TYPE;
+
+BEGIN
+
+-- V_CO_CD, V_NXT_ODR_LMT_SEQ := 
+SELECT NVL(CO_CD, #{CO_CD})  CO_CD
+     , NVL((SELECT MAX(ODR_LMT_SEQ) FROM TB_OD_ODR_LMT_INFO WHERE CO_CD=INPT.CO_CD), 0)+1  NXT_ODR_LMT_SEQ
+  INTO V_CO_CD
+     , V_NXT_ODR_LMT_SEQ
+  FROM (SELECT #{CO_CD}  CO_CD FROM DUAL)  INPT
+;
+
+
+-- TB_OD_ODR_LMT_INFO
+-- SAVE: TB_OD_ODR_LMT_INFO
+MERGE INTO TB_OD_ODR_LMT_INFO                TRGT
+USING (
+
+<include refid="sqlWithOdrLmtMst" />
+SELECT CO_CD
+     , ODR_LMT_SEQ
+     , CUST_SPR_CD
+     , ODR_LMT_DOMN_CD
+     , ODR_LMT_MAX_QTY
+     , ODR_LMT_STR_DT
+     , ODR_LMT_END_DT
+     , ODR_LMT_APLY_DCNT
+     , USE_YN
+     , REG_DTM
+     , REGPSN_ID
+     , UPD_DTM
+     , UPDPSN_ID
+  FROM WITH_ODR_LMT_INFO
+  
+      )    INPT
+   ON (    INPT.CO_CD           = TRGT.CO_CD
+       <if test='ODR_LMT_SEQ != null'>
+       AND INPT.ODR_LMT_SEQ     = TRGT.ODR_LMT_SEQ
+       </if>
+       <if test='ODR_LMT_SEQ == null'>
+       AND INPT.CUST_SPR_CD       = TRGT.CUST_SPR_CD
+       AND INPT.ODR_LMT_DOMN_CD   = TRGT.ODR_LMT_DOMN_CD
+       AND INPT.ODR_LMT_MAX_QTY   = TRGT.ODR_LMT_MAX_QTY
+       AND INPT.ODR_LMT_STR_DT    = TRGT.ODR_LMT_STR_DT
+       AND INPT.ODR_LMT_END_DT    = TRGT.ODR_LMT_END_DT
+       AND INPT.ODR_LMT_APLY_DCNT = TRGT.ODR_LMT_APLY_DCNT
+       </if>
+      )
+      
+ WHEN MATCHED THEN
+      UPDATE SET
+           <trim prefixOverrides="AND|OR|UNION ALL|," prefix="">
+           <if test='ODR_LMT_SEQ != null'>
+           , CUST_SPR_CD       =     INPT.CUST_SPR_CD
+           , ODR_LMT_DOMN_CD   =     INPT.ODR_LMT_DOMN_CD
+           , ODR_LMT_MAX_QTY   =     INPT.ODR_LMT_MAX_QTY
+           , ODR_LMT_STR_DT    =     INPT.ODR_LMT_STR_DT
+           , ODR_LMT_END_DT    =     INPT.ODR_LMT_END_DT
+           , ODR_LMT_APLY_DCNT =     INPT.ODR_LMT_APLY_DCNT
+           </if>
+           , USE_YN            = NVL(INPT.USE_YN           , 'N')
+           , UPD_DTM           =     INPT.UPD_DTM
+           , UPDPSN_ID         =     INPT.UPDPSN_ID
+           </trim>
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , ODR_LMT_SEQ
+           , CUST_SPR_CD
+           , ODR_LMT_DOMN_CD
+           , ODR_LMT_MAX_QTY
+           , ODR_LMT_STR_DT
+           , ODR_LMT_END_DT
+           , ODR_LMT_APLY_DCNT
+           , USE_YN
+           , REG_DTM
+           , REGPSN_ID
+           , UPD_DTM
+           , UPDPSN_ID
+      )
+      VALUES (
+                 INPT.CO_CD
+           , NVL(INPT.ODR_LMT_SEQ      , NVL((SELECT MAX(ODR_LMT_SEQ) FROM TB_OD_ODR_LMT_INFO WHERE CO_CD=INPT.CO_CD), 0)+1)
+           ,     INPT.CUST_SPR_CD
+           ,     INPT.ODR_LMT_DOMN_CD
+           ,     INPT.ODR_LMT_MAX_QTY
+           ,     INPT.ODR_LMT_STR_DT
+           ,     INPT.ODR_LMT_END_DT
+           ,     INPT.ODR_LMT_APLY_DCNT
+           , NVL(INPT.USE_YN           , 'N')
+           ,     INPT.REG_DTM
+           ,     INPT.REGPSN_ID
+           ,     INPT.UPD_DTM
+           ,     INPT.UPDPSN_ID
+      )
+;
+
+-- TB_OD_ODR_LMT_TGT_PRD_DTLS
+<if test='LIST_TGT_PRD_DEL != null and LIST_TGT_PRD_DEL .size() > 0'>
+-- DELE: TB_OD_ODR_LMT_TGT_PRD_DTLS
+DELETE FROM TB_OD_ODR_LMT_TGT_PRD_DTLS
+ WHERE (CO_CD, ODR_LMT_SEQ, PRD_ID) IN (
+        <foreach collection="LIST_TGT_PRD_DEL" index="index" item="item" open="" separator="," close="">
+        (#{item.CO_CD}, #{item.ODR_LMT_SEQ}, #{item.PRD_ID})</foreach>
+       )
+;
+</if>
+<if test='LIST_TGT_PRD     != null and LIST_TGT_PRD     .size() > 0'>
+-- SAVE: TB_OD_ODR_LMT_TGT_PRD_DTLS
+MERGE INTO TB_OD_ODR_LMT_TGT_PRD_DTLS  TRGT
+USING (
+       SELECT CO_CD
+            , ODR_LMT_SEQ
+            , ODR_LMT_PRD_SEQ
+            , PRD_ID
+            , SYSDATE  REG_DTM, #{REGPSN_ID       }  REGPSN_ID
+            , SYSDATE  UPD_DTM, #{UPDPSN_ID       }  UPDPSN_ID
+         FROM (
+               SELECT CO_CD
+                    , MAX(NVL(ODR_LMT_SEQ, V_NXT_ODR_LMT_SEQ))  ODR_LMT_SEQ
+                    , MIN(NVL(ODR_LMT_PRD_SEQ, ROWNUM))         ODR_LMT_PRD_SEQ
+                    , LPAD(PRD_ID, 18, '0')                     PRD_ID
+                 FROM (SELECT NULL CO_CD, NULL  ODR_LMT_SEQ, NULL  ODR_LMT_PRD_SEQ, NULL  PRD_ID  FROM DUAL
+                       <foreach collection="LIST_TGT_PRD" index="index" item="item" open="" separator="" close="">
+                       UNION ALL SELECT #{CO_CD}, #{ODR_LMT_SEQ}, #{item.ODR_LMT_PRD_SEQ}, #{item.PRD_ID}  FROM DUAL</foreach>
+                     )        INF
+                WHERE CO_CD IS NOT NULL
+                GROUP BY
+                      CO_CD
+                    , NVL(ODR_LMT_SEQ, V_NXT_ODR_LMT_SEQ)
+                    , LPAD(PRD_ID, 18, '0')
+                ORDER BY
+                      CO_CD
+                    , ODR_LMT_SEQ
+                    , ODR_LMT_PRD_SEQ
+              )
+      )    INPT
+   ON (    INPT.CO_CD           = TRGT.CO_CD
+       AND INPT.ODR_LMT_SEQ     = TRGT.ODR_LMT_SEQ
+       AND INPT.ODR_LMT_PRD_SEQ = TRGT.ODR_LMT_PRD_SEQ
+<!--        AND INPT.PRD_ID      = TRGT.PRD_ID -->
+      )
+      
+ WHEN MATCHED THEN
+      UPDATE SET
+             PRD_ID          = INPT.PRD_ID
+           , UPD_DTM         = INPT.UPD_DTM
+           , UPDPSN_ID       = INPT.UPDPSN_ID
+           
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , ODR_LMT_SEQ
+           , ODR_LMT_PRD_SEQ
+           , PRD_ID
+           , REG_DTM
+           , REGPSN_ID
+           , UPD_DTM
+           , UPDPSN_ID
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.ODR_LMT_SEQ
+           , INPT.ODR_LMT_PRD_SEQ
+           , INPT.PRD_ID
+           , INPT.REG_DTM
+           , INPT.REGPSN_ID
+           , INPT.UPD_DTM
+           , INPT.UPDPSN_ID
+      )
+;
+</if>
+
+-- TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS
+<if test='LIST_EXCEPT_BZPLC_DEL != null and LIST_EXCEPT_BZPLC_DEL .size() > 0'>
+-- DELE: TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS
+DELETE FROM TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS
+ WHERE (CO_CD, ODR_LMT_SEQ, BZPLC_ID) IN (
+        <foreach collection="LIST_EXCEPT_BZPLC_DEL" index="index" item="item" open="" separator="," close="">
+        (#{item.CO_CD}, #{item.ODR_LMT_SEQ}, #{item.BZPLC_ID})</foreach>
+       )
+;
+</if>
+<if test='LIST_EXCEPT_BZPLC     != null and LIST_EXCEPT_BZPLC     .size() > 0'>
+-- SAVE: TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS
+MERGE INTO TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS  TRGT
+USING (
+       SELECT CO_CD
+            , NVL(ODR_LMT_SEQ, V_NXT_ODR_LMT_SEQ)    ODR_LMT_SEQ
+            , EXCEPT_BZPLC_SEQ
+            , BZPLC_ID
+            , SYSDATE  REG_DTM, #{REGPSN_ID       }  REGPSN_ID
+            , SYSDATE  UPD_DTM, #{UPDPSN_ID       }  UPDPSN_ID
+         FROM (SELECT NULL CO_CD, NULL  ODR_LMT_SEQ, NULL  EXCEPT_BZPLC_SEQ, NULL  BZPLC_ID  FROM DUAL
+               <foreach collection="LIST_EXCEPT_BZPLC" index="index" item="item" open="" separator="" close="">
+               UNION ALL SELECT #{CO_CD}, #{ODR_LMT_SEQ}, #{index}+1, #{item.BZPLC_ID}  FROM DUAL</foreach>
+              )
+        WHERE CO_CD IS NOT NULL
+      )    INPT
+   ON (    INPT.CO_CD       = TRGT.CO_CD
+       AND INPT.ODR_LMT_SEQ = TRGT.ODR_LMT_SEQ
+       AND INPT.BZPLC_ID    = TRGT.BZPLC_ID
+      )
+ WHEN MATCHED THEN
+      UPDATE SET
+             UPD_DTM         = INPT.UPD_DTM
+           , UPDPSN_ID       = INPT.UPDPSN_ID
+           
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , ODR_LMT_SEQ
+           , EXCEPT_BZPLC_SEQ
+           , BZPLC_ID
+           , REG_DTM
+           , REGPSN_ID
+           , UPD_DTM
+           , UPDPSN_ID
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.ODR_LMT_SEQ
+           , INPT.EXCEPT_BZPLC_SEQ
+           , INPT.BZPLC_ID
+           , INPT.REG_DTM
+           , INPT.REGPSN_ID
+           , INPT.UPD_DTM
+           , INPT.UPDPSN_ID
+      )
+;
+</if>
+
+-- SYNC: TB_OD_ODR_LMT
+
+
+
+END;
+/* /com.ssp.bo.od.odr.qty.lmt.saveOdrQtyLmt */
+</insert>
+
+<insert id="saveOdrQtyLmt_V1" parameterType="HashMap">
+<!-- <selectKey order="BEFORE" keyProperty="ODR_LMT_SEQ" resultType="int">
+SELECT NVL(#{ODR_LMT_SEQ}, NVL((SELECT MAX(ODR_LMT_SEQ) FROM TB_OD_ODR_LMT_INFO WHERE CO_CD=#{CO_CD}), 0)+1)  ODR_LMT_SEQ
+  FROM DUAL
+</selectKey> -->
+/* com.ssp.bo.od.odr.qty.lmt.saveOdrQtyLmt */
+DECLARE
+V_CO_CD            TB_OD_ODR_LMT_INFO.CO_CD%TYPE;
+V_TGT_ODR_LMT_SEQ  TB_OD_ODR_LMT_INFO.ODR_LMT_SEQ%TYPE;
+V_CNT_ODR_LMT_SEQ  TB_OD_ODR_LMT_INFO.ODR_LMT_SEQ%TYPE;
+
+BEGIN
+
+<if test='LIST_TGT_PRD_DEL != null and LIST_TGT_PRD_DEL .size() > 0'>
+DELETE FROM TB_OD_ODR_LMT_TGT_PRD_DTLS
+ WHERE (CO_CD, ODR_LMT_SEQ, PRD_ID) IN (
+        <foreach collection="LIST_TGT_PRD_DEL" index="index" item="item" open="" separator="," close="">
+        (#{item.CO_CD}, #{item.ODR_LMT_SEQ}, #{item.PRD_ID})</foreach>
+       )
+;
+</if>
+
+<if test='LIST_EXCEPT_BZPLC_DEL != null and LIST_EXCEPT_BZPLC_DEL .size() > 0'>
+DELETE FROM TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS
+ WHERE (CO_CD, ODR_LMT_SEQ, BZPLC_ID) IN (
+        <foreach collection="LIST_EXCEPT_BZPLC_DEL" index="index" item="item" open="" separator="," close="">
+        (#{item.CO_CD}, #{item.ODR_LMT_SEQ}, #{item.BZPLC_ID})</foreach>
+       )
+;
+</if>
+
+
+-- 동일조건이 있는 지 확인 후 동기화 처리
+<include refid="sqlWithOdrLmtMst" />
+SELECT WMST.CO_CD                                      CO_CD
+     , MIN  (NVL(ORGL.ODR_LMT_SEQ, WMST.ODR_LMT_SEQ))  TGT_ODR_LMT_SEQ
+     , COUNT(ORGL.ODR_LMT_SEQ)                         CNT_ODR_LMT_SEQ
+  INTO V_CO_CD
+     , V_TGT_ODR_LMT_SEQ
+     , V_CNT_ODR_LMT_SEQ
+  FROM WITH_ODR_LMT_INFO           WMST
+     , TB_OD_ODR_LMT_INFO          ORGL
+ WHERE WMST.CO_CD           = ORGL.CO_CD          (+)
+   AND WMST.CUST_SPR_CD     = ORGL.CUST_SPR_CD    (+)
+   AND WMST.ODR_LMT_DOMN_CD = ORGL.ODR_LMT_DOMN_CD(+)
+   AND WMST.MAX_QTY         = ORGL.MAX_QTY        (+)
+   AND WMST.STR_DT          = ORGL.STR_DT         (+)
+   AND WMST.END_DT          = ORGL.END_DT         (+)
+   AND WMST.APLY_DCNT       = ORGL.APLY_DCNT      (+)
+   
+ GROUP BY WMST.CO_CD
+;
+IF V_CNT_ODR_LMT_SEQ > 1 THEN
+
+    -- TB_OD_ODR_LMT_TGT_PRD_DTLS      : V_ODR_LMT_SEQ 정보로 통합
+    INSERT INTO TB_OD_ODR_LMT_TGT_PRD_DTLS
+    SELECT * FROM (
+            <include refid="sqlAnlsOdrLmtMst" />
+            SELECT AMST.CO_CD
+                 , AMST.TGT_ODR_LMT_SEQ  ODR_LMT_SEQ
+                 , NVL((SELECT MAX(ODR_LMT_PRD_SEQ) FROM TB_OD_ODR_LMT_TGT_PRD_DTLS WHERE CO_CD=AMST.CO_CD AND ODR_LMT_SEQ=AMST.TGT_ODR_LMT_SEQ), 0)+ROWNUM  ODR_LMT_PRD_SEQ
+                 , TPRD.PRD_ID
+                 , TPRD.REG_DTM
+                 , TPRD.REGPSN_ID
+                 , WMST.UPD_DTM
+                 , WMST.UPDPSN_ID
+              FROM TB_OD_ODR_LMT_TGT_PRD_DTLS         TPRD
+                 , ANLS_ODR_LMT_INFO                  AMST
+                 , WITH_ODR_LMT_INFO                  WMST
+             WHERE (TPRD.CO_CD, TPRD.ODR_LMT_SEQ)     IN (SELECT CO_CD,     ODR_LMT_SEQ FROM LIST_ODR_LMT_INFO)
+               AND (TPRD.CO_CD, TPRD.ODR_LMT_SEQ) NOT IN (SELECT CO_CD, TGT_ODR_LMT_SEQ FROM ANLS_ODR_LMT_INFO)
+               
+    )
+    ;
+    DELETE FROM TB_OD_ODR_LMT_TGT_PRD_DTLS  TTGT
+     WHERE (CO_CD, ODR_LMT_SEQ) IN (
+            
+            <include refid="sqlAnlsOdrLmtMst" />
+            SELECT CO_CD, ODR_LMT_SEQ
+              FROM TB_OD_ODR_LMT_INFO    DTNS
+             WHERE (CO_CD, ODR_LMT_SEQ)     IN (SELECT CO_CD,     ODR_LMT_SEQ FROM LIST_ODR_LMT_INFO)
+               AND (CO_CD, ODR_LMT_SEQ) NOT IN (SELECT CO_CD, TGT_ODR_LMT_SEQ FROM ANLS_ODR_LMT_INFO)
+               AND DTNS.CO_CD       = TTGT.CO_CD
+               AND DTNS.ODR_LMT_SEQ = TTGT.ODR_LMT_SEQ
+             
+           )
+    ;
+    
+    -- TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS : V_ODR_LMT_SEQ 정보로 통합
+    INSERT INTO TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS
+    SELECT * FROM (
+    
+            <include refid="sqlAnlsOdrLmtMst" />
+            SELECT AMST.CO_CD
+                 , AMST.TGT_ODR_LMT_SEQ  ODR_LMT_SEQ
+                 , NVL((SELECT MAX(EXCEPT_BZPLC_SEQ) FROM TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS WHERE CO_CD=AMST.CO_CD AND ODR_LMT_SEQ=AMST.TGT_ODR_LMT_SEQ), 0)+ROWNUM  EXCEPT_BZPLC_SEQ
+                 , TBZP.BZPLC_ID
+                 , TBZP.REG_DTM
+                 , TBZP.REGPSN_ID
+                 , WMST.UPD_DTM
+                 , WMST.UPDPSN_ID
+              FROM TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS    TBZP
+                 , ANLS_ODR_LMT_INFO                   AMST
+                 , WITH_ODR_LMT_INFO                   WMST
+             WHERE (TBZP.CO_CD, TBZP.ODR_LMT_SEQ)     IN (SELECT CO_CD,     ODR_LMT_SEQ FROM LIST_ODR_LMT_INFO)
+               AND (TBZP.CO_CD, TBZP.ODR_LMT_SEQ) NOT IN (SELECT CO_CD, TGT_ODR_LMT_SEQ FROM ANLS_ODR_LMT_INFO)
+    
+    )
+    ;
+    DELETE FROM TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS  TBZP
+     WHERE (CO_CD, ODR_LMT_SEQ) IN (
+     
+            <include refid="sqlAnlsOdrLmtMst" />
+            SELECT CO_CD, ODR_LMT_SEQ
+              FROM TB_OD_ODR_LMT_INFO    DTNS
+             WHERE (CO_CD, ODR_LMT_SEQ)     IN (SELECT CO_CD,     ODR_LMT_SEQ FROM LIST_ODR_LMT_INFO)
+               AND (CO_CD, ODR_LMT_SEQ) NOT IN (SELECT CO_CD, TGT_ODR_LMT_SEQ FROM ANLS_ODR_LMT_INFO)
+               AND DTNS.CO_CD       = TBZP.CO_CD
+               AND DTNS.ODR_LMT_SEQ = TBZP.ODR_LMT_SEQ
+             
+           )
+    ;
+    
+    
+    -- TB_OD_ODR_LMT_INFO               : V_ODR_LMT_SEQ 정보외 삭제
+    DELETE FROM TB_OD_ODR_LMT_INFO   TMST
+     WHERE (CO_CD, ODR_LMT_SEQ) IN (
+            
+            <include refid="sqlAnlsOdrLmtMst" />
+            SELECT CO_CD, ODR_LMT_SEQ
+              FROM TB_OD_ODR_LMT_INFO    DTNS
+             WHERE (CO_CD, ODR_LMT_SEQ)     IN (SELECT CO_CD,     ODR_LMT_SEQ FROM LIST_ODR_LMT_INFO)
+               AND (CO_CD, ODR_LMT_SEQ) NOT IN (SELECT CO_CD, TGT_ODR_LMT_SEQ FROM ANLS_ODR_LMT_INFO)
+               AND DTNS.CO_CD       = TMST.CO_CD
+               AND DTNS.ODR_LMT_SEQ = TMST.ODR_LMT_SEQ
+             
+           )
+    ;
+ELSE
+    <include refid="sqlWithOdrLmtMst" />
+    SELECT DISTINCT OMST.CO_CD, NVL((SELECT MAX(ODR_LMT_SEQ) FROM TB_OD_ODR_LMT_INFO WHERE CO_CD=WMST.CO_CD), 0)+1       ODR_LMT_SEQ
+      INTO V_CO_CD   , V_TGT_ODR_LMT_SEQ
+         
+      FROM TB_OD_ODR_LMT_INFO  OMST
+         , WITH_ODR_LMT_INFO   WMST
+     WHERE OMST.CO_CD=WMST.CO_CD
+    ;
+    
+END IF;
+-- /동일조건이 있는 지 확인 후 동기화 처리
+
+
+-- TB_OD_ODR_LMT_INFO
+MERGE INTO TB_OD_ODR_LMT_INFO                TRGT
+USING (
+
+<include refid="sqlWithOdrLmtMst" />
+SELECT CO_CD
+     , ODR_LMT_SEQ
+     , CUST_SPR_CD
+     , ODR_LMT_DOMN_CD
+     , MAX_QTY
+     , STR_DT
+     , END_DT
+     , APLY_DCNT
+     , USE_YN
+     , REG_DTM
+     , REGPSN_ID
+     , UPD_DTM
+     , UPDPSN_ID
+  FROM WITH_ODR_LMT_INFO
+  
+      )    INPT
+   ON (    INPT.CO_CD           = TRGT.CO_CD
+       AND INPT.CUST_SPR_CD     = TRGT.CUST_SPR_CD
+       AND INPT.ODR_LMT_DOMN_CD = TRGT.ODR_LMT_DOMN_CD
+       AND INPT.MAX_QTY         = TRGT.MAX_QTY
+       AND INPT.STR_DT          = TRGT.STR_DT
+       AND INPT.END_DT          = TRGT.END_DT
+       AND INPT.APLY_DCNT       = TRGT.APLY_DCNT
+       AND INPT.USE_YN          = TRGT.USE_YN
+      )
+      
+ WHEN MATCHED THEN
+      UPDATE SET
+             UPD_DTM    = INPT.UPD_DTM
+           , UPDPSN_ID  = INPT.UPDPSN_ID
+           
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , ODR_LMT_SEQ
+           , CUST_SPR_CD
+           , ODR_LMT_DOMN_CD
+           , MAX_QTY
+           , STR_DT
+           , END_DT
+           , APLY_DCNT
+           , USE_YN
+           , REG_DTM
+           , REGPSN_ID
+           , UPD_DTM
+           , UPDPSN_ID
+      )
+      VALUES (
+             INPT.CO_CD
+           , NVL((SELECT MAX(ODR_LMT_SEQ) FROM TB_OD_ODR_LMT_INFO WHERE CO_CD=INPT.CO_CD), 0)+1
+           , INPT.CUST_SPR_CD
+           , INPT.ODR_LMT_DOMN_CD
+           , INPT.MAX_QTY
+           , INPT.STR_DT
+           , INPT.END_DT
+           , INPT.APLY_DCNT
+           , INPT.USE_YN
+           , INPT.REG_DTM
+           , INPT.REGPSN_ID
+           , INPT.UPD_DTM
+           , INPT.UPDPSN_ID
+      )
+;
+
+
+<!-- 
+            , NVL(    (SELECT MAX(ODR_LMT_PRD_SEQ) FROM TB_OD_ODR_LMT_TGT_PRD_DTLS WHERE CO_CD=INF.CO_CD AND ODR_LMT_SEQ=INF.ODR_LMT_SEQ AND PRD_ID=INF.PRD_ID)
+                , NVL((SELECT MAX(ODR_LMT_PRD_SEQ) FROM TB_OD_ODR_LMT_TGT_PRD_DTLS WHERE CO_CD=INF.CO_CD AND ODR_LMT_SEQ=INF.ODR_LMT_SEQ), 0)+ROWNUM
+              )                                      ODR_LMT_PRD_SEQ
+ -->
+
+<if test='LIST_TGT_PRD != null and LIST_TGT_PRD .size() > 0'>
+-- TB_OD_ODR_LMT_TGT_PRD_DTLS
+MERGE INTO TB_OD_ODR_LMT_TGT_PRD_DTLS  TRGT
+USING (
+        SELECT CO_CD
+             , ODR_LMT_SEQ
+             , ODR_LMT_PRD_SEQ
+             , PRD_ID
+             , SYSDATE  REG_DTM, 'X0025958'  REGPSN_ID
+             , SYSDATE  UPD_DTM, 'X0025958'  UPDPSN_ID
+          FROM (
+                SELECT CO_CD
+                     , ODR_LMT_SEQ
+                     , MIN(NVL(ODR_LMT_PRD_SEQ, ROWNUM))  ODR_LMT_PRD_SEQ
+                     , LPAD(PRD_ID, 18, '0')              PRD_ID
+                         FROM (SELECT NULL CO_CD, NULL  ODR_LMT_SEQ, NULL  ODR_LMT_PRD_SEQ, NULL  PRD_ID  FROM DUAL
+                               <foreach collection="LIST_TGT_PRD" index="index" item="item" open="" separator="" close="">
+                               UNION ALL SELECT #{CO_CD}, #{ODR_LMT_SEQ}, #{item.ODR_LMT_PRD_SEQ}, #{item.PRD_ID}  FROM DUAL</foreach>
+                              )        INF
+                        WHERE CO_CD IS NOT NULL
+                 GROUP BY
+                       CO_CD
+                     , ODR_LMT_SEQ
+                     , LPAD(PRD_ID, 18, '0')
+                 ORDER BY
+                       CO_CD
+                     , ODR_LMT_SEQ
+                     , ODR_LMT_PRD_SEQ
+               )
+      )    INPT
+   ON (    INPT.CO_CD           = TRGT.CO_CD
+       AND INPT.ODR_LMT_SEQ     = TRGT.ODR_LMT_SEQ
+       AND INPT.ODR_LMT_PRD_SEQ = TRGT.ODR_LMT_PRD_SEQ
+<!--        AND INPT.PRD_ID      = TRGT.PRD_ID -->
+      )
+      
+ WHEN MATCHED THEN
+      UPDATE SET
+             PRD_ID          = INPT.PRD_ID
+           , UPD_DTM         = INPT.UPD_DTM
+           , UPDPSN_ID       = INPT.UPDPSN_ID
+           
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , ODR_LMT_SEQ
+           , ODR_LMT_PRD_SEQ
+           , PRD_ID
+           , REG_DTM
+           , REGPSN_ID
+           , UPD_DTM
+           , UPDPSN_ID
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.ODR_LMT_SEQ
+           , INPT.ODR_LMT_PRD_SEQ
+           , INPT.PRD_ID
+           , INPT.REG_DTM
+           , INPT.REGPSN_ID
+           , INPT.UPD_DTM
+           , INPT.UPDPSN_ID
+      )
+;
+</if>
+
+
+<if test='LIST_EXCEPT_BZPLC != null and LIST_EXCEPT_BZPLC .size() > 0'>
+-- TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS
+MERGE INTO TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS  TRGT
+USING (
+
+       SELECT #{CO_CD      }                         CO_CD
+            , #{ODR_LMT_SEQ}                         ODR_LMT_SEQ
+            , EXCEPT_BZPLC_SEQ
+            , BZPLC_ID
+            , SYSDATE  REG_DTM, #{REGPSN_ID       }  REGPSN_ID
+            , SYSDATE  UPD_DTM, #{UPDPSN_ID       }  UPDPSN_ID
+         FROM (SELECT NULL CO_CD, NULL  ODR_LMT_SEQ, NULL  EXCEPT_BZPLC_SEQ, NULL  BZPLC_ID  FROM DUAL
+               <foreach collection="LIST_EXCEPT_BZPLC" index="index" item="item" open="" separator="" close="">
+               UNION ALL SELECT #{CO_CD}, #{ODR_LMT_SEQ}, #{index}+1, #{item.BZPLC_ID}  FROM DUAL</foreach>
+              )
+        WHERE CO_CD IS NOT NULL
+      )    INPT
+   ON (    INPT.CO_CD       = TRGT.CO_CD
+<!--        AND INPT.ODR_LMT_SEQ = TRGT.ODR_LMT_SEQ -->
+       AND INPT.BZPLC_ID    = TRGT.BZPLC_ID
+      )
+ WHEN MATCHED THEN
+      UPDATE SET
+             UPD_DTM         = INPT.UPD_DTM
+           , UPDPSN_ID       = INPT.UPDPSN_ID
+           
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD
+           , ODR_LMT_SEQ
+           , EXCEPT_BZPLC_SEQ
+           , BZPLC_ID
+           , REG_DTM
+           , REGPSN_ID
+           , UPD_DTM
+           , UPDPSN_ID
+      )
+      VALUES (
+             INPT.CO_CD
+           , INPT.ODR_LMT_SEQ
+           , INPT.EXCEPT_BZPLC_SEQ
+           , INPT.BZPLC_ID
+           , INPT.REG_DTM
+           , INPT.REGPSN_ID
+           , INPT.UPD_DTM
+           , INPT.UPDPSN_ID
+      )
+;
+</if>
+
+END;
+/* /com.ssp.bo.od.odr.qty.lmt.saveOdrQtyLmt */
+</insert>
+
+
+<insert id="patchOdrQtyLmt" parameterType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.patchOdrQtyLmt */
+BEGIN
+
+<if test='LIST_PATCH != null and LIST_PATCH .size() > 0'>
+UPDATE TB_OD_ODR_LMT_INFO 
+   SET USE_YN   = #{USE_YN   }
+     , UPD_DTM  = SYSDATE
+     , UPDPSN_ID= #{UPDPSN_ID}
+ WHERE (CO_CD, ODR_LMT_SEQ) IN (
+       <foreach collection="LIST_PATCH" item="row" open="" separator="," close="">
+       (#{row.CO_CD}, #{row.ODR_LMT_SEQ})</foreach>
+       
+       )
+;
+</if>
+
+END;
+/* /com.ssp.bo.od.odr.qty.lmt.patchOdrQtyLmt */
+</insert>
+
+
+
+
+
+<insert id="trmnOdrQtyLmt" parameterType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.trmnOdrQtyLmt */
+
+DECLARE
+V_CO_CD       TB_OD_ODR_LMT_INFO.CO_CD%TYPE;
+V_ODR_LMT_SEQ TB_OD_ODR_LMT_INFO.ODR_LMT_SEQ%TYPE;
+
+BEGIN
+V_CO_CD := #{CO_CD           };
+
+<include refid="sqlWithOdrLmtMst" />
+
+
+-- TB_OD_ODR_LMT_INFO
+MERGE INTO TB_OD_ODR_LMT_INFO    TRGT
+USING (
+
+/* WITH SAVE_ODR_LMT_MST */
+<include refid="sqlWithOdrLmtMst" />
+SELECT *
+  FROM SAVE_ODR_LMT_MST
+/* /WITH SAVE_ODR_LMT_MST */
+
+      )    INPT
+   ON (    INPT.CO_CD             = TRGT.CO_CD
+       AND INPT.CUST_SPR_CD       = TRGT.CUST_SPR_CD
+       AND INPT.ODR_LMT_DOMN_CD   = TRGT.ODR_LMT_DOMN_CD
+       AND INPT.ODR_LMT_MAX_QTY   = TRGT.ODR_LMT_MAX_QTY
+       AND INPT.ODR_LMT_STR_DT    = TRGT.ODR_LMT_STR_DT
+       AND INPT.ODR_LMT_END_DT    = TRGT.ODR_LMT_END_DT
+       AND INPT.ODR_LMT_APLY_DCNT = TRGT.ODR_LMT_APLY_DCNT
+       AND INPT.USE_YN            = TRGT.USE_YN
+      )
+      
+ WHEN MATCHED THEN
+      UPDATE SET
+             UPD_DTM    = INPT.UPD_DTM
+           , UPDPSN_ID  = INPT.UPDPSN_ID
+           
+ WHEN NOT MATCHED THEN
+      INSERT (
+             CO_CD                     -- 회사코드
+           , ODR_LMT_SEQ               -- 주문제한순번
+           , CUST_SPR_CD               -- 고객구분코드
+           , ODR_LMT_DOMN_CD           -- 주문제한영역코드
+           , ODR_LMT_MAX_QTY           -- 최대주문수량
+           , ODR_LMT_STR_DT            -- 적용시작일
+           , ODR_LMT_END_DT            -- 적용종료일
+           , ODR_LMT_APLY_DCNT         -- 적용일수
+           , USE_YN                    -- 사용여부
+           , REG_DTM                   -- 등록일시
+           , REGPSN_ID                 -- 등록자ID
+           , UPD_DTM                   -- 수정일시
+           , UPDPSN_ID                 -- 수정자ID
+      )
+      VALUES (
+             INPT.CO_CD
+           , NVL((SELECT MAX(ODR_LMT_SEQ) FROM TB_OD_ODR_LMT_INFO WHERE CO_CD=INPT.CO_CD), 0)+1
+           , INPT.CUST_SPR_CD
+           , INPT.ODR_LMT_DOMN_CD
+           , INPT.ODR_LMT_MAX_QTY
+           , INPT.ODR_LMT_STR_DT
+           , INPT.ODR_LMT_END_DT
+           , INPT.ODR_LMT_APLY_DCNT
+           , INPT.USE_YN
+           , INPT.REG_DTM
+           , INPT.REGPSN_ID
+           , INPT.UPD_DTM
+           , INPT.UPDPSN_ID
+      )
+;
+ 
+-- TB_OD_ODR_LMT_TGT_PRD_DTLS
+
+-- TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS
+
+
+END;
+/* /com.ssp.bo.od.odr.qty.lmt.trmnOdrQtyLmt */
+</insert>
+
+
+
+<select id="listPrdInfo" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.listPrdInfo */
+WITH
+PARAMS_PRD_IDS  AS (
+SELECT LPAD(PRD_ID, 18, '0')  PRD_ID
+  FROM (
+        SELECT NULL SEQ, NULL CO_CD, NULL PRD_ID FROM DUAL
+       )
+ WHERE CO_CD IS NOT NULL AND PRD_ID IS NOT NULL
+)
+
+SELECT PPRD.SEQ
+     , PPRD.PRD_ID
+     , SPRD.PRD_NM
+     , MPRD.PUB_ONLY_SPR_CD
+  FROM PARAMS_PRD_IDS        PPRD
+     , TB_PR_PRD_INFO        SPRD
+     , TB_PR_MRO_PRD_INFO    MPRD
+ WHERE PPRD.CO_CD=SPRD.CO_CD(+) AND PPRD.PRD_ID=SPRD.PRD_ID(+)
+   AND PPRD.CO_CD=MPRD.CO_CD(+) AND PPRD.PRD_ID=MPRD.PRD_ID(+)
+ 
+ ORDER BY
+       SEQ
+/* com.ssp.bo.od.odr.qty.lmt.listPrdInfo */
+</select>
+
+
+<select id="listBzplcInfo" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.listBzplcInfo */
+WITH
+PARAMS_BZPLC_IDS  AS (
+SELECT SEQ, CO_CD, LPAD(BZPLC_ID, 10, '0')  BZPLC_ID
+  FROM (
+        SELECT NULL SEQ, NULL CO_CD, NULL BZPLC_ID FROM DUAL
+        UNION ALL SELECT 1 SEQ, '1000' CO_CD, 'S000010594' BZPLC_ID FROM DUAL
+       )
+ WHERE CO_CD IS NOT NULL AND BZPLC_ID IS NOT NULL
+)
+
+SELECT PBZP.SEQ
+     , PBZP.CO_CD
+     , PBZP.BZPLC_ID
+     , SBZP.BZPLC_NM
+     , SBZP.CUST_SPR_CD
+     , SBZP.USE_YN
+  FROM PARAMS_BZPLC_IDS      PBZP
+     , TB_CC_BZPLC_BASIS     SBZP
+ WHERE PBZP.CO_CD=SBZP.CO_CD(+) AND PBZP.BZPLC_ID=SBZP.BZPLC_ID(+)
+ 
+ ORDER BY SEQ
+/* com.ssp.bo.od.odr.qty.lmt.listBzplcInfo */
+</select>
+
+
+<sql id="sqlVaildateParams">
+        SELECT NULL SEQ, NULL CO_CD, NULL PRD_ID_INPT, null BZPLC_ID_INPT FROM DUAL
+        <if test="ds_validate_params != null and ds_validate_params.size() > 0"><foreach collection="ds_validate_params" item="item" index="index">
+        UNION ALL SELECT #{index}, #{CO_CD}, #{item.PRD_ID}, #{item.BZPLC_ID} FROM DUAL</foreach></if>
+</sql>
+
+<select id="validatePrd" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.validatePrd */
+
+WITH
+PARAMS_PRD_IDS  AS (
+SELECT DISTINCT
+       SEQ, CO_CD
+     , PRD_ID_INPT, LPAD(PRD_ID_INPT, 18, '0')  PRD_ID
+  FROM (
+        <include refid="sqlVaildateParams" />
+       )
+ WHERE CO_CD IS NOT NULL AND PRD_ID_INPT IS NOT NULL
+)
+
+SELECT RSLT.SEQ
+     , RSLT.CO_CD
+     , RSLT.PRD_ID_INPT  PRD_ID
+     , RSLT.PRD_NM
+     , RSLT.RSLT_MESG
+     , DECODE(RSLT.RSLT_MESG, NULL, NULL, 'ERROR')  RSLT_CD
+  FROM (SELECT PRMS.SEQ
+             , PRMS.CO_CD
+             , PRMS.PRD_ID_INPT
+             , PRMS.PRD_ID
+             , SPRD.PRD_NM
+             , MPRD.PUB_ONLY_SPR_CD
+             , CASE WHEN SPRD.PRD_ID IS NULL                                         THEN '미존재 상품 ('|| PRD_ID_INPT ||')'
+                    WHEN MPRD.PUB_ONLY_SPR_CD != 'P' OR MPRD.PUB_ONLY_SPR_CD IS NULL THEN   '전용 상품 ('|| PRD_ID_INPT ||')'
+                    WHEN (SELECT COUNT(*) FROM TB_OD_ODR_LMT_TGT_PRD_DTLS WHERE CO_CD=PRMS.CO_CD AND PRD_ID=PRMS.PRD_ID) > 0 THEN '주문수량 제한적용 상품 ('|| PRD_ID_INPT ||')'
+               END  RSLT_MESG
+          FROM PARAMS_PRD_IDS        PRMS
+             , TB_PR_PRD_INFO        SPRD
+             , TB_PR_MRO_PRD_INFO    MPRD
+         WHERE PRMS.CO_CD=SPRD.CO_CD(+) AND PRMS.PRD_ID=SPRD.PRD_ID(+)
+           AND PRMS.CO_CD=MPRD.CO_CD(+) AND PRMS.PRD_ID=MPRD.PRD_ID(+)
+       )  RSLT
+
+ ORDER BY RSLT.SEQ
+
+/* /com.ssp.bo.od.odr.qty.lmt.validatePrd */
+</select>
+
+
+<select id="validateBzplc" parameterType="HashMap" resultType="HashMap">
+/* com.ssp.bo.od.odr.qty.lmt.validateBzplc */
+
+WITH
+PARAMS_BZPLC_IDS  AS (
+SELECT DISTINCT
+       SEQ, CO_CD
+     , BZPLC_ID_INPT, BZPLC_ID_INPT  BZPLC_ID
+  FROM (
+        <include refid="sqlVaildateParams" />
+       )
+ WHERE CO_CD IS NOT NULL AND BZPLC_ID_INPT IS NOT NULL
+)
+
+SELECT RSLT.SEQ
+     , RSLT.CO_CD
+     , RSLT.BZPLC_ID_INPT  BZPLC_ID
+     , RSLT.BZPLC_NM
+     , RSLT.RSLT_MESG
+     , DECODE(RSLT.RSLT_MESG, NULL, NULL, 'ERROR')  RSLT_CD
+  FROM (SELECT PRMS.SEQ
+             , PRMS.CO_CD
+             , PRMS.BZPLC_ID_INPT
+             , BZPB.BZPLC_ID
+             , BZPB.BZPLC_NM
+             , CASE WHEN BZPB.BZPLC_ID IS NULL                                       THEN '미존재 사업장 ('|| BZPLC_ID_INPT ||')'
+               END  RSLT_MESG
+          FROM PARAMS_BZPLC_IDS      PRMS
+             , TB_CC_BZPLC_BASIS     BZPB
+         WHERE PRMS.CO_CD=BZPB.CO_CD(+) AND PRMS.BZPLC_ID_INPT=BZPB.BZPLC_ID(+)
+       )  RSLT
+
+ ORDER BY RSLT.SEQ
+ 
+/* /com.ssp.bo.od.odr.qty.lmt.validateBzplc */
+</select>
+
+
+<sql id="sqlOdrQtyLmt4Xlsx">
+SELECT 0      CHK
+     , TMST.*
+     , DECODE(TMST.CUST_SPR_CD, '*', '전체', (SELECT FN_COM_DTL_CDNM_NVL('KO', 'CUST_SPR_CD'    , TMST.CUST_SPR_CD    , TMST.CUST_SPR_CD    ) FROM DUAL))  CUST_SPR_CD_NM
+     ,                                       (SELECT FN_COM_DTL_CDNM_NVL('KO', 'ODR_LMT_DOMN_CD', TMST.ODR_LMT_DOMN_CD, TMST.ODR_LMT_DOMN_CD) FROM DUAL)   ODR_LMT_DOMN_CD_NM
+     ,                                       (SELECT FN_COM_DTL_CDNM_NVL('KO', 'USE_YN'         , TMST.USE_YN         , TMST.USE_YN         ) FROM DUAL)   USE_YN_NM
+     
+     , ODR_LMT_STR_DT  STR_DT, DECODE(ODR_LMT_STR_DT, NULL, '', SUBSTR(ODR_LMT_STR_DT, 1, 4) ||'.'|| SUBSTR(ODR_LMT_STR_DT, 5, 2)  ||'.'|| SUBSTR(ODR_LMT_STR_DT, 7, 2))  STR_DATE
+     , ODR_LMT_END_DT  END_DT, DECODE(ODR_LMT_END_DT, NULL, '', SUBSTR(ODR_LMT_END_DT, 1, 4) ||'.'|| SUBSTR(ODR_LMT_END_DT, 5, 2)  ||'.'|| SUBSTR(ODR_LMT_END_DT, 7, 2))  END_DATE
+     , ODR_LMT_MAX_QTY        MAX_QTY
+     , ODR_LMT_APLY_DCNT      APLY_DCNT
+     
+     , TO_CHAR(TMST.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS')                   UPD_DTTM
+     , (SELECT FN_CC_GET_MBR_NM(TMST.CO_CD, TMST.UPDPSN_ID) FROM DUAL)  UPDPSN_NM
+--     ,                            PRD_NMS
+     , TGTP.ODR_LMT_PRD_SEQ     , TO_CHAR(TO_NUMBER(TGTP.PRD_ID DEFAULT NULL ON CONVERSION ERROR))  APLY_PRD_ID, PRDI.PRD_NM
+     , EBIF.EXCEPT_BZPLC_NMS    , EBIF.ODR_LMT_EXCEPT_BZPLC
+     
+  FROM TB_OD_ODR_LMT_INFO         TMST
+     , TB_OD_ODR_LMT_TGT_PRD_DTLS TGTP
+     , TB_PR_PRD_INFO             PRDI
+     , (SELECT EXPB.CO_CD, EXPB.ODR_LMT_SEQ
+             , MIN(BZPB.BZPLC_NM) KEEP(DENSE_RANK FIRST ORDER BY EXPB.EXCEPT_BZPLC_SEQ)  EXCEPT_BZPLC_NM, COUNT(*)                                   BZPLC_CUNT
+             ,        MIN(BZPB.BZPLC_NM) KEEP(DENSE_RANK FIRST ORDER BY EXPB.EXCEPT_BZPLC_SEQ)        
+            || DECODE(MIN(BZPB.BZPLC_NM) KEEP(DENSE_RANK FIRST ORDER BY EXPB.EXCEPT_BZPLC_SEQ), NULL, LISTAGG(EXPB.BZPLC_ID, ','), DECODE((COUNT(*)-1), 0, '', ' 외 '||(COUNT(*)-1)))  EXCEPT_BZPLC_NMS
+            
+             , LISTAGG(EXPB.BZPLC_ID, ',') WITHIN GROUP(ORDER BY EXPB.EXCEPT_BZPLC_SEQ)     ODR_LMT_EXCEPT_BZPLC
+             
+          FROM TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS  EXPB
+             , TB_CC_BZPLC_BASIS                BZPB
+         WHERE EXPB.CO_CD=BZPB.CO_CD(+) AND EXPB.BZPLC_ID=BZPB.BZPLC_ID(+)
+         GROUP BY
+               EXPB.CO_CD, EXPB.ODR_LMT_SEQ
+       )       EBIF
+ WHERE TMST.ODR_LMT_SEQ!=0
+   AND TMST.CO_CD=TGTP.CO_CD(+) AND TMST.ODR_LMT_SEQ=TGTP.ODR_LMT_SEQ(+)  AND TGTP.CO_CD=PRDI.CO_CD(+) AND TGTP.PRD_ID=PRDI.PRD_ID(+)
+   AND TMST.CO_CD=EBIF.CO_CD(+) AND TMST.ODR_LMT_SEQ=EBIF.ODR_LMT_SEQ(+)
+   
+   <if test='CO_CD           != null and !"".equals( CO_CD           .trim())'>AND TMST.CO_CD           = #{CO_CD          }</if>
+   <if test='CUST_SPR_CD     != null and !"".equals( CUST_SPR_CD     .trim())'>AND TMST.CUST_SPR_CD     = #{CUST_SPR_CD    }</if>
+   <if test='ODR_LMT_DOMN_CD != null and !"".equals( ODR_LMT_DOMN_CD .trim())'>AND TMST.ODR_LMT_DOMN_CD = #{ODR_LMT_DOMN_CD}</if>
+   <if test='USE_YN          != null and !"".equals( USE_YN          .trim())'>AND TMST.USE_YN          = #{USE_YN         }</if>
+   <if test='ODR_LMT_SEQ     != null and !"".equals( ODR_LMT_SEQ     .trim())'>AND TMST.ODR_LMT_SEQ     = #{ODR_LMT_SEQ    }</if>
+   <if test="PRD_ID > 0">
+   AND EXISTS (  -- 주문수량 제한 상품
+        SELECT CO_CD, ODR_LMT_SEQ FROM TB_OD_ODR_LMT_TGT_PRD_DTLS
+         WHERE CO_CD=TMST.CO_CD AND ODR_LMT_SEQ=TMST.ODR_LMT_SEQ
+           AND PRD_ID IN (
+                SELECT LPAD(COND_DATA_VAL, 18, '0')  PRD_ID FROM TB_OD_ODR_INQ_TGT_DTLS
+                 WHERE SES_ID=#{SES_ID}
+                   AND INQ_COND_DTLS=#{INQ_COND_DTLS}
+                   AND COL_ITM='PRD_ID'
+       )       )
+   </if>
+   <if test="EXCEPT_BZPLC_ID > 0">
+   AND EXISTS (  -- 주문수량 제한 예외사업장
+        SELECT CO_CD, ODR_LMT_SEQ FROM TB_OD_ODR_LMT_EXCEPT_BZPLC_DTLS
+         WHERE CO_CD=TMST.CO_CD AND ODR_LMT_SEQ=TMST.ODR_LMT_SEQ
+           AND BZPLC_ID IN (
+                SELECT COND_DATA_VAL  BZPLC_ID FROM TB_OD_ODR_INQ_TGT_DTLS
+                 WHERE SES_ID=#{SES_ID}
+                   AND INQ_COND_DTLS=#{INQ_COND_DTLS}
+                   AND COL_ITM='EXCEPT_BZPLC_ID'
+       )       )
+   </if>
+</sql>
+
+<!-- 
+<select id="selectXlsxDownCount" parameterType="HashMap" resultType="HashMap">
+/* /com.ssp.bo.od.odr.qty.lmt.selectXlsxDownCount */
+
+SELECT COUNT(*)  TOT_CUNT  FROM (
+
+<include refid="sqlOdrQtyLmt" />
+
+       )
+
+/* /com.ssp.bo.od.odr.qty.lmt.selectXlsxDownCount */
+</select>
+ -->
+
+<select id="xlsxOdrQtyLmt" parameterType="HashMap" resultType="HashMap">
+/* /com.ssp.bo.od.odr.qty.lmt.xlsxOdrQtyLmt */
+
+<include refid="sqlOdrQtyLmt4Xlsx" />
+
+ ORDER BY
+       TMST.CO_CD
+     , TMST.ODR_LMT_SEQ      DESC
+     , TGTP.ODR_LMT_PRD_SEQ
+
+/* /com.ssp.bo.od.odr.qty.lmt.xlsxOdrQtyLmt */
+</select>
+
+</mapper>

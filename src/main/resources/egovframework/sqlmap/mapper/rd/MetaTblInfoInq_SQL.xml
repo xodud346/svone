@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="MetaTblInfoInq">
+
+    <select id="selectMetaTblInfoInq" parameterType="HashMap" resultType="HashMap">
+        /* MetaTblInfoInqDao.selectMetaTblInfoInq 업체공통클래스(샘풀) 조회 */
+        <![CDATA[
+			WITH BASE_CONDITION AS
+			(
+			 SELECT #{CODE} AS 검색용어
+			   FROM DUAL
+			)
+			, 제시단어단위로나눈것 AS
+			(
+			 SELECT UPPER(A.검색용어)                                                             AS 검색용어
+			      , LEVEL                                                                         AS 제시단어단위순번
+			      , UPPER(TRIM(SUBSTR(REGEXP_SUBSTR(' '||A.검색용어||' $',' +[^ ]+',1,LEVEL),2))) AS 제시단어
+			   FROM BASE_CONDITION A
+			CONNECT BY LEVEL <= REGEXP_COUNT(' '||A.검색용어||' $',' +[^ ]+')
+			)
+			, 단어재조합순번 AS
+			(
+			 SELECT SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(A.제시단어단위순번),','),2) AS 단어재조합순번목록
+			   FROM 제시단어단위로나눈것 A
+			  WHERE CONNECT_BY_ISLEAF = 1
+			CONNECT BY 
+			        PRIOR      A.제시단어단위순번 < A.제시단어단위순번
+			        START WITH A.제시단어단위순번 = 1
+			)
+			, 단어재조합 AS
+			(
+			 SELECT A.단어재조합순번목록
+			      , B.제조합순번
+			      , B.시작순번
+			      , B.종료순번
+			      , COUNT(*) OVER (PARTITION BY A.단어재조합순번목록)                                           AS 재조합단어갯수
+			      , LISTAGG(C.제시단어) WITHIN GROUP (ORDER BY C.제시단어단위순번)                              AS 재조합단어
+			   FROM 단어재조합순번 A
+			        CROSS APPLY
+			        (
+			         SELECT LEVEL                                                                               AS 제조합순번
+			              , TO_NUMBER(SUBSTR(REGEXP_SUBSTR(','||A.단어재조합순번목록,'\,[^,]+',1,LEVEL),2))     AS 시작순번
+			              , TO_NUMBER(SUBSTR(REGEXP_SUBSTR(','||A.단어재조합순번목록,'\,[^,]+',1,LEVEL+1),2))-1 AS 종료순번
+			           FROM DUAL
+			                CONNECT BY LEVEL < REGEXP_COUNT(','||A.단어재조합순번목록,'\,[^,]+')
+			        ) B
+			        JOIN 제시단어단위로나눈것 C
+			     ON (
+			         C.제시단어단위순번 BETWEEN B.시작순번 AND B.종료순번
+			        )
+			  GROUP BY A.단어재조합순번목록
+			         , B.제조합순번
+			         , B.시작순번
+			         , B.종료순번
+			)
+			, 단어부합결과 AS
+			(
+			 SELECT A.단어재조합순번목록
+			      , A.재조합단어갯수
+			      , A.제조합순번
+			      , A.재조합단어
+			      , ROW_NUMBER() OVER (PARTITION BY A.단어재조합순번목록,A.제조합순번 ORDER BY B.PRIORITY, LENGTHB(B.ENG_WORD), LENGTHB(B.WORD)) AS 우선순위
+			      , NVL(TO_CHAR(B.WORD_ID),'?')                                                                                                  AS WORD_ID
+			      , NVL(B.WORD,'?')                                                                                                              AS WORD
+			      , NVL(B.ENG_WORD,'?')                                                                                                          AS ENG_WORD
+			      , CASE WHEN B.WORD_ID IS NULL THEN 0 ELSE 1 END                                                                                AS MATCHED_COUNT
+			      , CASE WHEN B.WORD_ID IS NULL THEN A.재조합단어 END                                                                            AS MISMATCHED
+			   FROM 단어재조합     A
+			   LEFT JOIN META_WORD B
+			     ON (
+			             B.WORD   = A.재조합단어
+			         AND 
+			             B.USE_YN = 'Y'
+			        )
+			)
+			, 용어부합결과 AS
+			(
+			 SELECT A.단어재조합순번목록
+			      , A.재조합단어갯수
+			      , TO_NUMBER(DBMS_XMLGEN.GETXMLTYPE('SELECT  '||SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(NVL(A.MATCHED_COUNT,0)),'+'),2)||'  FROM DUAL').EXTRACT('//text()')) AS MATCHED_COUNT
+			      , TO_NUMBER(DBMS_XMLGEN.GETXMLTYPE('SELECT  '||SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(NVL(A.우선순위,0)),'+'),2)||'  FROM DUAL').EXTRACT('//text()'))      AS 우선순위_STRUCT
+			      , ROWNUM                                                                                                                                               AS 단어생성우선순위
+			      , SUBSTR(SYS_CONNECT_BY_PATH(A.재조합단어,'+'),2)                                                                                                      AS 재조합단어_STRUCT
+			      , SUBSTR(SYS_CONNECT_BY_PATH(A.WORD_ID,'+'),2)                                                                                                         AS TERM_STRUCT
+			      , SUBSTR(SYS_CONNECT_BY_PATH(A.WORD,'+'),2)                                                                                                            AS WORD_STRUCT
+			      , SUBSTR(SYS_CONNECT_BY_PATH(A.ENG_WORD,'+'),2)                                                                                                        AS ENG_WORD_STRUCT
+			      , SUBSTR(REPLACE(REPLACE(SYS_CONNECT_BY_PATH(A.MISMATCHED,' ,')||' ',', ',''),' ,',','),2)                                                             AS MISMATCHEDS
+			   FROM 단어부합결과 A
+			  WHERE CONNECT_BY_ISLEAF = 1
+			CONNECT BY 
+			        PRIOR A.단어재조합순번목록 = A.단어재조합순번목록
+			    AND PRIOR A.제조합순번         = A.제조합순번 - 1
+			  START WITH  A.제조합순번         = 1
+			  ORDER SIBLINGS BY A.단어재조합순번목록
+			                  , A.우선순위
+			)
+			, 용어부합결과우선순위적용 AS
+			(
+			 SELECT A.단어재조합순번목록
+			      , A.재조합단어갯수
+			      , A.MATCHED_COUNT
+			      , CASE WHEN A.재조합단어갯수 = A.MATCHED_COUNT
+			             THEN A.우선순위_STRUCT
+			             ELSE (1 - A.MATCHED_COUNT / NULLIF(A.재조합단어갯수,100000)) * 100000 + A.우선순위_STRUCT
+			        END AS 우선순위_STRUCT
+			      , A.단어생성우선순위
+			      , A.재조합단어_STRUCT
+			      , A.TERM_STRUCT
+			      , A.WORD_STRUCT
+			      , A.ENG_WORD_STRUCT
+			      , A.MISMATCHEDS
+			   FROM 용어부합결과 A
+			)
+			, 용어검색결과 AS
+			(
+			 SELECT B.TERM_NO
+			      , B.TERM_NM
+			      , B.TERM_STRUCT
+			      , B.WORD_STRUCT
+			      , B.ENG_WORD_STRUCT
+			      , B.ENG_COL_NM
+			      , B.TERM_DESC
+			      , (
+			         SELECT LISTAGG(S.DATA_TYPE_NAME||' - '||TO_CHAR(DATA_TYPE_NAME_COUNT)||'건' ,',') WITHIN GROUP (ORDER BY S.DATA_TYPE_NAME)
+			           FROM (
+			                 SELECT S.DATA_TYPE_NAME AS DATA_TYPE_NAME
+			                      , COUNT(*)         AS DATA_TYPE_NAME_COUNT
+			                   FROM META_TAB_COLUMNS S
+			                  WHERE S.COLUMN_NAME = B.ENG_COL_NM
+			                  GROUP BY S.DATA_TYPE_NAME
+			                ) S
+			          WHERE ROWNUM < 10
+			        ) DATA_TYPES
+			   FROM BASE_CONDITION A
+			   JOIN META_TERM      B
+			     ON (
+			         B.TERM_NM = REPLACE(UPPER(A.검색용어),' ','')
+			        )
+			  WHERE NOT EXISTS
+			        (
+			         SELECT NULL
+			           FROM META_TERM_STRUCT C
+			           JOIN META_WORD        D
+			             ON (
+			                 D.WORD_ID = C.WORD_ID
+			                )
+			          WHERE C.TERM_NO = B.TERM_NO
+			            AND NVL(D.USE_YN,'N') = 'N'
+			        )
+			)
+			SELECT 'Y'                                           AS 용어존재여부
+			     , ''                                            AS 단어검색성공여부
+			     , A.TERM_NM                                     AS 용어
+			     , A.TERM_NO                                     AS 용어번호
+			     , A.WORD_STRUCT                                 AS 단어조합구조
+			     , A.TERM_STRUCT                                 AS 단어ID조합구조
+			     , A.WORD_STRUCT                                 AS 결과단어조합구조
+			     , A.ENG_WORD_STRUCT                             AS 결과영단어조합구조
+			     , A.ENG_COL_NM                                  AS 영문컬럼명
+			     , LENGTHB(A.ENG_COL_NM)                         AS 영문컬럼명길이
+			     , A.DATA_TYPES                                  AS 기존데이타타입
+			     , A.TERM_DESC                                   AS 비고
+			     , ''                                            AS 불일치단어목록
+			     , 1                                             AS 우선순위_STRUCT
+			     , 1                                             AS 단어생성우선순위
+			  FROM 용어검색결과 A
+			 UNION ALL
+			SELECT 'N'                                           AS 용어존재여부
+			     , CASE WHEN A.재조합단어갯수 = A.MATCHED_COUNT
+			            THEN 'Y'
+			            ELSE 'N'
+			       END                                           AS 단어검색성공여부
+			     , REPLACE(A.재조합단어_STRUCT,'+','')           AS 용어
+			     , NULL                                          AS 용어번호
+			     , A.재조합단어_STRUCT                           AS 단어조합구조
+			     , A.TERM_STRUCT                                 AS 단어ID조합구조
+			     , A.WORD_STRUCT                                 AS 결과단어조합구조
+			     , A.ENG_WORD_STRUCT                             AS 결과영단어조합구조
+			     , REPLACE(A.ENG_WORD_STRUCT,'+','_')            AS 영문컬럼명
+			     , LENGTHB(REPLACE(A.ENG_WORD_STRUCT,'+','_'))   AS 영문컬럼명길이
+			     , ''                                            AS 기존데이타타입
+			     , NULL                                          AS 비고
+			     , A.MISMATCHEDS                                 AS 불일치단어목록
+			     , A.우선순위_STRUCT                             AS 우선순위_STRUCT
+			     , A.단어생성우선순위                            AS 단어생성우선순위
+			  FROM 용어부합결과우선순위적용 A
+			 WHERE NOT EXISTS
+			       (
+			        SELECT NULL
+			          FROM 용어검색결과
+			       )
+			   AND ROWNUM = 1
+			 ORDER BY 단어검색성공여부 DESC
+			        , 우선순위_STRUCT
+			        , 단어생성우선순위
+        ]]>
+    </select>
+</mapper>

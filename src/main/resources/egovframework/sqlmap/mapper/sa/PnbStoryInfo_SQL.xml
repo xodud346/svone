@@ -1,0 +1,696 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.sa.pnbStoryInfo">
+
+    <!--
+	******************************************************************************
+	* 설명 : PNB스토리 테마 목록 조회
+	* 작성자 : 87minho
+	* 작성일자 : 2023.02.17.
+	******************************************************************************
+	-->
+    <select id="selectPnbStoryThmList" parameterType="HashMap" resultType="HashMap">
+        /* PNB스토리 테마 목록 조회 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.selectPnbStoryThmList */		
+		SELECT S.PNB_LVL
+			        , S.CO_CD
+			        , NVL(S.PNB_THM_SEQ, S.HRNK_PNB_THM_SEQ) AS PNB_THM_SEQ
+			        , S.PNB_SEQ
+			        , S.TTL
+			        , S.SUB_TTL
+			        , S.CNSOL_SRWR
+			        , S.PC_DOC_REG_ID
+			        , S.MBL_DOC_REG_ID
+			        , S.PC_LST_DOC_REG_ID
+			        , S.MBL_LST_DOC_REG_ID
+			        , S.PC_DTL_DOC_REG_ID
+			        , S.MBL_DTL_DOC_REG_ID
+			        , S.PC_EXPS_CNT
+			        , S.MBL_EXPS_CNT
+			        , S.DISP_SO
+			        , S.UI_DISP_SEQ
+			        , S.USE_YN
+                    , TO_CHAR(S.REG_DTM, 'YYYY.MM.DD') AS REG_DTM
+                    , S.REGPSN_ID
+                    , S.REGPSN_NM
+                    , TO_CHAR(S.UPD_DTM, 'YYYY.MM.DD') AS UPD_DTM
+                    , S.UPDPSN_ID
+                    , S.UPDPSN_NM
+                    , F.ATFL_NM AS PC_ATFL_NM
+                    , F.DOC_REG_SEQ AS PC_DOC_REG_SEQ
+                    , F.ORI_ATFL_NM AS PC_ORI_ATFL_NM
+                    , F.ATFL_STOR_PATH AS PC_ATFL_STOR_PATH
+                    , G.ATFL_NM AS MBL_ATFL_NM
+                    , G.DOC_REG_SEQ AS MBL_DOC_REG_SEQ
+                    , G.ORI_ATFL_NM AS MBL_ORI_ATFL_NM
+                    , G.ATFL_STOR_PATH AS MBL_ATFL_STOR_PATH                    
+                    , H.ATFL_NM AS PC_LST_ATFL_NM
+                    , H.DOC_REG_SEQ AS PC_LST_DOC_REG_SEQ
+                    , H.ORI_ATFL_NM AS PC_LST_ORI_ATFL_NM
+                    , H.ATFL_STOR_PATH AS PC_LST_ATFL_STOR_PATH
+                    , I.ATFL_NM AS MBL_LST_ATFL_NM
+                    , I.DOC_REG_SEQ AS MBL_LST_DOC_REG_SEQ
+                    , I.ORI_ATFL_NM AS MBL_LST_ORI_ATFL_NM
+                    , I.ATFL_STOR_PATH AS MBL_LST_ATFL_STOR_PATH
+                    , J.ATFL_NM AS PC_DTL_ATFL_NM
+                    , J.DOC_REG_SEQ AS PC_DTL_DOC_REG_SEQ
+                    , J.ORI_ATFL_NM AS PC_DTL_ORI_ATFL_NM
+                    , J.ATFL_STOR_PATH AS PC_DTL_ATFL_STOR_PATH
+                    , K.ATFL_NM AS MBL_DTL_ATFL_NM
+                    , K.DOC_REG_SEQ AS MBL_DTL_DOC_REG_SEQ
+                    , K.ORI_ATFL_NM AS MBL_DTL_ORI_ATFL_NM
+                    , K.ATFL_STOR_PATH AS MBL_DTL_ATFL_STOR_PATH
+            FROM (
+                    SELECT 1 AS PNB_LVL
+							, A.CO_CD
+							, NULL HRNK_PNB_THM_SEQ
+							, A.PNB_THM_SEQ
+							, NULL AS PNB_SEQ
+							, A.THM_TTL AS TTL
+                            , NULL AS SUB_TTL
+                            , NULL AS CNSOL_SRWR
+                            , A.PC_DOC_REG_ID
+                            , A.MBL_DOC_REG_ID
+							, NULL AS PC_LST_DOC_REG_ID
+							, NULL AS MBL_LST_DOC_REG_ID
+							, NULL AS PC_DTL_DOC_REG_ID
+							, NULL AS MBL_DTL_DOC_REG_ID
+							, A.PC_EXPS_CNT
+							, A.MBL_EXPS_CNT
+							, A.DISP_SO
+							, NULL AS UI_DISP_SEQ
+							, A.USE_YN
+							, A.REG_DTM
+							, A.REGPSN_ID
+							, FN_CC_GET_MBR_NM(A.CO_CD, A.REGPSN_ID) AS REGPSN_NM
+							, A.UPD_DTM
+							, A.UPDPSN_ID
+							, FN_CC_GET_MBR_NM(A.CO_CD, A.UPDPSN_ID) AS UPDPSN_NM
+                    FROM TB_SA_PNB_STORY_THM_INFO A
+                    WHERE A.CO_CD = #{coCd}
+                    UNION ALL
+                    SELECT 2 AS PNB_LVL
+                            , B.CO_CD
+							, B.PNB_THM_SEQ AS HRNK_PNB_THM_SEQ
+							, NULL PNB_THM_SEQ
+							, B.PNB_SEQ
+							, B.TTL
+							, B.SUB_TTL
+							, B.CNSOL_SRWR
+							, NULL AS PC_DOC_REG_ID
+                            , NULL AS MBL_DOC_REG_ID
+							, B.PC_LST_DOC_REG_ID
+							, B.MBL_LST_DOC_REG_ID
+							, B.PC_DTL_DOC_REG_ID
+							, B.MBL_DTL_DOC_REG_ID
+							, NULL AS PC_EXPS_CNT
+							, NULL AS MBL_EXPS_CNT
+							, NULL AS DISP_SO
+							, B.UI_DISP_SEQ
+							, B.USE_YN
+							, B.REG_DTM
+							, B.REGPSN_ID
+							, FN_CC_GET_MBR_NM(B.CO_CD, B.REGPSN_ID) AS REGPSN_NM
+							, B.UPD_DTM
+							, B.UPDPSN_ID
+							, FN_CC_GET_MBR_NM(B.CO_CD, B.UPDPSN_ID) AS UPDPSN_NM
+                    FROM TB_SA_PNB_STORY_INFO B
+                    WHERE B.CO_CD = #{coCd}
+			 ) S
+			 , TB_CO_ATFL_DTLS F
+			 , TB_CO_ATFL_DTLS G
+			 , TB_CO_ATFL_DTLS H
+             , TB_CO_ATFL_DTLS I
+             , TB_CO_ATFL_DTLS J
+             , TB_CO_ATFL_DTLS K
+             WHERE S.PC_DOC_REG_ID = F.DOC_REG_ID(+)
+                 AND S.MBL_DOC_REG_ID = G.DOC_REG_ID(+)
+                 AND S.PC_LST_DOC_REG_ID = H.DOC_REG_ID(+)
+	             AND S.MBL_LST_DOC_REG_ID = I.DOC_REG_ID(+)
+	             AND S.PC_DTL_DOC_REG_ID = J.DOC_REG_ID(+)
+	             AND S.MBL_DTL_DOC_REG_ID = K.DOC_REG_ID(+)
+			START WITH S.HRNK_PNB_THM_SEQ IS NULL
+			CONNECT BY PRIOR S.PNB_THM_SEQ = S.HRNK_PNB_THM_SEQ
+			ORDER SIBLINGS BY S.DISP_SO, S.UI_DISP_SEQ
+	</select>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 테마 시퀀스 값 조회
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <select id="selectThmInfoSeq" parameterType="HashMap" resultType="String">
+        /* PNB스토리 테마 시퀀스 값 조회 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.selectThmInfoSeq */
+		SELECT SQ_SA_PNB_STORY_THM_INFO_01.NEXTVAL
+		FROM DUAL
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 테마 전시 순서 수정
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <update id="updateThmDispSo" parameterType="HashMap">    
+        /* PNB스토리 테마 전시 순서 수정 - PnbStoryInfo.updateThmDispSo */
+        UPDATE TB_SA_PNB_STORY_THM_INFO
+        SET DISP_SO = #{dispSo}
+            , UPDPSN_ID = #{updpsnId}
+            , UPD_DTM = SYSDATE
+        WHERE CO_CD = #{coCd}
+            AND PNB_THM_SEQ = #{pnbThmSeq}
+    </update>
+    
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 테마 정보 등록
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <insert id="insertThmInfo" parameterType="HashMap">
+        /* PNB스토리 테마 정보 등록 - PnbStoryInfo.insertThmInfo */
+        <selectKey keyProperty="pnbThmSeq" resultType="Integer" order="BEFORE">
+            SELECT SQ_SA_PNB_STORY_THM_INFO_01.NEXTVAL
+            FROM DUAL
+	    </selectKey>
+	    INSERT INTO TB_SA_PNB_STORY_THM_INFO
+		     ( CO_CD
+		     , PNB_THM_SEQ
+		     , THM_TTL
+		     , PC_EXPS_CNT
+		     , MBL_EXPS_CNT
+		     , PC_DOC_REG_ID
+		     , MBL_DOC_REG_ID
+		     , DISP_SO
+		     , USE_YN
+		     , REGPSN_ID
+		     , REG_DTM
+		     , UPDPSN_ID
+		     , UPD_DTM
+		     )
+		VALUES
+		     ( #{coCd}
+		     , #{pnbThmSeq}
+		     , TRIM(#{TTL})
+		     , #{pcExpsCnt}
+		     , #{mblExpsCnt}
+		     , #{pcDocRegId}
+             , #{mblDocRegId}
+		     , (SELECT MAX(DISP_SO) + 1 FROM TB_SA_PNB_STORY_THM_INFO)
+		     , #{useYn}
+		     , #{regpsnId}
+		     , SYSDATE
+		     , #{updpsnId}
+		     , SYSDATE
+		     )
+    </insert>
+    
+     <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 테마 정보 등록
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <update id="updateThmInfo" parameterType="HashMap">    
+        /* PNB스토리 테마 정보 수정 - PnbStoryInfo.updateThmInfo */
+        UPDATE TB_SA_PNB_STORY_THM_INFO
+        SET THM_TTL = TRIM(#{TTL})
+	        , PC_EXPS_CNT = #{pcExpsCnt}
+	        , MBL_EXPS_CNT = #{mblExpsCnt}
+	        , PC_DOC_REG_ID = #{pcDocRegId}
+            , MBL_DOC_REG_ID = #{mblDocRegId}
+            , USE_YN = #{useYn}
+	        , UPDPSN_ID = #{updpsnId}
+	        , UPD_DTM = SYSDATE
+        WHERE CO_CD = #{coCd}
+            AND PNB_THM_SEQ = #{pnbThmSeq}
+    </update>
+    
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 테마 아이템 전시 순서 수정
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <update id="updatePnbStoryDispSo" parameterType="HashMap">    
+        /* PNB스토리 테마 아이템 전시 순서 수정 - PnbStoryInfo.updatePnbStoryDispSo */
+        UPDATE TB_SA_PNB_STORY_INFO
+        SET UI_DISP_SEQ = #{uiDispSeq}
+            , UPDPSN_ID = #{updpsnId}
+            , UPD_DTM = SYSDATE
+        WHERE CO_CD = #{coCd}
+            AND PNB_THM_SEQ = #{pnbThmSeq}
+            AND PNB_SEQ = #{pnbSeq}
+    </update>
+    
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 테마 정보 삭제
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <delete id="deleteThmInfo" parameterType="HashMap">    
+        /* PNB스토리 테마 정보 삭제 - PnbStoryInfo.deleteThmInfo */
+        DELETE FROM TB_SA_PNB_STORY_THM_INFO
+        WHERE CO_CD = #{coCd}
+            AND PNB_THM_SEQ = #{pnbThmSeq}
+    </delete>
+    
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 시퀀스 값 조회
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.30.
+    ******************************************************************************
+    -->
+	<select id="selectPnbStoryInfoSeq" parameterType="HashMap" resultType="HashMap">	   
+	   /* PNB스토리 시퀀스 값 조회 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.selectPnbStoryInfoSeq */
+	   SELECT SQ_SA_PNB_STORY_INFO_01.NEXTVAL AS PNB_SEQ
+	   FROM DUAL
+	</select>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 기본 정보 등록
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.30.
+    ******************************************************************************
+    -->
+    <insert id="insertPnbStoryInfo" parameterType="HashMap">    
+		/* PNB스토리 기본 정보 등록 - PnbStoryInfo.insertPnbStoryInfo */		
+		INSERT INTO TB_SA_PNB_STORY_INFO
+		     ( CO_CD
+		     , PNB_THM_SEQ
+		     , PNB_SEQ
+		     , TTL
+		     , SUB_TTL
+		     , PC_LST_DOC_REG_ID
+		     , MBL_LST_DOC_REG_ID
+		     , PC_DTL_DOC_REG_ID
+		     , MBL_DTL_DOC_REG_ID
+		     , CNSOL_SRWR
+		     , UI_DISP_SEQ
+		     , USE_YN
+		     , REGPSN_ID
+		     , REG_DTM
+		     , UPDPSN_ID
+		     , UPD_DTM
+		     )
+		VALUES
+		     ( #{coCd}
+		     , #{pnbThmSeq}
+		     , #{pnbSeq}
+		     , TRIM(#{TTL})
+		     , TRIM(#{subTtl})
+		     , #{pcLstDocRegId}
+		     , #{mblLstDocRegId}
+		     , #{pcDtlDocRegId}
+		     , #{mblDtlDocRegId}
+		     , TRIM(#{cnsolSrwr})
+		     , (SELECT MAX(UI_DISP_SEQ) + 1
+	            FROM TB_SA_PNB_STORY_INFO 
+	            WHERE PNB_THM_SEQ = #{pnbThmSeq})
+		     , #{useYn}
+		     , #{regpsnId}
+		     , SYSDATE
+		     , #{updpsnId}
+		     , SYSDATE
+		     )
+    </insert>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 기본 정보 수정
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.30.
+    ******************************************************************************
+    -->
+	<update id="updatePnbStoryInfo" parameterType="hashMap">	
+		/* PNB스토리 기본 정보 수정 - PnbStoryInfo.updatePnbStoryInfo */
+		UPDATE TB_SA_PNB_STORY_INFO		
+		   SET TTL = TRIM(#{TTL})
+		     , SUB_TTL = TRIM(#{subTtl})
+		     , PC_LST_DOC_REG_ID = #{pcLstDocRegId}
+		     , MBL_LST_DOC_REG_ID = #{mblLstDocRegId}
+		     , PC_DTL_DOC_REG_ID = #{pcDtlDocRegId}
+		     , MBL_DTL_DOC_REG_ID = #{mblDtlDocRegId}
+		     , CNSOL_SRWR = TRIM(#{cnsolSrwr})
+		     , USE_YN = #{useYn}
+		     , UPDPSN_ID = #{updpsnId}
+		     , UPD_DTM = SYSDATE		
+		 WHERE CO_CD = #{coCd}
+		    AND PNB_THM_SEQ = #{pnbThmSeq}
+		    AND PNB_SEQ = #{pnbSeq}
+	</update>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 카테고리 상세
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <select id="selectPnbStoryCatgDtlList" parameterType="HashMap" resultType="HashMap">    
+		/* PNB스토리 카테고리 상세 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.selectPnbStoryCatgDtlList */	
+		SELECT A.CO_CD
+		     , A.PNB_THM_SEQ
+		     , A.PNB_SEQ
+		     , A.PNB_CATG_SEQ
+		     , A.CATG_NM
+		     , A.CATG_DISP_SO		     
+		  FROM TB_SA_PNB_STORY_CATG_DTL A		  
+		 WHERE A.CO_CD = #{coCd}
+		   AND A.PNB_THM_SEQ = #{pnbThmSeq}
+		   AND A.PNB_SEQ = #{pnbSeq}   
+    </select>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 카테고리 상품 상세
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <select id="selectPnbStoryCatgPrdDtlList" parameterType="HashMap" resultType="HashMap">    
+		/* PNB스토리 카테고리 상품 상세 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.selectPnbStoryCatgPrdDtlList */		
+		WITH TEMP_PRD_ID_INFO AS
+		(
+		    SELECT /*+ USE_NL(PRD MROPRD) INDEX(PRD TB_PR_PRD_INFO_PK) */
+		           PRD.CO_CD
+		         , PRD.PRD_ID
+		         , TO_NUMBER(PRD.PRD_ID) PRD_ID_VIEW
+		         , PRD.PRD_NM
+		         , SSP_APP.FN_PR_ATTR_VAL_LIST(PRD.CO_CD, PRD.PRD_ID) ATTR_VAL
+		         , MNFR.MNFR_NO
+		         , MNFR.MNFR_NM
+		         , FN_COM_DTL_CDNM_NVL('KO', 'MALL_SPR_CD', PRD.MALL_SPR_CD, '') AS MALL_SPR_CD_NM
+		         , PRD.MALL_SPR_CD
+		         , PRD.PRD_CLCD
+		         , SSP_APP.FN_PR_FULL_CLSF_NM(PRD.CO_CD, PRD.PRD_CLCD) FULL_PRD_CLSF_NM
+		         , PPCI.PRD_CLSF_NM
+		         , PRD.PRD_USE_YN
+		         , FN_COM_DTL_CDNM('KO', 'DISP_STATS_CD', DPDSI.DISP_STATS_CD) AS DISP_STATS_NM
+		         , FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD', MROPRD.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM
+		         , FN_COM_DTL_CDNM('KO','REPR_PRD_SPR_CD', DECODE(RPMD.REPR_PRD_SPR_YN, 'Y', RPMD.REPR_PRD_SPR_RSN_CD, '3')) AS REPR_PRD_SPR_NM
+		           
+		      FROM SSP_APP.TB_PR_PRD_INFO PRD                   -- 상품기본정보
+		     INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO MROPRD       -- MRO상품기본정보
+		        ON PRD.CO_CD = MROPRD.CO_CD 
+		       AND PRD.PRD_ID = MROPRD.PRD_ID
+		        
+		     INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR            -- 제조원
+		        ON MNFR.CO_CD = MROPRD.CO_CD 
+		       AND MNFR.MNFR_NO = MROPRD.MNFR_NO
+		       
+		      LEFT JOIN TB_PR_PRD_CLSF_INFO PPCI                -- 카테고리 정보
+		        ON (PRD.CO_CD = PPCI.CO_CD 
+		       AND PRD.PRD_CLCD = PPCI.PRD_CLCD 
+		       AND NVL(PPCI.USE_YN, '') = 'Y' 
+		       AND NVL(PPCI.FRT_EXPS_YN, 'Y') = 'Y' 
+		       AND NVL(PPCI.DEL_YN, 'N') = 'N')
+		       
+		      LEFT JOIN TB_DP_PRD_DISP_STATS_INFO DPDSI         -- 진열마스터
+		        ON (PRD.CO_CD = DPDSI.CO_CD 
+		       AND PRD.PRD_ID = DPDSI.PRD_ID 
+		       AND MROPRD.PUB_ONLY_SPR_CD = 'P'
+		       AND DPDSI.BZPLC_ID ='*' 
+		       AND DPDSI.OPR_UNIT_ID ='*')
+		       
+		      LEFT JOIN TB_PR_REPR_PRD_MNG_DTL RPMD             --대표상품
+		        ON (PRD.CO_CD = RPMD.CO_CD 
+		       AND PRD.PRD_ID = RPMD.PRD_ID
+		       AND RPMD.SSP_PRD_YN = 'Y')
+		
+		     WHERE PRD.CO_CD = #{coCd}
+		       AND PRD.PRD_USE_YN = 'Y'
+		       AND MROPRD.MRO_PRD_STATS_CD = '00'
+		
+		    <if test="mallSprCd != null and !mallSprCd.equals('') ">
+		    
+		       AND PRD.MALL_SPR_CD = #{mallSprCd}
+		       
+		    </if>
+		)
+		
+		SELECT A.CO_CD
+		     , A.PNB_THM_SEQ
+		     , A.PNB_SEQ
+		     , A.PNB_CATG_SEQ
+		     , A.PRD_ID
+		     , TO_NUMBER(A.PRD_ID) AS PRD_ID_VIEW
+		     
+		     , B.PRD_NM
+		     , B.ATTR_VAL
+		     , B.MNFR_NM AS MNFR
+		     , B.PUB_ONLY_SPR_NM
+		     , B.REPR_PRD_SPR_NM
+		     , B.PRD_USE_YN
+		     , CASE WHEN B.PRD_USE_YN = 'Y' THEN '사용'
+		            WHEN B.PRD_USE_YN = 'N' THEN '미사용'
+		            ELSE '미사용'
+		             END PRD_USE_YN_NM
+		     , B.DISP_STATS_NM
+		    
+		     , '' AS DELETE_ROW
+		
+		  FROM TB_SA_PNB_STORY_CATG_PRD_DTL A
+		     , TEMP_PRD_ID_INFO B
+		
+		 WHERE A.CO_CD = B.CO_CD(+) 
+		   AND A.PRD_ID = B.PRD_ID(+)
+		 
+		   AND A.CO_CD = #{coCd}
+		   AND A.PNB_THM_SEQ = #{pnbThmSeq}
+		   AND A.PNB_SEQ = #{pnbSeq}
+		   <if test="pnbCatgSeq != null and pnbCatgSeq != '' ">
+		      AND A.PNB_CATG_SEQ = #{pnbCatgSeq}
+		   </if>
+
+    </select>
+    
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 정보 삭제
+    * 작성자 : 박진원
+    * 작성일자 : 2022.03.30.
+    ******************************************************************************
+    -->
+	<delete id="deletePnbStoryInfo" parameterType="hashMap">
+	   /* PNB스토리 정보 삭제 - PnbStoryInfo.deletePnbStoryInfo */
+	   DELETE FROM TB_SA_PNB_STORY_INFO
+	   WHERE CO_CD = #{coCd}
+	       AND PNB_THM_SEQ = #{pnbThmSeq}
+		   <if test="pnbSeq != null and !pnbSeq.equals('') ">
+		      AND PNB_SEQ = #{pnbSeq}
+		   </if>
+	</delete>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 기본 상품 카테고리 정보 삭제
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <delete id="deletePnbStoryCatgDtl" parameterType="hashMap">
+        /* PNB스토리 기본 상품 카테고리 정보 삭제 - PnbStoryInfo.deletePnbStoryCatgDtl */
+        DELETE FROM TB_SA_PNB_STORY_CATG_DTL
+        WHERE CO_CD = #{coCd}
+		  AND PNB_THM_SEQ = #{pnbThmSeq}
+		  <if test="pnbSeq != null and !pnbSeq.equals('') ">
+		      AND PNB_SEQ = #{pnbSeq}
+		      <if test="pnbCatgSeq != null and !pnbCatgSeq.equals('') ">
+		          AND PNB_CATG_SEQ = #{pnbCatgSeq}
+		      </if>
+		  </if>
+    </delete>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 카테고리 상품 정보 삭제
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <delete id="deletePnbStoryCatgPrdDtl" parameterType="hashMap">
+        /* PNB스토리 카테고리 상품 정보 삭제 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.deletePnbStoryCatgPrdDtl */
+        DELETE FROM TB_SA_PNB_STORY_CATG_PRD_DTL
+        WHERE CO_CD = #{coCd}
+            AND PNB_THM_SEQ = #{pnbThmSeq}
+            <if test="pnbSeq != null and !pnbSeq.equals('') ">
+                AND PNB_SEQ = #{pnbSeq}
+                <if test="pnbCatgSeq != null and !pnbCatgSeq.equals('') ">
+                    AND PNB_CATG_SEQ = #{pnbCatgSeq}
+                    <if test="prdId != null and !prdId.equals('') ">
+                        AND PRD_ID = #{prdId}
+                    </if>
+                </if>
+            </if>
+    </delete>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 카테고리 시퀀스 값 조회
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <select id="selectPnbStoryCatgDtlSeq" parameterType="HashMap" resultType="String">    
+		/* PNB스토리 카테고리 시퀀스 값 조회 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.selectPnbStoryCatgDtlSeq */
+		SELECT SQ_SA_PNB_STORY_CATG_DTL_01.NEXTVAL AS PNB_CATG_SEQ
+		FROM DUAL
+    </select>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 카테고리 정보 등록
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <insert id="insertPnbStoryCatgDtl" parameterType="HashMap">    
+		/* PNB스토리 카테고리 정보 등록 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.insertPnbStoryCatgDtl */		
+		INSERT INTO TB_SA_PNB_STORY_CATG_DTL
+		     ( CO_CD
+		     , PNB_THM_SEQ
+		     , PNB_SEQ
+		     , PNB_CATG_SEQ
+		     , CATG_NM
+		     , CATG_DISP_SO
+		     , REGPSN_ID
+		     , REG_DTM
+		     , UPDPSN_ID
+		     , UPD_DTM
+		     )
+		VALUES
+		     ( #{coCd}
+		     , #{pnbThmSeq}
+		     , #{pnbSeq}
+		     , #{pnbCatgSeq}
+		     , #{catgNm}
+		     , #{catgDispSo}
+		     , #{regpsnId}
+		     , SYSDATE
+		     , #{updpsnId}
+		     , SYSDATE
+		     )
+    </insert>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 카테고리 정보 수정
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <update id="updatePnbStoryCatgDtl" parameterType="hashMap">    
+		/* PNB스토리 카테고리 정보 수정 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.updatePnbStoryCatgDtl */
+		UPDATE TB_SA_PNB_STORY_CATG_DTL		
+		   SET CATG_NM = #{catgNm}
+		     , CATG_DISP_SO = #{catgDispSo}		   
+		     , UPDPSN_ID = #{updpsnId}
+		     , UPD_DTM = SYSDATE		
+		 WHERE CO_CD = #{coCd}
+		   AND PNB_THM_SEQ = #{pnbThmSeq}
+		   AND PNB_SEQ = #{pnbSeq}
+		   AND PNB_CATG_SEQ = #{pnbCatgSeq}
+    </update>
+
+    <!--
+    ******************************************************************************
+    * 설명 : PNB스토리 카테고리 상품 정보 등록
+    * 작성자 : 87minho
+    * 작성일자 : 2023.02.17.
+    ******************************************************************************
+    -->
+    <insert id="insertPnbStoryCatgPrdDtl" parameterType="HashMap">
+		/* PNB스토리 카테고리 상품 정보 등록 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.insertPnbCatgPrdDtl */
+		INSERT INTO TB_SA_PNB_STORY_CATG_PRD_DTL
+		     ( CO_CD
+		     , PNB_THM_SEQ
+		     , PNB_SEQ
+		     , PNB_CATG_SEQ
+		     , PRD_ID
+		     , REGPSN_ID
+		     , REG_DTM
+		     , UPDPSN_ID
+		     , UPD_DTM
+		     )
+		VALUES
+		     ( #{coCd}
+		     , #{pnbThmSeq}
+		     , #{pnbSeq}
+		     , #{pnbCatgSeq}
+		     , #{prdId}
+		     , #{regpsnId}
+		     , SYSDATE
+		     , #{updpsnId}
+		     , SYSDATE
+		     )
+    </insert>
+    
+    <select id="selectExcelPnbStoryList" parameterType="HashMap" resultType="HashMap">
+        /* PNB스토리 엑셀 다운 목록 조회 - PnbStoryInfo_SQL.com.ssp.bo.sa.pnbStoryInfo.selectExcelPnbStoryList */
+        SELECT A.PNB_THM_SEQ 
+				, A.THM_TTL
+				, DECODE(A.PC_EXPS_CNT, 0, '전체', A.PC_EXPS_CNT) AS PC_EXPS_CNT
+                , DECODE(A.MBL_EXPS_CNT, 0, '전체', A.MBL_EXPS_CNT) AS MBL_EXPS_CNT
+				, A.DISP_SO 
+				, DECODE(A.USE_YN, 'Y', '사용', '미사용') AS USE_YN_NM 
+				, B.PNB_SEQ 
+				, B.TTL 
+				, B.SUB_TTL 
+				, B.CNSOL_SRWR 
+				, B.UI_DISP_SEQ 
+				, DECODE(B.USE_YN, 'Y', '사용', '미사용') AS ITM_USE_YN_NM
+				, C.PNB_CATG_SEQ 
+				, C.CATG_NM 
+				, C.CATG_DISP_SO 
+				, D.PRD_ID
+				, LTRIM(D.PRD_ID, '0') AS PRD_ID_VIEW   
+				, E.PRD_NM
+				, FN_PR_ATTR_VAL_LIST(E.CO_CD, E.PRD_ID) AS ATTR_VAL
+				, FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD', F.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM
+				, FN_COM_DTL_CDNM('KO','REPR_PRD_SPR_CD', DECODE(G.REPR_PRD_SPR_YN, 'Y', G.REPR_PRD_SPR_RSN_CD, '3')) AS REPR_PRD_SPR_NM
+				, DECODE(E.PRD_USE_YN, 'Y', '사용', '미사용') AS PRD_USE_YN_NM
+				, FN_COM_DTL_CDNM('KO','DISP_STATS_CD', H.DISP_STATS_CD) AS DISP_STATS_NM
+		FROM TB_SA_PNB_STORY_THM_INFO A
+				, TB_SA_PNB_STORY_INFO B
+				, TB_SA_PNB_STORY_CATG_DTL C
+				, TB_SA_PNB_STORY_CATG_PRD_DTL D
+				, TB_PR_PRD_INFO E
+				, TB_PR_MRO_PRD_INFO F
+				, TB_PR_REPR_PRD_MNG_DTL G
+				, TB_DP_PRD_DISP_STATS_INFO H
+		WHERE A.CO_CD = B.CO_CD 
+			AND A.PNB_THM_SEQ = B.PNB_THM_SEQ 
+			AND B.CO_CD = C.CO_CD 
+			AND B.PNB_THM_SEQ = C.PNB_THM_SEQ 
+			AND B.PNB_SEQ = C.PNB_SEQ 
+			AND C.CO_CD = C.CO_CD 
+			AND C.PNB_THM_SEQ = D.PNB_THM_SEQ 
+			AND C.PNB_SEQ = D.PNB_SEQ 
+			AND C.PNB_CATG_SEQ = D.PNB_CATG_SEQ 
+			AND D.CO_CD = E.CO_CD(+)
+			AND D.PRD_ID = E.PRD_ID(+)
+			AND E.CO_CD = F.CO_CD(+)
+			AND E.PRD_ID = F.PRD_ID(+)
+			AND D.CO_CD = G.CO_CD(+)
+			AND D.PRD_ID = G.PRD_ID(+)
+			AND G.SSP_PRD_YN(+) = 'Y'
+			AND E.CO_CD = H.CO_CD(+)
+			AND E.PRD_ID = H.PRD_ID(+) 
+			AND H.PUB_ONLY_SPR_CD(+) = 'P'
+			AND H.BZPLC_ID(+) = '*' 
+			AND H.OPR_UNIT_ID(+) = '*'
+		ORDER BY A.DISP_SO, A.PNB_THM_SEQ, B.UI_DISP_SEQ, B.PNB_SEQ
+    </select>
+    
+</mapper>

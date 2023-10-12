@@ -1,0 +1,1093 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="RegistProduct">
+	<sql id="registProductWhere">
+			<if test="searchId != '' and searchId != null">
+				AND (
+					PRD_ID IN <foreach collection="searchIds" item="searchId" open="(" close=")" separator=",">#{searchId}</foreach>
+				OR
+					INGT_PRD_GRP_ID IN <foreach collection="searchIds" item="searchId" open="(" close=")" separator=",">#{searchId}</foreach>
+					)
+			</if>
+			<if test="searchPrdNm != '' and searchPrdNm != null">
+				<if test="searchFullname == 'Y'.toString()">
+					AND
+						PRD_NM = #{searchPrdNm}
+				</if>
+				<if test="searchFullname == 'N'.toString()">
+					AND
+						PRD_NM LIKE '%'||#{searchPrdNm}||'%'
+				</if>
+			</if>
+			<if test="searchPrdClsCd != '' and searchPrdClsCd != null">
+				<if test="selectCategory == ''.toString()">
+					AND
+						PRD_CLS_CD_SSP = #{searchPrdClsCd}
+				</if>
+				<if test="selectCategory == 'smro'.toString()">
+					AND
+						PRD_CLS_CD_SMRO = #{searchPrdClsCd}
+				</if>
+			</if>
+			<if test="searchPrdClsNm != '' and searchPrdClsNm != null">
+				<if test="selectCategory == ''.toString()">
+					AND PRD_CLS_CD_SSP IN
+					(
+			    	SELECT 
+					    TSPC.PRD_CLS_CD
+					FROM TB_SG_PRD_CLS TSPC
+					WHERE 0=0
+					AND TSPC.PRD_CLS_NM = #{searchPrdClsNm}
+					) 
+				</if>
+				<if test="selectCategory == 'smro'.toString()">
+					AND PRD_CLS_CD_SMRO IN
+					(
+				        SELECT 
+						    PRD_CLS_CD
+						FROM (
+							SELECT
+							    TFPC.PRD_CLS_CD
+                                ,PRD_CLS_NM
+                                ,PRD_CLS_LVL
+                                ,HRNK_PRD_CLS_CD
+							FROM 
+								TB_FV_PRD_CLS TFPC
+							WHERE 
+								TFPC.CO_CD = '1000'
+							AND 
+								TFPC.USE_YN = 'Y'
+							)
+						WHERE PRD_CLS_LVL = 4
+						AND PRD_CLS_NM = #{searchPrdClsNm}
+						START WITH PRD_CLS_LVL = 1
+						CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+					)
+				</if>
+			</if>
+			<if test="searchSpec != '' and searchSpec != null">
+				AND (
+					REPR_SPEC LIKE '%'||#{searchSpec}||'%'
+				OR
+					ATTR_VAL LIKE '%'||#{searchSpec}||'%'
+					)
+			</if>
+			<if test="searchStartDate != '' and searchStartDate != null">
+				<if test="searchEndDate != '' and searchEndDate != null">
+					<if test="searchDate == ''.toString()">
+AND S.REG_DTM BETWEEN TO_DATE(#{searchStartDate}||'000000','YYYYMMDDHH24MISS') AND TO_DATE(#{searchEndDate}||'235959','YYYYMMDDHH24MISS')
+					</if>
+					<if test="searchDate == 'smro'.toString()">
+						AND
+							TO_CHAR(REG_DTM_SMRO, 'YYYYMMDD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+					</if>
+					<if test="searchDate == 'modify'.toString()">
+						AND
+							TO_CHAR(UPD_DTM_SSP, 'YYYYMMDD') BETWEEN #{searchStartDate} AND #{searchEndDate}
+					</if>
+				</if>
+			</if>
+			<if test="searchMnfrNo != '' and searchMnfrNo != null">
+				AND
+					MNFR_NO = #{searchMnfrNo}
+			</if>
+			<if test="searchMnfrNm != '' and searchMnfrNm != null">
+				AND
+					MNFR_NO IN
+					(
+                     SELECT 
+						    TFMM.MNFR_NO
+						FROM 
+						    TB_FV_MNFR_MAST TFMM
+						WHERE 0=0
+						    AND TFMM.CO_CD = '1000'
+							AND TFMM.MNFR_NM = #{searchMnfrNm}
+					)
+			</if>
+			
+			<if test="searchKeyword != '' and searchKeyword != null">
+				<if test="selectKeyword == ''.toString()">
+					AND
+						BRND_NM LIKE '%'||#{searchKeyword}||'%'
+				</if>
+				<if test="selectKeyword == 'hashtag'.toString()">
+					AND
+						HASH_TAG LIKE '%'||#{searchKeyword}||'%'
+				</if>
+			</if>
+			<if test="searchIntgPrdSpr != '' and searchIntgPrdSpr != null">
+				AND
+					INTG_PRD_SPR = #{searchIntgPrdSpr}
+			</if>
+			<!-- 담당자 -->
+			<if test="searchManagerId != '' and searchManagerId != null">
+				<if test="selectManager == 'chrpsnId'.toString()">
+					AND
+						CHRPSN_ID = #{searchManagerId}
+				</if>
+				<if test="selectManager == 'chrMdId'.toString()">
+					AND
+						CHR_MD_ID = #{searchManagerId}
+				</if>
+				<if test="selectManager == 'regpsnId'.toString()">
+					AND
+						REGPSN_ID = #{searchManagerId}
+				</if>
+				<if test="selectManager == 'updpsnId'.toString()">
+					AND
+						UPDPSN_ID = #{searchManagerId}
+				</if>
+			</if>
+			<if test="searchManagerNm != '' and searchManagerNm != null">
+				<if test="selectManager == 'chrpsnId'.toString()">
+					AND
+						CHRPSN_ID IN
+						(
+                            SELECT EMP_NO
+                            FROM TB_FC_MEM_OPRTR B
+                            WHERE 0=0
+                            AND USE_YN = 'Y'
+                            AND CO_CD = '1000'
+                            AND OPRTR_NM = #{searchManagerNm}
+						)
+				</if>
+				<if test="selectManager == 'chrMdId'.toString()">
+					AND
+						CHR_MD_ID IN
+						(
+                            SELECT EMP_NO
+                            FROM TB_FC_MEM_OPRTR B
+                            WHERE 0=0
+                            AND USE_YN = 'Y'
+                            AND CO_CD = '1000'
+                            AND OPRTR_NM = #{searchManagerNm}
+						)
+				</if>
+				<if test="selectManager == 'regpsnId'.toString()">
+					AND
+						REGPSN_ID IN
+						(
+                            SELECT EMP_NO
+                            FROM TB_FC_MEM_OPRTR B
+                            WHERE 0=0
+                            AND USE_YN = 'Y'
+                            AND CO_CD = '1000'
+                            AND OPRTR_NM = #{searchManagerNm}
+						)
+				</if>
+				<if test="selectManager == 'updpsnId'.toString()">
+					AND
+						UPDPSN_ID IN
+						(
+                            SELECT EMP_NO
+                            FROM TB_FC_MEM_OPRTR B
+                            WHERE 0=0
+                            AND USE_YN = 'Y'
+                            AND CO_CD = '1000'
+                            AND OPRTR_NM = #{searchManagerNm}
+						)
+				</if>
+			</if>
+			<if test="searchSspOnlySpr != '' and searchSspOnlySpr != null">
+				AND
+					SSP_ONLY_SPR = #{searchSspOnlySpr}
+			</if>
+			<if test="searchUseYn != '' and searchUseYn != null">
+				AND
+					USE_YN = #{searchUseYn}
+			</if>
+			<if test="searchUseStatsCd != '' and searchUseStatsCd != null">
+				AND
+					USE_STATS_CD = #{searchUseStatsCd}
+			</if>
+			<!-- 가격대상 -->
+			<if test="searchBadge != '' and searchBadge != null">
+				AND
+					PRD_BG_CD = #{searchBadge}
+			</if>
+	</sql>
+
+	<select id="selectProductCount" parameterType="hashMap" resultType="integer">
+		/* RegistProduct.selectProductCount */
+		SELECT
+			COUNT(0)
+		FROM
+			(
+SELECT 
+S.PRD_ID
+,( SELECT PRD_GRP_ID FROM TB_SG_PRD_GRP WHERE CO_CD = S.CO_CD AND PRD_ID = S.PRD_ID AND PRD_GRP_SPR_CD = 'S' AND BSS_PRD_YN = 'Y') PRD_GRP_ID --여러건발생
+,S.PRD_CLS_CD PRD_CLS_CD_SSP
+,( SELECT SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM_SSP FROM TB_SG_PRD_CLS WHERE USE_YN = 'Y' AND PRD_CLS_CD = S.PRD_CLS_CD START WITH PRD_CLS_LVL = 1 CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD ) PRD_CLS_LVL_NM_SSP
+,FN_SG_SUBSTRB_CONCAT_KOR(NVL(S.PRD_NM,P.PRD_NM),20,CHR(10)) PRD_NM
+,FN_SG_GET_PRVLS(S.CO_CD, S.PRD_ID,';') ATTR_VAL
+,S.MNFR_NO
+,( SELECT MNFR_NM FROM TB_FV_MNFR_MAST WHERE CO_CD = P.CO_CD AND MNFR_NO = P.MNFR_NO ) MNFR_NM
+,P.ODR_UNT
+,S.USE_YN
+,P.USE_STATS_CD
+,C.INGT_PRD_GRP_ID
+,C.INTG_PRD_SPR
+,P.INTG_PRD_ID
+,P.SSP_ONLY_SPR
+,S.REG_DTM REG_DTM_SSP
+FROM TB_SG_PRD S
+LEFT JOIN TB_FV_PRD P
+ON 0=0
+AND P.CO_CD = S.CO_CD
+AND P.PRD_ID = S.PRD_ID
+						LEFT JOIN
+							(	SELECT
+									A.CO_CD,
+									A.INGT_PRD_GRP_ID,
+									A.INGT_PRD_GRP_STATS,
+									A.REG_DTM REG_DTM_INGT,
+									A.REGPSN_ID,
+									B.INGT_PRD_GRP_ITM_NO,
+									B.PRD_ID,
+									B.INTG_NONINTG_PRD_SPR,
+									B.INTG_PRD_SPR
+								FROM
+									TB_FV_INTG_PRD_MNG_HEADR A,
+									TB_FV_INTG_PRD_MNG_DTL B
+								WHERE 0=0
+								AND A.CO_CD = B.CO_CD
+								AND A.INGT_PRD_GRP_ID = B.INGT_PRD_GRP_ID
+							) C
+						ON 0=0
+						AND P.CO_CD = C.CO_CD
+						AND P.INTG_PRD_ID = FN_FC_GET_CUST_PRD_ID('1000', NULL, NULL, NULL, NULL, C.PRD_ID, NULL, 'FC')
+WHERE 0=0
+		<include refid="registProductWhere" />
+/*
+				SELECT
+					S.CO_CD,
+					S.PRD_ID,
+							S.PRD_CLS_CD PRD_CLS_CD_SSP,
+					( SELECT SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM_SSP FROM TB_SG_PRD_CLS WHERE USE_YN = 'Y' AND PRD_CLS_CD = S.PRD_CLS_CD START WITH PRD_CLS_LVL = 1 CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD ) PRD_CLS_LVL_NM,
+					( SELECT PRD_GRP_ID FROM TB_SG_PRD_GRP WHERE CO_CD = S.CO_CD AND PRD_ID = S.PRD_ID AND PRD_GRP_SPR_CD = 'S' AND BSS_PRD_YN = 'Y') PRD_GRP_ID,
+					S.USE_YN,
+					S.PRD_BG_CD,
+					S.MNFR_NO,
+					( SELECT MNFR_NM FROM TB_FV_MNFR_MAST WHERE CO_CD = P.CO_CD AND MNFR_NO = P.MNFR_NO ) MNFR_NM,
+					S.HASH_TAG,
+					S.BRND_NM,
+					S.REG_DTM REG_DTM_SSP,
+					S.REGPSN_ID,
+					S.UPD_DTM UPD_DTM_SSP,
+					S.UPDPSN_ID,
+							FN_SG_GET_PRVLS(S.CO_CD, S.PRD_ID,';') ATTR_VAL,
+					U.CHRPSN_ID,
+					U.CHRPSN_NM,
+					FN_SG_SUBSTRB_CONCAT_KOR(P.PRD_NM,20,CHR(10)) PRD_NM,
+					P.REPR_SPEC,
+					P.ODR_UNT,
+							P.PRD_CLS_CD PRD_CLS_CD_SMRO,
+					(	SELECT
+							SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM
+						FROM
+							(	SELECT
+									PRD_CLS_CD, PRD_CLS_NM, PRD_CLS_LVL, HRNK_PRD_CLS_CD
+								FROM 
+									TB_FV_PRD_CLS
+								WHERE
+									CO_CD = '1000'
+								AND 
+									USE_YN = 'Y'
+							)
+						WHERE
+							PRD_CLS_LVL = 4
+						AND
+							PRD_CLS_CD = P.PRD_CLS_CD
+						START WITH
+							PRD_CLS_LVL = 1
+						CONNECT BY PRIOR
+							PRD_CLS_CD = HRNK_PRD_CLS_CD
+					) PRD_CLS_LVL_NM_SMRO,
+					P.CHR_MD_ID,
+					( SELECT OPRTR_NM FROM TB_FC_MEM_OPRTR WHERE OPRTR_ID = P.CHR_MD_ID AND USE_YN = 'Y' ) CHR_MD_NM,
+					P.USE_STATS_CD,
+					P.REG_DTM REG_DTM_SMRO,
+					P.SSP_ONLY_SPR,
+					P.INTG_PRD_ID,
+					C.INGT_PRD_GRP_ID,
+					C.INGT_PRD_GRP_STATS,
+					C.REG_DTM_INGT,
+					C.INTG_PRD_SPR,
+					( SELECT '('||OPRTR_ID||')'||OPRTR_NM FROM TB_FC_MEM_OPRTR WHERE OPRTR_ID = C.REGPSN_ID AND USE_YN = 'Y' ) INTG_REG_ID
+				FROM
+					TB_SG_PRD S
+				LEFT JOIN
+					TB_FV_PRD P
+				ON
+					S.CO_CD = P.CO_CD
+				AND
+					S.PRD_ID = P.PRD_ID
+				LEFT JOIN
+					TB_SG_PRD_USER_MAPP U
+				ON
+					S.PRD_CLS_CD = U.PRD_CLS_CD
+				AND
+					U.CHRPSN_SPR_CD = '0'
+				LEFT JOIN
+					(	SELECT
+							A.CO_CD,
+							A.INGT_PRD_GRP_ID,
+							A.INGT_PRD_GRP_STATS,
+							A.REG_DTM REG_DTM_INGT,
+							A.REGPSN_ID,
+							B.INGT_PRD_GRP_ITM_NO,
+							B.PRD_ID,
+							B.INTG_NONINTG_PRD_SPR,
+							B.INTG_PRD_SPR
+						FROM
+							TB_FV_INTG_PRD_MNG_HEADR A,
+							TB_FV_INTG_PRD_MNG_DTL B
+						WHERE
+							A.CO_CD = B.CO_CD
+						AND
+							A.INGT_PRD_GRP_ID = B.INGT_PRD_GRP_ID
+					) C
+				ON
+					P.CO_CD = C.CO_CD
+				AND
+					P.INTG_PRD_ID = FN_FC_GET_CUST_PRD_ID('1000', NULL, NULL, NULL, NULL, C.PRD_ID, NULL, 'FC')
+*/
+
+			)
+	</select>
+
+	<select id="selectProductList" parameterType="hashMap" resultType="sspMap">
+		/* RegistProduct.selectProductList */
+		SELECT
+			S2.*
+		FROM
+			(	SELECT
+					ROWNUM RNUM,
+					S1.*
+				FROM
+					(	
+SELECT 
+S.PRD_ID
+,( SELECT PRD_GRP_ID FROM TB_SG_PRD_GRP WHERE CO_CD = S.CO_CD AND PRD_ID = S.PRD_ID AND PRD_GRP_SPR_CD = 'S' AND BSS_PRD_YN = 'Y') PRD_GRP_ID --여러건발생
+,S.PRD_CLS_CD PRD_CLS_CD_SSP
+,( SELECT SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM_SSP FROM TB_SG_PRD_CLS WHERE USE_YN = 'Y' AND PRD_CLS_CD = S.PRD_CLS_CD START WITH PRD_CLS_LVL = 1 CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD ) PRD_CLS_LVL_NM_SSP
+,FN_SG_SUBSTRB_CONCAT_KOR(NVL(S.PRD_NM,P.PRD_NM),20,CHR(10)) PRD_NM
+,FN_SG_GET_PRVLS(S.CO_CD, S.PRD_ID,';') ATTR_VAL
+,S.MNFR_NO
+,( SELECT MNFR_NM FROM TB_FV_MNFR_MAST WHERE CO_CD = P.CO_CD AND MNFR_NO = P.MNFR_NO ) MNFR_NM
+,P.ODR_UNT
+,S.USE_YN
+,P.USE_STATS_CD
+,C.INGT_PRD_GRP_ID
+,C.INTG_PRD_SPR
+,P.INTG_PRD_ID
+,P.SSP_ONLY_SPR
+,S.REG_DTM REG_DTM_SSP
+FROM TB_SG_PRD S
+LEFT JOIN TB_FV_PRD P
+ON 0=0
+AND P.CO_CD = S.CO_CD
+AND P.PRD_ID = S.PRD_ID
+						LEFT JOIN
+							(	SELECT
+									A.CO_CD,
+									A.INGT_PRD_GRP_ID,
+									A.INGT_PRD_GRP_STATS,
+									A.REG_DTM REG_DTM_INGT,
+									A.REGPSN_ID,
+									B.INGT_PRD_GRP_ITM_NO,
+									B.PRD_ID,
+									B.INTG_NONINTG_PRD_SPR,
+									B.INTG_PRD_SPR
+								FROM
+									TB_FV_INTG_PRD_MNG_HEADR A,
+									TB_FV_INTG_PRD_MNG_DTL B
+								WHERE 0=0
+								AND A.CO_CD = B.CO_CD
+								AND A.INGT_PRD_GRP_ID = B.INGT_PRD_GRP_ID
+							) C
+						ON 0=0
+						AND P.CO_CD = C.CO_CD
+						AND P.INTG_PRD_ID = FN_FC_GET_CUST_PRD_ID('1000', NULL, NULL, NULL, NULL, C.PRD_ID, NULL, 'FC')
+WHERE 0=0
+				<include refid="registProductWhere" />
+/*
+					SELECT
+							S.CO_CD,
+							S.PRD_ID,
+							S.PRD_CLS_CD PRD_CLS_CD_SSP,
+							( SELECT SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM_SSP FROM TB_SG_PRD_CLS WHERE USE_YN = 'Y' AND PRD_CLS_CD = S.PRD_CLS_CD START WITH PRD_CLS_LVL = 1 CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD ) PRD_CLS_LVL_NM_SSP,
+							( SELECT PRD_GRP_ID FROM TB_SG_PRD_GRP WHERE CO_CD = S.CO_CD AND PRD_ID = S.PRD_ID AND PRD_GRP_SPR_CD = 'S' AND BSS_PRD_YN = 'Y') PRD_GRP_ID,
+							S.USE_YN,
+							S.PRD_BG_CD,
+							S.MNFR_NO,
+							( SELECT MNFR_NM FROM TB_FV_MNFR_MAST WHERE CO_CD = P.CO_CD AND MNFR_NO = P.MNFR_NO ) MNFR_NM,
+							S.HASH_TAG,
+							S.BRND_NM,
+							S.REG_DTM REG_DTM_SSP,
+							S.REGPSN_ID,
+							S.UPD_DTM UPD_DTM_SSP,
+							S.UPDPSN_ID,
+							FN_SG_GET_PRVLS(S.CO_CD, S.PRD_ID,';') ATTR_VAL,
+							U.CHRPSN_ID,
+							U.CHRPSN_NM,
+					FN_SG_SUBSTRB_CONCAT_KOR(P.PRD_NM,20,CHR(10)) PRD_NM,
+							P.REPR_SPEC,
+							P.ODR_UNT,
+							P.PRD_CLS_CD PRD_CLS_CD_SMRO,
+							(	SELECT
+									SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM
+								FROM
+									(	SELECT
+											PRD_CLS_CD, PRD_CLS_NM, PRD_CLS_LVL, HRNK_PRD_CLS_CD
+										FROM 
+											TB_FV_PRD_CLS
+										WHERE
+											CO_CD = '1000'
+										AND 
+											USE_YN = 'Y'
+									)
+								WHERE
+									PRD_CLS_LVL = 4
+								AND
+									PRD_CLS_CD = P.PRD_CLS_CD
+								START WITH
+									PRD_CLS_LVL = 1
+								CONNECT BY PRIOR
+									PRD_CLS_CD = HRNK_PRD_CLS_CD
+							) PRD_CLS_LVL_NM_SMRO,
+							P.CHR_MD_ID,
+							( SELECT OPRTR_NM FROM TB_FC_MEM_OPRTR WHERE OPRTR_ID = P.CHR_MD_ID AND USE_YN = 'Y' ) CHR_MD_NM,
+							P.USE_STATS_CD,
+							P.REG_DTM REG_DTM_SMRO,
+							P.SSP_ONLY_SPR,
+							P.INTG_PRD_ID,
+							C.INGT_PRD_GRP_ID,
+							C.INGT_PRD_GRP_STATS,
+							C.REG_DTM_INGT,
+							C.INTG_PRD_SPR,
+							C.REGPSN_ID INTG_REG_ID,
+							( SELECT OPRTR_NM FROM TB_FC_MEM_OPRTR WHERE OPRTR_ID = C.REGPSN_ID AND USE_YN = 'Y' ) INTG_REG_NM
+						FROM
+							TB_SG_PRD S
+						LEFT JOIN
+							TB_FV_PRD P
+						ON
+							S.CO_CD = P.CO_CD
+						AND
+							S.PRD_ID = P.PRD_ID
+						LEFT JOIN
+							TB_SG_PRD_USER_MAPP U
+						ON
+							S.PRD_CLS_CD = U.PRD_CLS_CD
+						AND
+							U.CHRPSN_SPR_CD = '0'
+						LEFT JOIN
+							(	SELECT
+									A.CO_CD,
+									A.INGT_PRD_GRP_ID,
+									A.INGT_PRD_GRP_STATS,
+									A.REG_DTM REG_DTM_INGT,
+									A.REGPSN_ID,
+									B.INGT_PRD_GRP_ITM_NO,
+									B.PRD_ID,
+									B.INTG_NONINTG_PRD_SPR,
+									B.INTG_PRD_SPR
+								FROM
+									TB_FV_INTG_PRD_MNG_HEADR A,
+									TB_FV_INTG_PRD_MNG_DTL B
+								WHERE
+									A.CO_CD = B.CO_CD
+								AND
+									A.INGT_PRD_GRP_ID = B.INGT_PRD_GRP_ID
+							) C
+						ON
+							P.CO_CD = C.CO_CD
+						AND
+							P.INTG_PRD_ID = FN_FC_GET_CUST_PRD_ID('1000', NULL, NULL, NULL, NULL, C.PRD_ID, NULL, 'FC')
+*/
+						<if test="selectSort == ''">ORDER BY S.REG_DTM DESC NULLS LAST</if>
+						<if test="selectSort == 'sspDtmAsc'.toString()">ORDER BY S.REG_DTM ASC NULLS LAST</if>
+						<if test="selectSort == 'smroDtmDesc'.toString()">ORDER BY P.REG_DTM DESC NULLS LAST</if>
+						<if test="selectSort == 'smroDtmAsc'.toString()">ORDER BY P.REG_DTM ASC NULLS LAST</if>
+						<if test="selectSort == 'prdIdDesc'.toString()">ORDER BY S.PRD_ID DESC NULLS LAST</if>
+						<if test="selectSort == 'prdIdAsc'.toString()">ORDER BY S.PRD_ID ASC NULLS LAST</if>
+						<if test="selectSort == 'prdNmDesc'.toString()">ORDER BY P.PRD_NM DESC NULLS LAST</if>
+						<if test="selectSort == 'prdNmAsc'.toString()">ORDER BY P.PRD_NM ASC NULLS LAST</if>
+						<if test="selectSort == 'categoryIdDesc'.toString()">ORDER BY S.PRD_CLS_CD DESC NULLS LAST</if>
+						<if test="selectSort == 'categoryIdAsc'.toString()">ORDER BY S.PRD_CLS_CD ASC NULLS LAST</if>
+					) S1
+			) S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} and #{endNum}
+	</select>
+
+	<select id="selectBadgeList" parameterType="hashMap" resultType="sspMap">
+		/* RegistProduct.selectBadgeList */
+		SELECT
+			A.PRD_BG_CD AS PRD_BG_CD,
+			A.PRD_BG_NM AS PRD_BG_NM,
+			A.ATFL_ID AS ATFL_ID,
+			DBMS_LOB.SUBSTR(B.FILE_CTS, 4000, 1) AS FILE_CTS,
+			B.FILE_STOR_PATH AS FILE_STOR_PATH,
+			B.STOR_FILE_NM AS STOR_FILE_NM,
+			A.USE_YN AS USE_YN,
+			A.REG_DTM AS REG_DTM,
+			A.REGPSN_ID AS REGPSN_ID,
+			A.UPD_DTM AS UPD_DTM,
+			A.UPDPSN_ID AS UPDPSN_ID,
+			( SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = A.REGPSN_ID ) AS REGPSN_NM,
+			( SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = A.UPDPSN_ID ) AS UPDPSN_NM
+		FROM
+			TB_SG_PRD_BG A
+		LEFT JOIN
+			TB_SB_ATCH_FILE_DTL B 
+		ON
+			A.ATFL_ID = B.ATFL_ID 
+		WHERE
+			1 = 1
+		AND
+			A.USE_YN = 'Y'
+		AND
+			B.FILE_USE_YN = 'Y'
+		ORDER BY
+			A.REG_DTM DESC
+	</select>
+
+	<select id="selectProductListExcel" parameterType="hashMap" resultType="hashMap">
+		/* RegistProduct.selectProductListExcel */
+				SELECT
+					ROWNUM RNUM,
+					S1.*
+				FROM
+					(	
+SELECT 
+S.PRD_ID
+,( SELECT PRD_GRP_ID FROM TB_SG_PRD_GRP WHERE CO_CD = S.CO_CD AND PRD_ID = S.PRD_ID AND PRD_GRP_SPR_CD = 'S' AND BSS_PRD_YN = 'Y') PRD_GRP_ID --여러건발생
+,S.PRD_CLS_CD PRD_CLS_CD_SSP
+,( SELECT SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM_SSP FROM TB_SG_PRD_CLS WHERE USE_YN = 'Y' AND PRD_CLS_CD = S.PRD_CLS_CD START WITH PRD_CLS_LVL = 1 CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD ) PRD_CLS_LVL_NM_SSP
+,FN_SG_SUBSTRB_CONCAT_KOR(NVL(S.PRD_NM,P.PRD_NM),20,CHR(10)) PRD_NM
+,FN_SG_GET_PRVLS(S.CO_CD, S.PRD_ID,';') ATTR_VAL
+,S.MNFR_NO
+,( SELECT MNFR_NM FROM TB_FV_MNFR_MAST WHERE CO_CD = P.CO_CD AND MNFR_NO = P.MNFR_NO ) MNFR_NM
+,P.ODR_UNT
+,S.USE_YN
+,P.USE_STATS_CD
+,C.INGT_PRD_GRP_ID
+,C.INTG_PRD_SPR
+,P.INTG_PRD_ID
+,P.SSP_ONLY_SPR
+,S.REG_DTM REG_DTM_SSP
+FROM TB_SG_PRD S
+LEFT JOIN TB_FV_PRD P
+ON 0=0
+AND P.CO_CD = S.CO_CD
+AND P.PRD_ID = S.PRD_ID
+						LEFT JOIN
+							(	SELECT
+									A.CO_CD,
+									A.INGT_PRD_GRP_ID,
+									A.INGT_PRD_GRP_STATS,
+									A.REG_DTM REG_DTM_INGT,
+									A.REGPSN_ID,
+									B.INGT_PRD_GRP_ITM_NO,
+									B.PRD_ID,
+									B.INTG_NONINTG_PRD_SPR,
+									B.INTG_PRD_SPR
+								FROM
+									TB_FV_INTG_PRD_MNG_HEADR A,
+									TB_FV_INTG_PRD_MNG_DTL B
+								WHERE 0=0
+								AND A.CO_CD = B.CO_CD
+								AND A.INGT_PRD_GRP_ID = B.INGT_PRD_GRP_ID
+							) C
+						ON 0=0
+						AND P.CO_CD = C.CO_CD
+						AND P.INTG_PRD_ID = FN_FC_GET_CUST_PRD_ID('1000', NULL, NULL, NULL, NULL, C.PRD_ID, NULL, 'FC')
+WHERE 0=0
+				<include refid="registProductWhere" />
+/*
+					SELECT
+							S.CO_CD,
+							S.PRD_ID,
+							S.PRD_CLS_CD PRD_CLS_CD_SSP,
+							( SELECT SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM_SSP FROM TB_SG_PRD_CLS WHERE USE_YN = 'Y' AND PRD_CLS_CD = S.PRD_CLS_CD START WITH PRD_CLS_LVL = 1 CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD ) PRD_CLS_LVL_NM_SSP,
+							( SELECT PRD_GRP_ID FROM TB_SG_PRD_GRP WHERE CO_CD = S.CO_CD AND PRD_ID = S.PRD_ID AND PRD_GRP_SPR_CD = 'S' AND BSS_PRD_YN = 'Y') PRD_GRP_ID,
+							S.USE_YN,
+							S.PRD_BG_CD,
+							S.MNFR_NO,
+							( SELECT MNFR_NM FROM TB_FV_MNFR_MAST WHERE CO_CD = P.CO_CD AND MNFR_NO = P.MNFR_NO ) MNFR_NM,
+							S.HASH_TAG,
+							S.BRND_NM,
+							S.REG_DTM REG_DTM_SSP,
+							S.REGPSN_ID,
+							S.UPD_DTM UPD_DTM_SSP,
+							S.UPDPSN_ID,
+							FN_SG_GET_PRVLS(S.CO_CD, S.PRD_ID,';') ATTR_VAL,
+							U.CHRPSN_ID,
+							U.CHRPSN_NM,
+					FN_SG_SUBSTRB_CONCAT_KOR(P.PRD_NM,20,CHR(10)) PRD_NM,
+							P.REPR_SPEC,
+							P.ODR_UNT,
+							P.PRD_CLS_CD PRD_CLS_CD_SMRO,
+							(	SELECT
+									SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM
+								FROM
+									(	SELECT
+											PRD_CLS_CD, PRD_CLS_NM, PRD_CLS_LVL, HRNK_PRD_CLS_CD
+										FROM 
+											TB_FV_PRD_CLS
+										WHERE
+											CO_CD = '1000'
+										AND 
+											USE_YN = 'Y'
+									)
+								WHERE
+									PRD_CLS_LVL = 4
+								AND
+									PRD_CLS_CD = P.PRD_CLS_CD
+								START WITH
+									PRD_CLS_LVL = 1
+								CONNECT BY PRIOR
+									PRD_CLS_CD = HRNK_PRD_CLS_CD
+							) PRD_CLS_LVL_NM_SMRO,
+							P.CHR_MD_ID,
+							( SELECT OPRTR_NM FROM TB_FC_MEM_OPRTR WHERE OPRTR_ID = P.CHR_MD_ID AND USE_YN = 'Y' ) CHR_MD_NM,
+							P.USE_STATS_CD,
+							P.REG_DTM REG_DTM_SMRO,
+							P.SSP_ONLY_SPR,
+							P.INTG_PRD_ID,
+							C.INGT_PRD_GRP_ID,
+							C.INGT_PRD_GRP_STATS,
+							C.REG_DTM_INGT,
+							C.INTG_PRD_SPR,
+							C.REGPSN_ID INTG_REG_ID,
+							( SELECT OPRTR_NM FROM TB_FC_MEM_OPRTR WHERE OPRTR_ID = C.REGPSN_ID AND USE_YN = 'Y' ) INTG_REG_NM
+						FROM
+							TB_SG_PRD S
+						LEFT JOIN
+							TB_FV_PRD P
+						ON
+							S.CO_CD = P.CO_CD
+						AND
+							S.PRD_ID = P.PRD_ID
+						LEFT JOIN
+							TB_SG_PRD_USER_MAPP U
+						ON
+							S.PRD_CLS_CD = U.PRD_CLS_CD
+						AND
+							U.CHRPSN_SPR_CD = '0'
+						LEFT JOIN
+							(	SELECT
+									A.CO_CD,
+									A.INGT_PRD_GRP_ID,
+									A.INGT_PRD_GRP_STATS,
+									A.REG_DTM REG_DTM_INGT,
+									A.REGPSN_ID,
+									B.INGT_PRD_GRP_ITM_NO,
+									B.PRD_ID,
+									B.INTG_NONINTG_PRD_SPR,
+									B.INTG_PRD_SPR
+								FROM
+									TB_FV_INTG_PRD_MNG_HEADR A,
+									TB_FV_INTG_PRD_MNG_DTL B
+								WHERE
+									A.CO_CD = B.CO_CD
+								AND
+									A.INGT_PRD_GRP_ID = B.INGT_PRD_GRP_ID
+							) C
+						ON
+							P.CO_CD = C.CO_CD
+						AND
+							P.INTG_PRD_ID = FN_FC_GET_CUST_PRD_ID('1000', NULL, NULL, NULL, NULL, C.PRD_ID, NULL, 'FC')
+*/
+						<if test="selectSort == ''">ORDER BY S.REG_DTM DESC NULLS LAST</if>
+						<if test="selectSort == 'sspDtmAsc'.toString()">ORDER BY S.REG_DTM ASC NULLS LAST</if>
+						<if test="selectSort == 'smroDtmDesc'.toString()">ORDER BY P.REG_DTM DESC NULLS LAST</if>
+						<if test="selectSort == 'smroDtmAsc'.toString()">ORDER BY P.REG_DTM ASC NULLS LAST</if>
+						<if test="selectSort == 'prdIdDesc'.toString()">ORDER BY S.PRD_ID DESC NULLS LAST</if>
+						<if test="selectSort == 'prdIdAsc'.toString()">ORDER BY S.PRD_ID ASC NULLS LAST</if>
+						<if test="selectSort == 'prdNmDesc'.toString()">ORDER BY P.PRD_NM DESC NULLS LAST</if>
+						<if test="selectSort == 'prdNmAsc'.toString()">ORDER BY P.PRD_NM ASC NULLS LAST</if>
+						<if test="selectSort == 'categoryIdDesc'.toString()">ORDER BY S.PRD_CLS_CD DESC NULLS LAST</if>
+						<if test="selectSort == 'categoryIdAsc'.toString()">ORDER BY S.PRD_CLS_CD ASC NULLS LAST</if>
+					) S1
+	</select>
+
+	<select id="selectProductDetail" parameterType="hashMap" resultType="sspMap">
+		/* RegistProduct.selectProductDetail */
+		SELECT
+			S.CO_CD,
+			S.PRD_ID,
+			S.PRD_CLS_CD,
+			( SELECT SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM_SSP FROM TB_SG_PRD_CLS WHERE USE_YN = 'Y' AND PRD_CLS_CD = S.PRD_CLS_CD START WITH PRD_CLS_LVL = 1 CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD ) PRD_CLS_LVL_NM,
+			( SELECT PRD_GRP_ID FROM TB_SG_PRD_GRP WHERE CO_CD = S.CO_CD AND PRD_ID = S.PRD_ID AND PRD_GRP_SPR_CD = 'S' AND BSS_PRD_YN = 'Y') PRD_GRP_ID,
+			S.USE_YN,
+			S.PRD_BG_CD,
+			S.MNFR_NO,
+			( SELECT MNFR_NM FROM TB_FV_MNFR_MAST WHERE CO_CD = P.CO_CD AND MNFR_NO = P.MNFR_NO ) MNFR_NM,
+			S.HASH_TAG,
+			S.NUSE_RSN_CD,
+			S.BRND_NM,
+			TO_CHAR(S.REG_DTM, 'YYYYMMDDHH24MISS') SSP_REG_DTM,
+			TO_CHAR(S.UPD_DTM, 'YYYYMMDDHH24MISS') SSP_UPD_DTM,
+			S.ATTR_VAL,
+			S.NOTI_ID,
+			( SELECT NOTI_NM FROM TB_SG_NOTI WHERE NOTI_ID = S.NOTI_ID ) NOTI_NM,
+			TO_CHAR(S.BG_APL_STR_DTM, 'YYYY-MM-DD') BG_APL_STR_DTM,
+			TO_CHAR(S.BG_APL_END_DTM, 'YYYY-MM-DD') BG_APL_END_DTM,
+			DBMS_LOB.SUBSTR(S.PRD_DTL_DESC, DBMS_LOB.GETLENGTH(S.PRD_DTL_DESC)) PRD_DTL_DESC,
+			U.CHRPSN_ID,
+			U.CHRPSN_NM,
+			P.PRD_NM,
+			P.ORGPLC_CD,
+			( SELECT CTRY_NM FROM TB_FC_COM_CTRY WHERE CO_CD = P.CO_CD AND LANG_SPR_CD = FN_FC_GET_COCD_TO_LANGCD(P.CO_CD) AND CTRY_SPR_CD = P.ORGPLC_CD ) ORGPLC_NM,
+			P.REPR_SPEC,
+			P.ODR_UNT,
+			P.MULTI_ODR_UNT,
+			P.PRD_CLS_CD,
+			(	SELECT
+					SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM
+				FROM
+					(	SELECT
+							PRD_CLS_CD, PRD_CLS_NM, PRD_CLS_LVL, HRNK_PRD_CLS_CD
+						FROM 
+							TB_FV_PRD_CLS
+						WHERE
+							CO_CD = '1000'
+						AND 
+							USE_YN = 'Y'
+					)
+				WHERE
+					PRD_CLS_LVL = 4
+				AND
+					PRD_CLS_CD = P.PRD_CLS_CD
+				START WITH
+					PRD_CLS_LVL = 1
+				CONNECT BY PRIOR
+					PRD_CLS_CD = HRNK_PRD_CLS_CD
+			) PRD_CLS_LVL_NM_SMRO,
+			P.CHR_MD_ID,
+			( SELECT OPRTR_NM FROM TB_FC_MEM_OPRTR WHERE OPRTR_ID = P.CHR_MD_ID AND USE_YN = 'Y' ) CHR_MD_NM,
+			P.USE_STATS_CD,
+			TO_CHAR(P.REG_DTM, 'YYYYMMDDHH24MISS') SMRO_REG_DTM,
+			P.SSP_ONLY_SPR,
+			P.INTG_PRD_ID,
+			C.INGT_PRD_GRP_ID,
+			C.INGT_PRD_GRP_STATS,
+			C.INTG_REG_DTM,
+			C.INTG_PRD_SPR,
+			( SELECT '('||OPRTR_ID||')'||OPRTR_NM FROM TB_FC_MEM_OPRTR WHERE OPRTR_ID = C.REGPSN_ID AND USE_YN = 'Y' ) INTG_REG_ID,
+			BG.FILE_CTS,
+			BG.FILE_STOR_PATH,
+			BG.STOR_FILE_NM
+		FROM
+			TB_SG_PRD S
+		LEFT JOIN
+			(	SELECT
+					A.PRD_BG_CD AS PRD_BG_CD,
+					DBMS_LOB.SUBSTR(B.FILE_CTS, 4000, 1) AS FILE_CTS,
+					B.FILE_STOR_PATH AS FILE_STOR_PATH,
+					B.STOR_FILE_NM AS STOR_FILE_NM
+				FROM
+					TB_SG_PRD_BG A
+				LEFT JOIN
+					TB_SB_ATCH_FILE_DTL B
+				ON
+					A.ATFL_ID = B.ATFL_ID
+				WHERE
+					1 = 1
+				AND
+					A.USE_YN = 'Y'
+				AND
+					B.FILE_USE_YN = 'Y'
+				ORDER BY
+					A.REG_DTM DESC
+			) BG
+		ON
+			S.PRD_BG_CD = BG.PRD_BG_CD
+		LEFT JOIN
+			TB_FV_PRD P
+		ON
+			S.CO_CD = P.CO_CD
+		AND
+			S.PRD_ID = P.PRD_ID
+		LEFT JOIN
+			TB_SG_PRD_USER_MAPP U
+		ON
+			S.PRD_CLS_CD = U.PRD_CLS_CD
+		AND
+			U.CHRPSN_SPR_CD = '0'
+		LEFT JOIN
+			(	SELECT
+					A.CO_CD,
+					A.INGT_PRD_GRP_ID,
+					A.INGT_PRD_GRP_STATS,
+					TO_CHAR(A.REG_DTM, 'YYYYMMDDHH24MISS') INTG_REG_DTM,
+					A.REGPSN_ID,
+					B.INGT_PRD_GRP_ITM_NO,
+					B.PRD_ID,
+					B.INTG_NONINTG_PRD_SPR,
+					B.INTG_PRD_SPR
+				FROM
+					TB_FV_INTG_PRD_MNG_HEADR A,
+					TB_FV_INTG_PRD_MNG_DTL B
+				WHERE
+					A.CO_CD = B.CO_CD
+				AND
+					A.INGT_PRD_GRP_ID = B.INGT_PRD_GRP_ID
+			) C
+		ON
+			P.CO_CD = C.CO_CD
+		AND
+			P.INTG_PRD_ID = FN_FC_GET_CUST_PRD_ID('1000', NULL, NULL, NULL, NULL, C.PRD_ID, NULL, 'FC')
+		WHERE
+			1 = 1
+		AND
+			S.PRD_ID = #{searchPrdId}
+	</select>
+
+	<select id="selectNoUseCodeList" parameterType="hashMap" resultType="sspMap">
+		/* RegistProduct.selectNoUseCodeList */
+		SELECT
+			CMN_COM_IDX,
+			CMN_COM_NM,
+			CMN_COM_LEVEL,
+			CMN_COM_UP_IDX,
+			CMN_COM_TOP_IDX,
+			CMN_COM_ETC1,
+			CMN_COM_ETC2,
+			CMN_COM_ETC3,
+			CMN_COM_SORT,
+			CMN_COM_USE_YN,
+			CMN_COM_REG_DT,
+			CMN_COM_REG_IP,
+			CMN_COM_REG_ID,
+			CMN_COM_UPD_DT,
+			CMN_COM_UPD_IP,
+			CMN_COM_UPD_ID 
+		FROM
+			T_CMM_COM
+		WHERE
+			1 = 1
+		AND
+			CMN_COM_USE_YN = 'Y'
+		AND
+			CMN_COM_UP_IDX = ( SELECT CMN_COM_IDX FROM T_CMM_COM WHERE CMN_COM_NM = 'SSP 미사용 사유' )
+	</select>
+
+	<select id="selectSmroSpecList" parameterType="hashMap" resultType="sspMap">
+		/* RegistProduct.selectSmroSpecList */
+		SELECT
+			ATTR_CD,
+			PRNM,
+			PRVL
+		FROM
+			TB_FV_PRD_SPEC
+		WHERE
+			1 = 1
+		AND
+			CO_CD = '1000'
+		AND
+			PRVL IS NOT NULL
+		AND
+			PRD_ID = #{searchPrdId}
+		ORDER BY
+			SPEC_SEQ
+	</select>
+
+	<select id="selectSspCategoryList" parameterType="hashMap" resultType="sspMap">
+		/* RegistProduct.selectSspCategoryList */
+		SELECT
+			C.*
+		FROM
+			(	SELECT
+					PRD_CLS_CD,
+					PRD_CLS_NM,
+					SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM
+				FROM
+					TB_SG_PRD_CLS
+				WHERE
+					1 = 1
+				AND
+					USE_YN = 'Y'
+				AND
+					SMRO_MAPP_ID = #{searchPrdClsCd}
+				START WITH
+					PRD_CLS_LVL = 1
+				CONNECT BY PRIOR
+					PRD_CLS_CD = HRNK_PRD_CLS_CD
+			) C
+	</select>
+
+	<select id="selectSspSpecList" parameterType="hashMap" resultType="sspMap">
+		/*RegistProduct.selectSspSpecList */
+		SELECT
+			A.CO_CD,
+			A.PRD_ID,
+			A.ATTR_CD,
+			C.ATTR_NM,
+			A.PRVL,
+			C.MAND_YN
+		FROM
+			TB_SG_PRD_SPEC A
+		INNER JOIN
+			(	SELECT
+					A.ATTR_CD,
+					A.ATTR_NM,
+					B.MAND_YN
+				FROM
+					TB_SG_ATTR A,
+					TB_SG_CLS_ATTR_MAPP B
+				WHERE
+					A.ATTR_CD = B.ATTR_CD
+				AND
+					B.PRD_CLS_CD = #{searchPrdClsCd}
+				AND
+					A.USE_YN = 'Y'
+				ORDER BY
+					B.ATTR_SEQ
+			) C
+		ON
+			A.ATTR_CD = C.ATTR_CD
+		WHERE
+			A.USE_YN = 'Y'
+		AND
+			A.PRD_ID = #{searchPrdId}
+	</select>
+
+	<select id="selectNotiList" parameterType="hashMap" resultType="sspMap">
+		/* RegistProduct.selectNotiList */
+		SELECT
+			A.PRD_NOTI_ID,
+			A.NOTI_ID,
+			A.PRD_ID,
+			A.SRT_SO,
+			A.NOTI_CTS,
+			A.USE_YN,
+			A.REG_DTM,
+			A.REGPSN_ID,
+			A.NOTI_INFO_ID,
+			B.NOTI_TTL
+		FROM
+			TB_SG_PRD_NOTI A
+		LEFT JOIN
+			TB_SG_NOTI_INFO B
+		ON
+			A.NOTI_INFO_ID = B.NOTI_INFO_ID
+		AND
+			A.NOTI_ID = B.NOTI_ID
+		WHERE
+			A.NOTI_ID = #{searchNotiId}
+		AND
+			A.PRD_ID = #{searchPrdId}
+		AND
+			A.USE_YN = 'Y'
+		ORDER BY
+			PRD_NOTI_ID
+	</select>
+
+	<update id="updateSspProduct" parameterType="hashMap">
+		/* RegistProduct.updateSspProduct */
+		UPDATE
+			TB_SG_PRD
+		SET
+			PRD_CLS_CD = #{inputPrdClsCd},
+			USE_YN = #{inputUseYn},
+			PRD_BG_CD = #{inputPrdBgCd},
+			HASH_TAG = #{inputHashTag},
+			NUSE_RSN_CD = #{inputNoUseCd},
+			BRND_NM = #{inputBrndNm},
+			UPD_DTM = SYSDATE,
+			UPDPSN_ID = #{inputUpdpsnId},
+			ATTR_VAL = #{inputAttrVal},
+			NOTI_ID = #{inputNotiId},
+			BG_APL_STR_DTM = TO_DATE(NVL(#{searchStartDate}, NULL), 'YYYY-MM-DD'),
+			BG_APL_END_DTM = TO_DATE(NVL(#{searchEndDate}, NULL), 'YYYY-MM-DD'),
+			PRD_DTL_DESC = #{inputPrdDtlDesc:CLOB}
+		WHERE
+			PRD_ID = #{inputPrdId}
+	</update>
+
+	<delete id="deleteSspSpec" parameterType="hashMap">
+		/* RegistProduct.deleteSspSpec */
+		DELETE FROM
+			TB_SG_PRD_SPEC
+		WHERE
+			CO_CD = #{inputCoCd}
+		AND
+			PRD_ID = #{inputPrdId}
+	</delete>
+
+	<insert id="insertSspSpec" parameterType="hashMap">
+		/* RegistProduct.insertSspSpec */
+		INSERT INTO
+			TB_SG_PRD_SPEC
+				(	CO_CD,
+					PRD_ID,
+					SPEC_SEQ,
+					ATTR_CD,
+					PRVL,
+					USE_YN,
+					REG_DTM,
+					REGPSN_ID,
+					UPD_DTM,
+					UPDPSN_ID
+				)
+			VALUES
+				(	#{inputCoCd},
+					#{inputPrdId},
+					#{inputSpecSeq},
+					#{inputAttrCd},
+					#{inputPrvl},
+					'Y',
+					SYSDATE,
+					#{inputUpdpsnId},
+					SYSDATE,
+					#{inputUpdpsnId}
+				)
+	</insert>
+
+	<delete id="deleteSspNoti" parameterType="hashMap">
+		/* RegistProduct.deleteSspNoti */
+		DELETE FROM
+			TB_SG_PRD_NOTI
+		WHERE
+			PRD_ID = #{inputPrdId}
+	</delete>
+
+	<insert id="insertSspNoti" parameterType="hashMap">
+		/* RegistProduct.insertSspNoti */
+		<selectKey keyProperty="inputPrdNotiId" resultType="Integer" order="BEFORE">
+			SELECT SQ_SG_NOTI_INFO.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO
+			TB_SG_PRD_NOTI
+				(	PRD_NOTI_ID,
+					NOTI_ID,
+					PRD_ID,
+					SRT_SO,
+					NOTI_CTS,
+					USE_YN,
+					REG_DTM,
+					REGPSN_ID,
+					UPD_DTM,
+					UPDPSN_ID,
+					NOTI_INFO_ID
+				)
+			VALUES
+				(	#{inputPrdNotiId},
+					#{inputNotiId},
+					#{inputPrdId},
+					#{inputSrtSo},
+					#{inputNotiCts},
+					'Y',
+					SYSDATE,
+					#{inputUpdpsnId},
+					SYSDATE,
+					#{inputUpdpsnId},
+					#{inputNotiInfoId}
+				)
+	</insert>
+</mapper>

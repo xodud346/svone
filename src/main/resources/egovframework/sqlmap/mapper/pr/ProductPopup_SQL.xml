@@ -1,0 +1,749 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+******************************************************************************
+* SELECT : 상품공통팝업
+* 작성자 : 
+* 작성 일자 : 2022.02.22
+******************************************************************************
+-->
+<mapper namespace="PrProductPopup">
+   
+    <!-- 카테고리팝업 -->
+    <select id="selectCategoryPopupCount" parameterType="HashMap" resultType="Integer">
+        /* PrProductPopup.selectCategoryPopupCount */
+        SELECT 
+            COUNT(*)
+        FROM 
+            SSP_APP.TB_PR_PRD_CLSF_INFO
+        WHERE USE_YN = 'Y'
+        <include refid="categoryPopupWhere"/>
+        START WITH HIER_LVL = 1
+        CONNECT BY PRIOR PRD_CLCD = HRNK_PRD_CLCD
+    </select>
+    
+    <select id="selectCategoryPopupList" parameterType="HashMap" resultType="HashMap">
+        /* PrProductPopup.selectCategoryPopupList */
+        WITH CATE_LIST AS (
+        	SELECT 
+		        CO_CD,
+		        PRD_CLCD,
+		        PRD_CLSF_NM,
+		        SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLSF_NM, '>'),2) AS FULL_PRD_CLSF_NM, 
+		        HIER_LVL,
+		        USE_YN,
+		        LWST_CD_YN,
+		        SEL_MTHD_CD,
+		        MALL_SPR_CD,
+		        SRT_SO
+		    FROM 
+		        SSP_APP.TB_PR_PRD_CLSF_INFO
+		    START WITH HIER_LVL = 1
+		    CONNECT BY PRIOR PRD_CLCD = HRNK_PRD_CLCD
+        )
+        SELECT PRD_CLCD
+              ,PRD_CLSF_NM
+              ,FULL_PRD_CLSF_NM 
+              ,HIER_LVL
+          FROM CATE_LIST
+         WHERE USE_YN = 'Y' 
+		   AND CO_CD = #{CO_CD}
+		   AND ROWNUM <![CDATA[<=]]> #{ROW_COUNT}
+        <include refid="categoryPopupWhere"/>
+        ORDER BY CO_CD, PRD_CLCD, SRT_SO ASC
+    </select>
+    
+    <sql id="categoryPopupWhere">
+        <if test="PRD_CLCD != null and PRD_CLCD != ''">
+            AND PRD_CLCD = #{PRD_CLCD}
+        </if>
+        <if test="PRD_CLSF_NM != null and PRD_CLSF_NM != ''">
+            AND PRD_CLSF_NM LIKE '%'||#{PRD_CLSF_NM}||'%'
+        </if>
+        <if test="LWST_CD_YN != null and LWST_CD_YN != ''">
+            AND LWST_CD_YN = #{LWST_CD_YN}
+        </if>
+        <if test="SEL_MTHD_CD != null and SEL_MTHD_CD != ''">
+            AND SEL_MTHD_CD = #{SEL_MTHD_CD}
+        </if>
+        <if test="MALL_SPR_CD != null and MALL_SPR_CD != ''">
+        	<if test="MALL_SPR_CD == '10' or MALL_SPR_CD == '20'">
+            	AND MALL_SPR_CD = #{MALL_SPR_CD}
+            </if>
+        </if>
+    </sql>
+    
+    
+    <!-- 상품고시품목 -->
+    <select id="selectProductNoticePopupCount" parameterType="HashMap" resultType="Integer">
+        /* PrProductPopup.selectProductNoticeCount */
+        SELECT
+            COUNT(*)
+        FROM
+            SSP_APP.TB_PR_NOTI_ITM_BASIS
+        WHERE 1=1
+        <include refid="productNoticePopupWhere"/>
+    </select>
+    
+    <select id="selectProductNoticePopupList" parameterType="HashMap" resultType="HashMap">
+        /* PrProductNotice.selectProductNoticeList */
+        SELECT
+            CO_CD,
+            NOTI_ITM_ID,
+            NOTI_ITM_NM,
+            USE_YN,
+            REG_DTM,
+            REGPSN_ID,
+            UPD_DTM,
+            UPDPSN_ID
+        FROM
+            SSP_APP.TB_PR_NOTI_ITM_BASIS
+        WHERE USE_YN = 'Y' AND CO_CD = #{CO_CD} 
+        <include refid="productNoticePopupWhere"/>
+        ORDER BY CO_CD, NOTI_ITM_ID
+    </select>
+    
+    <sql id="productNoticePopupWhere">
+        <if test="NOTI_ITM_ID != null and NOTI_ITM_ID != ''">
+            AND NOTI_ITM_ID = #{NOTI_ITM_ID}
+        </if>
+        <if test="NOTI_ITM_NM != null and NOTI_ITM_NM != ''">
+            AND NOTI_ITM_NM LIKE '%'||#{NOTI_ITM_NM}||'%'
+        </if>
+    </sql>
+    
+    <!-- 상품ID목록 -->
+    <select id="selectProductPopupCount" parameterType="HashMap" resultType="Integer">
+        /* PrProductPopup.selectProductPopupCount */
+        SELECT 
+            COUNT(*)
+        FROM SSP_APP.TB_PR_PRD_INFO PRD --상품기본정보
+        INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO MROPRD    --MRO상품기본정보
+            ON PRD.CO_CD = MROPRD.CO_CD AND PRD.PRD_ID = MROPRD.PRD_ID
+        INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR --제조원
+            ON MNFR.CO_CD = MROPRD.CO_CD AND MNFR.MNFR_NO = MROPRD.MNFR_NO
+        INNER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_DTL REPR  --대표상품
+           ON MROPRD.CO_CD = REPR.CO_CD AND MROPRD.PRD_ID = REPR.PRD_ID AND REPR.SSP_PRD_YN = 'Y'
+        INNER JOIN SSP_APP.TB_PR_REPR_PRD_MNG_BASIS REPRB   --대표상품
+           ON REPRB.CO_CD = REPR.CO_CD AND REPR.REPR_PRD_GRP_ID = REPRB.REPR_PRD_GRP_ID AND REPRB.REPR_PRD_GRP_USEYN = 'Y'
+        WHERE 1=1 
+        <include refid="prPoductPopupWhere"/>
+    </select>
+    
+    <select id="selectProductPopupList" parameterType="HashMap" resultType="HashMap">
+        /* PrProductNotice.selectProductPopupList */
+        SELECT /*+ USE_NL(PRD MROPRD) INDEX(PRD TB_PR_PRD_INFO_PK) */
+            0 CHK
+            , PRD.CO_CD 
+		    , PRD.PRD_ID  
+		    , TO_NUMBER(PRD.PRD_ID) PRD_ID_VIEW 
+		    , PRD.PRD_NM 
+		    , SSP_APP.FN_PR_ATTR_VAL_LIST(PRD.CO_CD, PRD.PRD_ID) ATTR_VAL 
+		    , MNFR.MNFR_NO 
+		    , MNFR.MNFR_NM 
+		    , PRD.MALL_SPR_CD
+            , PRD.PRD_CLCD
+            , SSP_APP.FN_PR_FULL_CLSF_NM(PRD.CO_CD, PRD.PRD_CLCD) FULL_PRD_CLSF_NM
+            , PC.SEL_MTHD_CD                   /* 선정방식  */
+            , SSP_APP.FN_PR_GET_SSP_PRD_NM(PRD.CO_CD, PRD.PRD_ID) SSP_PRD_NM
+            , TB.IDDT_NM
+		FROM SSP_APP.TB_PR_PRD_INFO PRD					--상품기본정보
+		INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO MROPRD    --MRO상품기본정보
+		ON PRD.CO_CD = MROPRD.CO_CD 
+		AND PRD.PRD_ID = MROPRD.PRD_ID
+		INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR 		--제조원
+		ON MNFR.CO_CD = MROPRD.CO_CD 
+		AND MNFR.MNFR_NO = MROPRD.MNFR_NO
+        LEFT JOIN TB_PR_PRD_CLSF_INFO PC 				/* 상품분류정보 */
+        ON (PC.CO_CD = PRD.CO_CD 
+        	AND PC.PRD_CLCD = PRD.PRD_CLCD)
+        LEFT JOIN (										/* 산업군명들을 가져오기위한 테이블 */
+        			SELECT LISTAGG(C.IDDT_NM, ',') WITHIN GROUP(ORDER BY C.IDDT_ID) AS IDDT_NM
+							, C.CO_CD
+							, C.PRD_CLCD
+	            	FROM ( SELECT B.IDDT_NM
+	            				   , B.IDDT_ID
+	            				   , A.PRD_CLCD 
+	            				   , A.CO_CD
+	            		   FROM TB_PR_PRD_CLSF_IDDT_MAPP A
+	            		   INNER JOIN TB_CC_IDDT_BASIS B
+	            		   ON 1=1
+	            		   AND B.IDDT_ID = A.IDDT_ID             		             		
+	            		   AND B.USE_YN = 'Y'            		  
+	            		 ) C	            		 
+	                GROUP BY C.PRD_CLCD, C.CO_CD
+        		  ) TB
+        ON TB.CO_CD = PRD.CO_CD 
+        AND TB.PRD_CLCD = PRD.PRD_CLCD
+		WHERE PRD.CO_CD = #{CO_CD}
+		  AND PRD_USE_YN = 'Y' 
+		  AND MRO_PRD_STATS_CD = '00'
+		  AND ROWNUM <![CDATA[<=]]> #{ROW_COUNT}
+		  AND EXISTS
+            (SELECT 'X'
+	               FROM TB_PR_REPR_PRD_MNG_DTL PRPMD     -- 대표상품그룹상세
+	               INNER JOIN TB_PR_REPR_PRD_MNG_BASIS PRPMB -- 대표상품그룹정보
+	               ON ( PRPMB.CO_CD = PRPMD.CO_CD AND PRPMB.REPR_PRD_GRP_ID = PRPMD.REPR_PRD_GRP_ID AND PRPMB.REPR_PRD_GRP_USEYN = 'Y' AND PRD.MALL_SPR_CD = '10')
+	              WHERE 0=0
+	                AND PRPMD.CO_CD = PRD.CO_CD 
+	                AND PRPMD.PRD_ID = PRD.PRD_ID 
+	                AND PRPMD.SSP_PRD_YN = 'Y'
+	             UNION ALL
+	             SELECT 'X'
+	               FROM DUAL
+	              WHERE 0=0
+	                AND PRD.MALL_SPR_CD = '20'
+	        )
+        <include refid="prPoductPopupWhere"/>
+        ORDER BY PRD.CO_CD, PRD.PRD_NM, PRD.PRD_ID
+    </select>
+    
+    <sql id="prPoductPopupWhere">
+        <if test="PRD_ID != null and PRD_ID != ''">
+           <choose>
+              <when test='PRD_LIKE_YN == "Y"'>
+              AND PRD.PRD_ID  LIKE '%' || #{PRD_ID} || '%'   --상품ID
+              </when>
+              <otherwise>
+              AND PRD.PRD_ID = LPAD(#{PRD_ID}, 18, '0')   --상품ID
+              </otherwise>
+           </choose>   
+        </if>
+        <if test="PRD_NM != null and PRD_NM != ''">
+            AND PRD.PRD_NM LIKE '%'||#{PRD_NM}||'%' --상품명
+        </if>
+        <if test="PRVL != null and PRVL != ''">
+            AND (
+	            EXISTS (SELECT 'X' FROM TB_PR_PRD_INFO_ATTR_MAPP X 
+	                    WHERE X.CO_CD = PRD.CO_CD AND X.PRD_ID = PRD.PRD_ID AND X.PRVL LIKE '%'||#{PRVL}||'%') --ssp규격
+	            OR 
+	            EXISTS (SELECT 'X' FROM TB_PR_MRO_PRD_INFO_ATTR_MAPP X 
+	                    WHERE X.CO_CD = PRD.CO_CD AND X.PRD_ID = PRD.PRD_ID AND X.PRVL LIKE '%'||#{PRVL}||'%') --mro규격
+	            )   --대표규격
+        </if>
+        <if test="MNFR_NM != null and MNFR_NM != ''">
+            AND MNFR.MNFR_NM LIKE '%'||#{MNFR_NM}||'%'   --제조사명
+        </if>
+        <if test="PUB_ONLY_SPR_CD != null and PUB_ONLY_SPR_CD != ''">
+            AND MROPRD.PUB_ONLY_SPR_CD = #{PUB_ONLY_SPR_CD}   --공용전용
+        </if>
+        <if test="DISP_STATS_YN != null and DISP_STATS_YN != ''">
+            AND EXISTS (SELECT 'X'
+                          FROM TB_DP_PRD_DISP_STATS_INFO 
+                         WHERE 0=0
+                           AND CO_CD = PRD.CO_CD 
+                           AND PRD_ID = PRD.PRD_ID 
+                           AND DISP_STATS_CD = '10'
+                       )
+        </if>
+        <if test="REPR_PRD_YN != null and REPR_PRD_YN != ''">
+        	<if test="MALL_SPR_CD == '10'">
+            AND EXISTS (SELECT 'X'
+                          FROM TB_PR_REPR_PRD_MNG_DTL 
+                         WHERE 0=0
+                           AND CO_CD = PRD.CO_CD 
+                           AND PRD_ID = PRD.PRD_ID 
+                           AND SSP_PRD_YN = 'Y'
+                           AND REPR_PRD_SPR_YN = 'Y'
+                       )
+             </if>
+        </if>
+        
+        <if test="PRD_CLCD != null and PRD_CLCD != ''">
+            AND PRD.PRD_CLCD = #{PRD_CLCD}   --상품분류코드
+        </if>
+        <if test="SEL_MTHD_CD != null and SEL_MTHD_CD != ''">
+	        <if test='SEL_MTHD_CD == "Y"'>
+	            AND PC.SEL_MTHD_CD  != '40' -- 전시상품 제외
+	        </if>
+        </if>
+        <if test="MALL_SPR_CD != null and MALL_SPR_CD != ''">
+        	<if test="MALL_SPR_CD == '10' or MALL_SPR_CD == '20'">
+	            AND PRD.MALL_SPR_CD = #{MALL_SPR_CD}   --몰구분
+	        </if>
+        </if>
+        
+        <if test="SPL_PSB_YN != null and SPL_PSB_YN != ''">
+        	 AND EXISTS (SELECT 'X'
+                           FROM TB_PC_CPRTCP_LWST_PRC_INFO A
+                           JOIN TB_PC_CPRTCP_PRD_INFO B
+                             ON ( A.CO_CD = B.CO_CD AND A.PRD_ID = B.PRD_ID AND A.CPRTCP_ID = B.CPRTCP_ID AND TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN A.VLD_STR_DT AND A.VLD_END_DT)
+                           JOIN TB_PC_PRD_PRC_HST C
+                             ON ( A.CO_CD = C.CO_CD AND A.PRD_ID = C.PRD_ID AND TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN BSS_SALSPRC_STR_DTM AND BSS_SALSPRC_END_DTM)
+                          WHERE A.CO_CD = PRD.CO_CD
+                            AND A.PRD_ID = PRD.PRD_ID 
+                            AND B.SPL_PSB_YN = 'Y'
+                       )
+        </if>
+        
+    </sql>
+    
+    <select id="selectProductPopupListForDupProc" parameterType="HashMap" resultType="HashMap">
+        /* PrProductNotice.selectProductPopupListForDupProc */
+        SELECT * 
+        FROM (
+        	SELECT * 
+       		FROM (
+        		SELECT * 
+        		FROM (
+		        	SELECT /*+ USE_NL(PRD MROPRD) INDEX(PRD TB_PR_PRD_INFO_PK) */
+	        		    0 CHK,
+					    PRD.CO_CD CO_CD, 
+					    PRD.PRD_ID PRD_ID, 
+					    TO_NUMBER(PRD.PRD_ID) PRD_ID_VIEW ,
+					    MROPRD.PUB_ONLY_SPR_CD, 
+					    PRD.PRD_NM PRD_NM, 
+					    SSP_APP.FN_PR_ATTR_VAL_LIST(PRD.CO_CD, PRD.PRD_ID) ATTR_VAL, 
+					    MNFR.MNFR_NO ,
+					    MNFR.MNFR_NM ,
+					    PRD.MALL_SPR_CD,
+			            PRD.PRD_CLCD,
+			            SSP_APP.FN_PR_FULL_CLSF_NM(PRD.CO_CD, PRD.PRD_CLCD) FULL_PRD_CLSF_NM,
+			            PC.SEL_MTHD_CD                    /* 선정방식                 */
+					FROM SSP_APP.TB_PR_PRD_INFO PRD --상품기본정보
+					INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO MROPRD    --MRO상품기본정보
+					    ON PRD.CO_CD = MROPRD.CO_CD AND PRD.PRD_ID = MROPRD.PRD_ID
+					INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR --제조원
+					    ON MNFR.CO_CD = MROPRD.CO_CD AND MNFR.MNFR_NO = MROPRD.MNFR_NO
+		        	LEFT JOIN TB_PR_PRD_CLSF_INFO    PC /* 상품분류정보               */
+		            	ON(PC.CO_CD = PRD.CO_CD AND PC.PRD_CLCD = PRD.PRD_CLCD)
+					WHERE PRD.CO_CD = #{CO_CD}
+					  AND PRD_USE_YN = 'Y' 
+					  AND MRO_PRD_STATS_CD = '00'
+					  AND PUB_ONLY_SPR_CD = 'P'
+					  AND EXISTS
+			            (SELECT 'X'
+			               FROM TB_PR_REPR_PRD_MNG_DTL PRPMD     -- 대표상품그룹상세
+			               INNER JOIN TB_PR_REPR_PRD_MNG_BASIS PRPMB -- 대표상품그룹정보
+			               ON ( PRPMB.CO_CD = PRPMD.CO_CD AND PRPMB.REPR_PRD_GRP_ID = PRPMD.REPR_PRD_GRP_ID AND PRPMB.REPR_PRD_GRP_USEYN = 'Y' AND PRD.MALL_SPR_CD = '10')
+			              WHERE 0=0
+			                AND PRPMD.CO_CD = PRD.CO_CD 
+			                AND PRPMD.PRD_ID = PRD.PRD_ID 
+			                AND PRPMD.SSP_PRD_YN = 'Y'
+			             UNION ALL
+			             SELECT 'X'
+			               FROM DUAL
+			              WHERE 0=0
+			                AND PRD.MALL_SPR_CD = '20'
+			        )
+        <include refid="prPoductPopupWhere"/>
+	        ) WHERE ROWNUM <![CDATA[<=]]> #{ROW_COUNT}
+			ORDER BY
+			  CO_CD,
+			  PRD_NM,
+			  PRD_ID)
+        UNION ALL 
+        SELECT * 
+        FROM (
+        	SELECT * 
+        	FROM (
+		        SELECT /*+ USE_NL(PRD MROPRD) INDEX(PRD TB_PR_PRD_INFO_PK) */
+		            0 CHK,
+				    PRD.CO_CD CO_CD, 
+				    PRD.PRD_ID PRD_ID, 
+				    TO_NUMBER(PRD.PRD_ID) PRD_ID_VIEW ,
+				    MROPRD.PUB_ONLY_SPR_CD,
+				    PRD.PRD_NM PRD_NM, 
+				    SSP_APP.FN_PR_ATTR_VAL_LIST(PRD.CO_CD, PRD.PRD_ID) ATTR_VAL, 
+				    MNFR.MNFR_NO ,
+				    MNFR.MNFR_NM ,
+				    PRD.MALL_SPR_CD,
+		            PRD.PRD_CLCD,
+		            SSP_APP.FN_PR_FULL_CLSF_NM(PRD.CO_CD, PRD.PRD_CLCD) FULL_PRD_CLSF_NM,
+		            PC.SEL_MTHD_CD                    /* 선정방식                 */
+				FROM SSP_APP.TB_PR_PRD_INFO PRD --상품기본정보
+				INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO MROPRD    --MRO상품기본정보
+				    ON PRD.CO_CD = MROPRD.CO_CD AND PRD.PRD_ID = MROPRD.PRD_ID
+				INNER JOIN SSP_APP.TB_PR_MNFR_INFO MNFR --제조원
+				    ON MNFR.CO_CD = MROPRD.CO_CD AND MNFR.MNFR_NO = MROPRD.MNFR_NO
+		        LEFT JOIN TB_PR_PRD_CLSF_INFO    PC /* 상품분류정보               */
+		            ON(PC.CO_CD = PRD.CO_CD AND PC.PRD_CLCD = PRD.PRD_CLCD)
+				WHERE PRD.CO_CD = #{CO_CD}
+				  AND PRD_USE_YN = 'Y' 
+				  AND MRO_PRD_STATS_CD = '00'
+				  AND PUB_ONLY_SPR_CD = 'E'
+				  AND EXISTS
+		            (SELECT 'X'
+			               FROM TB_PR_REPR_PRD_MNG_DTL PRPMD     -- 대표상품그룹상세
+			               INNER JOIN TB_PR_REPR_PRD_MNG_BASIS PRPMB -- 대표상품그룹정보
+			               ON ( PRPMB.CO_CD = PRPMD.CO_CD AND PRPMB.REPR_PRD_GRP_ID = PRPMD.REPR_PRD_GRP_ID AND PRPMB.REPR_PRD_GRP_USEYN = 'Y' AND PRD.MALL_SPR_CD = '10')
+			              WHERE 0=0
+			                AND PRPMD.CO_CD = PRD.CO_CD 
+			                AND PRPMD.PRD_ID = PRD.PRD_ID 
+			                AND PRPMD.SSP_PRD_YN = 'Y'
+			             UNION ALL
+			             SELECT 'X'
+			               FROM DUAL
+			              WHERE 0=0
+			                AND PRD.MALL_SPR_CD = '20'
+			        )
+		        <include refid="prDupPoductPopupWhere"/>
+		        ) WHERE ROWNUM <![CDATA[<=]]> #{ROW_COUNT}
+		        ORDER BY CO_CD, PRD_NM, PRD_ID
+	        )
+        ) WHERE ROWNUM <![CDATA[<=]]> #{ROW_COUNT}
+        ORDER BY CO_CD, PRD_NM, PRD_ID
+    </select>
+    
+        
+    
+    <sql id="prDupPoductPopupWhere">
+        <if test="PRD_ID != null and PRD_ID != ''">
+           <choose>
+              <when test='PRD_LIKE_YN == "Y"'>
+              AND PRD.PRD_ID  LIKE '%' || #{PRD_ID} || '%'   --상품ID
+              </when>
+              <otherwise>
+              AND PRD.PRD_ID = LPAD(#{PRD_ID}, 18, '0')   --상품ID
+              </otherwise>
+           </choose>   
+        </if>
+        <if test="PRD_NM != null and PRD_NM != ''">
+            AND PRD.PRD_NM LIKE '%'||#{PRD_NM}||'%' --상품명
+        </if>
+        <if test="PRVL != null and PRVL != ''">
+            AND (
+	            EXISTS (SELECT 'X' FROM TB_PR_PRD_INFO_ATTR_MAPP X 
+	                    WHERE X.CO_CD = PRD.CO_CD AND X.PRD_ID = PRD.PRD_ID AND X.PRVL LIKE '%'||#{PRVL}||'%') --ssp규격
+	            OR 
+	            EXISTS (SELECT 'X' FROM TB_PR_MRO_PRD_INFO_ATTR_MAPP X 
+	                    WHERE X.CO_CD = PRD.CO_CD AND X.PRD_ID = PRD.PRD_ID AND X.PRVL LIKE '%'||#{PRVL}||'%') --mro규격
+	            )   --대표규격
+        </if>
+        <if test="MNFR_NM != null and MNFR_NM != ''">
+            AND MNFR.MNFR_NM LIKE '%'||#{MNFR_NM}||'%'   --제조사명
+        </if>
+        <if test="REPR_PRD_YN != null and REPR_PRD_YN != ''">
+        	<if test="MALL_SPR_CD == '10'">
+            AND EXISTS (SELECT 'X'
+                          FROM TB_PR_REPR_PRD_MNG_DTL 
+                         WHERE 0=0
+                           AND CO_CD = PRD.CO_CD 
+                           AND PRD_ID = PRD.PRD_ID 
+                           AND SSP_PRD_YN = 'Y'
+                           AND REPR_PRD_SPR_YN = 'Y'
+                       )
+             </if>
+        </if>
+        <if test="MALL_SPR_CD != null and MALL_SPR_CD != ''">
+        	<if test="MALL_SPR_CD == '10' or MALL_SPR_CD == '20'">
+	            AND PRD.MALL_SPR_CD = #{MALL_SPR_CD}   --몰구분
+	        </if>
+        </if>
+    </sql>
+    
+    
+        
+    <select id="selectMroPrdPopupList" parameterType="HashMap" resultType="HashMap">
+        SELECT MRO_PRD_CLCD
+        	 , MRO_PRD_CLSF_NM AS TEMP_MRO_PRD_CLSF_NM
+             , SUBSTR(SYS_CONNECT_BY_PATH(MRO_PRD_CLSF_NM, '>'),2) AS MRO_PRD_CLSF_NM
+         FROM SSP_APP.TB_PR_MRO_PRD_CLSF_INFO
+        WHERE 1=1
+          AND USE_YN = 'Y'
+          AND PRD_CLSF_LVL = 4
+          AND CO_CD = #{CO_CD}
+          <if test="ROW_COUNT != null and ROW_COUNT != ''">
+          AND ROWNUM <![CDATA[<=]]> #{ROW_COUNT}
+          </if>
+          <if test="MRO_PRD_CLCD != null and MRO_PRD_CLCD != ''">
+          AND MRO_PRD_CLCD = #{MRO_PRD_CLCD}
+          </if>
+          <if test="MRO_PRD_CLSF_NM != null and MRO_PRD_CLSF_NM != ''">
+          AND MRO_PRD_CLSF_NM LIKE '%' || #{MRO_PRD_CLSF_NM} || '%'
+          </if>
+        START WITH HRNK_MRO_PRD_CLCD IS NULL
+      CONNECT BY PRIOR MRO_PRD_CLCD = HRNK_MRO_PRD_CLCD    
+    </select>
+    
+    <select id="selectMroPrdPopupListCount" parameterType="HashMap" resultType="integer">
+       SELECT COUNT(0)
+         FROM SSP_APP.TB_PR_MRO_PRD_CLSF_INFO
+        WHERE 1=1
+          AND USE_YN = 'Y'
+          AND PRD_CLSF_LVL = 4
+           AND CO_CD = #{CO_CD}
+          <if test="ROW_COUNT != null and ROW_COUNT != ''">
+          AND ROWNUM <![CDATA[<=]]> #{ROW_COUNT}
+          </if>
+          <if test="MRO_PRD_CLCD != null and MRO_PRD_CLCD != ''">
+          AND MRO_PRD_CLCD = #{MRO_PRD_CLCD}
+          </if>
+          <if test="MRO_PRD_CLSF_NM != null and MRO_PRD_CLSF_NM != ''">
+          AND MRO_PRD_CLSF_NM LIKE '%' || #{MRO_PRD_CLSF_NM} || '%'
+          </if>
+    </select>
+    
+    <select id="selectCtryPopupList" parameterType="HashMap" resultType="HashMap">
+		SELECT CO_CD
+		     , CTRY_SPR_CD
+		     , CTRY_NM
+		     , SRT_SO
+		  FROM SSP_APP.TB_CO_CTRY_INFO
+		 WHERE 1=1
+		   AND CO_CD = #{CO_CD}
+		   <if test="CTRY_SPR_CD != null and CTRY_SPR_CD != ''">
+		   AND CTRY_SPR_CD = #{CTRY_SPR_CD}
+		   </if>
+		   <if test="CTRY_NM != null and CTRY_NM != ''">
+		   AND CTRY_NM LIKE '%'|| #{CTRY_NM} ||'%'
+		   </if>
+		   AND ROWNUM <![CDATA[<=]]> #{ROW_COUNT}
+		 ORDER BY SRT_SO ASC
+    </select>  
+    
+    <select id="selectCtryPopupListCount" parameterType="HashMap" resultType="integer">
+       SELECT COUNT(0)
+         FROM SSP_APP.TB_CO_CTRY_INFO
+        WHERE 1=1
+           AND CO_CD = #{CO_CD}
+          <if test="CTRY_SPR_CD != null and CTRY_SPR_CD != ''">
+           AND CTRY_SPR_CD = #{CTRY_SPR_CD}
+           </if>
+           <if test="CTRY_NM != null and CTRY_NM != ''">
+           AND CTRY_NM LIKE '%'|| #{CTRY_NM} ||'%'
+           </if>
+           AND ROWNUM <![CDATA[<=]]> #{ROW_COUNT}
+    </select>
+    
+     <select id="selectPrdClsfList" parameterType="HashMap" resultType="HashMap">
+        /* PrProductPopup.selectPrdClsfList */
+        SELECT /*+ USE_NL(A C) INDEX(C TB_PR_PRD_INFO_PK) */
+               DISTINCT 
+               '' AS CHK
+             , A.PRD_CLCD
+             , A.PRD_CLSF_NM
+             , FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD)  AS PRD_CLSF_LVL_NM
+             , A.MALL_SPR_CD
+             , B.PRD_CLSF_CHRPSN_ID
+             , D.OPRTR_NM
+        FROM SSP_APP.TB_PR_PRD_CLSF_INFO  A
+           , (  SELECT CO_CD
+                     , PRD_CLCD
+                     , PRD_CLSF_CHRPSN_ID
+                FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO
+                WHERE PRD_CLSF_CHRPSN_TP_CD = '10'
+                  AND PRD_CLSF_CHRPSN_SPR_CD = '10'
+                  AND PRD_CLSF_CHRPSN_USEYN = 'Y'
+              ) B
+           , SSP_APP.TB_PR_PRD_INFO C
+           , SSP_APP.TB_CO_MBR_OPRTR_INFO D
+        WHERE 1 = 1
+          AND A.CO_CD = B.CO_CD(+)
+          AND A.CO_CD = C.CO_CD
+          AND A.PRD_CLCD = B.PRD_CLCD(+)
+          AND A.PRD_CLCD = C.PRD_CLCD
+          AND B.PRD_CLSF_CHRPSN_ID = D.OPRTR_ID(+)
+          AND A.LWST_CD_YN = 'Y'
+          AND A.USE_YN ='Y'
+          AND A.CO_CD = #{CO_CD}
+          AND A.SEL_MTHD_CD != '40'
+          AND C.PRD_NM LIKE '%' || #{PRNM} || '%'
+          <if test="MALL_SPR_CD != null and MALL_SPR_CD != ''">
+          AND A.MALL_SPR_CD = #{MALL_SPR_CD}
+          </if>
+        ORDER BY A.MALL_SPR_CD ASC
+     </select>
+     
+     <select id="selectPrdClsfNmList" parameterType="HashMap" resultType="HashMap">
+        /* PrProductPopup.selectPrdClsfList */
+        SELECT DISTINCT 
+               '' AS CHK
+             , A.PRD_CLCD
+             , A.PRD_CLSF_NM
+             , FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD)  AS PRD_CLSF_LVL_NM
+             , A.MALL_SPR_CD
+             , B.PRD_CLSF_CHRPSN_ID
+             , D.OPRTR_NM
+        FROM SSP_APP.TB_PR_PRD_CLSF_INFO  A
+           , (  SELECT CO_CD
+                     , PRD_CLCD
+                     , PRD_CLSF_CHRPSN_ID
+                FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO
+                WHERE PRD_CLSF_CHRPSN_TP_CD = '10'
+                  AND PRD_CLSF_CHRPSN_SPR_CD = '10'
+                  AND PRD_CLSF_CHRPSN_USEYN = 'Y'
+              ) B
+           , SSP_APP.TB_CO_MBR_OPRTR_INFO D
+        WHERE 1 = 1
+          AND A.CO_CD = B.CO_CD(+)
+          AND A.PRD_CLCD = B.PRD_CLCD(+)
+          AND B.PRD_CLSF_CHRPSN_ID = D.OPRTR_ID(+)
+          AND A.LWST_CD_YN = 'Y'
+          AND A.CO_CD = #{CO_CD}
+          AND A.SEL_MTHD_CD != '40'
+          AND A.USE_YN ='Y'
+          AND A.PRD_CLSF_NM LIKE '%' || #{PRNM} || '%'
+          <if test="MALL_SPR_CD != null and MALL_SPR_CD != ''">
+          AND A.MALL_SPR_CD = #{MALL_SPR_CD}
+          </if>
+        ORDER BY A.MALL_SPR_CD ASC
+     </select>
+     
+     <insert id="insertNewPrdStats" parameterType="HashMap" >
+        /* PrProductPopup.insertNewPrdStats */
+		INSERT INTO TB_PR_NEW_PRD_REQ_STATS_DTLS (
+		      CO_CD
+		    , NEW_PRD_REQ_NO
+		    , SEQ
+		    , NEW_PRD_REQ_STATS_CD
+		    , MALL_SPR_CD
+		    , MEMO_CTS
+		    , REGPSN_ID
+		    , REG_DTM
+		    , UPDPSN_ID
+		    , UPD_DTM
+		) VALUES (
+		      #{CO_CD}
+		    , #{NEW_PRD_REQ_NO}
+		    , (SELECT NVL(MAX(SEQ),0)+1 FROM TB_PR_NEW_PRD_REQ_STATS_DTLS WHERE NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO})
+		    , DECODE((SELECT COUNT(*) FROM TB_PR_NEW_PRD_REQ_STATS_DTLS WHERE NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO} AND NEW_PRD_REQ_STATS_CD IN ('33','34')),0,'33','34')
+		    , '20'
+		    , #{TRSF_RSN}
+		    , #{USER_ID}
+		    , SYSDATE
+		    , #{USER_ID}
+		    , SYSDATE
+		)     
+     </insert>
+     
+     <update id="updateNewPrdReqProc" parameterType="HashMap" >
+        /* PrProductPopup.updateNewPrdReqProc */
+		UPDATE TB_PR_NEW_PRD_REQ_PROC
+		   SET PRD_CLCD = #{PRD_CLCD}
+		     , MALL_SPR_CD = #{MALL_SPR_CD}
+		     , TRSF_RSN = #{TRSF_RSN}
+		     , UPDPSN_ID = #{USER_ID}
+		     , UPD_DTM = SYSDATE
+		 WHERE CO_CD = #{CO_CD}
+		   AND NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO}     
+     </update>
+     
+     <update id="updateNewPrdCustReqInfo" parameterType="HashMap" >
+        /* PrProductPopup.updateNewPrdCustReqInfo */
+		UPDATE TB_PR_NEW_PRD_CUST_REQ_INFO
+		   SET REQ_SBJ_CD = '10'
+		     , UPDPSN_ID = #{USER_ID}
+		     , UPD_DTM = SYSDATE
+		 WHERE CO_CD = #{CO_CD}
+		   AND NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO}     
+     </update>
+     
+     <select id="selectBgPopupList" parameterType="HashMap" resultType="HashMap">
+        SELECT
+		    BG.CO_CD,
+		    BG.BG_SEQ,
+		    BG.BG_NM
+		FROM
+		    SSP_APP.TB_SA_BG_INFO BG
+            INNER JOIN TB_CO_ATFL_DTLS DOC
+                ON BG.DOC_REG_ID = DOC.DOC_REG_ID
+		WHERE BG.CO_CD = #{CO_CD} AND BG.USE_YN = 'Y'
+		  <if test="BG_SEQ != null and BG_SEQ != ''">
+		      AND BG_SEQ = #{BG_SEQ}
+		  </if>
+		  <if test="BG_NM != null and BG_NM != ''">
+              AND BG_NM LIKE '%'||#{BG_NM}||'%'
+          </if>
+          AND ROWNUM <![CDATA[<=]]> #{ROW_COUNT}
+     </select>
+     
+     <select id="selectNewPrdProcHst" parameterType="HashMap" resultType="HashMap">
+        /* PrProductPopup.selectNewPrdProcHst */
+        SELECT * 
+          FROM (
+		        SELECT A.CO_CD
+		             , A.HST_SEQ
+		             , A.DATA_CHG_TP_CD
+		             , LAG(A.PRD_CLCD) OVER(PARTITION BY A.NEW_PRD_REQ_NO ORDER BY A.PRD_CLCD) AS BF_PRD_CLCD
+		             , LAG(FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD)) OVER(PARTITION BY A.NEW_PRD_REQ_NO ORDER BY A.PRD_CLCD) AS BF_PRD_CLSF_NN
+		             , A.PRD_CLCD
+		             , FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD) AS PRD_CLSF_NN
+		             , A.MALL_SPR_CD
+		             , A.TRSF_RSN
+		             , A.UPDPSN_ID AS UPD_ID
+		             , B.OPRTR_NM  AS UPD_NAME
+		             , A.UPD_DTM
+		        FROM TB_PR_NEW_PRD_REQ_PROC_HST A
+		           , TB_CO_MBR_OPRTR_INFO B
+		        WHERE 1=1
+		        AND A.UPDPSN_ID = B.OPRTR_ID
+		        AND A.CO_CD = #{CO_CD} 
+		        AND A.NEW_PRD_REQ_NO = #{NEW_PRD_REQ_NO}    
+		        ) 
+		  WHERE DATA_CHG_TP_CD != 'C'
+          ORDER BY UPD_DTM DESC  
+     </select>
+
+    <select id="selectSpecialIndustryGroup" parameterType="HashMap" resultType="HashMap">
+        /* PrProductPopup.selectSpecialIndustryGroup */
+        SELECT
+            DECODE(A.IDDT_ID, NULL, 0, 1) CHK
+            ,B.IDDT_ID
+            ,B.IDDT_NM
+            , #{PRD_CLCD} AS PRD_CLCD
+        FROM SSP_APP.TB_PR_PRD_CLSF_IDDT_MAPP A
+        RIGHT JOIN SSP_APP.TB_CC_IDDT_BASIS B
+        ON A.IDDT_ID = B.IDDT_ID
+        AND A.CO_CD = #{CO_CD}
+        AND A.PRD_CLCD = #{PRD_CLCD}
+        WHERE B.USE_YN = 'Y'
+        ORDER BY B.IDDT_ID
+    </select>
+
+
+    <select id="selectSpecialIndustryGroupMappList" parameterType="HashMap" resultType="HashMap">
+        /* PrProductPopup.selectSpecialIndustryGroupMappList */
+        SELECT
+            TB.*, ROWNUM RN
+        FROM
+            (SELECT
+                0 AS CHK
+                , A.PRD_CLCD
+                , A.IDDT_ID
+                , B.IDDT_NM
+                , A.SRT_SO
+            FROM SSP_APP.TB_PR_PRD_CLSF_IDDT_MAPP A
+            , SSP_APP.TB_CC_IDDT_BASIS B
+            WHERE 1=1
+            AND A.IDDT_ID = B.IDDT_ID
+            AND A.CO_CD = #{CO_CD}
+            AND A.PRD_CLCD = #{PRD_CLCD}
+            AND B.USE_YN = 'Y'
+            ORDER BY A.SRT_SO ASC) TB
+    </select>
+
+
+
+    <insert id="insertSpecialIndustryGroupMappList" parameterType="HashMap">
+        /* PrProductPopup.insertSpecialIndustryGroupMappList */
+        INSERT INTO SSP_APP.TB_PR_PRD_CLSF_IDDT_MAPP
+        (
+           CO_CD
+            , PRD_CLCD
+            , IDDT_ID
+            , REGPSN_ID
+            , REG_DTM
+            , UPDPSN_ID
+            , UPD_DTM
+        ) VALUES (
+            #{CO_CD}
+            , #{PRD_CLCD}
+            , #{IDDT_ID}
+            , #{USER_ID}
+            , SYSDATE
+            , #{USER_ID}
+            , SYSDATE
+        )
+    </insert>
+
+    <delete id="deleteSpecialIndustryGroupMappList" parameterType="HashMap">
+        /* PrProductPopup.deleteSpecialIndustryGroupMappList */
+        DELETE FROM SSP_APP.TB_PR_PRD_CLSF_IDDT_MAPP
+        WHERE CO_CD        = #{CO_CD}
+          AND PRD_CLCD     = #{PRD_CLCD}
+          AND IDDT_ID  = #{IDDT_ID}
+    </delete>
+
+</mapper>

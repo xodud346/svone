@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-4.0.xsd">
+
+	<!--
+	<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="marketA"/>
+		<property name="resourceRef" value="true"/>
+	</bean>
+	-->
+
+<!-- 	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close"> -->
+<!-- 		<property name="driverClassName" value="${datasource.marketA.driver}"/> -->
+<!-- 		<property name="url" value="${datasource.marketA.url}"/> -->
+<!-- 		<property name="username" value="${datasource.marketA.username}"/> -->
+<!-- 		<property name="password" value="${datasource.marketA.password}"/> -->
+<!-- 	</bean> -->
+	
+	<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="java:comp/env/jdbc/JNDI_ORACLE" />
+		<property name="resourceRef" value="true"/>
+	</bean>
+
+	<bean id="dataSourceLog" class="net.sf.log4jdbc.Log4jdbcProxyDataSource">
+		<constructor-arg ref="dataSource" />
+		<property name="logFormatter">
+			<bean class="net.sf.log4jdbc.tools.Log4JdbcCustomFormatter">
+				<property name="loggingType" value="MULTI_LINE" />
+			</bean>
+		</property>
+	</bean>
+	
+    <!-- 1. batch에 사용할 SqlSessionFactory Bean을 하나 생성. 데이터소스와 config.xml은 기존 것을 그냥 사용해도 무방함 -->
+    <bean id="sqlSessionFactoryBulk" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="mapperLocations" value="classpath*:egovframework/sqlmap/mapper/**/*.xml"/>
+        <property name="configLocation" value="classpath:/egovframework/sqlmap/sql-map-config.xml"/>
+    </bean>
+  
+    <!-- 2. 1에서 생성한 Factory Bean을 사용하는 SqlSessionTemplate Bean을 생성 -->
+    <bean id="batchSqlSessionTemplate" name="batchSqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlSessionFactoryBulk" />
+        <constructor-arg index="1" value="BATCH" />
+    </bean>   
+</beans>

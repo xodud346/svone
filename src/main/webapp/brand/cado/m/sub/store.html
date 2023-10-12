@@ -1,0 +1,577 @@
+<!DOCTYPE>
+<html lang="ko" ng-app="cado_M">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1;text/html; charset=utf-8;" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#282828">
+<meta name="title" content="카도 - 매일 당신이 숨쉬는 공기를 연구합니다. ">
+<title>store < m.cado</title>
+
+<link rel="stylesheet" type="text/css" href="../com/css/reset.css">
+<link rel="stylesheet" type="text/css" href="../com/css/all.css">
+
+<link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet"><!--icon font-->
+
+<script src="../com/js/jquery-1.9.1.js"></script>
+<script src="../com/js/angular.min.js"></script>
+<script src="../com/js/jquery.stellar.min.js"></script>
+<script>
+var this_pg = "store";
+
+//angular load
+angular.module("cado_M",[]).controller("cado_header",function($scope){
+	$scope.load = function(){
+	hd_nav();
+		$("nav a").each(function(i){
+			if(this_pg.indexOf("product") > -1){
+				//product
+				this_pg_tx = this_pg.split("_");
+				$("nav a:eq(1)").addClass("on");
+				$("nav ol li").each(function(){
+					if( $(this).find("a").text().indexOf( this_pg_tx[1] ) > -1 ) $(this).find("a").addClass("on").parent().siblings().find("a").removeClass("on");
+				});
+			}else if($(this).text().indexOf(this_pg) > -1){
+				//나머지
+				$(this).addClass("on");
+				return false;
+			}
+		});
+	}
+}).controller("cado_footer",function($scope){
+	$scope.load = function(){
+		/*$("nav a").each(function(i){
+			if(this_pg.indexOf("product") > -1){
+				//product
+				this_pg_tx = this_pg.split("_");
+				$("nav a:eq(1)").addClass("on");
+				$("nav ol a").each(function(){
+					if( $(this).find("a").text().indexOf( this_pg_tx[1] ) > -1 ) $(this).find("a").addClass("on").parent().siblings().find("a").removeClass("on");
+				});
+			}else if($(this).text().indexOf(this_pg) > -1){
+				//나머지
+				$(this).addClass("on");
+				return false;
+			}
+		});*/
+	}
+});
+</script>
+<script language="javascript" type="text/javascript" src="../com/js/all.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
+<script>
+var ck_maps = false;
+var geocoder;
+var map;
+var infowindow = new google.maps.InfoWindow();
+var marker;
+var ck_one = false;
+function initialize() {
+  resize();
+  $("#map-canvas").css({width:win_w,height:win_h-51});
+  geocoder = new google.maps.Geocoder();
+  var latlng = new google.maps.LatLng(37.564894, 126.981752);
+  var mapOptions = {
+    zoom: 15,
+    center: latlng,
+    mapTypeId: 'roadmap'
+  }
+  map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+  if(!ck_one){
+	ck_one = true;
+  }
+}
+function closeMap(){
+	$("#map_d").removeClass("open").animate({top:"100%",right:"0",left:"0",borderTopLeftRadius:"100%",borderTopRightRadius:"100%",width:"100%",height:"0"},500);
+	$(".btn_close_map").removeAttr("style");
+}
+function codeLatLng(val,ti_tx) {
+	resize();
+    $("#map_d").addClass("open").animate({top:"51px",borderTopLeftRadius:"20%",borderTopRightRadius:"20%",height:(win_h-51)+"px"},500,function(){
+	$("#map-canvas").css({width:win_w,height:win_h-51});
+	$("#map_d").animate({borderTopLeftRadius:"0",borderTopRightRadius:"0"},300);
+	$(".btn_close_map").animate({bottom:"0"},1000);
+	if(!ck_maps) initialize();
+	ck_maps = true;
+	var input = val;
+	var latlngStr = input.split(',', 2);
+	var lat = parseFloat(latlngStr[0]);
+	var lng = parseFloat(latlngStr[1]);
+	var latlng = new google.maps.LatLng(lat, lng);
+
+	if(marker != undefined) marker.setMap(null);
+	geocoder.geocode({'latLng': latlng}, function(results, status) {
+	if (status == google.maps.GeocoderStatus.OK) {
+	  if (results[1]) {
+		map.setZoom(15);
+		marker = new google.maps.Marker({
+			position: latlng,
+			map: map
+		});
+		var latLng = marker.getPosition(); // returns LatLng object
+		map.setCenter(latLng);
+		
+		infowindow.setContent("<strong>"+ti_tx+"</strong><br>"+results[1].formatted_address);
+		infowindow.open(map, marker);
+	  } else {
+		console.log('No results found');
+	  }
+	} else {
+	  console.log('Geocoder failed due to: ' + status);
+	}
+	});
+
+  });
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+    </script>
+</head>
+<body>
+<div id="pg_lod" class="pg_lod"><div class="ico_d"><i class="ico_1"></i><i class="ico_2"></i><i class="ico_3"></i></div></div>
+<a href="javascript:void(0);" id="skipnavi" class="skipnavi">본문 바로가기</a>
+<!-- #wrap S -->
+<div id="wrap" class="sub_pg shp_pg">
+	<!-- #header S -->
+	<header id="header" ng-include="'../inc/header.html'" ng-controller="cado_header" onload="load()"></header>
+	<!-- #header E -->
+	
+	<!-- #container S -->
+	<section id="container">
+		<article class="pg_title">
+			<h2 id="ti_an" class="ti_an">
+				<span>s</span>
+				<span>t</span>
+				<span>o</span>
+				<span>r</span>
+				<span>e</span>
+			</h2>
+		</article>
+		<!-- .store_sh S -->
+		<article id="search" class="store_sh">
+		  <input name="q" type="search" size="40" placeholder="검색어를 입력하세요." />
+		</article>
+		<!-- .store_sh E -->
+		<!-- .store_list S -->
+		<article class="store_list">
+			<ol class="sec_01">
+				<li class="ti"><h2>백화점</h2><span><i class="fa fa-map-marker"></i>지도보기</span></li>
+				<li>
+					<h3>롯데백화점</h3>
+					<dl>
+						<dt>본점</dt>
+						<dd>
+							<p>서울특별시 중구 소공동 1</p>
+							<a href="tel:02-772-3756" class="tx_tel">02-772-3756</a>
+							<button onclick="codeLatLng('37.565262, 126.981305','롯데백화점 / 본점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>강남점</dt>
+						<dd>
+							<p>서울특별시 강남구 도곡로 401</p>
+							<a href="tel:02-531-2828" class="tx_tel">02-531-2828</a>
+							<button onclick="codeLatLng('37.497164, 127.053262','롯데백화점 / 강남점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>광복점</dt>
+						<dd>
+							<p>부산광역시 중구 중앙대로 2</p>
+							<a href="tel:051-678-2500" class="tx_tel">051-678-2500</a>
+							<button onclick="codeLatLng('35.096952, 129.036705','롯데백화점 / 광복점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>광주점</dt>
+						<dd>
+							<p>광주광역시 동구 독립로 268</p>
+							<a href="tel:062-221-1825" class="tx_tel">062-221-1825</a>
+							<button onclick="codeLatLng('35.157511, 126.905948','롯데백화점 / 광주점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>구리점</dt>
+						<dd>
+							<p>경기도 구리시 경춘로 261</p>
+							<a href="tel:031-550-7114" class="tx_tel">031-550-7114</a>
+							<button onclick="codeLatLng('37.602962, 127.143768','롯데백화점 / 구리점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>노원점</dt>
+						<dd>
+							<p>서울특별시 노원구 동일로 1414</p>
+							<a href="tel:02-950-2714" class="tx_tel">02-950-2714</a>
+							<button onclick="codeLatLng('37.655431, 127.061120','롯데백화점 / 노원점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>대구점</dt>
+						<dd>
+							<p>대구광역시 북구 태평로 161</p>
+							<a href="tel:053-660-1376" class="tx_tel">053-660-1376</a>
+							<button onclick="codeLatLng('35.876172, 128.596398','롯데백화점 / 대구점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>분당점</dt>
+						<dd>
+							<p>경기도 성남시 분당구 황새울로 200번길 45</p>
+							<a href="tel:031-738-2839" class="tx_tel">031-738-2839</a>
+							<button onclick="codeLatLng('37.378642, 127.114271','롯데백화점 / 분당점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>부평점</dt>
+						<dd>
+							<p>인천광역시 부평구 부평문화로 35</p>
+							<a href="tel:032-452-2500" class="tx_tel">032-452-2500</a>
+							<button onclick="codeLatLng('37.493675, 126.719564','롯데백화점 / 부평점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>상인점</dt>
+						<dd>
+							<p>대구광역시 달서구 월배로 232</p>
+							<a href="tel:053-258-2500" class="tx_tel">053-258-2500</a>
+							<button onclick="codeLatLng('35.819050, 128.538894','롯데백화점 / 상인점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>서면점</dt>
+						<dd>
+							<p>부산광역시 부산진구 가야대로 772</p>
+							<a href="tel:051-810-3678" class="tx_tel">051-810-3678</a>
+							<button onclick="codeLatLng('35.157125, 129.056614','롯데백화점 / 서면점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>센텀점</dt>
+						<dd>
+							<p>부산광역시 해운대구 센텀남대로 59</p>
+							<a href="tel:051-730-3794" class="tx_tel">051-730-3794</a>
+							<button onclick="codeLatLng('35.170097, 129.131112','롯데백화점 / 센텀점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>안양점</dt>
+						<dd>
+							<p>경기도 안양시 만안로 244</p>
+							<a href="tel:031-463-2685" class="tx_tel">031-463-2685</a>
+							<button onclick="codeLatLng('37.401842, 126.922795','롯데백화점 / 안양점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>울산점</dt>
+						<dd>
+							<p>울산광역시 남구 삼산로 288</p>
+							<a href="tel:052-960-5215" class="tx_tel">052-960-5215</a>
+							<button onclick="codeLatLng('35.538617, 129.338223','롯데백화점 / 울산점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>일산점</dt>
+						<dd>
+							<p>경기도 고양시 일산동구 중앙로 1283</p>
+							<a href="tel:031-909-3072" class="tx_tel">031-909-3072</a>
+							<button onclick="codeLatLng('37.660864, 126.772076','롯데백화점 / 일산점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>수원점</dt>
+						<dd>
+							<p>경기 수원시 권선구 세화로 134(서둔동)</p>
+							<a href="tel:031-8066-2500" class="tx_tel">031-8066-2500</a>
+							<button onclick="codeLatLng('37.264269, 126.997997','롯데백화점 / 수원점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>잠실점</dt>
+						<dd>
+							<p>서울특별시 송파구 올림픽로 240</p>
+							<a href="tel:02-2143-7888" class="tx_tel">02-2143-7888</a>
+							<button onclick="codeLatLng('37.511550, 127.097963','롯데백화점 / 잠실점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>중동점</dt>
+						<dd>
+							<p>경기도 부천시 원미구 길주로 300</p>
+							<a href="tel:032-327-1552" class="tx_tel">032-327-1552</a>
+							<button onclick="codeLatLng('37.502722, 126.775336','롯데백화점 / 중동점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>창원점</dt>
+						<dd>
+							<p>경상남도 창원시 성산구 중앙대로 124</p>
+							<a href="tel:055-279-2500" class="tx_tel">055-279-2500</a>
+							<button onclick="codeLatLng('35.224804, 128.681789','롯데백화점 / 창원점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+				</li>
+				<li>
+					<h3>현대백화점</h3>
+					<dl>
+						<dt>대구점</dt>
+						<dd>
+							<p>대구광역시 중구 달구벌대로 2077</p>
+							<a href="tel:053-245-2724" class="tx_tel">053-245-2724</a>
+							<button onclick="codeLatLng('35.866492, 128.590717','현대백화점 / 대구점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>목동점</dt>
+						<dd>
+							<p>서울시 양천구 목동동로 257</p>
+							<a href="tel:02-2163-1092" class="tx_tel">02-2163-1092</a>
+							<button onclick="codeLatLng('37.527098, 126.875005','현대백화점 / 목동점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>무역점</dt>
+						<dd>
+							<p>서울시 강남구 삼성1동 159-7 현대백화점 8층</p>
+							<a href="tel:02-3467-8477" class="tx_tel">02-3467-8477</a>
+							<button onclick="codeLatLng('37.508728, 127.059771','현대백화점 / 무역점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>본점</dt>
+						<dd>
+							<p>서울시 강남구 압구정로 165</p>
+							<a href="tel:02-3449-5449" class="tx_tel">02-3449-5449</a>
+							<button onclick="codeLatLng('37.508728, 127.059771','현대백화점 / 무역점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>부산점</dt>
+						<dd>
+							<p>부산 동구 범일2동 62-5 현대백화점 8층</p>
+							<a href="tel:051-667-0778" class="tx_tel">051-667-0778</a>
+							<button onclick="codeLatLng('35.141558, 129.058525','현대백화점 / 부산점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>울산점</dt>
+						<dd>
+							<p>울산 남구 삼산동 1521-1 현대백화점 9층</p>
+							<a href="tel:052-228-1278" class="tx_tel">052-228-1278</a>
+							<button onclick="codeLatLng('35.539881, 129.335758','현대백화점 / 울산점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>킨텍스점</dt>
+						<dd>
+							<p>경기 고양시 일산서구 대화동 2602 현대백화점</p>
+							<a href="tel:031-822-3723" class="tx_tel">031-822-3723</a>
+							<button onclick="codeLatLng('37.667994, 126.751060','현대백화점 / 킨텍스점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>미아점</dt>
+						<dd>
+							<p>서울 성북구 길음동 20번지 현대백화점 7층</p>
+							<a href="tel:02-2117-1785" class="tx_tel">02-2117-1785</a>
+							<button onclick="codeLatLng('37.608605, 127.028731','현대백화점 / 미아점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>신촌점</dt>
+						<dd>
+							<p>서울시 서대문구 창전동 30-33 현대백화점 9층</p>
+							<a href="tel:02-3145-2955" class="tx_tel">02-3145-2955</a>
+							<button onclick="codeLatLng('37.556336, 126.935869','현대백화점 / 신촌점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>중동점</dt>
+						<dd>
+							<p>경기도 부천시 원미구 중1동 1164 현대백화점 7층</p>
+							<a href="tel:032-623-2973" class="tx_tel">032-623-2973</a>
+							<button onclick="codeLatLng('37.504538, 126.761925','현대백화점 / 중동점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>천호점</dt>
+						<dd>
+							<p>서울시 강동구 천호동 455-8 현대백화점 10층</p>
+							<a href="tel:02-2225-8962" class="tx_tel">02-2225-8962</a>
+							<button onclick="codeLatLng('37.539054, 127.124480','현대백화점 / 천호점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+				</li>
+				<li>
+					<h3>신세계백화점</h3>
+					<dl>
+						<dt>본점</dt>
+						<dd>
+							<p>서울특별시 중구 소공로63(충무로1가)</p>
+							<a href="tel:02-310-1465" class="tx_tel">02-310-1465</a>
+							<button onclick="codeLatLng('37.567983, 126.981112','신세계백화점 / 본점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>충청점</dt>
+						<dd>
+							<p>충청남도 천안시 동남구 신안동 356</p>
+							<a href="tel:1588-1234" class="tx_tel">1588-1234</a>
+							<button onclick="codeLatLng('36.819724, 127.156487','신세계백화점 / 충청점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+				</li>
+				<li>
+					<h3>AK프라자</h3>
+					<dl>
+						<dt>분당점</dt>
+						<dd>
+							<p>경기 성남시 분당구 서현동 263 AK분당점 5층</p>
+							<a href="tel:031-779-3528" class="tx_tel">031-779-3528</a>
+							<button onclick="codeLatLng('37.385296, 127.123392','AK프라자 / 분당점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>수원점</dt>
+						<dd>
+							<p>경기 수원시 팔달구 매산로1가 18번지 AK수원점 5층</p>
+							<a href="tel:031-240-1515" class="tx_tel">031-240-1515</a>
+							<button onclick="codeLatLng('37.265901, 127.000084','AK프라자 / 수원점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+				</li>
+			</ol>
+
+			<ol class="sec_02">
+				<li class="ti"><h2>MarketPlant 프라이스킹 직영매장</h2><span><i class="fa fa-map-marker"></i>지도보기</span></li>
+				<li>
+					<h3>수도권</h3>
+					<dl>
+						<dt>용산점</dt>
+						<dd>
+							<p>서울시 용산구 한강로3가 16-9</p>
+							<a href="tel:02-707-4712" class="tx_tel">02-707-4712</a>
+							<button onclick="codeLatLng('37.533073, 126.959563','MarketPlant / 용산점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>주안점</dt>
+						<dd>
+							<p>인천광역시 남구 주안동 1534-3</p>
+							<a href="tel:032-426-9933" class="tx_tel">032-426-9933</a>
+							<button onclick="codeLatLng('37.451382, 126.689312','MarketPlant / 주안점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>일산점</dt>
+						<dd>
+							<p>경기도 고양시 일산 서구 대화동 2198-2</p>
+							<a href="tel:032-426-9933" class="tx_tel">031-924-2200</a>
+							<button onclick="codeLatLng('37.675672, 126.749929','MarketPlant / 일산점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>디큐브시티점</dt>
+						<dd>
+							<p>서울시 구로구 경인로 662 (신도림동) 디큐브백화점 4층</p>
+							<a href="tel:02-2211-0460" class="tx_tel">02-2211-0460</a>
+							<button onclick="codeLatLng('37.508342, 126.888037','MarketPlant / 디큐브시티점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>쿡앤킹명동점</dt>
+						<dd>
+							<p>서울시 중구 명동10길 51</p>
+							<a href="tel:02-778-8387" class="tx_tel">02-778-8387</a>
+							<button onclick="codeLatLng('37.561736, 126.986017','MarketPlant / 쿡앤킹명동점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+				</li>
+				<li>
+					<h3>중부</h3>
+					<dl>
+						<dt>둔산점</dt>
+						<dd>
+							<p>대전광역시 서구 둔산동 1366</p>
+							<a href="tel:042-478-5555" class="tx_tel">042-478-5555</a>
+							<button onclick="codeLatLng('36.353989, 127.379919','MarketPlant / 둔산점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>두정점</dt>
+						<dd>
+							<p>충청남도 천안시 성정동 1244, 1245</p>
+							<a href="tel:041-565-9696" class="tx_tel">041-565-9696</a>
+							<button onclick="codeLatLng('36.827191, 127.133425','MarketPlant / 두정점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+				</li>
+				<li>
+					<h3>서부</h3>
+					<dl>
+						<dt>인후점</dt>
+						<dd>
+							<p>전라북도 전주시 덕진구 인후동1가 818-1</p>
+							<a href="tel:063-247-3100" class="tx_tel">063-247-3100</a>
+							<button onclick="codeLatLng('35.833577, 127.158244','MarketPlant / 인후점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+				</li>
+				<li>
+					<h3>남부</h3>
+					<dl>
+						<dt>상남점</dt>
+						<dd>
+							<p>경상남도 창원시 성산구 상남동 26-1</p>
+							<a href="tel:055-281-8800" class="tx_tel">055-281-8800</a>
+							<button onclick="codeLatLng('35.222239, 128.681813','MarketPlant / 상남점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>도동점</dt>
+						<dd>
+							<p>경상남도 진주시 상대동 197,197-1</p>
+							<a href="tel:055-754-9300" class="tx_tel">055-754-9300</a>
+							<button onclick="codeLatLng('35.186429, 128.117262','MarketPlant / 도동점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>남천메가마트점</dt>
+						<dd>
+							<p>부산시 수영구 남천동 545-2 남천 메가마트 1층</p>
+							<a href="tel:051-612-8896" class="tx_tel">051-612-8896</a>
+							<button onclick="codeLatLng('35.137187, 129.110896','MarketPlant / 남천메가마트점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+					<dl>
+						<dt>동래메가마트점</dt>
+						<dd>
+							<p>부산광역시 동래구 충렬대로197(명륜동) 동래메가마트 내 1층</p>
+							<a href="tel:051-554-8801" class="tx_tel">051-554-8801</a>
+							<button onclick="codeLatLng('35.204598, 129.081165','MarketPlant / 동래메가마트점')"><i class="fa fa-map-marker"></i><span class="tx_skip">지도보기</span></button>
+						</dd>
+					</dl>
+				</li>
+			</ol>
+		</article>
+		<!-- .store_list E -->
+		<article id="map_d" class="map_d">
+			<button class="btn_close_map" onclick="closeMap()"><span class="tx_skip">지도 닫기</span></button>
+			<div id="map-canvas" class="map-canvas"></div>
+		</article>
+
+		<article class="img_stellar2">
+			<dl>
+				<dt>카도 구입/AS 문의처</dt>
+				<dd>SGS PLUS <a href="tel:02-707-4706">02.707.4706</a></dd>
+				<div class="bg_img" data-stellar-ratio="1.1"></div>
+			</dl>
+		</article>
+	</section>
+	<!-- #container E -->
+
+	<footer ng-include="'../inc/footer.html'" ng-controller="cado_footer" onload="load()"></footer>
+</div>
+<!-- #wrap E -->
+</body>
+</html>

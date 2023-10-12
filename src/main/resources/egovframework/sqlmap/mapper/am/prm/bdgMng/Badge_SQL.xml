@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Badge">
+
+	<select id="selectBadgeCount" parameterType="hashMap" resultType="integer">
+		/* Badge.selectBadgeCount */
+				SELECT
+					COUNT(0)
+				FROM
+					TB_SG_PRD_BG TSPB
+				LEFT JOIN
+					TB_SB_ATCH_FILE_DTL TCAFD
+				ON TCAFD.ATFL_ID = TSPB.ATFL_ID
+						WHERE
+							1 = 1
+						AND TCAFD.FILE_USE_YN = 'Y'
+						<if test="useYn != '' and useYn != null">
+						AND
+							TSPB.USE_YN = #{useYn}
+						</if>
+						<if test="prdBgNm != '' and prdBgNm != null">
+						AND
+							TSPB.PRD_BG_NM LIKE '%'||#{prdBgNm}||'%'
+						</if>
+						<if test="regpsnId != '' and regpsnId != null">
+						AND
+							TSPB.REGPSN_ID = #{regpsnId}
+						</if>
+						<if test="searchStartDt != '' and searchStartDt != null">
+							<if test="searchEndDt != '' and searchEndDt != null">
+						AND
+							TO_CHAR(TSPB.REG_DTM, 'YYYYMMDD') BETWEEN #{searchStartDt} AND #{searchEndDt}
+							</if>
+						</if>
+	</select>
+
+
+	<!-- 배지관리 배지 목록 -->
+	<select id="selectBadgeList" parameterType="hashMap" resultType="sspMap">
+		/* Badge.selectBadgeList */
+		SELECT
+	    	S2.*
+	    FROM
+	        (
+	        SELECT
+	        	ROWNUM RNUM,
+	            S1.*
+		    FROM (
+				SELECT
+					TSPB.PRD_BG_CD AS PRD_BG_CD,
+					TSPB.PRD_BG_NM AS PRD_BG_NM,
+					TSPB.ATFL_ID AS ATFL_ID,
+					DBMS_LOB.SUBSTR(TCAFD.FILE_CTS, 4000, 1) AS FILE_CTS,
+					TCAFD.FILE_STOR_PATH AS FILE_STOR_PATH,
+					TCAFD.STOR_FILE_NM AS STOR_FILE_NM,
+					TSPB.USE_YN AS USE_YN,
+					TSPB.REG_DTM AS REG_DTM,
+					TSPB.REGPSN_ID AS REGPSN_ID,
+					TSPB.UPD_DTM AS UPD_DTM,
+					TSPB.UPDPSN_ID AS UPDPSN_ID,
+					(SELECT TAM.ADM_MST_NM FROM T_ADM_MST TAM WHERE TAM.ADM_MST_ID = TSPB.REGPSN_ID) AS REGPSN_NM,
+					(SELECT TAM.ADM_MST_NM FROM T_ADM_MST TAM WHERE TAM.ADM_MST_ID = TSPB.UPDPSN_ID) AS UPDPSN_NM
+				FROM
+					TB_SG_PRD_BG TSPB
+				LEFT JOIN
+					TB_SB_ATCH_FILE_DTL TCAFD
+				ON TCAFD.ATFL_ID = TSPB.ATFL_ID
+						WHERE
+							1 = 1
+						AND TCAFD.FILE_USE_YN = 'Y'
+						<if test="useYn != '' and useYn != null">
+						AND
+							TSPB.USE_YN = #{useYn}
+						</if>
+						<if test="prdBgNm != '' and prdBgNm != null">
+						AND
+							TSPB.PRD_BG_NM LIKE '%'||#{prdBgNm}||'%'
+						</if>
+						<if test="regpsnId != '' and regpsnId != null">
+						AND
+							TSPB.REGPSN_ID = #{regpsnId}
+						</if>
+						<if test="searchStartDt != '' and searchStartDt != null">
+							<if test="searchEndDt != '' and searchEndDt != null">
+						AND
+							TO_CHAR(TSPB.REG_DTM, 'YYYYMMDD') BETWEEN #{searchStartDt} AND #{searchEndDt}
+							</if>
+						</if>
+
+						ORDER BY
+							TSPB.REG_DTM DESC
+				)S1
+			)S2
+			WHERE
+                S2.RNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+
+
+	<update id="updateStatus" parameterType="hashMap">
+		/* Badge.updateStatus */
+		UPDATE
+			TB_SG_PRD_BG
+		SET
+		<if test="useYn != '' and useYn != null">
+			USE_YN = #{useYn},
+		</if>
+			UPD_DTM = SYSDATE,
+			UPDPSN_ID = #{updpsnId}
+		WHERE
+			PRD_BG_CD IN
+				<foreach collection="prdBgCd" item="prdBgCd"  open="(" close=")" separator=",">
+					#{prdBgCd}
+				</foreach>
+	</update>
+
+
+	<insert id="insertBadge" parameterType="hashMap">
+		/* Badge.insertBadge */
+		<selectKey keyProperty="prdBgCd" resultType="Integer" order="BEFORE">
+			SELECT SQ_SG_PRD_BG.NEXTVAL AS PRD_BG_CD FROM DUAL
+		</selectKey>
+		INSERT INTO TB_SG_PRD_BG
+			(
+			PRD_BG_CD,
+			PRD_BG_NM,
+			ATFL_ID,
+			USE_YN,
+			REG_DTM,
+			REGPSN_ID,
+			UPD_DTM,
+			UPDPSN_ID
+			)
+		VALUES
+			(
+			#{prdBgCd},
+			#{prdBgNm},
+			#{attachFileId},
+			#{useYn},
+			SYSDATE,
+			#{regpsnId},
+			SYSDATE,
+			#{regpsnId}
+			)
+	</insert>
+
+		<!-- 프론트 > 마이페이지 > 1:1 문의 상세보기 -->
+	<select id="readBadge" parameterType="HashMap" resultType="sspMap">
+		/* Badge.readBadge */
+		SELECT
+			TSPB.PRD_BG_CD AS PRD_BG_CD,
+			TSPB.PRD_BG_NM AS PRD_BG_NM,
+			TCAFD.ORIGNL_FILE_NM AS ORIGNL_FILE_NM,
+			DBMS_LOB.SUBSTR(TCAFD.FILE_CTS, 4000, 1) AS FILE_CTS,
+			TSPB.USE_YN AS USE_YN,
+			TSPB.REG_DTM AS REG_DTM,
+			TSPB.REGPSN_ID AS REGPSN_ID,
+			TSPB.UPD_DTM AS UPD_DTM,
+			TSPB.UPDPSN_ID AS UPDPSN_ID,
+			TSPB.ATFL_ID,
+			TAM.ADM_MST_NM AS ADM_MST_NM,
+			TCAFD.FILE_SEQ,
+			(SELECT TAM.ADM_MST_NM FROM T_ADM_MST TAM WHERE TAM.ADM_MST_ID = TSPB.REGPSN_ID) AS REGPSN_NM,
+			(SELECT TAM.ADM_MST_NM FROM T_ADM_MST TAM WHERE TAM.ADM_MST_ID = TSPB.UPDPSN_ID) AS UPDPSN_NM
+        FROM
+            TB_SG_PRD_BG TSPB
+        LEFT JOIN
+        	TB_SB_ATCH_FILE_DTL TCAFD
+        ON TCAFD.ATFL_ID = TSPB.ATFL_ID
+		LEFT JOIN
+			T_ADM_MST TAM
+		ON TAM.ADM_MST_ID = TSPB.REGPSN_ID
+        WHERE
+        	TCAFD.FILE_USE_YN = 'Y'
+			AND TSPB.PRD_BG_CD = #{prdBgCd}
+	</select>
+
+
+	<update id="updateBadge" parameterType="hashMap">
+		/* Badge.updateBadge */
+		UPDATE
+			TB_SG_PRD_BG
+		SET
+			<if test="useYn != '' and useYn != null">
+				USE_YN = #{useYn},
+			</if>
+			<if test="prdBgNm != '' and prdBgNm != null">
+				PRD_BG_NM = #{prdBgNm},
+			</if>
+			<if test="attachFileId != '' and attachFileId != null">
+				ATFL_ID = #{attachFileId},
+			</if>
+				UPD_DTM = SYSDATE,
+				UPDPSN_ID = #{updpsnId}
+		WHERE
+				PRD_BG_CD = #{prdBgCd}
+	</update>
+
+
+	<delete id="deleteBadge" parameterType="hashMap">
+		/* Badge.deleteBadge */
+		DELETE FROM
+			TB_SG_PRD_BG
+		WHERE
+			PRD_BG_CD = #{prdBgCd}
+	</delete>
+</mapper>

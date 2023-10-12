@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PA_48_01" width="740" height="800" titletext="상품이력 상세뷰어" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="800" width="740" stepindex="">
+        <WebBrowser id="wbs_prdDetail" taborder="0" onloadcompleted="webEditor_onloadcompleted" onusernotify="webEditor_onusernotify" width="703" height="690" left="17" top="20" onsize="div_prdDetail_wbs_prdDetail_onsize"/>
+        <Edit id="close_focus" taborder="1" left="345" top="749" width="46" height="21" visible="true"/>
+        <Button id="btn_close" taborder="2" text="닫기" left="320" width="100" height="32" onclick="btn_close_onclick" top="744"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : 상품상세 HTML
+CREATION DATES : 2021.05.27
+*******************************************************/
+// 공통형 스크립트 인클루드
+include "CO::coUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.fvDocWeb = "";
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+    //공통 함수 호출(필수)
+    this.gfn_formOnLoad(this);
+	var PRD_ID = this.parent.PRD_ID;
+	var HST_SEQ = this.parent.HST_SEQ;
+	
+	this.ds_search.setColumn(0, "PRD_ID", PRD_ID);
+	this.ds_search.setColumn(0, "HST_SEQ", HST_SEQ);
+	
+	this.fn_search();
+	
+	this.close_focus.setFocus();	//esc용
+	
+	
+};
+
+// 화면 단축키
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	if (e.keycode == 27) {// ESC
+		this.close();// 팝업 화면 닫기
+		e.stopPropagation();
+	}
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (bInit)
+{
+    var sSvcId = "search";    
+    var sUrl = "/pr/prd-hst/select-prd-hst-dtl-html-info.do";  
+    var inDs = "ds_search=ds_search";
+    var outDs = "ds_output=prdDtlHtml";
+    var arg = "";
+    
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+    switch(svcID) {
+        case "search" :
+		this.fn_initEditor();
+		break;
+    }
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_initEditor = function(){
+	//var sUrl = nexacro.getEnvironment().services["svcUrl"].url + "smartEditor/SmartEditor2.html";
+	//this.div_prdDetail.form.wbs_prdDetail.set_url(sUrl);
+	var sUrl = nexacro.getEnvironment().services["svcUrl"].url + "toastEditor/index.html";
+	this.wbs_prdDetail.set_url(sUrl);
+	
+};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+this.webEditor_onloadcompleted = function(obj:nexacro.WebBrowser,e:nexacro.WebLoadCompEventInfo)
+{
+	this.fvDocWeb = this.wbs_prdDetail.getProperty("document").getProperty("all");
+	
+	var sContents = this.ds_output.getColumn(0, "PRD_DTL_DESC");
+	if(typeof sContents == 'undefined'){
+		sContents = '';
+	}
+	this.fvDocWeb.getProperty("editorData").setProperty("value",sContents);
+	this.fvDocWeb.getProperty("setData").callMethod("click");	
+};]]></Script>
+    <Objects>
+      <Dataset id="ds_output">
+        <ColumnInfo>
+          <Column id="PRD_DTL_DESC" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PRD_ID" type="STRING" size="256"/>
+          <Column id="HST_SEQ" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+  </Form>
+</FDL>

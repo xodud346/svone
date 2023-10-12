@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CoSmsSendHst">
+       <!--
+	******************************************************************************
+	* SELECT 	: SMS발송이력조회 전체 개수 조회
+	* 작성자 		: 이상민
+	* 작성 일자 	: 2023-06-02
+	******************************************************************************
+	-->
+	<select id="selectSmsSendHstListCount" parameterType="HashMap" resultType="int">
+		/* CoSmsSendHst.selectSmsSendHstListCount */
+		SELECT 	COUNT(1)
+		FROM 	TB_CO_SMS_TRANS_INFO A
+		  		  
+		  		<if test="cbTelNoCnt > 0">
+                INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S1
+                ON 		S1.SES_ID           = #{sesId}
+                AND 	S1.INQ_COND_DTLS    = #{inqCondDtls}
+                AND 	S1.COL_ITM          = 'CB_TEL_NO'
+                AND 	A.CB_TEL_NO 		LIKE '%' || S1.COND_DATA_VAL 
+                </if>
+                
+                <if test="telNoCnt > 0">
+                INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+                ON 		S2.SES_ID           = #{sesId}
+                AND 	S2.INQ_COND_DTLS    = #{inqCondDtls}
+                AND 	S2.COL_ITM          = 'TEL_NO'
+                AND		A.TEL_NO 			LIKE '%' || S2.COND_DATA_VAL
+                </if>
+                <if test="mbrIdCnt > 0">
+               	INNER JOIN 
+                (
+                	SELECT 	DISTINCT B.HP_NO
+                	FROM 	TB_CC_MBR_BASIS B
+
+			                INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+			                ON 		S2.SES_ID           = #{sesId}
+			                AND 	S2.INQ_COND_DTLS    = #{inqCondDtls}
+			                AND 	S2.COL_ITM          = 'MBR_ID'
+			                AND 	S2.COND_DATA_VAL	= B.MBR_ID
+			                
+	                WHERE 	B.CO_CD = #{coCd}
+                )B
+                ON 		B.HP_NO	= A.TEL_NO
+				</if>
+		WHERE 	A.TRANS_DTM 					BETWEEN TO_DATE(#{transStrDtm} || ' 00:00:00', 'YYYYMMDD HH24:MI:SS') AND TO_DATE(#{transEndDtm}|| '23:59:59','YYYYMMDD HH24:MI:SS')
+		AND		A.TRANS_MSG 					LIKE 	'%' || #{transMsg} || '%'
+	  	AND		NVL(A.CUST_ISS_NO, 0) 			LIKE 	CASE #{custIssNo} WHEN '%' THEN '%' ELSE SUBSTR(#{custIssNo}, 1, 5) END || '%'
+	  	AND		NVL(A.CUST_ISS_LOWR_ID, ' ') 	LIKE 	CASE #{custIssNo} WHEN '%' THEN '%' ELSE SUBSTR(#{custIssNo}, 6, 2) END || '%'
+	  	AND		NVL(A.SEND_RSLT_CD, '00')		IN 		(${smsSendRsltCd})
+		  
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT 	: SMS발송이력조회 조회
+	* 작성자 		: 이상민
+	* 작성 일자 	: 2023-06-02
+	******************************************************************************
+	-->
+	<select id="selectSmsSendHstList" parameterType="HashMap" resultType="HashMap">
+		/* CoSmsSendHst.selectSmsSendHstList */
+		SELECT 	*
+		FROM 	(
+					SELECT 	<if test="sortColumn == null or sortColumn == '' ">
+								ROW_NUMBER()OVER(ORDER BY A.TRANS_DTM DESC, A.CUST_ISS_NO || A.CUST_ISS_LOWR_ID, A.TEL_NO) 	AS ROW_NO
+							</if>
+							<if test="sortColumn != null and sortColumn != '' ">
+								ROW_NUMBER()OVER(ORDER BY ${sortColumn} ${sortType}) 							AS ROW_NO
+							</if>
+							, TO_CHAR(A.TRANS_DTM, 'YYYY-MM-DD HH24:MI:SS') 									AS TRANS_DTM
+					     	, A.MSG_UNQ_NO
+					     	, FN_OD_COM_CDNM('CUST_ISS_NO', A.CUST_ISS_NO || A.CUST_ISS_LOWR_ID, '2')			AS CUST_ISS_NO
+					    	, FN_CO_FORM_TELNO(A.CB_TEL_NO)														AS CB_TEL_NO
+					    	
+					     	, FN_CC_MASK_TELNO(A.TEL_NO)														AS TEL_NO
+					     	, FN_OD_COM_CDNM('SMS_SEND_RSLT_CD', '''' || NVL(A.SEND_RSLT_CD,'00') || '''', '2') 			AS SMS_SEND_RSLT_CD
+					     	, A.TRANS_MSG		     
+					  FROM 	TB_CO_SMS_TRANS_INFO A
+					  		  
+					  		<if test="cbTelNoCnt > 0">
+			                INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S1
+			                ON 		S1.SES_ID           = #{sesId}
+			                AND 	S1.INQ_COND_DTLS    = #{inqCondDtls}
+			                AND 	S1.COL_ITM          = 'CB_TEL_NO'
+			                AND 	A.CB_TEL_NO 		LIKE '%' || S1.COND_DATA_VAL
+			                </if>
+			                
+			                <if test="telNoCnt > 0">
+			                INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+			                ON 		S2.SES_ID           = #{sesId}
+			                AND 	S2.INQ_COND_DTLS    = #{inqCondDtls}
+			                AND 	S2.COL_ITM          = 'TEL_NO'
+			                AND		A.TEL_NO 			LIKE '%' || S2.COND_DATA_VAL
+			                </if>
+			                <if test="mbrIdCnt > 0">
+			                INNER JOIN 
+			                (
+			                	SELECT 	DISTINCT B.HP_NO
+			                	FROM 	TB_CC_MBR_BASIS B
+			                		
+						                INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+						                ON 		S2.SES_ID           = #{sesId}
+						                AND 	S2.INQ_COND_DTLS    = #{inqCondDtls}
+						                AND 	S2.COL_ITM          = 'MBR_ID'
+						                AND 	S2.COND_DATA_VAL	= B.MBR_ID
+				                	
+				                WHERE 	B.CO_CD = #{coCd}
+			                )B
+			                ON 		B.HP_NO	= A.TEL_NO
+			                </if>
+					WHERE 	A.TRANS_DTM 					BETWEEN TO_DATE(#{transStrDtm} || ' 00:00:00', 'YYYYMMDD HH24:MI:SS') AND TO_DATE(#{transEndDtm}|| '23:59:59','YYYYMMDD HH24:MI:SS')
+					AND		A.TRANS_MSG 					LIKE 	'%' || #{transMsg} || '%'
+					AND		NVL(A.CUST_ISS_NO, 0) 			LIKE 	CASE #{custIssNo} WHEN '%' THEN '%' ELSE SUBSTR(#{custIssNo}, 1, 5) END || '%'
+					AND		NVL(A.CUST_ISS_LOWR_ID, ' ') 	LIKE 	CASE #{custIssNo} WHEN '%' THEN '%' ELSE SUBSTR(#{custIssNo}, 6, 2) END || '%'
+					AND		NVL(A.SEND_RSLT_CD, '00')		IN 		(${smsSendRsltCd})
+				)A
+
+		<!-- 정렬 -->
+        <if test="sortColumn != null and sortColumn != '' ">
+         	ORDER BY ${sortColumn} ${sortType}
+        </if>
+        <if test="sortColumn == null or sortColumn == '' ">
+         	ORDER BY 1, A.TRANS_DTM DESC, A.CUST_ISS_NO, A.TEL_NO
+        </if>
+		<if test="startNum != null and startNum > -1">
+			OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+		</if>
+		
+	</select>
+    
+</mapper>

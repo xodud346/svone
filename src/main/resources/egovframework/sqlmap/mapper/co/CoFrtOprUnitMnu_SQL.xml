@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.co.coFrtOprUnitMnu">
+   <!--
+    ******************************************************************************
+    * SELECT : 프론트메뉴관리
+    * 작성자 : 
+    * 작성 일자 : 2022.03.17
+    ******************************************************************************
+    -->
+	    
+    <sql id="frtOprUntMnuWhere">
+    	<if test="coCd != null and coCd != ''">
+		AND A.CO_CD = #{coCd}
+		</if>
+		<if test="pgmId != null and pgmId != ''">
+		AND A.PGM_ID LIKE '%' ||  #{pgmId} || '%'
+		</if>
+		<if test="pgmNm != null and pgmNm != ''">
+		AND B.PGM_NM LIKE '%' || #{pgmNm} || '%'
+		</if>
+		<if test="oprUnitId != null and oprUnitId != ''">
+		AND A.OPR_UNIT_ID = #{oprUnitId}
+		</if>
+		<if test="bzplcId != null and bzplcId != ''">
+		AND A.BZPLC_ID = #{bzplcId}
+		</if>
+		<if test="useYn != '' and useYn != null">
+	    AND A.USE_YN = #{useYn}
+		</if>
+	</sql>
+	
+    <select id="selectFrtOprUnitMnuList" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.co.coFrtOprUnitMnu.selectFrtOprUnitMnuList   */
+	    SELECT 0 AS CHK
+	    	, A.CO_CD
+			, A.PGM_ID
+			, B.PGM_NM
+			, A.PAGE_TP_ID
+			, A.BZPLC_ID 
+			, C.BZPLC_NM 
+			, A.OPR_UNIT_ID
+			, D.OPR_UNIT_NM 
+			, A.MALL_SPR_CD
+			, A.USE_YN
+		 FROM SSP_APP.TB_CO_FRT_OPR_UNIT_MNU_INFO A 
+		 LEFT OUTER JOIN SSP_APP.TB_CO_FRT_PGM_INFO B 
+		   ON A.CO_CD = B.CO_CD 
+		  AND A.PGM_ID  = B.PGM_ID 
+		 LEFT OUTER JOIN SSP_APP.TB_CC_BZPLC_BASIS C
+		   ON A.CO_CD = C.CO_CD 
+		  AND A.BZPLC_ID  = C.BZPLC_ID 
+		 LEFT OUTER JOIN SSP_APP.TB_CC_OPR_UNIT_BASIS D
+		   ON A.CO_CD = D.CO_CD 
+		  AND A.OPR_UNIT_ID  = D.OPR_UNIT_ID 
+		<where>
+		 	<include refid="frtOprUntMnuWhere" />
+		</where>
+		 
+		<choose>
+			<when test="sortColumn != null and sortColumn != ''">
+			 	ORDER BY ${sortColumn} ${sortType}
+			</when>
+			<otherwise>
+				 ORDER BY A.PGM_ID, A.PAGE_TP_ID, A.BZPLC_ID, A.OPR_UNIT_ID
+			</otherwise>
+		</choose>
+		
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <!-- 프론트메뉴관리 목록 갯수 -->
+	<select id="selectFrtOprUnitMnuListCount" parameterType="hashMap" resultType="integer">
+		/* com.ssp.bo.co.coFrtOprUnitMnu.selectFrtOprUnitMnuListCount */
+		SELECT
+			COUNT(0)
+		  FROM SSP_APP.TB_CO_FRT_OPR_UNIT_MNU_INFO A 
+		  LEFT OUTER JOIN SSP_APP.TB_CO_FRT_PGM_INFO B 
+		   ON A.CO_CD = B.CO_CD 
+		  AND A.PGM_ID  = B.PGM_ID 
+		 LEFT OUTER JOIN SSP_APP.TB_CC_BZPLC_BASIS C
+		   ON A.CO_CD = C.CO_CD 
+		  AND A.BZPLC_ID  = C.BZPLC_ID 
+		 LEFT OUTER JOIN SSP_APP.TB_CC_OPR_UNIT_BASIS D
+		   ON A.CO_CD = D.CO_CD 
+		  AND A.OPR_UNIT_ID  = D.OPR_UNIT_ID 
+		<where>
+			 <include refid="frtOprUntMnuWhere" />
+		</where>
+	</select>
+	
+	<!--  프론트메뉴관리 등록 -->
+    <insert id="saveFrtOprUnitMnu" parameterType="HashMap">
+        /*com.ssp.bo.co.coFrtOprUnitMnu.saveFrtOprUnitMnu  */
+        MERGE INTO SSP_APP.TB_CO_FRT_OPR_UNIT_MNU_INFO
+		USING DUAL 
+				ON ( 	 CO_CD = #{coCd}
+					 AND PGM_ID = #{pgmId}
+					 AND PAGE_TP_ID = #{pageTpId}
+					 AND BZPLC_ID = #{bzplcId}
+					 AND OPR_UNIT_ID = #{oprUnitId}
+					)
+		WHEN MATCHED THEN
+				UPDATE
+				   SET MALL_SPR_CD = #{mallSprCd}
+					 , USE_YN = #{useYn}
+					 , UPD_DTM = SYSDATE
+					 , UPDPSN_ID = #{updpsnId}
+		WHEN NOT MATCHED THEN
+		          INSERT 
+		               ( 
+		                 CO_CD
+						, PGM_ID
+						, PAGE_TP_ID
+						, BZPLC_ID
+						, OPR_UNIT_ID
+						, MALL_SPR_CD
+						, USE_YN
+					    , REG_DTM
+					    , REGPSN_ID 
+		                )
+		        VALUES 
+		               (
+		                  #{coCd}    
+		                , #{pgmId}
+		                , #{pageTpId}
+		                , #{bzplcId}
+		                , #{oprUnitId}
+		                , #{mallSprCd}
+		                , #{useYn}
+		                , SYSDATE
+		                , #{regpsnId}
+		               )            
+    </insert>
+    
+    <!-- 프론트메뉴관리 수정 -->
+	<update id="updateFrtOprUnitMnu" parameterType="hashMap">
+		/* com.ssp.bo.co.coFrtOprUnitMnu.updateFrtOprUnitMnu */
+		UPDATE
+			SSP_APP.TB_CO_FRT_OPR_UNIT_MNU_INFO
+		SET
+			MALL_SPR_CD = #{mallSprCd}
+			, USE_YN = #{useYn}
+			, UPD_DTM = SYSDATE
+			, UPDPSN_ID = #{updpsnId}
+		WHERE CO_CD =  #{coCd}
+		  AND PGM_ID = #{pgmId}
+		  AND PAGE_TP_ID = #{pageTpId}
+		  AND BZPLC_ID =  #{bzplcId}
+		  AND OPR_UNIT_ID = #{oprUnitId}
+	</update>
+    
+    <!--  프론트메뉴관리 삭제 -->
+    <delete id="deletFrtOprUnitMnu" parameterType="hashMap">
+		/* com.ssp.bo.co.coFrtOprUnitMnu.deletFrtOprUnitMnu */
+		DELETE FROM SSP_APP.TB_CO_FRT_OPR_UNIT_MNU_INFO
+	     WHERE CO_CD =  #{coCd}
+		   AND PGM_ID = #{pgmId}
+		   AND PAGE_TP_ID = #{pageTpId}
+		   AND OPR_UNIT_ID = #{oprUnitId}
+		   AND BZPLC_ID =  #{bzplcId}
+	</delete>
+
+</mapper>

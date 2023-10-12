@@ -1,0 +1,619 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PurgInfoPkgChg">
+
+    <select id="selectPurgInfoPkgChg" parameterType="HashMap" resultType="HashMap">
+        /* PurgInfoPkgChg.selectPurgInfoPkgChg | 구매정보일괄변경 조회 */
+        <![CDATA[
+            SELECT '0'                       AS CHK               /*CHK*/
+                 , A2.CO_CD                                       /*회사코드 PK*/
+                 , A2.CONT_NO                                     /*계약번호 PK*/
+                 , A2.CONT_CHG_DGRCNT                             /*계약변경차수 PK*/
+                 , A2.CUST_PREQNO                                 /*합의번호*/
+                 , A2.CPRTCP_ID                                   /*협력사ID*/
+                 , A2.PRPS_SPR_CD                                 /*제안구분코드*/
+                 , A2.SEQ                                         /*순번*/
+                 , A2.ELC_CONT_APPR_STATS_CD                      /*전자계약승인상태코드*/
+                 , A2.ELC_CONT_APPR_STATS_NM                      /*전자계약승인상태명*/
+                 , A2.PRPS_SPR_NM                                 /*제안구분명*/
+                 , A2.CPRTCP_KOR_NM                               /*협력사명*/
+                 , A2.REQ_SBJ_CD                                  /*요청주체코드*/
+                 , A2.REQ_SBJ_NM								  /*요청주체명*/
+                 , A2.PRPS_FILE_NM                                /*제안파일명*/
+                 , A2.PURG_CHRPSN_ID                              /*구매담당자ID*/
+                 , A2.PURG_CHRPSN_NM                              /*구매담당자명*/
+                 , A2.REG_DTM                                     /*요청일시*/
+                 , A2.UPD_DTM                                     /*처리일시*/
+                 , A2.UPDPSN_ID                                   /*처리자ID*/
+                 , A2.UPDPSN_NM                                   /*처리자명*/
+                 , A2.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER
+              FROM (
+                    SELECT A1.CO_CD
+                         , A1.CONT_NO
+                         , A1.CONT_CHG_DGRCNT
+                         , A1.CUST_PREQNO
+                         , A1.CPRTCP_ID
+                         , A1.PRPS_SPR_CD
+                         , A1.SEQ
+                         , A1.ELC_CONT_APPR_STATS_CD
+                         , A1.ELC_CONT_APPR_STATS_NM
+                         , A1.PRPS_SPR_NM
+                         , A1.CPRTCP_KOR_NM
+                         , A1.REQ_SBJ_CD
+                         , A1.REQ_SBJ_NM
+                         , DECODE(REQ_SBJ_CD, '30', A1.CPRTCP_PURG_CHRPSN_ID, A1.PURG_CHRPSN_ID) AS PURG_CHRPSN_ID
+                         , DECODE(REQ_SBJ_CD, '30', DECODE(A1.CPRTCP_PURG_CHRPSN_ID, NULL, '', FN_CC_GET_MBR_NM(A1.CO_CD, A1.CPRTCP_PURG_CHRPSN_ID)), A1.PURG_CHRPSN_NM) AS PURG_CHRPSN_NM
+                         , A1.REG_DTM
+                         , DECODE(A1.ELC_CONT_APPR_STATS_CD, '42', A1.UPD_DTM, '52', A1.UPD_DTM, '') AS UPD_DTM
+                         , A1.UPDPSN_ID
+                         , DECODE(A1.UPDPSN_ID, NULL, '', A1.CPRTCP_ID, A1.CPRTCP_KOR_NM, A1.UPDPSN_NM) AS UPDPSN_NM
+                         , A1.CPRTCP_KOR_NM
+                           ||'_'
+                           ||'구매정보'
+                           ||'_'
+                           ||A1.PRPS_SPR_NM
+                           ||'.xlsx'            AS PRPS_FILE_NM
+                         , A1.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER
+                      FROM (
+                            SELECT /*+ USE_INDEX(A TB_RD_REQ_CPRTCP_CONSN_INFO_PK) */
+                                   A.CO_CD                                                                                                         /*회사코드 PK*/
+                                 , A.CONT_NO	                                                                                                   /*계약번호 PK*/
+                                 , A.CONT_CHG_DGRCNT                                                                                               /*계약변경차수 PK*/
+                                 , A.CUST_PREQNO	                                                                                               /*합의번호*/
+                                 , A.CPRTCP_ID   	                                                                                               /*협력사ID*/
+                                 , A.PRPS_SPR_CD	                                                                                               /*제안구분코드*/
+                                 , C.SEQ                                                                                                           /*순번*/
+                                 , C.ELC_CONT_APPR_STATS_CD	                                                                                       /*전자계약승인상태코드*/
+                                 , (
+                                    SELECT SSP_APP.FN_COM_DTL_CDNM
+                                           (
+                                             #{LANG_CD}
+                                           , 'NEW_PRD_REQ_STATS_CD'
+                                           , C.ELC_CONT_APPR_STATS_CD
+                                           )
+                                      FROM DUAL
+                                   )                                                                                   AS ELC_CONT_APPR_STATS_NM   /*전자계약승인상태명*/
+                                 , (
+                                    SELECT SSP_APP.FN_COM_DTL_CDNM
+                                           (
+                                             #{LANG_CD}
+                                           , 'PRPS_SPR_CD'
+                                           , A.PRPS_SPR_CD
+                                           )
+                                      FROM DUAL
+                                   )                                                                                   AS PRPS_SPR_NM              /*제안구분명*/
+                                 , B.CPRTCP_KOR_NM	                                                                                               /*협력사명*/
+                                 , A.REQ_SBJ_CD                                                                        AS REQ_SBJ_CD               /*요청주체코드*/
+                                 , (
+                                 	SELECT SSP_APP.FN_COM_DTL_CDNM
+                                 			(
+                                 				#{LANG_CD}
+                                 				, 'REQ_SBJ_CD'
+                                 				, A.REQ_SBJ_CD
+                                 			)
+                                 	FROM DUAL
+                                 	)																				  AS REQ_SBJ_NM				   /*요청주체명*/
+                                 , A.PURG_CHRPSN_ID	                                                                                               /*구매담당자ID*/
+                                 , (
+                                    SELECT B.OPRTR_NM
+                                      FROM SSP_APP.TB_CO_MBR_OPRTR_INFO B
+                                     WHERE B.CO_CD    = A.CO_CD
+                                       AND B.OPRTR_ID = A.PURG_CHRPSN_ID
+                                   )                                                                                   AS PURG_CHRPSN_NM           /*구매담당자명*/
+                                 , TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS')                                          AS REG_DTM                  /*요청일시*/
+                                 , TO_CHAR(C.UPD_DTM,'YYYY-MM-DD HH24:MI:SS')                                          AS UPD_DTM	               /*처리일시*/
+                                 , DECODE(C.ELC_CONT_APPR_STATS_CD, '42', C.UPDPSN_ID, '52', C.UPDPSN_ID, '') AS UPDPSN_ID		   /*처리자ID*/
+                                 , (
+                                    SELECT B.OPRTR_NM
+                                      FROM SSP_APP.TB_CO_MBR_OPRTR_INFO B
+                                     WHERE B.CO_CD    = C.CO_CD
+                                       AND B.OPRTR_ID = C.UPDPSN_ID
+                                   )                                                                                   AS UPDPSN_NM                /*처리자명*/
+                                 , ROW_NUMBER() OVER (PARTITION BY A.CO_CD
+                                                                 , A.CONT_NO
+                                                                 , A.CONT_CHG_DGRCNT
+                                                          ORDER BY A.CONT_CHG_DGRCNT DESC
+                                                                 , C.SEQ DESC
+                                   )                                                                                   AS TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER
+                                 , (SELECT MAX(CPRTCP_PURG_CHRPSN_ID) KEEP(DENSE_RANK FIRST ORDER BY CPRTCP_PURG_CHRPSN_CNT DESC)
+									  FROM (
+											SELECT D.CO_CD
+											     , D.CONT_NO
+											     , D.CONT_CHG_DGRCNT
+											     , SSP_APP.FN_RD_CHRPSN_ID(F.CO_CD, F.MNFR_NO, E.PRD_CLCD, '30') AS CPRTCP_PURG_CHRPSN_ID
+											     , COUNT(*) AS CPRTCP_PURG_CHRPSN_CNT
+											  FROM TB_RD_REQ_CPRTCP_CONSN_DTL   D
+											  LEFT JOIN TB_PR_PRD_INFO          E
+												    ON E.CO_CD  = D.CO_CD
+												   AND E.PRD_ID = D.PRD_ID
+											  LEFT JOIN TB_PR_MRO_PRD_INFO      F
+											        ON F.CO_CD  = E.CO_CD
+											       AND F.PRD_ID = E.PRD_ID
+											 GROUP BY
+											       D.CO_CD
+											     , D.CONT_NO
+											     , D.CONT_CHG_DGRCNT
+											     , SSP_APP.FN_RD_CHRPSN_ID(F.CO_CD, F.MNFR_NO, E.PRD_CLCD, '30')
+									       ) G
+									  WHERE A.CO_CD = G.CO_CD
+											 AND A.CONT_NO = G.CONT_NO 
+											 AND A.CONT_CHG_DGRCNT = G.CONT_CHG_DGRCNT
+									 GROUP BY
+									       CO_CD, CONT_NO, CONT_CHG_DGRCNT
+									) AS CPRTCP_PURG_CHRPSN_ID
+                              FROM SSP_APP.TB_RD_REQ_CPRTCP_CONSN_INFO A
+                              LEFT JOIN SSP_APP.TB_CP_CPRTCP_BASIS     B
+                                ON 1=1
+                               AND B.CO_CD     = A.CO_CD
+                               AND B.CPRTCP_ID = A.CPRTCP_ID
+                              LEFT JOIN SSP_APP.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS C
+                                ON 1=1
+                               AND C.CO_CD           = A.CO_CD
+                               AND C.CONT_NO         = A.CONT_NO
+                               AND C.CONT_CHG_DGRCNT = A.CONT_CHG_DGRCNT
+        ]]>
+		                  <if test="CUST_PREQNO_CNT > 0">
+                             INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S1
+                                ON 0=0
+                               AND S1.SES_ID        = #{SES_ID}
+                               AND S1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                               AND S1.COL_ITM       = 'CUST_PREQNO'
+                               AND S1.COND_DATA_VAL = A.CUST_PREQNO
+                          </if>
+        <![CDATA[
+                             WHERE 1=1
+                               AND A.CUST_PREQNO LIKE 'RA%' /* RA: 가격채번규칙 */
+                               AND A.CO_CD       = #{CO_CD}
+        ]]>
+                         <if test="CPRTCP_ID != null and CPRTCP_ID != ''">
+                             <![CDATA[
+                               AND A.CPRTCP_ID = #{CPRTCP_ID}
+                             ]]>
+                         </if>
+                         <choose>
+	                     	<when test="REQ_SBJ_CD != null and REQ_SBJ_CD != ''">
+	                        	AND A.REQ_SBJ_CD = #{REQ_SBJ_CD}
+	                        </when>
+                         	<otherwise>
+                         		AND A.REQ_SBJ_CD IN ('20', '30')
+                         	</otherwise>
+                         </choose> 
+                         <choose>
+                             <when test="PRPS_SPR_CD != null and PRPS_SPR_CD != ''">
+                               AND A.PRPS_SPR_CD = #{PRPS_SPR_CD}
+                             </when>
+                             <otherwise>
+                               AND A.PRPS_SPR_CD IN ('10','20')
+                             </otherwise>
+                         </choose>
+                         <if test='(DATE_FR_DT != null and DATE_FR_DT != "") and (DATE_TO_DT != null and DATE_TO_DT != "")'>
+                             <if test="REQ_DT_FNL_PROC_DT_SPR == 'REG_DTM'">
+                             <![CDATA[
+                               AND A.REG_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                                 AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                             ]]>
+                         	</if>
+                             <if test="REQ_DT_FNL_PROC_DT_SPR == 'UPD_DTM'">
+                             <![CDATA[
+                               AND A.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                                 AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                             ]]>
+                         	</if>
+                         </if>
+                           ) A1
+                     WHERE 1=1
+                       AND A1.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER = 1
+                       <choose>
+                           <when test="ELC_CONT_APPR_STATS_CD != null and ELC_CONT_APPR_STATS_CD != ''">
+                             AND A1.ELC_CONT_APPR_STATS_CD = #{ELC_CONT_APPR_STATS_CD}
+                           </when>
+                           <otherwise>
+                             AND A1.ELC_CONT_APPR_STATS_CD IN ('22','42','52')
+                           </otherwise>
+                       </choose>
+                       <if test="CHRPSN_ID != null and CHRPSN_ID != ''">
+                           <if test="CHRPSN_GUBUN == '20'">
+                           <![CDATA[
+                             AND A1.UPDPSN_ID = #{CHRPSN_ID}
+                           ]]>
+                           </if>
+                       </if>
+                   ) A2
+            WHERE 1=1
+            <if test="CHRPSN_ID != null and CHRPSN_ID != ''">
+                <if test="CHRPSN_GUBUN == '10'">
+                <![CDATA[
+                  AND A2.PURG_CHRPSN_ID = #{CHRPSN_ID}
+                ]]>
+                </if>
+            </if>
+<!--  2022-07-26 속도가 안나와서 SROT 기능 뺌.
+        <choose>
+            <when test='(SORT_COLUMN != null and SORT_COLUMN != "") and (SORT_TYPE != null and SORT_TYPE != "")'>
+            ORDER BY A2.${SORT_COLUMN} ${SORT_TYPE}
+            </when>
+            <otherwise>
+            ORDER BY A2.CONT_NO
+            </otherwise>
+        </choose>
+-->
+           OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+
+    <select id="selectPurgInfoPkgChgCount" parameterType="HashMap" resultType="Integer">
+        /* PurgInfoPkgChg.selectPurgInfoPkgChgCount 구매정보일괄변경 카운트 조회 */
+        <![CDATA[
+            SELECT COUNT(1)
+              FROM (
+                    SELECT A1.CO_CD
+                         , A1.CONT_NO
+                         , A1.CONT_CHG_DGRCNT
+                         , A1.CUST_PREQNO
+                         , A1.CPRTCP_ID
+                         , A1.PRPS_SPR_CD
+                         , A1.SEQ
+                         , A1.ELC_CONT_APPR_STATS_CD
+                         , A1.ELC_CONT_APPR_STATS_NM
+                         , A1.PRPS_SPR_NM
+                         , A1.CPRTCP_KOR_NM
+                         , A1.REQ_SBJ_CD
+                         , DECODE(REQ_SBJ_CD, '30', A1.CPRTCP_PURG_CHRPSN_ID, A1.PURG_CHRPSN_ID) AS PURG_CHRPSN_ID
+					     , DECODE(REQ_SBJ_CD, '30', DECODE(A1.CPRTCP_PURG_CHRPSN_ID, NULL, '', FN_CC_GET_MBR_NM(A1.CO_CD, A1.CPRTCP_PURG_CHRPSN_ID)), A1.PURG_CHRPSN_NM) AS PURG_CHRPSN_NM
+                         , A1.REG_DTM
+                         , DECODE(A1.ELC_CONT_APPR_STATS_CD, '42', A1.UPD_DTM, '52', A1.UPD_DTM, '') AS UPD_DTM
+                         , A1.UPDPSN_ID
+                         , DECODE(A1.UPDPSN_ID, NULL, '', A1.CPRTCP_ID, A1.CPRTCP_KOR_NM, A1.UPDPSN_NM) AS UPDPSN_NM
+                         , A1.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER
+                      FROM (
+                            SELECT /*+ USE_INDEX(A TB_RD_REQ_CPRTCP_CONSN_INFO_PK) */
+                                   A.CO_CD                                                                                                         /*회사코드 PK*/
+                                 , A.CONT_NO	                                                                                                   /*계약번호 PK*/
+                                 , A.CONT_CHG_DGRCNT                                                                                               /*계약변경차수 PK*/
+                                 , A.CUST_PREQNO	                                                                                               /*합의번호*/
+                                 , A.CPRTCP_ID   	                                                                                               /*협력사ID*/
+                                 , A.PRPS_SPR_CD	                                                                                               /*제안구분코드*/
+                                 , C.SEQ                                                                                                           /*순번*/
+                                 , C.ELC_CONT_APPR_STATS_CD	                                                                                       /*전자계약승인상태코드*/
+                                 , (
+                                    SELECT SSP_APP.FN_COM_DTL_CDNM
+                                           (
+                                             #{LANG_CD}
+                                           , 'NEW_PRD_REQ_STATS_CD'
+                                           , C.ELC_CONT_APPR_STATS_CD
+                                           )
+                                      FROM DUAL
+                                   )                                                                                   AS ELC_CONT_APPR_STATS_NM   /*전자계약승인상태명*/
+                                 , (
+                                    SELECT SSP_APP.FN_COM_DTL_CDNM
+                                           (
+                                             #{LANG_CD}
+                                           , 'PRPS_SPR_CD'
+                                           , A.PRPS_SPR_CD
+                                           )
+                                      FROM DUAL
+                                   )                                                                                   AS PRPS_SPR_NM              /*제안구분명*/
+                                 , B.CPRTCP_KOR_NM	                                                                                               /*협력사명*/
+                                 , A.REQ_SBJ_CD                                                                        AS REQ_SBJ_CD               /*요청주체코드*/
+                                 , A.PURG_CHRPSN_ID	                                                                                               /*구매담당자ID*/
+                                 , (
+                                    SELECT B.OPRTR_NM
+                                      FROM SSP_APP.TB_CO_MBR_OPRTR_INFO B
+                                     WHERE B.CO_CD    = A.CO_CD
+                                       AND B.OPRTR_ID = A.PURG_CHRPSN_ID
+                                   )                                                                                   AS PURG_CHRPSN_NM           /*구매담당자명*/
+                                 , TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS')                                          AS REG_DTM                  /*요청일시*/
+                                 , TO_CHAR(C.UPD_DTM,'YYYY-MM-DD HH24:MI:SS')                                          AS UPD_DTM	               /*처리일시*/
+                                 , DECODE(C.ELC_CONT_APPR_STATS_CD, '42', C.UPDPSN_ID, '52', C.UPDPSN_ID, '') AS UPDPSN_ID		   /*처리자ID*/
+                                 , (
+                                    SELECT B.OPRTR_NM
+                                      FROM SSP_APP.TB_CO_MBR_OPRTR_INFO B
+                                     WHERE B.CO_CD    = C.CO_CD
+                                       AND B.OPRTR_ID = C.UPDPSN_ID
+                                   )                                                                                   AS UPDPSN_NM                /*처리자명*/
+                                 , ROW_NUMBER() OVER (PARTITION BY A.CO_CD
+                                                                 , A.CONT_NO
+                                                                 , A.CONT_CHG_DGRCNT
+                                                          ORDER BY A.CONT_CHG_DGRCNT DESC
+                                                                 , C.SEQ DESC
+                                   )                                                                                   AS TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER
+                                 , (SELECT MAX(CPRTCP_PURG_CHRPSN_ID) KEEP(DENSE_RANK FIRST ORDER BY CPRTCP_PURG_CHRPSN_CNT DESC)
+									  FROM (
+											SELECT D.CO_CD
+											     , D.CONT_NO
+											     , D.CONT_CHG_DGRCNT
+											     , SSP_APP.FN_RD_CHRPSN_ID(F.CO_CD, F.MNFR_NO, E.PRD_CLCD, '30') AS CPRTCP_PURG_CHRPSN_ID
+											     , COUNT(*) AS CPRTCP_PURG_CHRPSN_CNT
+											  FROM TB_RD_REQ_CPRTCP_CONSN_DTL   D
+											  LEFT JOIN TB_PR_PRD_INFO          E
+												    ON E.CO_CD  = D.CO_CD
+												   AND E.PRD_ID = D.PRD_ID
+											  LEFT JOIN TB_PR_MRO_PRD_INFO      F
+											        ON F.CO_CD  = E.CO_CD
+											       AND F.PRD_ID = E.PRD_ID
+											 GROUP BY
+											       D.CO_CD
+											     , D.CONT_NO
+											     , D.CONT_CHG_DGRCNT
+											     , SSP_APP.FN_RD_CHRPSN_ID(F.CO_CD, F.MNFR_NO, E.PRD_CLCD, '30')
+									       ) G
+									  WHERE A.CO_CD = G.CO_CD
+											 AND A.CONT_NO = G.CONT_NO 
+											 AND A.CONT_CHG_DGRCNT = G.CONT_CHG_DGRCNT
+									 GROUP BY
+									       CO_CD, CONT_NO, CONT_CHG_DGRCNT
+									) AS CPRTCP_PURG_CHRPSN_ID
+                              FROM SSP_APP.TB_RD_REQ_CPRTCP_CONSN_INFO A
+                              LEFT JOIN SSP_APP.TB_CP_CPRTCP_BASIS     B
+                                ON 1=1
+                               AND B.CO_CD     = A.CO_CD
+                               AND B.CPRTCP_ID = A.CPRTCP_ID
+                              LEFT JOIN SSP_APP.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS C
+                                ON 1=1
+                               AND C.CO_CD           = A.CO_CD
+                               AND C.CONT_NO         = A.CONT_NO
+                               AND C.CONT_CHG_DGRCNT = A.CONT_CHG_DGRCNT
+        ]]>
+		                  <if test="CUST_PREQNO_CNT > 0">
+                             INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S1
+                                ON 0=0
+                               AND S1.SES_ID        = #{SES_ID}
+                               AND S1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                               AND S1.COL_ITM       = 'CUST_PREQNO'
+                               AND S1.COND_DATA_VAL = A.CUST_PREQNO
+                          </if>
+        <![CDATA[
+                             WHERE 1=1
+                               AND A.CUST_PREQNO LIKE 'RA%' /*고정*/
+                               AND A.CO_CD       = #{CO_CD}
+        ]]>
+                         <if test="CPRTCP_ID != null and CPRTCP_ID != ''">
+                             <![CDATA[
+                               AND A.CPRTCP_ID = #{CPRTCP_ID}
+                             ]]>
+                         </if>
+                         <choose>
+                             <when test="PRPS_SPR_CD != null and PRPS_SPR_CD != ''">
+                               AND A.PRPS_SPR_CD = #{PRPS_SPR_CD}
+                             </when>
+                             <otherwise>
+                               AND A.PRPS_SPR_CD IN ('10','20')
+                             </otherwise>
+                         </choose>
+                         <choose>
+	                     	<when test="REQ_SBJ_CD != null and REQ_SBJ_CD != ''">
+	                        	AND A.REQ_SBJ_CD = #{REQ_SBJ_CD}
+	                        </when>
+                         	<otherwise>
+                         		AND A.REQ_SBJ_CD IN ('20', '30')
+                         	</otherwise>
+                         </choose> 
+                         <if test='(DATE_FR_DT != null and DATE_FR_DT != "") and (DATE_TO_DT != null and DATE_TO_DT != "")'>
+                             <if test="REQ_DT_FNL_PROC_DT_SPR == 'REG_DTM'">
+                             <![CDATA[
+                               AND A.REG_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                                 AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                             ]]>
+                         	</if>
+                             <if test="REQ_DT_FNL_PROC_DT_SPR == 'UPD_DTM'">
+                             <![CDATA[
+                               AND A.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                                 AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                             ]]>
+                         	</if>
+                         </if>
+                           ) A1
+                     WHERE 1=1
+                       AND A1.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER = 1
+                       <choose>
+                           <when test="ELC_CONT_APPR_STATS_CD != null and ELC_CONT_APPR_STATS_CD != ''">
+                             AND A1.ELC_CONT_APPR_STATS_CD = #{ELC_CONT_APPR_STATS_CD}
+                           </when>
+                           <otherwise>
+                             AND A1.ELC_CONT_APPR_STATS_CD IN ('22','42','52')
+                           </otherwise>
+                       </choose>
+                       <if test="CHRPSN_ID != null and CHRPSN_ID != ''">
+                           <if test="CHRPSN_GUBUN == '20'">
+                           <![CDATA[
+                             AND A1.UPDPSN_ID = #{CHRPSN_ID}
+                           ]]>
+                           </if>
+                       </if>
+                   ) A2
+            WHERE 1=1
+            <if test="CHRPSN_ID != null and CHRPSN_ID != ''">
+                <if test="CHRPSN_GUBUN == '10'">
+                <![CDATA[
+                  AND A2.PURG_CHRPSN_ID = #{CHRPSN_ID}
+                ]]>
+                </if>
+            </if>
+    </select>
+
+    <select id="selectPrpsFileExcelDown" parameterType="HashMap" resultType="HashMap">
+        /* PurgInfoPkgChg.selectPrpsFileExcelDown 제안파일엑셀다운로드 조회 */
+        <![CDATA[
+            SELECT A1.CO_CD                        /*회사코드 PK*/
+                 , A1.CONT_NO                      /*계약번호 PK*/
+                 , A1.CONT_CHG_DGRCNT              /*계약변경차수 PK*/
+                 , A1.PRD_ID                       /*상품ID*/
+                 , A1.PRD_CLCD                     /*카테고리ID*/
+                 , A1.PRD_CLCD_NM                  /*카테고리명*/
+                 , A1.PRD_NM                       /*상품명*/
+                 , A1.ATTR_VAL_LIST                /*대표규격*/
+                 , A1.MNFR_NO                      /*제조원ID*/
+                 , A1.MNFR_NM                      /*제조원*/
+                 , A1.SELL_UNIT                    /*주문단위*/
+                 , A1.PURG_CHRPSN_ID                    /*구매담당자ID*/
+		 , DECODE(A1.PURG_CHRPSN_ID, NULL, '', FN_CC_GET_MBR_NM(A1.CO_CD, A1.PURG_CHRPSN_ID)) AS PURG_CHRPSN_NM                    /*구매담당자명*/
+                 , A1.DSTRB_STD_PRC                /*LIST PRICE*/
+                 , A1.CPRTCP_ID                    /*협력사ID*/
+                 , A1.CPRTCP_KOR_NM                /*협력사한글명*/
+                 , A1.SPL_PSB_YN                   /*공급가능여부*/
+                 , A1.MIN_ODR_QTY                  /*최소주문수량*/
+                 , A1.PRD_PRC                      /*상품가격*/
+                 , A1.DLV_AMT                      /*배송금액*/
+                 , A1.DLV_LT                       /*배송리드타임*/
+                 , A1.VLD_STR_DT                   /*유효시작일자*/
+                 , A1.VLD_END_DT                   /*유효종료일자*/
+                 , A1.KC_CERT_YN                  /*KC인증여부*/
+                 , A1.RND_DC_QTY                   /*기간할인금액*/
+                 , A1.RND_DC_VLD_STR_DTM           /*기간할인시작일시*/
+                 , A1.RND_DC_VLD_END_DTM           /*기간할인종료일시*/
+                 , A1.QTY_DC_AMT1                  /*물량할인금액1*/
+                 , A1.STR_QTY_CNT1                 /*물량할인수량1*/
+                 , A1.QTY_DC_AMT2                  /*물량할인금액2*/
+                 , A1.STR_QTY_CNT2                 /*물량할인수량2*/
+                 , A1.QTY_DC_AMT3                  /*물량할인금액3*/
+                 , A1.STR_QTY_CNT3                 /*물량할인수량3*/
+                 , A1.QTY_DC_AMT4                  /*물량할인금액4*/
+                 , A1.STR_QTY_CNT4                 /*물량할인수량4*/
+                 , A1.QTY_DC_AMT5                  /*물량할인금액5*/
+                 , A1.STR_QTY_CNT5                 /*물량할인수량5*/
+              FROM (
+                    SELECT A.CO_CD                                                                  AS CO_CD                       /*회사코드 PK*/
+                         , A.CONT_NO	                                                            AS CONT_NO	                   /*계약번호 PK*/
+                         , A.CONT_CHG_DGRCNT	                                                    AS CONT_CHG_DGRCNT             /*계약변경차수 PK*/
+                         , TO_CHAR(TO_NUMBER(B.PRD_ID))                                             AS PRD_ID                      /*상품ID*/
+                         , C.PRD_CLCD                                                               AS PRD_CLCD                    /*카테고리ID*/
+                         , (
+                            SELECT SSP_APP.FN_PR_FULL_CLSF_NM
+                                   (
+                                     C.CO_CD
+                                   , C.PRD_CLCD
+                                   )
+                              FROM DUAL
+                           )                                                                        AS PRD_CLCD_NM                 /*카테고리명*/
+                         , C.PRD_NM                                                                 AS PRD_NM                      /*상품명*/
+                         , (
+                            SELECT SSP_APP.FN_PR_ATTR_VAL_LIST
+                                   (
+                                     C.CO_CD
+                                   , C.PRD_ID
+                                   )
+                              FROM DUAL
+                           )                                                                        AS ATTR_VAL_LIST               /*대표규격*/
+                         , D.MNFR_NO                                                                AS MNFR_NO                     /*제조원ID*/
+                         , E.MNFR_NM                                                                AS MNFR_NM                     /*제조원*/
+                         , TRIM(TO_CHAR(D.BASIS_UNIT_QTY,'999,999,999,999,999'))
+                           ||' '
+                           ||D.BASIS_UNIT_CD
+                           ||CASE WHEN D.SELL_UNIT_CD IS NOT NULL
+                                   AND D.BASIS_UNIT_CD != D.SELL_UNIT_CD
+                                  THEN '/'||D.SELL_UNIT_CD
+                           END                                                                      AS SELL_UNIT                   /*주문단위*/
+                         , (
+						            SELECT SSP_APP.FN_RD_CHRPSN_ID
+					                   (
+						                     A.CO_CD
+						                   , D.MNFR_NO
+						                   , C.PRD_CLCD
+						                   , '30'
+						           		)
+							      	FROM DUAL
+						   )                                                                   AS PURG_CHRPSN_ID                       /*구매담당자ID*/
+                         , G.DSTRB_STD_PRC                                                          AS DSTRB_STD_PRC               /*LIST PRICE*/
+                         , A.CPRTCP_ID	                                                            AS CPRTCP_ID                   /*협력사ID*/
+                         , F.CPRTCP_KOR_NM                                                          AS CPRTCP_KOR_NM	           /*협력사한글명*/
+                         , B.SPL_PSB_YN	                                                            AS SPL_PSB_YN                  /*공급가능여부*/
+                         , B.MIN_ODR_QTY                                                            AS MIN_ODR_QTY                 /*최소주문수량*/
+                         , B.PRD_PRC                                                                AS PRD_PRC                     /*상품가격*/
+                         , B.DLV_AMT                                                                AS DLV_AMT                     /*배송금액*/
+                         , B.DLV_LT                                                                 AS DLV_LT	                   /*배송리드타임*/
+                         , TO_CHAR(TO_DATE(B.VLD_STR_DT,'YYYYMMDD'),'YYYY-MM-DD')                   AS VLD_STR_DT                  /*유효시작일자*/
+                         , TO_CHAR(TO_DATE(B.VLD_END_DT,'YYYYMMDD'),'YYYY-MM-DD')                   AS VLD_END_DT                  /*유효종료일자*/
+                         , B.KC_CERT_YN                  /*KC인증여부*/
+                         , B.RND_DC_QTY	                                                            AS RND_DC_QTY                  /*기간할인금액*/
+                         , TO_CHAR(TO_DATE(B.RND_DC_VLD_STR_DTM,'YYYYMMDD'),'YYYY-MM-DD')           AS RND_DC_VLD_STR_DTM          /*기간할인시작일시*/
+                         , TO_CHAR(TO_DATE(B.RND_DC_VLD_END_DTM,'YYYYMMDD'),'YYYY-MM-DD')           AS RND_DC_VLD_END_DTM          /*기간할인종료일시*/
+                         , MAX(DECODE(QTY_SEQ,1,QTY_DC_AMT)) OVER (PARTITION BY C.CO_CD, C.PRD_ID)  AS QTY_DC_AMT1                 /*물량할인금액1*/
+                         , MAX(DECODE(QTY_SEQ,1,STR_QTY_CNT)) OVER (PARTITION BY C.CO_CD, C.PRD_ID) AS STR_QTY_CNT1                /*물량할인수량1*/
+                         , MAX(DECODE(QTY_SEQ,2,QTY_DC_AMT)) OVER (PARTITION BY C.CO_CD, C.PRD_ID)  AS QTY_DC_AMT2                 /*물량할인금액2*/
+                         , MAX(DECODE(QTY_SEQ,2,STR_QTY_CNT)) OVER (PARTITION BY C.CO_CD, C.PRD_ID) AS STR_QTY_CNT2                /*물량할인수량2*/
+                         , MAX(DECODE(QTY_SEQ,3,QTY_DC_AMT)) OVER (PARTITION BY C.CO_CD, C.PRD_ID)  AS QTY_DC_AMT3                 /*물량할인금액3*/
+                         , MAX(DECODE(QTY_SEQ,3,STR_QTY_CNT)) OVER (PARTITION BY C.CO_CD, C.PRD_ID) AS STR_QTY_CNT3                /*물량할인수량3*/
+                         , MAX(DECODE(QTY_SEQ,4,QTY_DC_AMT)) OVER (PARTITION BY C.CO_CD, C.PRD_ID)  AS QTY_DC_AMT4                 /*물량할인금액4*/
+                         , MAX(DECODE(QTY_SEQ,4,STR_QTY_CNT)) OVER (PARTITION BY C.CO_CD, C.PRD_ID) AS STR_QTY_CNT4                /*물량할인수량4*/
+                         , MAX(DECODE(QTY_SEQ,5,QTY_DC_AMT)) OVER (PARTITION BY C.CO_CD, C.PRD_ID)  AS QTY_DC_AMT5                 /*물량할인금액5*/
+                         , MAX(DECODE(QTY_SEQ,5,STR_QTY_CNT)) OVER (PARTITION BY C.CO_CD, C.PRD_ID) AS STR_QTY_CNT5                /*물량할인수량5*/
+                         , ROW_NUMBER() OVER (PARTITION BY C.CO_CD,C.PRD_ID ORDER BY 1) RN
+                      FROM SSP_APP.TB_RD_REQ_CPRTCP_CONSN_INFO     A
+                      LEFT JOIN SSP_APP.TB_RD_REQ_CPRTCP_CONSN_DTL B
+                        ON 1=1
+                       AND B.CO_CD           = A.CO_CD
+                       AND B.CONT_NO         = A.CONT_NO
+                       AND B.CONT_CHG_DGRCNT = A.CONT_CHG_DGRCNT
+                      LEFT JOIN SSP_APP.TB_PR_PRD_INFO C
+                        ON 1=1
+                       AND C.CO_CD  = B.CO_CD
+                       AND C.PRD_ID = LPAD(B.PRD_ID,18,'0')
+                      LEFT JOIN SSP_APP.TB_PR_MRO_PRD_INFO D
+                        ON 1=1
+                       AND D.CO_CD  = C.CO_CD
+                       AND D.PRD_ID = C.PRD_ID
+                      LEFT JOIN SSP_APP.TB_PR_MNFR_INFO E
+                        ON 1=1
+                       AND E.CO_CD   = D.CO_CD
+                       AND E.MNFR_NO = D.MNFR_NO
+                      LEFT JOIN SSP_APP.TB_CP_CPRTCP_BASIS F
+                        ON 1=1
+                       AND F.CO_CD     = A.CO_CD
+                       AND F.CPRTCP_ID = A.CPRTCP_ID
+                      LEFT JOIN SSP_APP.TB_PC_PRD_PRC_HST G
+                        ON 1=1
+                       AND G.CO_CD  = C.CO_CD
+                       AND G.PRD_ID = C.PRD_ID
+                       AND TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') BETWEEN G.BSS_SALSPRC_STR_DTM AND G.BSS_SALSPRC_END_DTM
+                      LEFT JOIN SSP_APP.TB_RD_REQ_CPRTCP_QTY_CONSN_INFO H
+                        ON 1=1
+                       AND H.CO_CD           = B.CO_CD
+                       AND H.CONT_NO         = B.CONT_NO
+                       AND H.CONT_CHG_DGRCNT = B.CONT_CHG_DGRCNT
+                       AND H.PRD_ID          = LPAD(B.PRD_ID,18,'0')
+                     WHERE 1=1
+                       AND A.CO_CD           = #{CO_CD}
+                       AND A.CONT_NO         = #{CONT_NO}
+                       AND A.CONT_CHG_DGRCNT = #{CONT_CHG_DGRCNT}
+                   ) A1
+             WHERE 1=1
+               AND A1.RN = 1
+        ]]>
+    </select>
+
+	<insert id="insertReqCprtcpConsnStatsDtlsStor" parameterType="HashMap">
+		/* PurgInfoPkgChg.insertReqCprtcpConsnStatsDtlsStor | 요청협력사합의상태내역 저장 */
+		INSERT INTO SSP_APP.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS (
+			CO_CD /*회사코드*/
+			, CONT_NO /*계약번호*/
+			, CONT_CHG_DGRCNT /*계약변경차수*/
+			, SEQ /*순번*/
+			, ELC_CONT_APPR_STATS_CD /*전자계약승인상태코드*/
+			, PROC_SBJ_CD /*처리주체코드*/
+			, CHGRQST_RSN /*변경요청사유*/
+			, REGPSN_ID /*등록자ID*/
+			, REG_DTM /*등록일시*/
+			, UPDPSN_ID /*수정자ID*/
+			, UPD_DTM /*수정일시*/
+		) VALUES (
+			#{CO_CD}
+			, #{CONT_NO}
+			, #{CONT_CHG_DGRCNT}
+			, (
+				SELECT NVL(MAX(SEQ), 0) + 1 AS SEQ
+				FROM SSP_APP.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS
+				WHERE CO_CD = #{CO_CD}
+				AND CONT_NO = #{CONT_NO}
+				AND CONT_CHG_DGRCNT = #{CONT_CHG_DGRCNT}
+			)
+			, #{ELC_CONT_APPR_STATS_CD}
+			, '20'
+			, #{CHGRQST_RSN}
+			, #{REGPSN_ID}
+			, SYSDATE
+			, #{UPDPSN_ID}
+			, SYSDATE
+		)
+	</insert>
+
+</mapper>

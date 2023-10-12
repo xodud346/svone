@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ContCustDcrtMng">
+
+    <select id="selectContCustDcrtMng" parameterType="HashMap" resultType="HashMap">
+        /* ContCustDcrtMngDao.selectContCustDcrtMng 계약고객할인율관리 조회 */
+        <![CDATA[
+            SELECT A2.CHK                              /*CHK*/
+			       ,A2.CO_CD                           /*회사코드*/
+                   ,A2.SEQ
+			       ,A2.USE_YN                          /*사용여부*/
+			       ,A2.USE_YN          AS OLD_USE_YN
+			       ,A2.RND_PRFRT_SPR_CD                /*할인율구분코드*/
+			       ,A2.RND_PRFRT_SPR_NM                /*할인율구분명*/
+			       ,A2.CONT_CUST_DCRT                  /*계약고객할인율*/
+			       ,A2.CONT_CUST_DCRT  AS OLD_CONT_CUST_DCRT
+                   ,A2.BZPLC_ID                        /*사업장ID*/
+                   ,A2.BZPLC_NM                        /*사업장명*/
+			       ,A2.MNFR_NO                         /*제조원*/
+			       ,A2.MNFR_NM                         /*제조원명*/
+			       ,A2.PRD_CLCD                        /*카테고리*/
+			       ,A2.PRD_CLCD_NM                     /*카테고리명*/
+			       ,A2.USE_YN_NM                       /*사용여부명*/
+			       ,A2.REG_UPD_ID                      /*등록변경담당자ID*/
+			       ,A2.REG_UPD_DTM                     /*등록변경일자*/
+                   ,A2.REG_UPD_NM                      /*등록변경담당자명*/
+                   ,A2.ORG_NM                          /*담당팀*/
+                   ,A2.CHG_HTS                         /*변경이력*/
+              FROM (
+		            SELECT A1.CHK                              /*CHK*/
+					       ,A1.CO_CD                           /*회사코드*/
+		                   ,A1.SEQ
+					       ,A1.USE_YN                          /*사용여부*/
+					       ,A1.RND_PRFRT_SPR_CD                /*할인율구분코드*/
+					       ,A1.RND_PRFRT_SPR_NM                /*할인율구분명*/
+					       ,A1.CONT_CUST_DCRT                  /*계약고객할인율*/
+		                   ,A1.BZPLC_ID                        /*사업장ID*/
+		                   ,A1.BZPLC_NM                        /*사업장명*/
+					       ,A1.MNFR_NO                         /*제조원*/
+					       ,A1.MNFR_NM                         /*제조원명*/
+					       ,A1.PRD_CLCD                        /*카테고리*/
+					       ,A1.PRD_CLCD_NM                     /*카테고리명*/
+					       ,A1.USE_YN_NM                       /*사용여부명*/
+					       ,A1.REG_UPD_ID                      /*등록변경담당자ID*/
+					       ,A1.REG_UPD_DTM                     /*등록변경일자*/
+					       ,(SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD = A1.CO_CD AND OPRTR_ID = A1.REG_UPD_ID ) AS REG_UPD_NM --A1.REG_UPD_NM                     /*등록변경자*/
+		                   ,(SELECT ORG_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD = A1.CO_CD AND OPRTR_ID = A1.REG_UPD_ID AND USE_YN = 'Y') AS ORG_NM
+		                   ,'변경이력' AS CHG_HTS
+					 FROM (
+					        SELECT '0' AS CHK
+					               ,A.CO_CD
+					               ,A.USE_YN
+		                           ,A.SEQ
+					               ,A.RND_PRFRT_SPR_CD
+					               ,FN_COM_DTL_CDNM('KO','RND_PRFRT_SPR_CD',A.RND_PRFRT_SPR_CD) AS RND_PRFRT_SPR_NM
+					               ,A.CONT_CUST_DCRT
+		                           ,A.BZPLC_ID
+		                           ,C.BZPLC_NM
+					               ,CASE WHEN A.MNFR_NO <> '*' THEN A.MNFR_NO END MNFR_NO
+					               ,B.MNFR_NM
+					               ,CASE WHEN A.PRD_CLCD <> '*' THEN A.PRD_CLCD END PRD_CLCD
+					               ,CASE WHEN A.PRD_CLCD <> '*' THEN FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) END PRD_CLCD_NM 
+					               ,DECODE(D.USE_YN,'Y','사용','N','미사용') AS USE_YN_NM
+					               ,CASE WHEN A.UPDPSN_ID IS NULL THEN A.REGPSN_ID ELSE A.UPDPSN_ID END AS REG_UPD_ID
+					               ,CASE WHEN A.UPDPSN_ID IS NULL THEN TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS') ELSE TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') END AS REG_UPD_DTM
+					               ,ROW_NUMBER() OVER (PARTITION BY A.CO_CD,A.MNFR_NO,A.PRD_CLCD,A.BZPLC_ID ORDER BY A.SEQ DESC) AS NUM
+					          FROM TB_RD_CUST_DC_INFO A
+		                      JOIN TB_CC_BZPLC_BASIS C
+		                        ON C.CO_CD = A.CO_CD
+		                       AND C.BZPLC_ID = A.BZPLC_ID
+					          LEFT JOIN TB_PR_MNFR_INFO B
+					            ON B.CO_CD = A.CO_CD
+					           AND B.MNFR_NO = A.MNFR_NO
+					          LEFT JOIN TB_PR_PRD_CLSF_INFO D
+		                        ON D.CO_CD = A.CO_CD
+		                       AND D.PRD_CLCD = A.PRD_CLCD
+		                       AND D.MALL_SPR_CD = '20' 
+					         WHERE A.CONT_CUST_DCRT IS NOT NULL    
+					           AND ( A.REG_DTM BETWEEN TO_DATE(#{DATE_FR_DT},'YYYYMMDD') AND TO_DATE(#{DATE_TO_DT},'YYYYMMDD')+1
+			                         OR A.UPD_DTM BETWEEN TO_DATE(#{DATE_FR_DT},'YYYYMMDD') AND TO_DATE(#{DATE_TO_DT},'YYYYMMDD')+1 )     
+        ]]>
+					      ) A1
+					 WHERE A1.NUM = 1
+		        ) A2
+        <if test="BZPLC_ID_CNT > 0">
+          INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S1
+             ON 0=0
+	        AND S1.SES_ID        = #{SES_ID}
+	        AND S1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+	        AND S1.COL_ITM       = 'BZPLC_ID'
+	        AND S1.COND_DATA_VAL = A2.BZPLC_ID
+        </if>
+        <if test="MNFR_NO_CNT > 0">
+          INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S1
+             ON 0=0
+	        AND S1.SES_ID        = #{SES_ID}
+	        AND S1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+	        AND S1.COL_ITM       = 'MNFR_NO'
+	        AND S1.COND_DATA_VAL = A2.MNFR_NO
+        </if>
+        <if test="PRD_CLCD_CNT > 0">
+          INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+             ON 0=0
+	        AND S2.SES_ID        = #{SES_ID}
+	        AND S2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+	        AND S2.COL_ITM       = 'PRD_CLCD'
+	        AND S2.COND_DATA_VAL = A2.PRD_CLCD
+         </if>
+          WHERE 1=1
+		 <if test="CHRPSN_ID != null and CHRPSN_ID != '' ">
+		    AND A2.REG_UPD_ID = #{CHRPSN_ID} 
+		 </if>	  
+		 <if test="STATS != null and STATS != '' ">
+		    AND A2.USE_YN = #{STATS} 
+		 </if>
+		 <if test="DCRT_SPR != null and DCRT_SPR != '' ">
+		    AND A2.RND_PRFRT_SPR_CD = #{DCRT_SPR} 
+		 </if>
+		 <choose>
+				            <when test='(SORT_COLUMN != null and SORT_COLUMN != "") and (SORT_TYPE != null and SORT_TYPE != "")'>
+				             ORDER BY A2.${SORT_COLUMN} ${SORT_TYPE}
+				            </when>
+				            <otherwise>
+				             ORDER BY A2.BZPLC_ID,A2.MNFR_NO ,A2.PRD_CLCD
+				            </otherwise>
+        </choose>
+            OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+
+    <select id="selectContCustDcrtMngCount" parameterType="HashMap" resultType="Integer">
+        /* ContCustDcrtMngDao.selectContCustDcrtMngCount 계약고객할인율관리 총 카운트 조회 */
+        <![CDATA[
+            SELECT COUNT(1) AS CNT
+              FROM (
+		            SELECT A1.CHK                              /*CHK*/
+					       ,A1.CO_CD                           /*회사코드*/
+		                   ,A1.SEQ
+					       ,A1.USE_YN                          /*사용여부*/
+					       ,A1.RND_PRFRT_SPR_CD                /*할인율구분코드*/
+					       ,A1.RND_PRFRT_SPR_NM                /*할인율구분명*/
+					       ,A1.CONT_CUST_DCRT                  /*계약고객할인율*/
+		                   ,A1.BZPLC_ID                        /*사업장ID*/
+		                   ,A1.BZPLC_NM                        /*사업장명*/
+					       ,A1.MNFR_NO                         /*제조원*/
+					       ,A1.MNFR_NM                         /*제조원명*/
+					       ,A1.PRD_CLCD                        /*카테고리*/
+					       ,A1.PRD_CLCD_NM                     /*카테고리명*/
+					       ,A1.USE_YN_NM                       /*사용여부명*/
+					       ,A1.REG_UPD_ID                      /*등록변경담당자ID*/
+					       ,A1.REG_UPD_DTM                     /*등록변경일자*/
+					       ,(SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD = A1.CO_CD AND OPRTR_ID = A1.REG_UPD_ID ) AS REG_UPD_NM --A1.REG_UPD_NM                     /*등록변경자*/
+		                   ,(SELECT ORG_NM FROM TB_CO_MBR_OPRTR_INFO WHERE CO_CD = A1.CO_CD AND OPRTR_ID = A1.REG_UPD_ID AND USE_YN = 'Y') AS ORG_NM
+					 FROM (
+					        SELECT '0' AS CHK
+					               ,A.CO_CD
+					               ,A.USE_YN
+		                           ,A.SEQ
+					               ,A.RND_PRFRT_SPR_CD
+					               ,FN_COM_DTL_CDNM('KO','RND_PRFRT_SPR_CD',A.RND_PRFRT_SPR_CD) AS RND_PRFRT_SPR_NM
+					               ,A.CONT_CUST_DCRT
+		                           ,A.BZPLC_ID
+		                           ,C.BZPLC_NM
+					               ,CASE WHEN A.MNFR_NO <> '*' THEN A.MNFR_NO END MNFR_NO
+					               ,B.MNFR_NM
+					               ,CASE WHEN A.PRD_CLCD <> '*' THEN A.PRD_CLCD END PRD_CLCD
+					               ,CASE WHEN A.PRD_CLCD <> '*' THEN FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) END PRD_CLCD_NM 
+					               ,DECODE(D.USE_YN,'Y','사용','N','미사용') AS USE_YN_NM
+					               ,CASE WHEN A.UPDPSN_ID IS NULL THEN A.REGPSN_ID ELSE A.UPDPSN_ID END AS REG_UPD_ID
+					               ,CASE WHEN A.UPDPSN_ID IS NULL THEN TO_CHAR(A.REG_DTM,'YYYY-MM-DD HH24:MI:SS') ELSE TO_CHAR(A.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') END AS REG_UPD_DTM
+					               ,ROW_NUMBER() OVER (PARTITION BY A.CO_CD,A.MNFR_NO,A.PRD_CLCD,A.BZPLC_ID ORDER BY A.SEQ DESC) AS NUM
+					          FROM TB_RD_CUST_DC_INFO A
+		                      JOIN TB_CC_BZPLC_BASIS C
+		                        ON C.CO_CD = A.CO_CD
+		                       AND C.BZPLC_ID = A.BZPLC_ID
+					          LEFT JOIN TB_PR_MNFR_INFO B
+					            ON B.CO_CD = A.CO_CD
+					           AND B.MNFR_NO = A.MNFR_NO
+					          LEFT JOIN TB_PR_PRD_CLSF_INFO D
+		                        ON D.CO_CD = A.CO_CD
+		                       AND D.PRD_CLCD = A.PRD_CLCD
+		                       AND D.MALL_SPR_CD = '20'  
+					         WHERE A.CONT_CUST_DCRT IS NOT NULL
+					           AND ( A.REG_DTM BETWEEN TO_DATE(#{DATE_FR_DT},'YYYYMMDD') AND TO_DATE(#{DATE_TO_DT},'YYYYMMDD')+1
+			                        OR A.UPD_DTM BETWEEN TO_DATE(#{DATE_FR_DT},'YYYYMMDD') AND TO_DATE(#{DATE_TO_DT},'YYYYMMDD')+1 )
+					      ) A1
+					 WHERE A1.NUM = 1
+		        ) A2
+        ]]>
+        <if test="BZPLC_ID_CNT > 0">
+          INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S1
+             ON 0=0
+	        AND S1.SES_ID        = #{SES_ID}
+	        AND S1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+	        AND S1.COL_ITM       = 'BZPLC_ID'
+	        AND S1.COND_DATA_VAL = A2.BZPLC_ID
+        </if>
+        <if test="MNFR_NO_CNT > 0">
+          INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S1
+             ON 0=0
+	        AND S1.SES_ID        = #{SES_ID}
+	        AND S1.INQ_COND_DTLS = #{INQ_COND_DTLS}
+	        AND S1.COL_ITM       = 'MNFR_NO'
+	        AND S1.COND_DATA_VAL = A2.MNFR_NO
+        </if>
+        <if test="PRD_CLCD_CNT > 0">
+          INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+             ON 0=0
+	        AND S2.SES_ID        = #{SES_ID}
+	        AND S2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+	        AND S2.COL_ITM       = 'PRD_CLCD'
+	        AND S2.COND_DATA_VAL = A2.PRD_CLCD
+         </if>
+          WHERE 1=1
+		 <if test="CHRPSN_ID != null and CHRPSN_ID != '' ">
+		    AND A2.REG_UPD_ID = #{CHRPSN_ID} 
+		 </if>	  
+		 <if test="STATS != null and STATS != '' ">
+		    AND A2.USE_YN = #{STATS} 
+		 </if>
+		 <if test="DCRT_SPR != null and DCRT_SPR != '' ">
+		    AND A2.RND_PRFRT_SPR_CD = #{DCRT_SPR} 
+		 </if>
+    </select>
+    
+    <update id="saveContCustDcrtMng" parameterType="HashMap">
+    	/* ContCustDcrtMngDao.saveContCustDcrtMng 계약고객할인율관리 등록/수정 */
+    	<selectKey keyProperty="RD_CUST_DC_SEQ" resultType="Integer" order="BEFORE">   
+            SELECT NVL(MAX(SEQ)+1,1)
+              FROM TB_RD_CUST_DC_INFO
+             WHERE CO_CD = #{CO_CD}
+               AND MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END
+               AND PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+               AND BZPLC_ID = #{BZPLC_ID}
+        </selectKey>
+    	MERGE INTO TB_RD_CUST_DC_INFO
+        USING DUAL
+           ON ( CO_CD      = #{CO_CD}
+            AND MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END
+            AND PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+            AND BZPLC_ID = #{BZPLC_ID}
+            AND SEQ = #{SEQ}
+              )
+         WHEN MATCHED THEN
+        UPDATE SET CONT_CUST_DCRT = #{CONT_CUST_DCRT}
+                   ,USE_YN = #{USE_YN}
+                   ,UPDPSN_ID = #{SESSION_OPRTR_ID}
+                   ,UPD_DTM = SYSDATE
+         WHEN NOT MATCHED THEN
+              INSERT (CO_CD
+			         ,MNFR_NO
+			         ,PRD_CLCD
+			         ,BZPLC_ID
+			         ,SEQ
+			         ,CONT_CUST_DCRT
+			         ,USE_YN
+			         ,VLD_STR_DTM
+			         ,VLD_END_DTM
+			         ,RND_PRFRT_SPR_CD
+			         ,REGPSN_ID
+			         ,REG_DTM)
+              VALUES 
+			         (#{CO_CD}
+			         ,CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END 
+			         ,CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+			         ,#{BZPLC_ID}
+			         ,#{RD_CUST_DC_SEQ}
+			         ,#{CONT_CUST_DCRT}
+			         ,#{USE_YN}
+			         ,TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')
+			         ,'99991231235959'
+			         ,#{RND_PRFRT_SPR_CD}
+			         ,#{SESSION_OPRTR_ID}
+			         ,SYSDATE)
+    </update>
+    
+    <update id="updateContCustDcrtMng" parameterType="HashMap">
+    	<selectKey keyProperty="REG_VLD_STR_DTM" resultType="string" order="BEFORE">
+    		SELECT TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') 
+			FROM DUAL
+		</selectKey>
+			UPDATE SSP_APP.TB_RD_CUST_DC_INFO
+			   SET VLD_END_DTM = TO_CHAR(TO_DATE(#{REG_VLD_STR_DTM},'YYYYMMDDHH24MISS')-1/(24*60*60),'YYYYMMDDHH24MISS')
+			       ,UPDPSN_ID  = #{SESSION_OPRTR_ID}
+                   ,UPD_DTM    = SYSDATE
+			 WHERE CO_CD      = #{CO_CD}
+               AND MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END
+               AND PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+               AND BZPLC_ID = #{BZPLC_ID}
+               AND SEQ = #{SEQ}
+               AND CONT_CUST_DCRT IS NOT NULL
+    </update>
+    
+    <insert id="insertContCustDcrtMng" parameterType="HashMap">
+    	/* ContCustDcrtMngDao.insertContCustDcrtMng 계약고객할인율관리 등록 */
+    	<selectKey keyProperty="RD_CUST_DC_SEQ" resultType="Integer" order="BEFORE">   
+            SELECT NVL(MAX(SEQ)+1,1)
+              FROM TB_RD_CUST_DC_INFO
+             WHERE CO_CD = #{CO_CD}
+               AND MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END
+               AND PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+               AND BZPLC_ID = #{BZPLC_ID}
+        </selectKey>
+    	INSERT INTO TB_RD_CUST_DC_INFO
+                     (CO_CD
+			         ,MNFR_NO
+			         ,PRD_CLCD
+			         ,BZPLC_ID
+			         ,SEQ
+			         ,CONT_CUST_DCRT
+			         ,USE_YN
+			         ,VLD_STR_DTM
+			         ,VLD_END_DTM
+			         ,RND_PRFRT_SPR_CD
+			         ,REGPSN_ID
+			         ,REG_DTM)
+              VALUES 
+			         (#{CO_CD}
+			         ,CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END 
+			         ,CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+			         ,#{BZPLC_ID}
+			         ,#{RD_CUST_DC_SEQ}
+			         ,#{CONT_CUST_DCRT}
+			         ,#{USE_YN}
+			         ,CASE WHEN #{REG_VLD_STR_DTM} IS NULL THEN TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS') ELSE #{REG_VLD_STR_DTM} END
+			         ,'99991231235959'
+			         ,#{RND_PRFRT_SPR_CD}
+			         ,#{SESSION_OPRTR_ID}
+			         ,SYSDATE)
+    </insert>
+
+	<select id="selectSalsChrpsnYn" parameterType="HashMap" resultType="HashMap">
+    	/* ContCustDcrtMngDao.selectSalsChrpsnYn 영업담당자여부 조회 */
+		SELECT CASE WHEN COUNT(1) <![CDATA[>]]> 0 THEN 'Y' ELSE 'N' END AS SALS_CHRPSN_YN
+		  FROM TB_CC_OPR_UNIT_BASIS
+		 WHERE USE_YN = 'Y'
+		   AND CO_CD = #{CO_CD}
+           AND SALS_CHRPSN_ID = #{SESSION_OPRTR_ID}
+    </select>
+    
+    <select id="selectContCustDcrtMngDupl" parameterType="HashMap" resultType="Integer">
+    	/* ContCustDcrtMngDao.selectContCustDcrtMngDupl 계약고객할인율관리 중복체크 */
+	    SELECT COUNT(1) AS CNT
+	      FROM TB_RD_CUST_DC_INFO
+	     WHERE CO_CD = #{CO_CD}
+	       AND MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END
+           AND PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+           AND BZPLC_ID = #{BZPLC_ID}
+	       AND CONT_CUST_DCRT IS NOT NULL
+    </select>
+    
+    <select id="selectContCustDcrtMngHst" parameterType="HashMap" resultType="HashMap">
+	    /* ContCustDcrtMngDao.selectContCustDcrtMngHst 계약고객할인율관리 이력조회 */
+	     SELECT A.CO_CD
+		        ,A.MNFR_NO
+		        ,A.MNFR_NM
+		        ,A.PRD_CLCD
+		        ,A.PRD_CLCD_NM
+		        ,A.BZPLC_ID
+		        ,A.BZPLC_NM
+		        ,A.SEQ
+		        ,A.CONT_CUST_DCRT
+		        ,A.USE_YN
+		        ,A.VLD_STR_DTM
+		        ,A.VLD_END_DTM
+		        ,A.RND_PRFRT_SPR_CD
+		        ,A.REG_UPD_ID
+		        ,A.REG_UPD_DTM
+		        ,B.OPRTR_NM
+		  FROM (SELECT A.CO_CD
+		                ,A.MNFR_NO
+		                ,B.MNFR_NM
+		                ,A.PRD_CLCD
+		                ,FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) AS PRD_CLCD_NM
+		                ,A.BZPLC_ID
+		                ,C.BZPLC_NM
+		                ,A.SEQ
+		                ,A.CONT_CUST_DCRT
+		                ,A.USE_YN
+		                ,A.VLD_STR_DTM
+		                ,A.VLD_END_DTM
+		                ,A.RND_PRFRT_SPR_CD
+		                ,A.REGPSN_ID AS REG_UPD_ID
+		                ,TO_CHAR(A.REG_DTM,'YYYY.MM.DD HH24:MI:SS') AS REG_UPD_DTM
+		         FROM SSP_APP.TB_RD_CUST_DC_INFO A
+		         LEFT JOIN SSP_APP.TB_PR_MNFR_INFO B
+                   ON B.CO_CD = A.CO_CD
+                  AND B.MNFR_NO = A.MNFR_NO
+                 LEFT JOIN SSP_APP.TB_CC_BZPLC_BASIS C
+                   ON 1=1
+                  AND C.CO_CD    = A.CO_CD
+                  AND C.BZPLC_ID = A.BZPLC_ID  
+		        WHERE A.CO_CD = #{CO_CD}
+		          AND A.MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END 
+		          AND A.PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+		          AND A.BZPLC_ID = #{BZPLC_ID}
+		          AND A.CONT_CUST_DCRT IS NOT NULL
+		         ORDER BY A.REG_DTM DESC , A.UPD_DTM DESC
+		       ) A
+		   LEFT OUTER JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO B
+             ON A.CO_CD = B.CO_CD
+            AND A.REG_UPD_ID = B.OPRTR_ID
+        <choose>
+            <when test='(SORT_COLUMN != null and SORT_COLUMN != "") and (SORT_TYPE != null and SORT_TYPE != "")'>
+             ORDER BY ${SORT_COLUMN} ${SORT_TYPE}
+            </when>
+            <otherwise>
+             ORDER BY A.SEQ DESC
+            </otherwise>
+        </choose>
+            OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+    
+     <select id="selectContCustDcrtMngHstCount" parameterType="HashMap" resultType="Integer">
+	    /* ContCustDcrtMngDao.selectContCustDcrtMngHstCount 계약고객할인율관리 이력조회 카운트*/
+	     SELECT COUNT(1) AS CNT
+		  FROM (SELECT A.CO_CD
+		                ,A.MNFR_NO
+		                ,B.MNFR_NM
+		                ,A.PRD_CLCD
+		                ,FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) AS PRD_CLCD_NM
+		                ,A.BZPLC_ID
+		                ,C.BZPLC_NM
+		                ,A.SEQ
+		                ,A.CONT_CUST_DCRT
+		                ,A.USE_YN
+		                ,A.VLD_STR_DTM
+		                ,A.VLD_END_DTM
+		                ,A.RND_PRFRT_SPR_CD
+		                ,A.REGPSN_ID AS REG_UPD_ID
+		                ,TO_CHAR(A.REG_DTM,'YYYY.MM.DD HH24:MI:SS') AS REG_UPD_DTM
+		         FROM SSP_APP.TB_RD_CUST_DC_INFO A
+		         LEFT JOIN SSP_APP.TB_PR_MNFR_INFO B
+                   ON B.CO_CD = A.CO_CD
+                  AND B.MNFR_NO = A.MNFR_NO
+                 LEFT JOIN SSP_APP.TB_CC_BZPLC_BASIS C
+                   ON 1=1
+                  AND C.CO_CD    = A.CO_CD
+                  AND C.BZPLC_ID = A.BZPLC_ID 
+		        WHERE A.CO_CD = #{CO_CD}
+		          AND A.MNFR_NO = CASE WHEN #{MNFR_NO} IS NULL THEN '*' ELSE #{MNFR_NO} END 
+		          AND A.PRD_CLCD = CASE WHEN #{PRD_CLCD} IS NULL THEN '*' ELSE #{PRD_CLCD} END
+		          AND A.BZPLC_ID = #{BZPLC_ID}
+		          AND A.CONT_CUST_DCRT IS NOT NULL
+		         ORDER BY A.REG_DTM DESC , A.UPD_DTM DESC
+		       ) A
+		   LEFT OUTER JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO B
+             ON A.CO_CD = B.CO_CD
+            AND A.REG_UPD_ID = B.OPRTR_ID
+    </select>
+   
+</mapper>

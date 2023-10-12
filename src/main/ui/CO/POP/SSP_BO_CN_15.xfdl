@@ -1,0 +1,299 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_CN_02" width="1280" titletext="약관 관리 등록" onload="fn_onLoad" height="880">
+    <Layouts>
+      <Layout height="880" mobileorientation="landscape" width="1280">
+        <Div id="div_save" taborder="0" text="Div01" left="20" top="0" border="0px solid darkblue" right="20" height="790">
+          <Layouts>
+            <Layout>
+              <TextArea id="edt_utClausCts" taborder="3" left="140" top="180" right="10" height="600" onchanged="div_save_edt_utClausCts_onchanged"/>
+              <Static id="Static65" taborder="9" left="0" top="175" height="610" cssclass="sta_cm_box02L" right="0"/>
+              <Static id="Static07" taborder="7" left="0" top="84" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static03" taborder="5" left="0" top="53" height="32" cssclass="sta_cm_box02L_tdt" right="0" text=""/>
+              <Static id="Static00" taborder="0" text="이용 약관" left="0" top="22" height="30" cssclass="sta_WF_title01" onclick="Static00_onclick" width="300"/>
+              <Static id="Static02" taborder="4" text="유형" left="0" top="53" width="130" height="32" cssclass="sta_cm_box01L_tdt_necessary" onclick="Div_top_info_Static02_onclick"/>
+              <Static id="Static06" taborder="6" text="상태" left="0" top="84" width="130" height="32" cssclass="sta_cm_box01L"/>
+              <Static id="Static10" taborder="8" text="내용" left="0" top="175" width="130" height="610" cssclass="sta_cm_box01L_necessary"/>
+              <Combo id="cmb_utClausSprCd" taborder="1" left="140" top="58" width="296" height="24" index="-1" innerdataset="ds_utClausSprCd" datacolumn="COM_DTL_CD_NM" codecolumn="COM_DTL_CD"/>
+              <Static id="Static07_00" taborder="10" left="0" top="114" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static07_00_00" taborder="11" left="0" top="144" height="32" cssclass="sta_cm_box02L" right="0" text=""/>
+              <Static id="Static06_01" taborder="12" text="게시 일자" left="0" top="114" width="130" height="32" cssclass="sta_cm_box01L_necessary"/>
+              <Static id="Static06_02" taborder="13" text="개정 이력" left="0" top="144" width="130" height="32" cssclass="sta_cm_box01L_necessary"/>
+              <Edit id="edt_qstTtl" taborder="2" left="140" top="148" height="24" right="15" maxlength="60" displaynulltext="최대 60자 까지 입력하실 수 있습니다." onchanged="edt_qstTtl_onchanged"/>
+              <Radio id="rdo_useYn" taborder="14" left="140" top="88" width="285" height="24" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" direction="vertical" index="0" text="전체" value="">
+                <Dataset id="innerdataset">
+                  <ColumnInfo>
+                    <Column id="codecolumn" size="256"/>
+                    <Column id="datacolumn" size="256"/>
+                  </ColumnInfo>
+                  <Rows>
+                    <Row>
+                      <Col id="codecolumn">Y</Col>
+                      <Col id="datacolumn">사용</Col>
+                    </Row>
+                    <Row>
+                      <Col id="codecolumn">N</Col>
+                      <Col id="datacolumn">미사용</Col>
+                    </Row>
+                  </Rows>
+                </Dataset>
+              </Radio>
+              <Calendar id="cal_regStartDate" taborder="15" left="139" top="118" width="140" height="24" cssclass="cal_WF_calendar" ondropdown="cal_regStartDate_ondropdown" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd"/>
+              <Static id="Static59" taborder="16" text="~" left="283" top="118" width="9" height="24"/>
+              <Calendar id="cal_regEndDate" taborder="17" left="296" top="118" width="140" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd" readonly="false" usecontextmenu="true" editformat="yyyy-MM-dd"/>
+              <CheckBox id="chk_noEndDt" taborder="18" text="종료일 없음" left="448" top="118" width="109" height="24" onchanged="chk_noEndDt_onchanged"/>
+              <WebBrowser id="wbs_utClausCts" taborder="19" onloadcompleted="webEditor_onloadcompleted" height="600" left="140" top="180" right="10"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btn_cancel" taborder="1" text="취소" top="811" width="70" height="30" onclick="btn_cancel_onclick" left="45.21%"/>
+        <Button id="btn_save" taborder="2" text="등록" top="811" width="70" height="30" cssclass="btn_WF_select" onclick="btn_save_onclick" left="btn_cancel:4"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 
+*******************************************************/
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.fvDocWeb = "";
+this.fvRtnHeight=260; //버튼사이즈
+this.utClausSeq = "";
+this.useCntYn = null;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo){
+	this.gfn_formOnLoad(this);
+	this.fn_commonCodeSearch();
+	this.ds_utClausDetail.addRow();
+	this.div_save.form.rdo_useYn.set_index(0);
+	
+	// 단축키
+	this.gfn_initFormHotKey({
+		ENTER : "",
+		ESC : "",
+		CTRL_ENTER : "",
+		SHIFT_ENTER : "",
+		SHIFT_S : "btn_save_onclick",
+		SHIFT_A : "",
+		SHIFT_D : "",
+	});
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_utClausSprCd=ds_output1";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "CODE_LIST", "UT_CLAUS_SPR_CD");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//저장
+this.fn_save = function(){	
+	var sSvcId = "save";  
+	var sUrl = "/co/ut-claus/save-ut-claus-list.do";  
+	var inDs = "ds_save=ds_utClausDetail:U"
+	var outDs = "";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//조회  
+this.fn_search = function(){
+	var sSvcId = "search"; 
+	var sUrl = "/co/ut-claus/select-ut-claus-list-detail.do";
+	var inDs = "ds_search=ds_search"
+	var outDs = "ds_utClausDetail=ds_output1";
+	var arg;
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack", false);
+};
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	switch(svcID){
+	case "commonCodeSearch":
+		this.ds_utClausSprCd.insertRow(0);
+		this.ds_utClausSprCd.setColumn(0,"COM_DTL_CD_NM","선택");
+		
+		var sUrl = nexacro.getEnvironment().services["svcUrl"].url + "toastEditor/index.html";
+		this.div_save.form.wbs_utClausCts.set_url(sUrl);
+	
+		break;
+	case "save":
+		if(errorCode == -100){
+			alert(errorMsg);
+		}else{
+			//개인정보취급방침의 경우 기존내역관련 alert창 안띄어지도록 수정 
+			if(this.ds_utClausDetail.getColumn(0, "UT_CLAUS_SPR_CD") != "02" && this.ds_utClausDetail.getColumn(0, "USE_YN") == "Y"){
+				if(!this.gfn_isNull(this.useCntYn)){
+					alert(this.gfn_getMessage("COMS000021")); //저장되었습니다. 기존 내역은 미사용처리 됩니다.
+				}else{
+					alert(this.gfn_getMessage("COMS000014", ["저장"])); //저장되었습니다. 
+				}
+			}else{
+				alert(this.gfn_getMessage("COMS000014", ["저장"])); //저장되었습니다. 
+			}
+			
+			if(!this.gfn_isNull(this.utClausSeq)){
+				this.ds_search.setColumn(0, "UT_CLAUS_SEQ", this.utClausSeq);
+			}
+			
+			this.fn_search();
+		}
+		break;
+	case "search":
+		this.ds_utClausDetail.addColumn("CHK_NO_END_DT","INT");
+		if(this.gfn_isNull(this.ds_utClausDetail.getColumn(0, "CLAUS_END_DT"))){
+			this.ds_utClausDetail.setColumn(0, "CHK_NO_END_DT", 1);
+			this.div_save.form.cal_regEndDate.set_readonly(true);
+		}
+		break;
+	default: 
+		break;
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+//저장 유효성 체크
+this.fn_validationCheck = function(){
+	if(this.gfn_isNull(this.div_save.form.cmb_utClausSprCd.value)) {
+		alert(this.gfn_getMessage("ERRC000004", ["유형"])); //&1 은(는) 필수 입력값입니다. 
+		return false;
+	}
+	
+	if(this.gfn_isNull(this.div_save.form.cal_regStartDate.value)) {
+		alert(this.gfn_getMessage("ERRC000004", ["게시 일자 시작일"])); //&1 은(는) 필수 입력값입니다. 
+		return false;
+	}
+	
+	if(!this.div_save.form.chk_noEndDt.value){
+		if(this.gfn_isNull(this.div_save.form.cal_regEndDate.value)) {
+			alert(this.gfn_getMessage("ERRC000004", ["게시 일자 종료일"])); //&1 은(는) 필수 입력값입니다. 
+			return false;
+		}
+		
+		if(this.div_save.form.cal_regStartDate.value > this.div_save.form.cal_regEndDate.value){
+			alert(this.gfn_getMessage("IFMS000002")); //종료일이 시작일보다 작을수 없습니다.
+			this.div_save.form.cal_regEndDate.setFocus();
+			return;
+		}
+	}
+	
+	if(this.gfn_isNull(this.div_save.form.edt_qstTtl.value)) {
+		alert(this.gfn_getMessage("ERRC000004", ["개정 이력"])); //&1 은(는) 필수 입력값입니다. 
+		return false;
+	}
+	
+	//에디터 내용을 가져오기
+	this.fvDocWeb.getProperty("getData").callMethod("click");
+	var sEditorData = this.fvDocWeb.getProperty("editorData").getProperty("value");
+	
+	if( sEditorData == ""  || sEditorData == null || sEditorData == '&nbsp;' || sEditorData == '<p><br></p>')  {
+	   alert(this.gfn_getMessage("ERRC000004", ["내용"])); //&1 은(는) 필수 입력값입니다. 
+       return;
+	}
+	this.ds_utClausDetail.setColumn(0, "UT_CLAUS_CTS", sEditorData);
+	
+	return true;
+};
+
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//취소
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close(false);
+};
+
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.fn_validationCheck()){
+		var sReturn = this.confirm(this.gfn_getMessage("COMS000013", ["등록"]));
+		if(sReturn == true){
+			this.fn_save();
+		}
+	}
+};
+
+//종료일 없음 체크시 종료일 비활성화
+this.chk_noEndDt_onchanged = function(obj:nexacro.CheckBox,e:nexacro.CheckBoxChangedEventInfo)
+{
+	if(this.div_save.form.chk_noEndDt.value){
+		this.div_save.form.cal_regEndDate.set_readonly(true);
+		this.div_save.form.cal_regEndDate.set_value("");
+	}else{
+		this.div_save.form.cal_regEndDate.set_readonly(false);
+	}
+};
+
+this.edt_qstTtl_onchanged = function(obj:nexacro.Edit,e:nexacro.ChangeEventInfo)
+{	
+	if(this.div_save.form.edt_qstTtl.value.toString().length == 0){
+		this.ds_utClausDetail.setColumn(0, "UT_CLAUS_TTL", null);
+	}
+};
+
+
+this.webEditor_onloadcompleted = function(obj:nexacro.WebBrowser,e:nexacro.WebLoadCompEventInfo)
+{
+	this.fvDocWeb = this.div_save.form.wbs_utClausCts.getProperty("document").getProperty("all");
+};
+
+]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="UT_CLAUS_SEQ" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_utClausDetail">
+        <ColumnInfo>
+          <Column id="UT_CLAUS_TTL" type="STRING" size="256"/>
+          <Column id="CLAUS_STR_DT" type="STRING" size="256"/>
+          <Column id="CLAUS_END_DT" type="STRING" size="256"/>
+          <Column id="UT_CLAUS_SPR_CD" type="STRING" size="256"/>
+          <Column id="UT_CLAUS_CTS" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="CHK_NO_END_DT" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_utClausSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item7" compid="div_save.form.edt_qstTtl" propid="value" datasetid="ds_utClausDetail" columnid="UT_CLAUS_TTL"/>
+      <BindItem id="item0" compid="div_save.form.edt_utClausCts" propid="value" datasetid="ds_utClausDetail" columnid="UT_CLAUS_CTS"/>
+      <BindItem id="item1" compid="div_save.form.cmb_utClausSprCd" propid="value" datasetid="ds_utClausDetail" columnid="UT_CLAUS_SPR_CD"/>
+      <BindItem id="item2" compid="div_save.form.rdo_useYn" propid="value" datasetid="ds_utClausDetail" columnid="USE_YN"/>
+      <BindItem id="item3" compid="div_save.form.cal_regStartDate" propid="value" datasetid="ds_utClausDetail" columnid="CLAUS_STR_DT"/>
+      <BindItem id="item4" compid="div_save.form.cal_regEndDate" propid="value" datasetid="ds_utClausDetail" columnid="CLAUS_END_DT"/>
+      <BindItem id="item5" compid="div_save.form.chk_noEndDt" propid="value" datasetid="ds_utClausDetail" columnid="CHK_NO_END_DT"/>
+    </Bind>
+  </Form>
+</FDL>

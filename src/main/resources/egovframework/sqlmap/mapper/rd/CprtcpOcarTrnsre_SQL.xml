@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CprtcpOcarTrnsre">
+
+	<sql id="CprtcpOcarTrnsreWhere">
+		AND	A.CO_CD = #{coCd}
+		AND	A.CPRTCP_ID = LPAD(#{cprtcpId}, 10, '0')
+	</sql>
+
+	<!-- 내부최저판매가 목록 -->
+    <select id="selectCprtcpOcarTrnsreList" parameterType="HashMap" resultType="HashMap">
+        /* CprtcpOcarTrnsre.selectCprtcpOcarTrnsreList */
+        SELECT * FROM (
+			SELECT 
+				A.TRNS_REGN_CD,
+				B.TRNS_REGN_ABBR_NM,
+				A.TRNS_AREA_CD,
+				B.TRNS_AREA_NM
+			FROM TB_CP_CPRTCP_OCAR_TRNSRE_MAPP A
+			INNER JOIN TB_CP_TRNSRE_DTL B
+				ON A.CO_CD = B.CO_CD
+				AND A.TRNS_REGN_CD = B.TRNS_REGN_CD
+				AND A.TRNS_AREA_CD = B.TRNS_AREA_CD
+			<where>
+			 	<include refid="CprtcpOcarTrnsreWhere" />
+			</where>
+		)A
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.TRNS_REGN_CD, A.TRNS_AREA_CD DESC</otherwise>
+		</choose>
+    </select>
+    
+    <select id="selectCprtcpOcarTrnsreCount" parameterType="hashMap" resultType="integer">
+    	/* CprtcpOcarTrnsre.selectCprtcpOcarTrnsreCount */
+		SELECT
+			COUNT(0)
+		FROM TB_CP_CPRTCP_OCAR_TRNSRE_MAPP A
+		INNER JOIN TB_CP_TRNSRE_DTL B
+			ON A.CO_CD = B.CO_CD
+			AND A.TRNS_REGN_CD = B.TRNS_REGN_CD
+			AND A.TRNS_AREA_CD = B.TRNS_AREA_CD
+		 <where>
+		 	<include refid="CprtcpOcarTrnsreWhere" />
+		</where>
+    </select>
+    
+</mapper>

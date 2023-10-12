@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.cc.stock">
+	
+    <select id="selectCustStockList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.cc.stock.selectCustStockList StockNo관리 목록 조회 */
+        SELECT LST.*
+        	, ( SELECT FN_PR_ATTR_VAL_LIST(LST.CO_CD, LST.PRD_ID) FROM DUAL ) PRVL
+		    , ( SELECT MNFR_NM 
+		      	  FROM TB_PR_MNFR_INFO 
+		     	 WHERE LST.CO_CD = CO_CD 
+		       	   AND MNFR_NO = (SELECT MPRD.MNFR_NO FROM TB_PR_MRO_PRD_INFO MPRD WHERE MPRD.CO_CD = LST.CO_CD AND MPRD.PRD_ID = LST.PRD_ID)
+		       ) AS MNFR_NM
+			, ( SELECT FN_PR_FULL_CLSF_NM(LST.CO_CD, LST.PRD_CLCD) FROM DUAL) AS CATG -- 카테고리
+		FROM (
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+        SELECT LIST.CO_CD
+        	 , LIST.BZPLC_ID
+        	 , LIST.BZPLC_NM
+        	 , LIST.PRD_ID_VIEW
+        	 , LIST.PRD_ID
+        	 , LIST.PRD_NM
+        	 , LIST.PRD_CLCD
+        	 , LIST.STOCK_NO
+        	 , LIST.USE_YN
+        	 , LIST.UPDPSN AS UPDPSN_ID
+        	 , NVL(M.OPRTR_NM, M2.MBR_NM) UPDPSN 
+        	 , LIST.UPD_DTM
+        	 , LIST.BTN
+        FROM(
+        	SELECT STOCK.CO_CD 												/* 회사코드 */
+				 , STOCK.BZPLC_ID											/* 사업장ID */
+				 , BZP.BZPLC_NM												/* 사업장명 */
+				 , TO_NUMBER(STOCK.PRD_ID) PRD_ID_VIEW						/* 상품ID */
+				 , STOCK.PRD_ID 											/* 상품ID */
+				 , (SELECT PRD.PRD_NM FROM TB_PR_PRD_INFO PRD WHERE PRD.CO_CD = STOCK.CO_CD AND PRD.PRD_ID = STOCK.PRD_ID ) PRD_NM
+				 , (SELECT PRD.PRD_CLCD FROM TB_PR_PRD_INFO PRD WHERE PRD.CO_CD = STOCK.CO_CD AND PRD.PRD_ID = STOCK.PRD_ID ) PRD_CLCD
+				 , STOCK.STOCK_NO 											/* StockNo */
+				 , STOCK.USE_YN 											/* 사용여부 */
+				 , NVL(STOCK.UPDPSN_ID, STOCK.REGPSN_ID) AS UPDPSN			/* 최종변경자 */
+				 , NVL(STOCK.UPD_DTM, STOCK.REG_DTM) AS UPD_DTM				/* 최종변경일시 */
+				 , '이력보기' AS BTN
+			FROM TB_CC_BZPLC_STOCK_NO_DTLS STOCK
+			<if test=" bzplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'BZPLC_ID'
+	            AND T1.COND_DATA_VAL = STOCK.BZPLC_ID
+            </if>
+			<if test=" prdId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T2
+	            ON  T2.SES_ID = #{sesId}
+	            AND T2.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T2.COL_ITM = 'PRD_ID'
+	            AND LPAD(T2.COND_DATA_VAL,18,'0') = STOCK.PRD_ID
+            </if>
+			LEFT OUTER JOIN TB_CC_BZPLC_BASIS BZP
+				ON BZP.CO_CD = STOCK.CO_CD 
+				AND BZP.BZPLC_ID = STOCK.BZPLC_ID
+			WHERE STOCK.SEQ = 1
+			<if test="useYn != null and !useYn.equals('') ">
+	            AND STOCK.USE_YN = #{useYn}
+	        </if>
+        )LIST
+        LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO M
+        	ON ( M.CO_CD = LIST.CO_CD AND M.OPRTR_ID = LIST.UPDPSN )
+        LEFT OUTER JOIN TB_CC_MBR_BASIS M2
+        	ON ( M2.CO_CD = LIST.CO_CD AND M2.MBR_ID = LIST.UPDPSN )
+		<if test="sortColumn != null and sortColumn != '' and sortColumn != 'PRVL' and sortColumn != 'MNFR_NM' and sortColumn != 'CATG'"> 
+	        ORDER BY ${sortColumn} ${sortType} 
+	    </if> 
+	    <if test="sortColumn == null or sortColumn == '' or sortColumn == 'PRVL' or sortColumn == 'MNFR_NM' or sortColumn == 'CATG'"> 
+			ORDER BY CO_CD, BZPLC_ID, PRD_ID
+	    </if>
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+        ) LST
+    </select>
+    
+    <select id="selectCheckStockNo" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.cc.stock.selectCheckStockNo StockNo관리 stockNo 중복체크 */
+        SELECT COUNT(*) AS CHK
+		  FROM TB_CC_BZPLC_STOCK_NO_DTLS
+		 WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+		   AND STOCK_NO = #{stockNo}
+		   AND USE_YN = 'Y'
+    </select>
+    
+    <select id="selectChkForInsert" parameterType="HashMap" resultType="int">
+        /* com.ssp.bo.cc.stock.selectChkForInsert insert-validation체크 */
+        SELECT COUNT(*) AS CHK
+		  FROM TB_CC_BZPLC_STOCK_NO_DTLS
+		 WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+		   AND PRD_ID = #{prdId}
+    </select>
+	
+	<select id="selectChkForStock" parameterType="HashMap" resultType="int">
+        /* com.ssp.bo.cc.stock.selectChkForStock StockNo중복체크 */
+        SELECT COUNT(*) AS CHK
+		  FROM TB_CC_BZPLC_STOCK_NO_DTLS
+		 WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+		   AND STOCK_NO = #{stockNo}
+		   AND USE_YN = 'Y'
+    </select>
+    
+    <insert id="saveCustStockList" parameterType="HashMap">
+        /* com.ssp.bo.cc.stock.saveCustStockList StockNo관리 정보 생성 */
+		INSERT INTO TB_CC_BZPLC_STOCK_NO_DTLS(
+        	CO_CD
+			, BZPLC_ID
+			, PRD_ID
+			, SEQ
+			, STOCK_NO
+			, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+        )VALUES(
+        	#{coCd}
+        	, #{bzplcId}
+        	, #{prdId}
+        	, 1
+        	, #{stockNo}
+        	, #{useYn}
+        	, #{oprtrId}
+        	, SYSDATE
+		)
+	</insert>
+	
+	<insert id="saveCustStockHist" parameterType="HashMap">
+        /* com.ssp.bo.cc.stock.saveCustStockHist StockNo관리 이력정보 생성 */
+		INSERT INTO TB_CC_BZPLC_STOCK_NO_HST(
+        	CO_CD
+			, BZPLC_ID
+			, PRD_ID
+			, SEQ
+			, HST_SEQ
+			, HST_SPR_CD
+			, STOCK_NO
+			, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+        )
+        SELECT CO_CD
+			, BZPLC_ID
+			, PRD_ID
+			, 1
+			, ( SELECT NVL(MAX(HST_SEQ)+1, 1)
+				  FROM TB_CC_BZPLC_STOCK_NO_HST
+				 WHERE CO_CD = #{coCd}
+				   AND BZPLC_ID = #{bzplcId}
+				   AND PRD_ID = #{prdId}
+				   AND SEQ = 1 )
+			, #{hstSprCd}
+			, STOCK_NO
+			, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+        FROM TB_CC_BZPLC_STOCK_NO_DTLS
+        WHERE CO_CD = #{coCd}
+          AND BZPLC_ID = #{bzplcId}
+          AND PRD_ID = #{prdId}
+          AND SEQ = '1'
+	</insert>
+	
+	<select id="selectPrdInfoByPrdId" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.cc.stock.selectPrdInfoByPrdId 상품 상세정보 조회 */
+        SELECT *
+        FROM (
+	        SELECT #{bzplcId} AS BZPLC_ID								/* 사업장ID */
+				 , #{bzplcNm} AS BZPLC_NM								/* 사업장명 */
+				 , TO_NUMBER(#{prdId}) AS PRD_ID_VIEW					/* 상품ID */
+				 , #{prdId} AS PRD_ID									/* 상품ID */
+				 , #{prdNm} AS PRD_NM									/* 상품명 */
+				 , #{coCd} AS CO_CD										/* 사용여부 */
+				 , S.STOCK_NO											/* STOCK NO */
+				 , S.STOCK_NO AS B_STOCK_NO								/* STOCK NO */
+				 , NVL(S.USE_YN, #{useYn}) AS USE_YN					/* 사용여부 */
+				 , S.USE_YN	AS B_USE_YN									/* 사용여부 */
+				 , FN_PR_ATTR_VAL_LIST(#{coCd}, PRD.PRD_ID) AS PRVL		/* 대표규격 */
+				 , FN_PR_FULL_CLSF_NM(#{coCd}, PRD.PRD_CLCD) AS CATG	/* 상품분류코드 */
+				 , MNFR.MNFR_NM 										/* 제조사명 */
+				 , CTRY.CTRY_NM AS ORGPLC_CTRY_CD						/* 원산지 국가코드 */
+			FROM TB_PR_PRD_INFO PRD
+			LEFT OUTER JOIN TB_PR_MRO_PRD_INFO MRO_PRD
+				ON MRO_PRD.CO_CD = PRD.CO_CD
+				AND MRO_PRD.PRD_ID = PRD.PRD_ID
+			LEFT OUTER JOIN TB_PR_MNFR_INFO MNFR
+				ON MNFR.CO_CD = PRD.CO_CD
+				AND MNFR.MNFR_NO = MRO_PRD.MNFR_NO
+			LEFT OUTER JOIN TB_CO_CTRY_INFO CTRY
+				ON CTRY.CO_CD = PRD.CO_CD
+				AND CTRY.CTRY_SPR_CD  = MRO_PRD.ORGPLC_CTRY_CD
+			LEFT OUTER JOIN TB_CC_BZPLC_STOCK_NO_DTLS S
+				ON S.CO_CD = PRD.CO_CD 
+				AND S.BZPLC_ID = #{bzplcId}
+				AND S.PRD_ID = #{prdId}
+				AND S.SEQ = 1
+			WHERE PRD.PRD_ID = #{prdId}
+			UNION ALL
+			SELECT #{bzplcId} AS BZPLC_ID								/* 사업장ID */
+				 , #{bzplcNm} AS BZPLC_NM								/* 사업장명 */
+				 , TO_NUMBER(#{prdId}) AS PRD_ID_VIEW					/* 상품ID */
+				 , #{prdId} AS PRD_ID									/* 상품ID */
+				 , #{prdNm} AS PRD_NM									/* 상품명 */
+				 , #{coCd} AS CO_CD										/* 사용여부 */
+				 , S.STOCK_NO											/* STOCK NO */
+				 , S.STOCK_NO AS B_STOCK_NO								/* STOCK NO */
+				 , NVL(S.USE_YN, #{useYn}) AS USE_YN					/* 사용여부 */
+				 , S.USE_YN	AS B_USE_YN									/* 사용여부 */
+				 , '' AS PRVL											/* 대표규격 */
+				 , '' AS CATG											/* 상품분류코드 */
+				 , '' MNFR_NM 											/* 제조사명 */
+				 , '' AS ORGPLC_CTRY_CD									/* 원산지 국가코드 */
+			  FROM TB_CC_BZPLC_STOCK_NO_DTLS S
+			 WHERE S.CO_CD = #{coCd}
+			   AND S.BZPLC_ID = #{bzplcId}
+			   AND S.PRD_ID = #{prdId}
+			   AND S.SEQ = 1
+		)
+		WHERE ROWNUM = 1
+    </select>
+	
+	<update id="updateCustStockList" parameterType="HashMap">
+        /* com.ssp.bo.cc.stock.updateCustStockList StockNo관리 정보 수정 */
+		UPDATE TB_CC_BZPLC_STOCK_NO_DTLS
+		   SET STOCK_NO = #{stockNo}
+		     , USE_YN = #{useYn}
+		   	 , UPDPSN_ID = #{oprtrId}
+		   	 , UPD_DTM = SYSDATE
+		 WHERE CO_CD = #{coCd}
+		   AND BZPLC_ID = #{bzplcId}
+		   AND PRD_ID = #{prdId}
+		   AND SEQ = 1
+    </update>
+    
+    <select id="selectCustStockHst" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.cc.stock.selectCustStockHst StockNo관리 이력조회 */
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+        SELECT LIST.BZPLC_ID										/* 사업장ID */
+			 , BZP.BZPLC_NM											/* 사업장명 */
+			 , LIST.PRD_ID											/* 상품ID */
+			 , TO_NUMBER(LIST.PRD_ID) AS PRD_ID_VIEW				/* 상품ID */
+			 , PRD.PRD_NM 											/* 상품명 */
+			 , FN_PR_ATTR_VAL_LIST(LIST.CO_CD, LIST.PRD_ID) AS PRVL /* 대표규격 */
+			 , LIST.HST_SPR_CD										/* 변경내용 */
+			 , LIST.B_STOCK_NO										/* Stock-no 변경 전 */
+			 , LIST.STOCK_NO										/* Stock-no 변경 후 */
+			 , LIST.B_USE_YN										/* 사용-미사용 변경 전 */
+			 , LIST.USE_YN											/* 사용-미사용 변경 후 */
+			 , LIST.UPDPSN_ID										/* 요청자ID */
+        	 , NVL(MBR.OPRTR_NM, M.MBR_NM) UPDPSN_NM 				/* 요청자 명 */
+			 , LIST.UPD_DTM											/* 변경일시 */
+		FROM(
+			SELECT HST.CO_CD
+			 , HST.BZPLC_ID 
+			 , HST.PRD_ID 
+			 , HST.HST_SPR_CD 
+			 , HST.HST_SEQ
+			 , DECODE(HST.HST_SEQ, 1, '-', (SELECT A.STOCK_NO 
+			 								 FROM TB_CC_BZPLC_STOCK_NO_HST A
+			 								WHERE A.CO_CD = HST.CO_CD
+			 								  AND A.BZPLC_ID = HST.BZPLC_ID
+			 								  AND A.PRD_ID = HST.PRD_ID
+			 								  AND A.SEQ = HST.SEQ
+			 								  AND A.HST_SEQ = HST.HST_SEQ-1)) AS B_STOCK_NO -- STOCK_NO 변경전
+			 , HST.STOCK_NO
+			 , DECODE(HST.HST_SEQ, 1, '-', (SELECT A.USE_YN 
+			 								 FROM TB_CC_BZPLC_STOCK_NO_HST A
+			 								WHERE A.CO_CD = HST.CO_CD
+			 								  AND A.BZPLC_ID = HST.BZPLC_ID
+			 								  AND A.PRD_ID = HST.PRD_ID
+			 								  AND A.SEQ = HST.SEQ
+			 								  AND A.HST_SEQ = HST.HST_SEQ-1)) B_USE_YN -- USE_YN 변경전
+			 , HST.USE_YN 
+			 , NVL(HST.UPDPSN_ID, HST.REGPSN_ID) AS UPDPSN_ID
+			 , NVL(HST.UPD_DTM, HST.REG_DTM) AS UPD_DTM
+		FROM TB_CC_BZPLC_STOCK_NO_HST HST
+		WHERE HST.CO_CD = #{coCd}
+		  AND HST.BZPLC_ID = #{bzplcId}
+		  AND HST.PRD_ID = #{prdId}
+		  AND HST.SEQ = 1
+		)LIST
+		LEFT OUTER JOIN TB_CC_BZPLC_BASIS BZP
+			ON BZP.CO_CD = LIST.CO_CD 
+			AND BZP.BZPLC_ID = LIST.BZPLC_ID
+		LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO MBR
+			ON MBR.CO_CD = LIST.CO_CD
+			AND MBR.OPRTR_ID = LIST.UPDPSN_ID
+        LEFT OUTER JOIN TB_CC_MBR_BASIS M
+        	ON M.CO_CD = LIST.CO_CD 
+        	AND M.MBR_ID = LIST.UPDPSN_ID
+		LEFT OUTER JOIN TB_PR_PRD_INFO PRD
+			ON PRD.CO_CD = LIST.CO_CD
+			AND PRD.PRD_ID = LIST.PRD_ID 
+		ORDER BY HST_SEQ DESC
+        )  LST
+    </select>
+    
+</mapper>

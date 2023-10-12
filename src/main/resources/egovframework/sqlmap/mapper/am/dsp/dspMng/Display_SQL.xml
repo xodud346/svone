@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Display">
+
+	<!-- 공통코드 현재 포함 하위 코드 조회 -->
+	<select id="selectSubCodeList" parameterType="hashMap" resultType="hashMap">
+		/* Display.selectSubCodeList */
+		SELECT * 
+		FROM
+			(
+			SELECT 
+				TO_CHAR(CMN_COM_IDX) AS CMN_COM_IDX,
+				CMN_COM_NM AS CMN_COM_NM,
+				CMN_COM_LEVEL AS CMN_COM_LEVEL,
+				TO_CHAR(CMN_COM_UP_IDX) AS CMN_COM_UP_IDX,
+				TO_CHAR(CMN_COM_SORT) AS CMN_COM_SORT,
+				'CMM' AS DATA_TYPE
+			FROM T_CMM_COM 
+			WHERE CMN_COM_top_IDX = '20'
+				AND CMN_COM_USE_YN = 'Y'
+		UNION 
+			SELECT 
+			    TSPC.PRD_CLS_CD AS CMN_COM_IDX,
+			    TSPC.PRD_CLS_NM AS CMN_COM_NM,
+			    4 AS CMN_COM_LEVEL,
+				'2991' AS CMN_COM_UP_IDX,
+				'1'||SEQ AS SORT,
+				'CLS' AS DATA_TYPE
+			FROM TB_SG_PRD_CLS TSPC
+			WHERE PRD_CLS_LVL = '1'
+			)
+		START WITH CMN_COM_UP_IDX = #{CODE}
+			CONNECT BY PRIOR CMN_COM_IDX = CMN_COM_UP_IDX
+			ORDER SIBLINGS BY CMN_COM_LEVEL, CMN_COM_SORT ASC
+	</select>
+
+	<!-- 전시상품관리 리스트 갯수 -->
+	<select id="selectDisplayListCount" parameterType="hashMap" resultType="integer">
+		/* Display.selectDisplayListCount */
+		SELECT
+			COUNT(0)
+		FROM
+			T_DSP_MST TM, T_DSP_DETAIL TD
+		WHERE
+			TM.DSP_MST_IDX = TD.DSP_MST_IDX
+		AND
+			CMN_COM_IDX = #{CMN_COM_IDX}
+		AND
+			DSP_MST_LOGIN_YN = #{DSP_MST_LOGIN_YN}
+		AND
+			DSP_MST_BZPLC_YN = #{DSP_MST_BZPLC_YN}
+		<if test="DSP_BZPLC_ID != null and DSP_BZPLC_ID != ''">
+		AND
+			DSP_BZPLC_ID = #{DSP_BZPLC_ID}
+		</if>
+		<if test="DSP_BZPLC_IDs != null and DSP_BZPLC_IDs.length > 0">
+			AND DSP_BZPLC_ID IN
+			<foreach collection="DSP_BZPLC_IDs" item="DSP_BZPLC_ID" open="(" close=")" separator=",">
+				#{DSP_BZPLC_ID}
+			</foreach>
+		</if>
+	</select> 
+
+	<!-- 전시상품관리 리스트 조회 -->
+	<select id="selectDisplayList" parameterType="hashMap" resultType="hashMap">
+		/* Display.selectDisplayList */
+		SELECT
+			IV1.RNUM,
+			IV1.DSP_MST_IDX,
+			IV1.CMN_COM_IDX,
+			IV1.DSP_MST_REG_DT,
+			IV1.DSP_MST_SRT,
+			IV1.DSP_MST_TXT,
+			PM.PRD_ID AS PRD_MST_CD,
+			'판매중' AS PRD_MST_SEL_STATE,
+			IV1.DSP_MST_LOGIN_YN,
+			IV1.DSP_MST_BZPLC_YN,
+			IV1.DSP_DETAIL_IDX,
+			IV1.DSP_SRT,
+			IV1.DSP_BZPLC_ID,
+			(
+			SELECT
+				BZPLC_NM
+			FROM
+				TB_FC_BZPLC_BASIS
+			WHERE
+				BZPLC_ID = IV1.DSP_BZPLC_ID
+			) DSP_BZPLC_NM
+		FROM
+			(
+			SELECT
+				ROWNUM RNUM,
+				A.*
+			FROM
+				(
+				SELECT
+					TM.DSP_MST_IDX,
+					CMN_COM_IDX,
+					PRD_MST_CD,
+					DSP_MST_TXT,
+					DSP_MST_REG_DT,
+					DSP_MST_SRT,
+					DSP_MST_LOGIN_YN,
+					DSP_MST_BZPLC_YN,
+					TD.DSP_DETAIL_IDX,
+					TD.DSP_SRT,
+					TD.DSP_BZPLC_ID
+				FROM
+					T_DSP_MST TM, T_DSP_DETAIL TD
+				WHERE
+					TM.DSP_MST_IDX = TD.DSP_MST_IDX
+				AND
+					CMN_COM_IDX = #{CMN_COM_IDX}
+				AND
+					DSP_MST_LOGIN_YN = #{DSP_MST_LOGIN_YN}
+				AND
+					DSP_MST_BZPLC_YN = #{DSP_MST_BZPLC_YN}
+				<if test="DSP_BZPLC_ID != null and DSP_BZPLC_ID != ''">
+				AND
+					DSP_BZPLC_ID = #{DSP_BZPLC_ID}
+				</if>
+				<if test="DSP_BZPLC_IDs != null and DSP_BZPLC_IDs.length > 0">
+					AND DSP_BZPLC_ID IN
+					<foreach collection="DSP_BZPLC_IDs" item="DSP_BZPLC_ID" open="(" close=")" separator=",">
+						#{DSP_BZPLC_ID}
+					</foreach>
+				</if>
+				ORDER BY TD.DSP_SRT ASC, DSP_MST_REG_DT DESC, PRD_MST_CD ASC
+				) A
+			) IV1
+			INNER JOIN TB_SG_PRD SP
+				ON IV1.PRD_MST_CD = SP.PRD_ID 
+				<if test="PRD_CLS_CD != null and PRD_CLS_CD != ''">
+				AND SP.PRD_CLS_CD IN (
+					SELECT PRD_CLS_CD
+					FROM 
+						TB_SG_PRD_CLS
+					WHERE
+						USE_YN = 'Y'
+					START WITH PRD_CLS_CD = #{PRD_CLS_CD}
+					CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+				)
+				</if>
+			INNER JOIN TB_FV_PRD PM
+				ON SP.PRD_ID = PM.PRD_ID 
+		WHERE 1=1
+		AND
+			RNUM BETWEEN #{startNum} AND #{endNum}
+		ORDER BY RNUM
+	</select>
+
+	<!-- 공통코드 현재 포함 하위 코드 조회 -->
+	<select id="selectProductCatCodeList" parameterType="hashMap" resultType="hashMap">
+		/* Display.selectProductCatCodeList */
+		SELECT
+			CMN_COM_LEVEL, CMN_COM_NM TITLE , CMN_COM_ETC1, CMN_COM_ETC2, CMN_COM_ETC3
+		FROM
+			(
+			SELECT
+				CMN_COM_LEVEL, CMN_COM_NM , CMN_COM_ETC1, CMN_COM_ETC2, CMN_COM_ETC3
+			FROM
+				T_CMM_COM
+			WHERE
+				CMN_COM_USE_YN = 'Y'
+			START WITH CMN_COM_IDX = #{CMN_COM_IDX}
+			CONNECT BY PRIOR CMN_COM_UP_IDX = CMN_COM_IDX and CMN_COM_USE_YN = 'Y'
+			ORDER SIBLINGS BY CMN_COM_LEVEL ASC
+			)
+		ORDER BY CMN_COM_LEVEL DESC
+	</select>
+
+	<!-- 전시상품관리 상품등록팝업 리스트 갯수 -->
+	<select id="selectBasicProductCount" parameterType="hashMap" resultType="integer">
+		/* Display.selectBasicProductCount */
+		SELECT
+			COUNT(0)
+		FROM
+			T_PRD_MST
+		WHERE
+			PRD_MST_DEL_YN <![CDATA[ <> ]]> 'Y'
+		AND
+			PRD_MST_CD IN 
+		<foreach collection="PRD_MST_CDs" item="PRD_MST_CD" open="(" close=")" separator=",">
+			#{PRD_MST_CD}
+		</foreach>
+	</select>
+
+	<!-- 전시상품관리 상품등록팝업 리스트 조회 -->
+	<select id="selectBasicProductList" parameterType="hashMap" resultType="hashMap">
+		/* Display.selectBasicProductList */
+		SELECT
+			PRD_MST_CD,
+			PRD_MST_NM
+		FROM
+			T_PRD_MST
+		WHERE
+			PRD_MST_DEL_YN <![CDATA[ <> ]]> 'Y'
+		AND
+			PRD_MST_CD IN
+		<foreach collection="PRD_MST_CDs" item="PRD_MST_CD" open="(" close=")" separator=",">
+			#{PRD_MST_CD}
+		</foreach>
+	</select>
+
+	<!-- 전시상품관리 등록 -->
+	<insert id="insertDisplayProduct" parameterType="hashMap">
+		<selectKey keyProperty="DSP_MST_IDX" resultType="Integer" order="BEFORE">
+			SELECT SEQ_DSP_MST_IDX.NEXTVAL AS DSP_MST_IDX FROM DUAL
+		</selectKey>
+		/* Display.insertDisplayProduct */
+		INSERT INTO T_DSP_MST
+			(
+			DSP_MST_IDX,
+			CMN_COM_IDX,
+			PRD_MST_CD,
+			DSP_MST_TXT,
+			DSP_MST_REG_DT,
+			DSP_MST_REG_IP,
+			DSP_MST_REG_ID,
+			DSP_MST_SRT,
+			DSP_MST_LOGIN_YN,
+			DSP_MST_BZPLC_YN
+			)
+		VALUES
+			(
+			#{DSP_MST_IDX},
+			#{CMN_COM_IDX},
+			#{PRD_MST_CD},
+			#{PRD_MST_NM},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{DSP_MST_REG_IP},
+			#{DSP_MST_REG_ID},
+			1,
+			#{DSP_MST_LOGIN_YN},
+			#{DSP_MST_BZPLC_YN}
+			)
+	</insert>
+
+	<!-- 전시상품관리 상세 등록 -->
+	<insert id="insertDisplayProductDetail" parameterType="hashMap">
+		<selectKey keyProperty="DSP_DETAIL_IDX" resultType="Integer" order="BEFORE">
+			SELECT NVL(MAX(DSP_DETAIL_IDX), 0) + 1 FROM T_DSP_DETAIL
+		</selectKey>
+		/* Display.insertDisplayProductDetail */
+		INSERT INTO T_DSP_DETAIL
+			(
+			DSP_DETAIL_IDX,
+			DSP_MST_IDX,
+			DSP_BZPLC_ID,
+			DSP_SRT,
+			DSP_REG_DT,
+			DSP_REG_ID
+			)
+		VALUES
+			(
+			#{DSP_DETAIL_IDX},
+			#{DSP_MST_IDX},
+			#{DSP_BZPLC_ID},
+			1,
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{DSP_MST_REG_ID}
+			)
+	</insert>
+
+	<!-- 전시상품관리 리스트 삭제 -->
+	<delete id="deleteDisplayProduct" parameterType="hashMap">
+		/* Display.deleteDisplayProduct */
+		DELETE FROM
+			T_DSP_DETAIL
+		WHERE
+			DSP_DETAIL_IDX IN
+		<foreach collection="DSP_DETAIL_IDXs" item="DSP_DETAIL_IDX" open="(" close=")" separator=",">
+			 #{DSP_DETAIL_IDX}
+		</foreach>
+	</delete>
+
+	<!-- 전시상품관리 리스트 정렬 변경 -->
+	<update id="updateDisplaySort" parameterType="hashMap">
+		UPDATE
+			T_DSP_DETAIL
+		SET
+			DSP_SRT = #{DSP_SRT}
+		WHERE
+			DSP_DETAIL_IDX = #{DSP_DETAIL_IDX}
+	</update>
+
+	<!-- 전시상품관리 정렬 순서 변경 -->
+	<update id="updateDisplayProductSort" parameterType="hashMap">
+		/* Display.updateDisplayProductSort */
+		UPDATE
+			T_DSP_MST
+		SET
+			DSP_MST_SRT = DSP_MST_SRT + 1
+		WHERE
+			CMN_COM_IDX = #{CMN_COM_IDX}
+		AND
+			DSP_MST_IDX <![CDATA[ <> ]]> #{DSP_MST_IDX}
+	</update>
+
+	<!-- 전시상품관리 상세 정렬 순서 변경 -->
+	<update id="updateDisplayProductDetailSort" parameterType="hashMap">
+		/* Display.updateDisplayProductDetailSort */
+		UPDATE
+			T_DSP_DETAIL
+		SET
+			DSP_SRT = DSP_SRT + 1
+		WHERE
+			DSP_MST_IDX <![CDATA[ <> ]]> #{DSP_MST_IDX}
+		<choose>
+			<when test="DSP_BZPLC_ID != null and DSP_BZPLC_ID != ''">
+				AND
+					DSP_BZPLC_ID = #{DSP_BZPLC_ID}
+			</when>
+			<otherwise>
+				AND
+					DSP_MST_IDX IN ( SELECT
+										DSP_MST_IDX 
+									FROM
+										T_DSP_MST
+									WHERE
+										DSP_MST_LOGIN_YN = #{DSP_MST_LOGIN_YN} 
+									AND
+										DSP_MST_BZPLC_YN = #{DSP_MST_BZPLC_YN}
+									)
+				AND
+					DSP_BZPLC_ID IS NULL
+			</otherwise>
+		</choose>
+	</update>
+	
+	<!-- 전시상품관리 상품등록팝업 상품조회팝업 리스트 갯수 -->
+	<select id="selectDisplayProductCount" parameterType="hashMap" resultType="integer">
+		/* Display.selectDisplayProductCount */
+		SELECT
+			COUNT(0)
+		FROM
+			T_PRD_MST
+		WHERE
+			PRD_MST_DEL_YN <![CDATA[ <> ]]> 'Y'
+		<if test="PRD_MST_CD != null and PRD_MST_CD != ''">
+		AND
+			PRD_MST_CD = #{PRD_MST_CD}
+		</if>
+		<if test="PRD_MST_NM != null and PRD_MST_NM != ''">
+		AND
+			PRD_MST_NM LIKE '%'||#{PRD_MST_NM}||'%'
+		</if>
+	</select>
+
+	<!-- 전시상품관리 상품등록팝업 상품조회팝업 리스트 조회 -->
+	<select id="selectDisplayProductList" parameterType="hashMap" resultType="hashMap">
+		/* Display.selectDisplayProductList */
+		SELECT
+			RNUM,
+			PRD_MST_CD,
+			PRD_MST_NM,
+			PRD_MST_SEL_STATE
+		FROM
+			(
+			SELECT
+				ROWNUM RNUM,
+				PRD_MST_CD,
+				PRD_MST_NM,
+				PRD_MST_SEL_STATE
+			FROM
+				(
+				SELECT
+					PM.PRD_MST_CD,  /* 온라인 상품코드 */
+					PM.PRD_MST_NM, /* 상품명 */
+					PM.PRD_MST_SEL_STATE /* 판매상태 */
+				FROM
+					T_PRD_MST PM
+				WHERE
+					PM.PRD_MST_DEL_YN <![CDATA[ <> ]]> 'Y'
+				<if test="PRD_MST_CD != null and PRD_MST_CD != ''">
+				AND
+					PRD_MST_CD = #{PRD_MST_CD}
+				</if>
+				<if test="PRD_MST_NM != null and PRD_MST_NM != ''">
+				AND
+					PRD_MST_NM = #{PRD_MST_NM}
+				</if>
+				ORDER BY PRD_MST_REG_DT DESC, PM.PRD_MST_CD ASC
+				) IV1
+			) IV2
+		WHERE
+			RNUM BETWEEN #{startNum} AND #{endNum}
+		ORDER BY
+			RNUM
+	</select>
+</mapper>

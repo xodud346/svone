@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   
+<!--
+******************************************************************************
+* SELECT : R&D가격변경요청_일괄(메일)
+* 작성자 : 
+* 작성 일자 : 2022.07.08
+******************************************************************************
+-->
+<mapper namespace="RdPrcChgReq">
+
+    <select id="selectRdPrcChgReqPkg" parameterType="hashMap" resultType="hashMap">
+        /* RdPrcChgReq.selectRdPrcChgReqPkg */
+
+		SELECT 
+			CPRTCP_ID
+			, COUNT(*)                                  AS CNT
+			, MAX(Z1.RECV_EMAIL)                        AS RECV_MAIL /*담당자이메일주소*/
+			, SUBSTR(TO_CHAR(SYSDATE,'YYYY'),1,4)       AS CURR_YYYY
+			, SUBSTR(TO_CHAR(SYSDATE,'MM'),1,2)         AS CURR_MM
+			, SUBSTR(TO_CHAR(SYSDATE,'DD'),1,2)         AS CURR_DD
+			, SUBSTR(TO_CHAR(SYSDATE,'HH24:MI'),1,5)    AS CURR_HH
+		FROM (
+		    SELECT         
+		        A1.*
+		        , A2.ELC_CONT_APPR_STATS_CD
+		        , ROW_NUMBER() OVER (PARTITION BY A1.CO_CD
+		                            , A1.CONT_NO
+		                            , A1.CONT_CHG_DGRCNT
+		                            , A1.PRD_ID
+		                            ORDER BY A2.SEQ DESC) AS TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER     
+		    FROM (
+		            SELECT
+		                        A.CPRTCP_ID
+		                        , A.CO_CD
+		                        , A.CONT_NO
+		                        , A.CONT_CHG_DGRCNT
+		                        , A.CUST_PREQNO	                                                AS CUST_PREQNO	       /*고객구매요청번호*/
+		                        , B.PRD_ID                                                      AS PRD_ID             /*상품ID*/
+		                        , C.PRD_NM                                                      AS PRD_NM             /*상품명*/
+		                        , SSP_APP.FN_PR_ATTR_VAL_LIST(C.CO_CD,C.PRD_ID)                 AS ATTR_VAL_LIST      /*대표규격*/
+		                        , D.MNFR_NO                                                     AS MNFR_NO            /*제조원NO*/
+		                        , E.MNFR_NM                                                     AS MNFR_NM            /*제조원*/
+		                        , A.PURG_CHRPSN_ID	                                            AS PURG_CHRPSN_ID    /*구매담당자ID*/
+		                        , B.PRD_PRC
+		                        , A.REQ_SBJ_CD	 
+		                        , F.CHRPSN_EMAIL_ADDR	                                        AS RECV_EMAIL /*담당자이메일주소*/
+		                    FROM SSP_APP.TB_RD_REQ_CPRTCP_CONSN_INFO          A
+		                    LEFT JOIN SSP_APP.TB_RD_REQ_CPRTCP_CONSN_DTL      B
+		                    ON 1=1
+		                    AND B.CO_CD           = A.CO_CD
+		                    AND B.CONT_NO         = A.CONT_NO
+		                    AND B.CONT_CHG_DGRCNT = A.CONT_CHG_DGRCNT
+		                    LEFT JOIN SSP_APP.TB_PR_PRD_INFO                  C
+		                    ON 1=1
+		                    AND C.CO_CD  = B.CO_CD
+		                    AND C.PRD_ID = B.PRD_ID
+		                    LEFT JOIN SSP_APP.TB_PR_MRO_PRD_INFO              D
+		                    ON 1=1
+		                    AND D.CO_CD  = C.CO_CD
+		                    AND D.PRD_ID = C.PRD_ID
+		                    LEFT JOIN SSP_APP.TB_PR_MNFR_INFO                 E
+		                    ON 1=1
+		                    AND E.CO_CD   = D.CO_CD
+		                    AND E.MNFR_NO = D.MNFR_NO
+		                    LEFT JOIN TB_CP_CPRTCP_BASIS                      F /*협력사정보*/       
+		                    ON 1=1
+		                    AND F.CO_CD = A.CO_CD
+		                    AND F.CPRTCP_ID = A.CPRTCP_ID                    
+		                    WHERE 1=1
+		                    AND A.CO_CD       = #{CO_CD}
+		                    AND A.CUST_PREQNO LIKE 'RA%' 		/*고정*/
+		                    AND A.REQ_SBJ_CD = '20' 			/*요청주체코드-20:자사*/
+		                    AND A.PRPS_SPR_CD = #{PRPS_SPR_CD} 	/*제안구분코드-10:일괄등록, 30:개별*/
+		    ) A1             
+		    LEFT JOIN SSP_APP.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS A2
+		                    ON 1=1
+		                   AND A2.CO_CD           = A1.CO_CD
+		                   AND A2.CONT_NO         = A1.CONT_NO
+		                   AND A2.CONT_CHG_DGRCNT = A1.CONT_CHG_DGRCNT
+		) Z1
+		WHERE 1=1
+		AND Z1.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER = 1
+		AND Z1.ELC_CONT_APPR_STATS_CD = '22'
+		GROUP BY CPRTCP_ID
+        
+    </select>
+    
+    <!-- 담당자  목록 -->
+    <select id="selectRdPrcChgReqPkgInfo" parameterType="hashMap" resultType="hashMap">
+        /* RdPrcChgReq.selectRdPrcChgReqPkgInfo */
+
+		SELECT 
+			Z1.*
+		FROM (
+		    SELECT         
+		        A1.*
+		        , A2.ELC_CONT_APPR_STATS_CD
+		        , TO_CHAR(A2.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM     /*최종처리일*/
+		        , ROW_NUMBER() OVER (PARTITION BY A1.CO_CD
+		                            , A1.CONT_NO
+		                            , A1.CONT_CHG_DGRCNT
+		                            , A1.PRD_ID
+		                            ORDER BY A2.SEQ DESC) AS TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER     
+		    FROM (
+		            SELECT
+		                        A.CPRTCP_ID
+		                        , A.CO_CD
+		                        , A.CONT_NO
+		                        , A.CONT_CHG_DGRCNT
+		                        , A.CUST_PREQNO	                                                AS CUST_PREQNO	       /*고객구매요청번호*/
+		                        , B.PRD_ID                                                      AS PRD_ID             /*상품ID*/
+		                        , C.PRD_NM                                                      AS PRD_NM             /*상품명*/
+		                        , SSP_APP.FN_PR_ATTR_VAL_LIST(C.CO_CD,C.PRD_ID)                 AS ATTR_VAL_LIST      /*대표규격*/
+		                        , D.MNFR_NO                                                     AS MNFR_NO            /*제조원NO*/
+		                        , E.MNFR_NM                                                     AS MNFR_NM            /*제조원*/
+		                        , A.PURG_CHRPSN_ID	                                            AS PURG_CHRPSN_ID    /*구매담당자ID*/
+		                        , B.PRD_PRC
+		                        , A.REQ_SBJ_CD	 
+		                    FROM SSP_APP.TB_RD_REQ_CPRTCP_CONSN_INFO          A
+		                    LEFT JOIN SSP_APP.TB_RD_REQ_CPRTCP_CONSN_DTL      B
+		                    ON 1=1
+		                    AND B.CO_CD           = A.CO_CD
+		                    AND B.CONT_NO         = A.CONT_NO
+		                    AND B.CONT_CHG_DGRCNT = A.CONT_CHG_DGRCNT
+		                    LEFT JOIN SSP_APP.TB_PR_PRD_INFO                  C
+		                    ON 1=1
+		                    AND C.CO_CD  = B.CO_CD
+		                    AND C.PRD_ID = B.PRD_ID
+		                    LEFT JOIN SSP_APP.TB_PR_MRO_PRD_INFO              D
+		                    ON 1=1
+		                    AND D.CO_CD  = C.CO_CD
+		                    AND D.PRD_ID = C.PRD_ID
+		                    LEFT JOIN SSP_APP.TB_PR_MNFR_INFO                 E
+		                    ON 1=1
+		                    AND E.CO_CD   = D.CO_CD
+		                    AND E.MNFR_NO = D.MNFR_NO
+		                    WHERE 1=1
+		                    AND A.CO_CD       = #{CO_CD}
+		                    AND A.CPRTCP_ID   = #{CPRTCP_ID}
+		                    AND A.CUST_PREQNO LIKE 'RA%' 		/*고정*/
+		                    AND A.REQ_SBJ_CD = '20' 			/*요청주체코드-20:자사*/
+		                    AND A.PRPS_SPR_CD = #{PRPS_SPR_CD} 	/*제안구분코드-10:일괄등록, 30:개별*/
+		    ) A1             
+		    LEFT JOIN SSP_APP.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS A2
+		                    ON 1=1
+		                   AND A2.CO_CD           = A1.CO_CD
+		                   AND A2.CONT_NO         = A1.CONT_NO
+		                   AND A2.CONT_CHG_DGRCNT = A1.CONT_CHG_DGRCNT
+		) Z1
+		WHERE 1=1
+		AND Z1.TB_RD_REQ_CPRTCP_CONSN_STATS_DTLS_ORDER = 1
+		AND Z1.ELC_CONT_APPR_STATS_CD = '22'
+        
+    </select>
+    
+    
+    
+</mapper>

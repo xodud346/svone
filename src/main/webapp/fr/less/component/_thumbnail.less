@@ -1,0 +1,70 @@
+//* vars =================================================================== */
+// thumbnail width height ratio
+@thumb-ratio                     : @theme-thumb-ratio; // 0.75, 640x480 비율
+
+// thumbnail size (8 가지)
+@thumb-width-xxsmall             : @theme-thumb-width-xxsmall;
+@thumb-width-xsmall              : @theme-thumb-width-xsmall;
+@thumb-width-small               : @theme-thumb-width-small;
+@thumb-width-medium              : @theme-thumb-width-medium;
+@thumb-width-large               : @theme-thumb-width-large;
+@thumb-width-xlarge              : @theme-thumb-width-xlarge;
+@thumb-width-xxlarge             : @theme-thumb-width-xxlarge;
+@thumb-width-xxxlarge            : @theme-thumb-width-xxxlarge;
+
+//* class =================================================================== */
+.set-img-retina (@file-1x; @file-2x; @width-1x; @height-1x) { // retina 이미지 처리, 보강 필요
+    background-image: url("@{file-1x}");
+    @media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and ( min--moz-device-pixel-ratio: 2), only screen and ( -o-min-device-pixel-ratio: 2/1), only screen and ( min-device-pixel-ratio: 2), only screen and ( min-resolution: 192dpi), only screen and ( min-resolution: 2dppx) {
+        background-image: url("@{file-2x}");
+        background-size: @width-1x @height-1x;
+    }
+}
+.set-height-by-ratio(@width, @ratio: 0.75){ // 비율로 height 값을 구함
+    height: @width * @ratio;
+}
+.set-thumb(@type: a) when (@type = a){ // thumbnail 규격 생성
+    
+    display: inline-block;
+    background-color: #bcbec0;
+    background-image: url("@{base-image-noimage}");
+    background-size: 100%;
+
+    &.xxsmall {
+        width: @thumb-width-xxsmall;
+        .set-height-by-ratio(@thumb-width-xxsmall, @thumb-ratio);
+    }
+    &.xsmall {
+        width: @thumb-width-xsmall;
+        .set-height-by-ratio(@thumb-width-xsmall, @thumb-ratio);
+    }
+    &.small {
+        width: @thumb-width-small;
+        .set-height-by-ratio(@thumb-width-small, @thumb-ratio);
+    }
+    &.medium {
+        width: @thumb-width-medium;
+        .set-height-by-ratio(@thumb-width-medium, @thumb-ratio);
+    }
+    &.large {
+        width: @thumb-width-large;
+        .set-height-by-ratio(@thumb-width-large, @thumb-ratio);
+    }
+    &.xlarge {
+        width: @thumb-width-xlarge;
+        .set-height-by-ratio(@thumb-width-xlarge, @thumb-ratio);
+    }
+    &.xxlarge {
+        width: @thumb-width-xxlarge;
+        .set-height-by-ratio(@thumb-width-xxlarge, @thumb-ratio);
+    }
+    &.xxxlarge {
+        width: @thumb-width-xxxlarge;
+        .set-height-by-ratio(@thumb-width-xxxlarge, @thumb-ratio);
+    }
+}
+
+//* less ==================================================================== */
+.thumb {
+    .set-thumb(a);
+}

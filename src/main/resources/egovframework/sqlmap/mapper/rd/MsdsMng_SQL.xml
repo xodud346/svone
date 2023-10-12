@@ -1,0 +1,1510 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="MsdsMng">
+	<sql id="sqlMsdsMng">
+		SELECT /*+ USE_INDEX(A TB_PR_PRD_INFO_PK) */
+			A.CO_CD
+			, A.PRD_ID
+			, A.PRD_NM
+			, NVL(B.MNFR_NO, '*') AS MNFR_NO    /*제조원ID*/
+			, NVL(A.PRD_CLCD, '*') AS PRD_CLCD  /*카테고리ID*/
+			, E.CPRTCP_ID
+			, E.MSDS_ATTC_FILEID
+			, E.RND_MSDS_URL
+			, F.PRD_CLSF_CHRPSN_ID
+			/*, G.PRVL_LIST*/
+			, NVL(E.SRVON_CERT_YN, 'N') AS SRVON_CERT_YN
+			, E.SRVON_CERT_FNL_CHG_DT
+			, E.REG_DTM
+			, E.UPD_DTM
+		FROM SSP_APP.TB_PR_PRD_INFO A
+		INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO B ON B.CO_CD = A.CO_CD
+			AND B.PRD_ID = A.PRD_ID
+			AND B.MALL_SPR_CD = A.MALL_SPR_CD
+			AND B.MALL_SPR_CD = '20'
+		LEFT JOIN SSP_APP.TB_PC_CPRTCP_PRD_INFO E ON E.CO_CD = A.CO_CD
+			AND E.PRD_ID = A.PRD_ID
+			AND E.SPL_PSB_YN = 'Y'
+		LEFT JOIN (
+			SELECT
+				CO_CD
+				, MALL_SPR_CD
+				, MNFR_NO
+				, PRD_CLCD
+				, PRD_CLSF_CHRPSN_ID
+			FROM SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO
+			WHERE PRD_CLSF_CHRPSN_TP_CD = '30' /* 10: 상품담당자, 20: MD담당자, 30: RND 구매담당자 */
+			AND PRD_CLSF_CHRPSN_SPR_CD = '10' /* 10: 정, 20: 부 */
+			AND PRD_CLSF_CHRPSN_USEYN = 'Y'
+		) F ON F.CO_CD = A.CO_CD
+			AND F.MALL_SPR_CD = A.MALL_SPR_CD
+			AND F.MNFR_NO = NVL(B.MNFR_NO, '*')
+			AND F.PRD_CLCD = NVL(A.PRD_CLCD, '*')
+		<if test="PRD_ID_CNT > 0">
+			INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S2 ON S2.SES_ID = #{SES_ID}
+				AND S2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				AND S2.COL_ITM = 'PRD_ID'
+				AND LPAD(S2.COND_DATA_VAL, 18, 0) = A.PRD_ID
+		</if>
+		<if test="PRD_CLCD_CNT > 0">
+			INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S3 ON S3.SES_ID = #{SES_ID}
+				AND S3.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				AND S3.COL_ITM = 'PRD_CLCD'
+				AND S3.COND_DATA_VAL = A.PRD_CLCD
+		</if>
+		<if test="CPRTCP_CD_CNT > 0">
+			INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S4 ON S4.SES_ID = #{SES_ID}
+				AND S4.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				AND S4.COL_ITM = 'CPRTCP_CD'
+				AND S4.COND_DATA_VAL = E.CPRTCP_ID
+		</if>
+		<if test="MNFR_NO_CNT > 0">
+			INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S6 ON S6.SES_ID = #{SES_ID}
+				AND S6.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				AND S6.COL_ITM = 'MNFR_NO'
+				AND S6.COND_DATA_VAL = B.MNFR_NO
+		</if>
+		WHERE A.CO_CD = #{CO_CD}
+		AND A.MALL_SPR_CD = '20'
+		AND (
+			E.RND_MSDS_URL IS NOT NULL
+			OR E.MSDS_ATTC_FILEID IS NOT NULL
+		)
+		<if test="PRD_NM != null and PRD_NM != ''">
+			<choose>
+				<when test="FULL_PRD_NM_YN != null and FULL_PRD_NM_YN == 'true'">
+					AND A.PRD_NM = #{PRD_NM}
+				</when>
+				<otherwise>
+					AND A.PRD_NM LIKE '%' || #{PRD_NM} || '%'
+				</otherwise>
+			</choose>
+		</if>
+		<if test="DT_SPR != null and DT_SPR != ''">
+			<if test="DT_SPR == 'REG_DTM'">
+				AND E.REG_DTM BETWEEN TO_DATE(#{DATE_FR_DT} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{DATE_TO_DT} || '235959', 'YYYYMMDDHH24MISS')
+			</if>
+			<if test="DT_SPR == 'UPD_DTM'">
+				AND E.UPD_DTM BETWEEN TO_DATE(#{DATE_FR_DT} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{DATE_TO_DT} || '235959', 'YYYYMMDDHH24MISS')
+			</if>
+		</if>
+		<if test="PRVL_LIST != null and PRVL_LIST != ''">
+			AND (
+				EXISTS (
+					SELECT 1 FROM SSP_APP.TB_PR_MRO_PRD_INFO_ATTR_MAPP
+					WHERE PRVL LIKE '%' || #{PRVL_LIST} || '%'
+					AND CO_CD = A.CO_CD
+					AND PRD_ID = A.PRD_ID
+				)
+				OR EXISTS (
+					SELECT 1 FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP
+					WHERE PRVL LIKE '%' || #{PRVL_LIST} || '%'
+					AND CO_CD = A.CO_CD
+					AND PRD_ID = A.PRD_ID
+				)
+			)
+		</if>
+		<if test="PURG_CHRPSN_ID != null and PURG_CHRPSN_ID != ''">
+			AND F.PRD_CLSF_CHRPSN_ID = #{PURG_CHRPSN_ID}
+		</if>
+	</sql>
+
+	<select id="selectMsdsMng" parameterType="HashMap" resultType="HashMap">
+		/* MsdsMng.selectMsdsMng | MSDS관리 목록 조회 */
+		SELECT
+			'0' AS CHK
+			, COUNT(*) OVER() AS TOT_CUNT
+			, A.*
+		FROM (
+			SELECT /*+ USE_INDEX(A TB_PR_PRD_INFO_PK) */
+				A.CO_CD
+				, A.PRD_ID
+				, TO_CHAR(TO_NUMBER(A.PRD_ID)) AS PRD_ID_VIEW  /* 상품ID 뷰 */
+				, A.PRD_NM
+				, H.PRVL_LIST
+				, NVL(B.MNFR_NO, '*') AS MNFR_NO    /*제조원ID*/
+				, D.MRO_MNFR_NM
+				, NVL(A.PRD_CLCD, '*') AS PRD_CLCD  /*카테고리ID*/
+				, (SELECT SSP_APP.FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD) FROM DUAL) AS PRD_CLCD_NM  /* 카테고리명 */
+				, E.CPRTCP_ID
+				, TCCB.CPRTCP_KOR_NM
+				, E.MSDS_ATTC_FILEID
+				, E.RND_MSDS_URL
+				, FILE_MSDS.DOC_REG_ID
+				, FILE_MSDS.DOC_REG_SEQ
+				, FILE_MSDS.ATFL_NM AS MSDS_ATTC_FILENM
+				, FILE_MSDS.ATFL_STOR_PATH
+				, FILE_MSDS.ORI_ATFL_NM
+				, FILE_MSDS.ATFL_LEN
+				, FILE_MSDS.ATFL_NM
+				, FILE_LOC.DOC_REG_ID AS LOC_ATTC_FILEID
+				, FILE_LOC.DOC_REG_SEQ AS LOC_ATTC_FILESEQ
+				, FILE_LOC.ATFL_NM AS LOC_ATTC_FILENM
+				, FILE_LOC.ATFL_STOR_PATH AS LOC_ATTC_FILEPATH
+				, FILE_LOC.ORI_ATFL_NM AS LOC_ATTC_FILE_ORI_NM
+				, FILE_LOC.ATFL_LEN AS LOC_ATTC_FILESIZE
+				, NVL(E.SRVON_CERT_YN, 'N') AS SRVON_CERT_YN
+				, E.SRVON_CERT_FNL_CHG_DT
+				, TO_CHAR(TO_DATE(E.SRVON_CERT_FNL_CHG_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS SRVON_CERT_FNL_CHG_DATE
+				, (
+					SELECT SSP_APP.FN_RD_CHRPSN_ID(A.CO_CD, B.MNFR_NO, A.PRD_CLCD, '30') FROM DUAL
+				) AS PRD_CLSF_CHRPSN_ID		/*구매담당자ID*/
+				, (
+					SELECT C2.OPRTR_NM
+					FROM SSP_APP.TB_CO_MBR_OPRTR_INFO C2
+					WHERE C2.CO_CD = A.CO_CD
+					AND C2.OPRTR_ID = (SELECT SSP_APP.FN_RD_CHRPSN_ID(A.CO_CD, B.MNFR_NO, A.PRD_CLCD, '30') FROM DUAL)
+				) AS PRD_CLSF_CHRPSN_NM
+				, TO_CHAR(E.REG_DTM,'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+				, TO_CHAR(E.UPD_DTM,'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM
+			FROM SSP_APP.TB_PR_PRD_INFO A
+			INNER JOIN SSP_APP.TB_PR_MRO_PRD_INFO B ON B.CO_CD = A.CO_CD
+				AND B.PRD_ID = A.PRD_ID
+				AND B.MALL_SPR_CD = A.MALL_SPR_CD
+				AND B.MALL_SPR_CD = '20'
+			LEFT JOIN SSP_APP.TB_PC_CPRTCP_PRD_INFO E ON E.CO_CD = A.CO_CD
+				AND E.PRD_ID = A.PRD_ID
+				AND E.SPL_PSB_YN = 'Y'
+			LEFT JOIN SSP_APP.TB_CO_ATFL_DTLS FILE_MSDS ON FILE_MSDS.DOC_REG_ID = E.MSDS_ATTC_FILEID
+				AND FILE_MSDS.ETC_FDS_2 = '95'
+				AND FILE_MSDS.DOC_REG_SEQ = (
+					SELECT MIN(DOC_REG_SEQ)
+					FROM SSP_APP.TB_CO_ATFL_DTLS
+					WHERE DOC_REG_ID = FILE_MSDS.DOC_REG_ID
+					AND ETC_FDS_2 = FILE_MSDS.ETC_FDS_2
+				)
+			LEFT JOIN SSP_APP.TB_CO_ATFL_DTLS FILE_LOC ON FILE_LOC.DOC_REG_ID = E.MSDS_ATTC_FILEID
+				AND FILE_LOC.ETC_FDS_2 = '9A'
+				AND FILE_LOC.DOC_REG_SEQ = (
+					SELECT MIN(DOC_REG_SEQ)
+					FROM SSP_APP.TB_CO_ATFL_DTLS
+					WHERE DOC_REG_ID = FILE_LOC.DOC_REG_ID
+					AND ETC_FDS_2 = FILE_LOC.ETC_FDS_2
+				)
+			LEFT JOIN SSP_APP.TB_PR_MNFR_INFO D ON D.CO_CD = A.CO_CD
+				AND D.MNFR_NO = B.MNFR_NO
+			LEFT JOIN SSP_APP.TB_CP_CPRTCP_BASIS TCCB ON TCCB.CO_CD = A.CO_CD
+				AND TCCB.CPRTCP_ID = E.CPRTCP_ID
+			LEFT JOIN (
+				SELECT
+					CO_CD
+					, PRD_ID
+					, LISTAGG(PRVL, ';') WITHIN GROUP(ORDER BY SRT_SO) AS PRVL_LIST
+				FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP
+				GROUP BY CO_CD, PRD_ID
+			) H ON H.CO_CD = A.CO_CD
+				AND H.PRD_ID = A.PRD_ID
+			<if test="PRD_ID_CNT > 0">
+				INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S2 ON S2.SES_ID = #{SES_ID}
+					AND S2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+					AND S2.COL_ITM = 'PRD_ID'
+					AND LPAD(S2.COND_DATA_VAL, 18, 0) = A.PRD_ID
+			</if>
+			<if test="PRD_CLCD_CNT > 0">
+				INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S3 ON S3.SES_ID = #{SES_ID}
+					AND S3.INQ_COND_DTLS = #{INQ_COND_DTLS}
+					AND S3.COL_ITM = 'PRD_CLCD'
+					AND S3.COND_DATA_VAL = A.PRD_CLCD
+			</if>
+			<if test="CPRTCP_CD_CNT > 0">
+				INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S4 ON S4.SES_ID = #{SES_ID}
+					AND S4.INQ_COND_DTLS = #{INQ_COND_DTLS}
+					AND S4.COL_ITM = 'CPRTCP_CD'
+					AND S4.COND_DATA_VAL = E.CPRTCP_ID
+			</if>
+			<if test="MNFR_NO_CNT > 0">
+				INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S6 ON S6.SES_ID = #{SES_ID}
+					AND S6.INQ_COND_DTLS = #{INQ_COND_DTLS}
+					AND S6.COL_ITM = 'MNFR_NO'
+					AND S6.COND_DATA_VAL = B.MNFR_NO
+			</if>
+			WHERE A.CO_CD = #{CO_CD}
+			AND A.MALL_SPR_CD = '20'
+			AND (
+				E.RND_MSDS_URL IS NOT NULL
+				OR E.MSDS_ATTC_FILEID IS NOT NULL
+			)
+			<if test="PRD_NM != null and PRD_NM != ''">
+				<choose>
+					<when test="FULL_PRD_NM_YN != null and FULL_PRD_NM_YN == 'true'">
+						AND A.PRD_NM = #{PRD_NM}
+					</when>
+					<otherwise>
+						AND A.PRD_NM LIKE '%' || #{PRD_NM} || '%'
+					</otherwise>
+				</choose>
+			</if>
+			<if test="DT_SPR != null and DT_SPR != ''">
+				<if test="DT_SPR == 'REG_DTM'">
+					AND E.REG_DTM BETWEEN TO_DATE(#{DATE_FR_DT} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{DATE_TO_DT} || '235959', 'YYYYMMDDHH24MISS')
+				</if>
+				<if test="DT_SPR == 'UPD_DTM'">
+					AND E.UPD_DTM BETWEEN TO_DATE(#{DATE_FR_DT} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{DATE_TO_DT} || '235959', 'YYYYMMDDHH24MISS')
+				</if>
+			</if>
+			<if test="PRVL_LIST != null and PRVL_LIST != ''">
+				AND (
+					EXISTS (
+						SELECT 1 FROM SSP_APP.TB_PR_MRO_PRD_INFO_ATTR_MAPP
+						WHERE PRVL LIKE '%' || #{PRVL_LIST} || '%'
+						AND CO_CD = A.CO_CD
+						AND PRD_ID = A.PRD_ID
+					)
+					OR EXISTS (
+						SELECT 1 FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP
+						WHERE PRVL LIKE '%' || #{PRVL_LIST} || '%'
+						AND CO_CD = A.CO_CD
+						AND PRD_ID = A.PRD_ID
+					)
+				)
+			</if>
+		) A
+		<if test="PURG_CHRPSN_ID != null and PURG_CHRPSN_ID != ''">
+			WHERE A.PRD_CLSF_CHRPSN_ID = #{PURG_CHRPSN_ID}
+		</if>
+		ORDER BY UPD_DTM DESC NULLS LAST
+		OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+	</select>
+
+<select id="selectMsdsMngOld" parameterType="HashMap" resultType="HashMap">
+/* MsdsMng.selectMsdsMng MSDS관리 목록 조회 */
+SELECT '0'   CHK
+     , A.*
+     , (SELECT SSP_APP.FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD) FROM DUAL)         PRD_CLCD_NM            /*카테고리명*/
+  FROM (
+             SELECT A3.CO_CD                              AS CO_CD                             /*회사코드 PK*/
+                  , A3.PRD_ID                             AS PRD_ID                            /*상품ID PK*/
+                  , A3.PRD_ID_VIEW                        AS PRD_ID_VIEW                       /*상품ID VIEW*/
+                  , A3.PRD_NM                             AS PRD_NM                            /*상품명*/
+                  , A3.MNFR_NO                            AS MNFR_NO                           /*제조원ID*/
+                  , A3.MRO_MNFR_NM                        AS MRO_MNFR_NM                       /*제조원*/
+                  , A3.PRD_CLCD                           AS PRD_CLCD                          /*카테고리ID*/
+                  --, A3.PRD_CLCD_NM                        AS PRD_CLCD_NM                       /*카테고리*/
+                  --, A3.TB_PR_PRD_INFO_ORDER               AS TB_PR_PRD_INFO_ORDER
+                  , A3.CPRTCP_ID                          AS CPRTCP_ID                         /*협력사ID*/
+                  , A3.CPRTCP_KOR_NM                      AS CPRTCP_KOR_NM                     /*협력사*/
+                  , A3.MSDS_ATTC_FILENM                   AS MSDS_ATTC_FILENM                  /*MSDS 파일명*/
+                  , A3.RND_MSDS_URL                       AS RND_MSDS_URL                      /*MSDS URL*/
+                  , A3.ATFL_LEN                           AS ATFL_LEN                          /*MSDS파일SIZE*/
+                  , A3.REG_DTM                            AS REG_DTM                           /*등록일*/
+                  , A3.UPD_DTM                            AS UPD_DTM                           /*최종수정일*/
+                  , A3.PRVL_LIST                          AS PRVL_LIST                         /*대표규격*/
+                  , A3.TB_PR_PRD_INFO_ATTR_MAPP_ORDER     AS TB_PR_PRD_INFO_ATTR_MAPP_ORDER
+                  , A3.PRD_CLSF_CHRPSN_ID                 AS PRD_CLSF_CHRPSN_ID                /*구매담당자ID*/
+                  , A3.PRD_CLSF_CHRPSN_NM                 AS PRD_CLSF_CHRPSN_NM                /*구매담당자명*/
+                  , A3.TB_PR_PRD_CLSF_CHRPSN_INFO_ORDER   AS TB_PR_PRD_CLSF_CHRPSN_INFO_ORDER
+                  , A3.ATFL_STOR_PATH                     AS ATFL_STOR_PATH
+                  , A3.ATFL_NM                            AS ATFL_NM
+                  , A3.ORI_ATFL_NM                        AS ORI_ATFL_NM
+                  , A3.DOC_REG_ID                         AS DOC_REG_ID
+                  , A3.DOC_REG_SEQ                        AS DOC_REG_SEQ
+             FROM (
+                      SELECT A2.CO_CD                                                                   AS CO_CD
+                           , A2.PRD_ID                                                                  AS PRD_ID
+                           , A2.PRD_ID_VIEW                                                             AS PRD_ID_VIEW
+                           , A2.PRD_NM                                                                  AS PRD_NM
+                           , A2.MNFR_NO                                                                 AS MNFR_NO
+                           , A2.MRO_MNFR_NM                                                             AS MRO_MNFR_NM
+                           , A2.PRD_CLCD                                                                AS PRD_CLCD
+                           --, A2.PRD_CLCD_NM                                                             AS PRD_CLCD_NM
+                           --, A2.TB_PR_PRD_INFO_ORDER                                                    AS TB_PR_PRD_INFO_ORDER
+                           , A2.CPRTCP_ID                                                               AS CPRTCP_ID
+                           , A2.CPRTCP_KOR_NM                                                           AS CPRTCP_KOR_NM
+                           , A2.MSDS_ATTC_FILENM                                                        AS MSDS_ATTC_FILENM
+                           , A2.ATFL_LEN                                                                AS ATFL_LEN
+                           , A2.RND_MSDS_URL                                                            AS RND_MSDS_URL
+                           , A2.REG_DTM                                                                 AS REG_DTM
+                           , A2.UPD_DTM                                                                 AS UPD_DTM
+                           , A2.PRVL_LIST                                                               AS PRVL_LIST
+                           , A2.TB_PR_PRD_INFO_ATTR_MAPP_ORDER                                          AS TB_PR_PRD_INFO_ATTR_MAPP_ORDER
+                           , B2.PRD_CLSF_CHRPSN_ID                                                      AS PRD_CLSF_CHRPSN_ID             /*구매담당자ID*/
+                           , C2.OPRTR_NM                                                                AS PRD_CLSF_CHRPSN_NM             /*구매담당자명*/
+                           , ROW_NUMBER() OVER (PARTITION BY A2.CO_CD, A2.PRD_ID, A2.CPRTCP_ID ORDER BY
+                                                CASE WHEN B2.MNFR_NO!='*' AND B2.PRD_CLCD!='*' THEN 1
+                                                     WHEN B2.MNFR_NO!='*'                      THEN 2
+                                                     ELSE 3 
+                                                END                                                  )  AS TB_PR_PRD_CLSF_CHRPSN_INFO_ORDER
+                           , A2.ATFL_STOR_PATH                                                          AS ATFL_STOR_PATH
+                           , A2.ATFL_NM                                                                 AS ATFL_NM
+                           , A2.ORI_ATFL_NM                                                             AS ORI_ATFL_NM
+                           , A2.DOC_REG_ID                                                              AS DOC_REG_ID
+                           , A2.DOC_REG_SEQ                                                             AS DOC_REG_SEQ
+                      FROM (
+                                SELECT A1.CO_CD                                                                                      AS CO_CD
+                                     , A1.PRD_ID                                                                                     AS PRD_ID
+                                     , TO_CHAR(TO_NUMBER(A1.PRD_ID))                                                                 AS PRD_ID_VIEW
+                                     , A1.PRD_NM                                                                                     AS PRD_NM
+                                     , A1.MNFR_NO                                                                                    AS MNFR_NO
+                                     , A1.MRO_MNFR_NM                                                                                AS MRO_MNFR_NM
+                                     , A1.PRD_CLCD                                                                                   AS PRD_CLCD
+                                     --, A1.PRD_CLCD_NM                                                                                AS PRD_CLCD_NM
+                                     --, A1.TB_PR_PRD_INFO_ORDER                                                                       AS TB_PR_PRD_INFO_ORDER
+                                     , A1.CPRTCP_ID                                                                                  AS CPRTCP_ID
+                                     , A1.CPRTCP_KOR_NM                                                                              AS CPRTCP_KOR_NM
+                                     , A1.MSDS_ATTC_FILENM                                                                           AS MSDS_ATTC_FILENM
+                                     , A1.RND_MSDS_URL                                                                               AS RND_MSDS_URL
+                                     , A1.ATFL_LEN                                                                                   AS ATFL_LEN
+                                     , A1.REG_DTM                                                                                    AS REG_DTM
+                                     , A1.UPD_DTM                                                                                    AS UPD_DTM
+                                     , LISTAGG(B1.PRVL,';') WITHIN GROUP(ORDER BY B1.SRT_SO) OVER (PARTITION BY A1.CO_CD, A1.PRD_ID) AS PRVL_LIST                      /*대표규격*/
+                                     , ROW_NUMBER() OVER (PARTITION BY A1.CO_CD, A1.PRD_ID,A1.CPRTCP_ID ORDER BY 1)                  AS TB_PR_PRD_INFO_ATTR_MAPP_ORDER
+                                     , A1.ATFL_STOR_PATH
+                                     , A1.ATFL_NM
+                                     , A1.ORI_ATFL_NM
+                                     , A1.DOC_REG_ID
+                                     , A1.DOC_REG_SEQ
+                                  FROM (
+                                           SELECT /*+ USE_INDEX(A TB_PR_PRD_INFO_PK) */
+                                                  A.CO_CD                                                                   AS CO_CD                  /*회사코드 PK*/
+                                                , A.PRD_ID                                                                  AS PRD_ID                 /*상품ID PK*/
+                                                , A.PRD_NM                                                                  AS PRD_NM                 /*상품명*/
+                                                , C.MNFR_NO                                                                 AS MNFR_NO                /*제조원ID*/
+                                                , D.MRO_MNFR_NM                                                             AS MRO_MNFR_NM            /*제조원*/
+                                                , A.PRD_CLCD                                                                AS PRD_CLCD               /*카테고리ID*/
+                                                --, (SELECT SSP_APP.FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD) FROM DUAL)        AS PRD_CLCD_NM            /*카테고리명*/
+                                                --, ROW_NUMBER() OVER (PARTITION BY A.CO_CD, A.PRD_ID,E.CPRTCP_ID ORDER BY 1) AS TB_PR_PRD_INFO_ORDER
+                                                , E.CPRTCP_ID                                                               AS CPRTCP_ID              /*협력사ID*/
+                                                , F.CPRTCP_KOR_NM                                                           AS CPRTCP_KOR_NM          /*협력사명*/
+                                                , B.ATFL_NM                                                                 AS MSDS_ATTC_FILENM       /*MSDS파일명*/
+                                                , E.RND_MSDS_URL                                                            AS RND_MSDS_URL           /*MSDS URL*/
+                                                , B.ATFL_LEN                                                                AS ATFL_LEN               /*MSDS파일SIZE*/
+                                                , B.DOC_REG_ID
+                                                , B.DOC_REG_SEQ
+                                                , TO_CHAR(E.REG_DTM,'YYYY-MM-DD HH24:MI:SS')                                AS REG_DTM                /*등록일*/
+                                                , TO_CHAR(E.UPD_DTM,'YYYY-MM-DD HH24:MI:SS')                                AS UPD_DTM                /*최종수정일*/
+                                                , B.ATFL_STOR_PATH
+                                                , B.ATFL_NM
+                                                , B.ORI_ATFL_NM
+                                             FROM SSP_APP.TB_PR_PRD_INFO                     A
+                                             LEFT JOIN SSP_APP.TB_PR_MRO_PRD_INFO            C
+                                               ON C.CO_CD       = A.CO_CD
+                                              AND C.PRD_ID      = A.PRD_ID
+                                              AND A.MALL_SPR_CD = '20'
+                                             LEFT JOIN SSP_APP.TB_PR_MNFR_INFO               D
+                                               ON D.CO_CD       = C.CO_CD
+                                              AND D.MNFR_NO     = C.MNFR_NO
+                                             LEFT JOIN SSP_APP.TB_PC_CPRTCP_PRD_INFO         E
+                                               ON E.CO_CD       = A.CO_CD
+                                              AND E.PRD_ID      = A.PRD_ID
+                                              AND E.SPL_PSB_YN  = 'Y'
+                                             LEFT JOIN SSP_APP.TB_CO_ATFL_DTLS               B
+                                               ON B.DOC_REG_ID  = E.MSDS_ATTC_FILEID
+                                              AND B.DOC_REG_SEQ = (SELECT MIN(DOC_REG_SEQ) FROM SSP_APP.TB_CO_ATFL_DTLS WHERE DOC_REG_ID=B.DOC_REG_ID AND ETC_FDS_2='95')
+                                              AND B.ETC_FDS_2   = '95'
+                                             LEFT JOIN SSP_APP.TB_CP_CPRTCP_BASIS            F
+                                               ON F.CO_CD       = E.CO_CD
+                                              AND F.CPRTCP_ID   = E.CPRTCP_ID
+                                           <if test="PRD_ID_CNT    > 0">INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS  S2  ON  S2.SES_ID=#{SES_ID} AND S2.INQ_COND_DTLS=#{INQ_COND_DTLS} AND S2.COL_ITM='PRD_ID'    AND LPAD(S2.COND_DATA_VAL,18,0)=A.PRD_ID</if>
+                                           <if test="PRD_CLCD_CNT  > 0">INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS  S3  ON  S3.SES_ID=#{SES_ID} AND S3.INQ_COND_DTLS=#{INQ_COND_DTLS} AND S3.COL_ITM='PRD_CLCD'  AND S3.COND_DATA_VAL=A.PRD_CLCD         </if>
+                                           <if test="CPRTCP_CD_CNT > 0">INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS  S4  ON  S4.SES_ID=#{SES_ID} AND S4.INQ_COND_DTLS=#{INQ_COND_DTLS} AND S4.COL_ITM='CPRTCP_CD' AND S4.COND_DATA_VAL=E.CPRTCP_ID        </if>
+                                           <if test="MNFR_NO_CNT   > 0">INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS  S6  ON  S6.SES_ID=#{SES_ID} AND S6.INQ_COND_DTLS=#{INQ_COND_DTLS} AND S6.COL_ITM='MNFR_NO'   AND S6.COND_DATA_VAL=C.MNFR_NO          </if>
+                                            WHERE A.CO_CD       = #{CO_CD}
+                                              AND A.MALL_SPR_CD = '20'
+                                              AND ( E.RND_MSDS_URL IS NOT NULL OR E.MSDS_ATTC_FILEID IS NOT NULL )
+                                              
+                                         <if test="PRD_NM != null and PRD_NM != ''"><choose><when test="FULL_PRD_NM_YN != null and FULL_PRD_NM_YN == 'true'">
+	                                          AND A.PRD_NM = #{PRD_NM}
+	                                     </when><otherwise>
+	                                          AND A.PRD_NM LIKE '%' || #{PRD_NM} || '%'
+	                                     </otherwise></choose></if>
+	                                     
+                                         <if test="PRVL_LIST != null and PRVL_LIST != ''">
+                                              AND (   EXISTS ( SELECT 1 FROM SSP_APP.TB_PR_MRO_PRD_INFO_ATTR_MAPP S1 WHERE S1.CO_CD=A.CO_CD AND S1.PRD_ID=A.PRD_ID AND S1.PRVL LIKE '%'||#{PRVL_LIST}||'%' )
+                                                   OR EXISTS ( SELECT 1 FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP     S2 WHERE S2.CO_CD=A.CO_CD AND S2.PRD_ID=A.PRD_ID AND S2.PRVL LIKE '%'||#{PRVL_LIST}||'%' )
+                                                  )
+                                         </if>
+                                         
+                                         <if test="DT_SPR != null and DT_SPR != ''">
+                                             <if test="DT_SPR == 'REG_DTM'">
+                                              AND A.REG_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                                                AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                                             </if>
+                                             <if test="DT_SPR == 'UPD_DTM'">
+                                              AND A.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                                                AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                                             </if>
+                                         </if>
+                                       ) A1
+                                    LEFT JOIN SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP B1
+                                      ON B1.CO_CD  = A1.CO_CD
+                                     AND B1.PRD_ID = A1.PRD_ID
+                                   --WHERE A1.TB_PR_PRD_INFO_ORDER = 1
+                           ) A2
+                        LEFT JOIN SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO B2
+                          ON B2.CO_CD                  = A2.CO_CD
+                         AND B2.MNFR_NO                = NVL(A2.MNFR_NO , '*')
+                         AND B2.PRD_CLCD               = NVL(A2.PRD_CLCD, '*')
+                         AND B2.MALL_SPR_CD            = '20'                                    /*10 SSP,20 RD*/
+                         AND B2.PRD_CLSF_CHRPSN_TP_CD  = '30'                                    /*10 상품담당자,20 MD담당자,30 RND 구매담당자*/
+                         AND B2.PRD_CLSF_CHRPSN_SPR_CD = '10'                                    /*10 정, 20 부*/
+                         AND B2.PRD_CLSF_CHRPSN_USEYN  = 'Y'
+                        LEFT JOIN TB_CO_MBR_OPRTR_INFO       C2
+                          ON C2.CO_CD                  = B2.CO_CD
+                         AND C2.OPRTR_ID               = B2.PRD_CLSF_CHRPSN_ID
+                       WHERE A2.TB_PR_PRD_INFO_ATTR_MAPP_ORDER = 1
+                     <if test="PURG_CHRPSN_ID != null and PURG_CHRPSN_ID != ''">
+                         AND B.PRD_CLSF_CHRPSN_ID = #{PURG_CHRPSN_ID}
+                     </if>
+                  ) A3
+             WHERE 1=1
+               AND A3.TB_PR_PRD_CLSF_CHRPSN_INFO_ORDER = 1
+<!--  2022-07-26 속도가 안나와서 SROT 기능 뺌.
+        <choose>
+          <when test='(SORT_COLUMN != null and SORT_COLUMN != "") and (SORT_TYPE != null and SORT_TYPE != "")'>
+             ORDER BY A3.${SORT_COLUMN} ${SORT_TYPE}
+          </when>
+          <otherwise>
+             ORDER BY A3.PRD_ID
+          </otherwise>
+        </choose>
+-->
+            OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+
+       )   A
+    </select>
+
+
+    <select id="selectMsdsMngCountOld" parameterType="HashMap" resultType="Integer">
+        /* MsdsMng.selectMsdsMngCount MSDS관리 카운트 조회 */
+        <![CDATA[
+            SELECT COUNT(1) AS CNT
+             FROM (
+                      SELECT '0'                                                                        AS CHK
+                           , A2.CO_CD                                                                   AS CO_CD
+                           , A2.PRD_ID                                                                  AS PRD_ID
+                           , A2.PRD_ID_VIEW                                                             AS PRD_ID_VIEW
+                           , A2.PRD_NM                                                                  AS PRD_NM
+                           , A2.MNFR_NO                                                                 AS MNFR_NO
+                           , A2.MRO_MNFR_NM                                                             AS MRO_MNFR_NM
+                           , A2.PRD_CLCD                                                                AS PRD_CLCD
+                           , A2.PRD_CLCD_NM                                                             AS PRD_CLCD_NM
+                           , A2.TB_PR_PRD_INFO_ORDER                                                    AS TB_PR_PRD_INFO_ORDER
+                           , A2.CPRTCP_ID                                                               AS CPRTCP_ID
+                           , A2.CPRTCP_KOR_NM                                                           AS CPRTCP_KOR_NM
+                           , A2.MSDS_ATTC_FILENM                                                        AS MSDS_ATTC_FILENM
+                           , A2.RND_MSDS_URL                                                            AS RND_MSDS_URL
+                           , A2.REG_DTM                                                                 AS REG_DTM
+                           , A2.UPD_DTM                                                                 AS UPD_DTM
+                           , A2.PRVL_LIST                                                               AS PRVL_LIST
+                           , A2.TB_PR_PRD_INFO_ATTR_MAPP_ORDER                                          AS TB_PR_PRD_INFO_ATTR_MAPP_ORDER
+                           , B2.PRD_CLSF_CHRPSN_ID                                                      AS PRD_CLSF_CHRPSN_ID                /*구매담당자ID*/
+                           , C2.OPRTR_NM                                                                AS PRD_CLSF_CHRPSN_NM         /*구매담당자명*/
+                           , ROW_NUMBER() OVER (PARTITION BY A2.CO_CD, A2.PRD_ID, A2.CPRTCP_ID ORDER BY
+                                                CASE WHEN B2.MNFR_NO != '*' AND B2.PRD_CLCD != '*'
+                                                     THEN 1
+                                                     WHEN B2.MNFR_NO != '*'
+                                                     THEN 2
+                                                     ELSE 3 END)                                        AS TB_PR_PRD_CLSF_CHRPSN_INFO_ORDER
+                       FROM (
+                                SELECT A1.CO_CD                                                                                      AS CO_CD
+                                     , A1.PRD_ID                                                                                     AS PRD_ID
+                                     , TO_CHAR(TO_NUMBER(A1.PRD_ID))                                                                 AS PRD_ID_VIEW
+                                     , A1.PRD_NM                                                                                     AS PRD_NM
+                                     , A1.MNFR_NO                                                                                    AS MNFR_NO
+                                     , A1.MRO_MNFR_NM                                                                                AS MRO_MNFR_NM
+                                     , A1.PRD_CLCD                                                                                   AS PRD_CLCD
+                                     , A1.PRD_CLCD_NM                                                                                AS PRD_CLCD_NM
+                                     , A1.TB_PR_PRD_INFO_ORDER                                                                       AS TB_PR_PRD_INFO_ORDER
+                                     , A1.CPRTCP_ID                                                                                  AS CPRTCP_ID
+                                     , A1.CPRTCP_KOR_NM                                                                              AS CPRTCP_KOR_NM
+                                     , A1.MSDS_ATTC_FILENM                                                                           AS MSDS_ATTC_FILENM
+                                     , A1.RND_MSDS_URL                                                                               AS RND_MSDS_URL
+                                     , A1.REG_DTM                                                                                    AS REG_DTM
+                                     , A1.UPD_DTM                                                                                    AS UPD_DTM
+                                     , LISTAGG(B1.PRVL,';') WITHIN GROUP(ORDER BY B1.SRT_SO) OVER (PARTITION BY A1.CO_CD, A1.PRD_ID) AS PRVL_LIST               /*대표규격*/
+                                     , ROW_NUMBER() OVER (PARTITION BY A1.CO_CD, A1.PRD_ID,A1.CPRTCP_ID ORDER BY 1)                  AS TB_PR_PRD_INFO_ATTR_MAPP_ORDER
+                                  FROM (
+                                           SELECT /*+ USE_INDEX(A TB_PR_PRD_INFO_PK) */
+                                                  A.CO_CD                                                                   AS CO_CD                /*회사코드 PK*/
+                                                , A.PRD_ID                                                                  AS PRD_ID               /*상품ID PK*/
+                                                , A.PRD_NM                                                                  AS PRD_NM               /*상품명*/
+                                                , C.MNFR_NO                                                                 AS MNFR_NO              /*제조원ID*/
+                                                , D.MRO_MNFR_NM                                                             AS MRO_MNFR_NM          /*제조원*/
+                                                , A.PRD_CLCD                                                                AS PRD_CLCD             /*카테고리ID*/
+                                                , (
+                                                   SELECT SSP_APP.FN_PR_FULL_CLSF_NM
+                                                          (
+                                                            A.CO_CD
+                                                          , A.PRD_CLCD
+                                                          )
+                                                     FROM DUAL
+                                                  )                                                                         AS PRD_CLCD_NM          /*카테고리명*/
+                                                , ROW_NUMBER() OVER (PARTITION BY A.CO_CD, A.PRD_ID,E.CPRTCP_ID ORDER BY 1) AS TB_PR_PRD_INFO_ORDER
+                                                , E.CPRTCP_ID                                                               AS CPRTCP_ID            /*협력사ID*/
+                                                , F.CPRTCP_KOR_NM                                                           AS CPRTCP_KOR_NM        /*협력사명*/
+                                                , B.ATFL_NM                                                                 AS MSDS_ATTC_FILENM     /*MSDS파일명*/
+                                                , E.RND_MSDS_URL                                                            AS RND_MSDS_URL         /*MSDS URL*/
+                                                , TO_CHAR(E.REG_DTM,'YYYY-MM-DD HH24:MI:SS')                                AS REG_DTM              /*등록일*/
+                                                , TO_CHAR(E.UPD_DTM,'YYYY-MM-DD HH24:MI:SS')                                AS UPD_DTM              /*최종수정일*/
+                                             FROM SSP_APP.TB_PR_PRD_INFO               A
+                                             LEFT JOIN SSP_APP.TB_PR_MRO_PRD_INFO      C
+                                               ON 1=1
+                                              AND C.CO_CD          = A.CO_CD
+                                              AND C.PRD_ID         = A.PRD_ID
+                                              AND A.MALL_SPR_CD    = '20'
+                                             LEFT JOIN SSP_APP.TB_PR_MNFR_INFO         D
+                                               ON 1=1
+                                              AND D.CO_CD          = C.CO_CD
+                                              AND D.MNFR_NO        = C.MNFR_NO
+                                             LEFT JOIN SSP_APP.TB_PC_CPRTCP_PRD_INFO   E
+                                               ON 1=1
+                                              AND E.CO_CD          = A.CO_CD
+                                              AND E.PRD_ID         = A.PRD_ID
+                                              AND E.SPL_PSB_YN     = 'Y'
+                                             LEFT JOIN SSP_APP.TB_CO_ATFL_DTLS         B
+                                               ON 1=1
+                                              AND B.DOC_REG_ID     = E.MSDS_ATTC_FILEID
+                                              AND B.ETC_FDS_2      = '95'
+                                             LEFT JOIN SSP_APP.TB_CP_CPRTCP_BASIS      F
+                                               ON 1=1
+                                              AND F.CO_CD          = E.CO_CD
+                                              AND F.CPRTCP_ID      = E.CPRTCP_ID
+        ]]>
+                                        <if test="PRD_ID_CNT > 0">
+                                            INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S2
+                                               ON 0=0
+                                              AND S2.SES_ID                   = #{SES_ID}
+                                              AND S2.INQ_COND_DTLS            = #{INQ_COND_DTLS}
+                                              AND S2.COL_ITM                  = 'PRD_ID'
+                                              AND LPAD(S2.COND_DATA_VAL,18,0) = A.PRD_ID
+                                        </if>
+                                        <if test="PRD_CLCD_CNT > 0">
+                                            INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S3
+                                               ON 0=0
+                                              AND S3.SES_ID        = #{SES_ID}
+                                              AND S3.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                                              AND S3.COL_ITM       = 'PRD_CLCD'
+                                              AND S3.COND_DATA_VAL = A.PRD_CLCD
+                                        </if>
+                                        <if test="CPRTCP_CD_CNT > 0">
+                                            INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S4
+                                               ON 0=0
+                                              AND S4.SES_ID        = #{SES_ID}
+                                              AND S4.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                                              AND S4.COL_ITM       = 'CPRTCP_CD'
+                                              AND S4.COND_DATA_VAL = E.CPRTCP_ID
+                                        </if>
+                                         <if test="MNFR_NO_CNT > 0">
+                                            INNER JOIN SSP_APP.TB_OD_ODR_INQ_TGT_DTLS S6
+                                               ON 0=0
+                                              AND S6.SES_ID        = #{SES_ID}
+                                              AND S6.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                                              AND S6.COL_ITM       = 'MNFR_NO'
+                                              AND S6.COND_DATA_VAL = C.MNFR_NO
+                                         </if>
+        <![CDATA[
+                                            WHERE A.CO_CD       = #{CO_CD}
+                                              AND A.MALL_SPR_CD = '20'
+                                              AND (
+                                                      E.RND_MSDS_URL IS NOT NULL
+                                                   OR
+                                                      E.MSDS_ATTC_FILEID IS NOT NULL
+                                                  )
+        ]]>
+                                         <if test="PRD_NM != null and PRD_NM != ''">
+	                                      <choose>
+	                                       <when test="FULL_PRD_NM_YN != null and FULL_PRD_NM_YN == 'true'">
+	                                          AND A.PRD_NM = #{PRD_NM}
+	                                       </when>
+	                                       <otherwise>
+	                                          AND A.PRD_NM LIKE '%' || #{PRD_NM} || '%'
+	                                       </otherwise>
+	                                      </choose>
+	                                     </if>
+                                         <if test="PRVL_LIST != null and PRVL_LIST != ''">
+                                             <![CDATA[
+                                              AND (
+                                                      EXISTS
+                                                      (
+                                                       SELECT 'X' 
+                                                         FROM SSP_APP.TB_PR_MRO_PRD_INFO_ATTR_MAPP S1
+                                                        WHERE S1.CO_CD  = A.CO_CD
+                                                          AND S1.PRD_ID = A.PRD_ID
+                                                          AND S1.PRVL   LIKE '%'||#{PRVL_LIST}||'%'
+                                                      )
+                                                   OR
+                                                      EXISTS
+                                                      (
+                                                       SELECT 'X'
+                                                         FROM SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP S2
+                                                        WHERE S2.CO_CD  = A.CO_CD
+                                                          AND S2.PRD_ID = A.PRD_ID
+                                                          AND S2.PRVL   LIKE '%'||#{PRVL_LIST}||'%'
+                                                      )
+                                                  )
+                                             ]]>
+                                         </if>
+                                         <if test="DT_SPR != null and DT_SPR != ''">
+                                             <if test="DT_SPR == 'REG_DTM'">
+                                              AND A.REG_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                                                AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                                             </if>
+                                             <if test="DT_SPR == 'UPD_DTM'">
+                                              AND A.UPD_DTM BETWEEN TO_DATE(TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 00:00:00','YYYY-MM-DD HH24:MI:SS')
+                                                                AND TO_DATE(TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+                                             </if>
+                                         </if>
+        <![CDATA[
+                                       ) A1
+                                    LEFT JOIN SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP B1
+                                      ON 1=1
+                                     AND B1.CO_CD  = A1.CO_CD
+                                     AND B1.PRD_ID = A1.PRD_ID
+                                   WHERE A1.TB_PR_PRD_INFO_ORDER = 1
+                           ) A2
+                        LEFT JOIN SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO B2
+                          ON 1=1
+                         AND B2.CO_CD                  = A2.CO_CD
+                         AND B2.MNFR_NO                = CASE WHEN A2.MNFR_NO IS NULL
+                                                              THEN '*'
+                                                              ELSE A2.MNFR_NO END
+                         AND B2.PRD_CLCD               = CASE WHEN A2.PRD_CLCD IS NULL
+                                                              THEN '*'
+                                                              ELSE A2.PRD_CLCD END
+                         AND B2.MALL_SPR_CD            = '20'                                    /*10 SSP,20 RD*/
+                         AND B2.PRD_CLSF_CHRPSN_TP_CD  = '30'                                    /*10 상품담당자,20 MD담당자,30 RND 구매담당자*/
+                         AND B2.PRD_CLSF_CHRPSN_SPR_CD = '10'                                    /*10 정, 20 부*/
+                         AND B2.PRD_CLSF_CHRPSN_USEYN  = 'Y'
+                        LEFT JOIN TB_CO_MBR_OPRTR_INFO       C2
+                          ON 1=1
+                         AND C2.CO_CD                  = B2.CO_CD
+                         AND C2.OPRTR_ID               = B2.PRD_CLSF_CHRPSN_ID
+                       WHERE A2.TB_PR_PRD_INFO_ATTR_MAPP_ORDER = 1
+        ]]>
+                     <if test="PURG_CHRPSN_ID != null and PURG_CHRPSN_ID != ''">
+                         AND B.PRD_CLSF_CHRPSN_ID = #{PURG_CHRPSN_ID}
+                     </if>
+        <![CDATA[
+                  ) A3
+          ]]>
+             WHERE 1=1
+               AND A3.TB_PR_PRD_CLSF_CHRPSN_INFO_ORDER = 1
+    </select>
+
+    <select id="selectMsdsMngDupl" parameterType="HashMap" resultType="Integer" >
+      /* MsdsMng.selectMsdsMngDupl MSDS관리 등록 중복체크*/
+          SELECT COUNT(1) AS CNT
+            FROM SSP_APP.TB_PC_CPRTCP_PRD_INFO
+           WHERE CO_CD     = #{CO_CD}
+             AND CPRTCP_ID = #{CPRTCP_ID}
+             AND PRD_ID    = #{PRD_ID}
+             <!-- SSP-623 -->
+             AND ( MSDS_ATTC_FILEID IS NOT NULL OR RND_MSDS_URL IS NOT NULL )
+    </select>
+    
+    <!-- SSP-623 -->
+    <select id="selectCprtcpPrdInfo" parameterType="HashMap" resultType="Integer" >
+      /* MsdsMng.selectCprtcpPrdInfo 협력사상품정보 조회*/
+          SELECT COUNT(*)
+            FROM SSP_APP.TB_PC_CPRTCP_PRD_INFO
+           WHERE CO_CD     = #{CO_CD}
+             AND CPRTCP_ID = #{CPRTCP_ID}
+             AND PRD_ID    = #{PRD_ID}
+    </select>
+
+    <insert id="insertMsdsMng" parameterType="HashMap">
+    /* MsdsMng.insertMsdsMng MSDS관리 저장 */
+    INSERT INTO SSP_APP.TB_PC_CPRTCP_PRD_INFO (
+             CO_CD                       /*회사코드*/
+           , CPRTCP_ID                   /*협력사ID*/
+           , PRD_ID                      /*상품ID*/
+           , ORD_CURR_CD                 /*발주통화코드*/
+           , MIN_ODR_QTY                 /*최소주문수량*/
+           , SPL_PSB_YN                  /*공급가능여부*/
+           , MSDS_ATTC_FILEID            /*MSDS첨부파일ID*/
+           , MSDS_FNL_CHG_DT             /*MSDS최종변경일자*/
+           , RND_MSDS_URL                /*RNDMSDSURL*/
+           , REGPSN_ID                   /*등록자ID*/
+           , REG_DTM                     /*등록일시*/
+           , UPDPSN_ID                   /*수정자ID*/
+           , UPD_DTM                     /*수정일시*/
+           
+<!--            , LOC_ATTC_FILEID             /* 레터첨부파일ID         */ -->
+           , LOC_ATFL_FNL_CHG_DT         /* 레터첨부파일최종변경일 */
+           , LOC_ATFL_UPD_DTM            /* 레터첨부파일수정일시   */
+           , LOC_ATTC_FILE_UPDPSN_ID     /* 레터첨부파일수정자     */
+           , SRVON_CERT_YN               /* 서브원인증여부         */
+           , SRVON_CERT_FNL_CHG_DT       /* 서브원인증최종변경일   */
+           , SRVON_CERT_UPD_DTM          /* 서브원인증수정일시     */
+           , SRVON_CERT_UPDPSN_ID        /* 서브원인증수정자       */
+           
+    ) VALUES (
+             #{CO_CD}
+           , #{CPRTCP_ID}
+           , #{PRD_ID}
+           , 'KRW'
+           , 0
+           , 'Y'
+           , #{MSDS_ATTC_FILEID}
+           , #{MSDS_FNL_CHG_DT}
+           , #{RND_MSDS_URL}
+           , #{REGPSN_ID}
+           , SYSDATE
+           , #{UPDPSN_ID}
+           , SYSDATE
+           
+<!--            , #{LOC_ATTC_FILEID      } -->
+           , #{LOC_ATFL_FNL_CHG_DT  }
+           , CASE WHEN #{MSDS_ATTC_FILEID     } IS NOT NULL OR #{LOC_ATFL_FNL_CHG_DT  } IS NOT NULL THEN SYSDATE      END
+           , CASE WHEN #{MSDS_ATTC_FILEID     } IS NOT NULL OR #{LOC_ATFL_FNL_CHG_DT  } IS NOT NULL THEN #{UPDPSN_ID} END
+           , #{SRVON_CERT_YN        }
+           , #{SRVON_CERT_FNL_CHG_DT}
+           , CASE WHEN #{SRVON_CERT_YN        } IS NOT NULL OR #{SRVON_CERT_FNL_CHG_DT} IS NOT NULL THEN SYSDATE      END
+           , CASE WHEN #{SRVON_CERT_YN        } IS NOT NULL OR #{SRVON_CERT_FNL_CHG_DT} IS NOT NULL THEN #{UPDPSN_ID} END
+           
+    )
+    </insert>
+    <update id="updateMsdsMng_old" parameterType="HashMap">
+        /* MsdsMng.updateMsdsMng MSDS관리 수정 */
+        <![CDATA[
+            UPDATE SSP_APP.TB_PC_CPRTCP_PRD_INFO
+               SET MSDS_ATTC_FILEID = #{MSDS_ATTC_FILEID}                      /*MSDS첨부파일ID*/
+                 , RND_MSDS_URL     = #{RND_MSDS_URL}                          /*RNDMSDSURL*/
+                 , MSDS_FNL_CHG_DT  = #{MSDS_FNL_CHG_DT}                       /*MSDS최종변경일자*/
+                 , UPDPSN_ID        = #{UPDPSN_ID}                             /*수정자ID*/
+                 , UPD_DTM          = SYSDATE                                  /*수정일시*/
+             WHERE CO_CD            = #{CO_CD}
+               AND CPRTCP_ID        = #{CPRTCP_ID}
+               AND PRD_ID           = #{PRD_ID}
+        ]]>
+    </update>
+    
+<!-- 2023.02.07 sg.park - AI-009 MSDS파일 2년경과 갱신처리 -->
+<sql id="sqlMerge4Msds">
+    MERGE INTO SSP_APP.TB_PC_CPRTCP_PRD_INFO  TRGT
+    USING (SELECT #{CO_CD                }    CO_CD
+                , #{CPRTCP_ID            }    CPRTCP_ID
+                , #{PRD_ID               }    PRD_ID
+                
+                , #{MSDS_ATTC_FILEID     }    MSDS_ATTC_FILEID            /* MSDS첨부파일ID         */
+                , #{RND_MSDS_URL         }    RND_MSDS_URL                /* RNDMSDSURL             */
+                , #{MSDS_FNL_CHG_DT      }    MSDS_FNL_CHG_DT             /* MSDS최종변경일자       */
+                ,   SYSDATE                   UPD_DTM                     
+                , #{UPDPSN_ID            }    UPDPSN_ID                   
+                                                                          
+                , #{LOC_ATTC_FILEID      }    LOC_ATTC_FILEID             /* 레터첨부파일ID         */
+                , #{LOC_ATFL_FNL_CHG_DT  }    LOC_ATFL_FNL_CHG_DT         /* 레터첨부파일최종변경일 */
+                ,   SYSDATE                   LOC_ATFL_UPD_DTM            /* 레터첨부파일수정일시   */
+                , #{UPDPSN_ID            }    LOC_ATTC_FILE_UPDPSN_ID     /* 레터첨부파일수정자     */
+                
+                , #{SRVON_CERT_YN        }    SRVON_CERT_YN               /* 자체증빙여부           */
+                , #{SRVON_CERT_FNL_CHG_DT}    SRVON_CERT_FNL_CHG_DT       /* 자체증빙최종변경일시   */
+                ,   SYSDATE                   SRVON_CERT_UPD_DTM          /* 자체증빙수정일시       */
+                , #{UPDPSN_ID            }    SRVON_CERT_UPDPSN_ID        /* 자체증빙수정자         */
+             FROM DUAL
+          )    INPT
+       ON (    INPT.CO_CD    =TRGT.CO_CD
+           AND INPT.CPRTCP_ID=TRGT.CPRTCP_ID
+           AND INPT.PRD_ID   =TRGT.PRD_ID
+          )
+     WHEN MATCHED THEN
+          UPDATE SET
+                 MSDS_ATTC_FILEID           = CASE WHEN NVL(INPT.MSDS_ATTC_FILEID, '-') = NVL(TRGT.MSDS_ATTC_FILEID, '-') 
+                 										AND NVL(INPT.RND_MSDS_URL, '-') = NVL(TRGT.RND_MSDS_URL, '-') 
+                 										AND NVL(INPT.MSDS_FNL_CHG_DT, '-') = NVL(TRGT.MSDS_FNL_CHG_DT, '-') 
+                 											THEN TRGT.MSDS_ATTC_FILEID 
+                 								   ELSE INPT.MSDS_ATTC_FILEID  
+                 							   END  /* MSDS첨부파일ID         */
+                 							   
+               , RND_MSDS_URL               = CASE WHEN NVL(INPT.MSDS_ATTC_FILEID, '-') = NVL(TRGT.MSDS_ATTC_FILEID, '-') 
+               											AND NVL(INPT.RND_MSDS_URL, '-') = NVL(TRGT.RND_MSDS_URL, '-') 
+               											AND NVL(INPT.MSDS_FNL_CHG_DT, '-') = NVL(TRGT.MSDS_FNL_CHG_DT, '-') 
+               												THEN TRGT.RND_MSDS_URL     
+               									   ELSE INPT.RND_MSDS_URL      
+               								   END  /* RNDMSDSURL             */
+               								   
+               , MSDS_FNL_CHG_DT            = CASE WHEN NVL(INPT.MSDS_ATTC_FILEID, '-') = NVL(TRGT.MSDS_ATTC_FILEID, '-') 
+               											AND NVL(INPT.RND_MSDS_URL, '-') = NVL(TRGT.RND_MSDS_URL, '-') 
+               											AND NVL(INPT.MSDS_FNL_CHG_DT, '-') = NVL(TRGT.MSDS_FNL_CHG_DT, '-') 
+               												THEN TRGT.MSDS_FNL_CHG_DT  
+               									   ELSE INPT.MSDS_FNL_CHG_DT   
+               								   END  /* MSDS최종변경일자       */
+               								   
+               , UPD_DTM                    = CASE WHEN NVL(INPT.MSDS_ATTC_FILEID, '-') = NVL(TRGT.MSDS_ATTC_FILEID, '-') 
+               											AND NVL(INPT.RND_MSDS_URL, '-') = NVL(TRGT.RND_MSDS_URL, '-') 
+               											AND NVL(INPT.MSDS_FNL_CHG_DT, '-') = NVL(TRGT.MSDS_FNL_CHG_DT, '-') 
+               												THEN TRGT.UPD_DTM          
+               									   ELSE INPT.UPD_DTM           
+               								   END  /* 수정일시               */
+               								   
+               , UPDPSN_ID                  = CASE WHEN NVL(INPT.MSDS_ATTC_FILEID, '-') = NVL(TRGT.MSDS_ATTC_FILEID, '-') 
+               											AND NVL(INPT.RND_MSDS_URL, '-') = NVL(TRGT.RND_MSDS_URL, '-') 
+               											AND NVL(INPT.MSDS_FNL_CHG_DT, '-') = NVL(TRGT.MSDS_FNL_CHG_DT, '-') 
+               												THEN TRGT.UPDPSN_ID        
+               									   ELSE INPT.UPDPSN_ID         
+               								   END  /* 수정자                 */
+                                                                                                                                                                                                                                                                                                                   
+               , LOC_ATTC_FILEID            = CASE WHEN NVL(INPT.LOC_ATTC_FILEID , '-') = NVL(TRGT.LOC_ATTC_FILEID , '-') 
+               											AND NVL(INPT.LOC_ATFL_FNL_CHG_DT  , '-') = NVL(TRGT.LOC_ATFL_FNL_CHG_DT  , '-') 
+               												THEN TRGT.LOC_ATTC_FILEID         
+               									   ELSE INPT.LOC_ATTC_FILEID              
+               								   END  /* 레터첨부파일ID         */
+               								   
+               , LOC_ATFL_FNL_CHG_DT        = CASE WHEN NVL(INPT.LOC_ATTC_FILEID , '-') = NVL(TRGT.LOC_ATTC_FILEID , '-') 
+               											AND NVL(INPT.LOC_ATFL_FNL_CHG_DT  , '-') = NVL(TRGT.LOC_ATFL_FNL_CHG_DT  , '-') 
+               												THEN TRGT.LOC_ATFL_FNL_CHG_DT     
+               									   ELSE INPT.LOC_ATFL_FNL_CHG_DT          
+               								   END  /* 레터첨부파일최종변경일 */
+               								   
+               , LOC_ATFL_UPD_DTM           = CASE WHEN NVL(INPT.LOC_ATFL_FNL_CHG_DT  , '-') = NVL(TRGT.LOC_ATFL_FNL_CHG_DT  , '-') 
+               												THEN TRGT.LOC_ATFL_UPD_DTM       
+               									   ELSE INPT.LOC_ATFL_UPD_DTM             
+               								   END  /* 레터첨부파일수정일시   */
+               								   
+               , LOC_ATTC_FILE_UPDPSN_ID    = CASE WHEN NVL(INPT.LOC_ATFL_FNL_CHG_DT  , '-') = NVL(TRGT.LOC_ATFL_FNL_CHG_DT  , '-') 
+               												THEN TRGT.LOC_ATTC_FILE_UPDPSN_ID 
+               									   ELSE INPT.LOC_ATTC_FILE_UPDPSN_ID      
+               								   END  /* 레터첨부파일수정자     */
+                                                                                                                                                                                                                                                                                                                   
+               , SRVON_CERT_YN              = CASE WHEN NVL(INPT.SRVON_CERT_YN   , '-') = NVL(TRGT.SRVON_CERT_YN   , '-') 
+               											AND NVL(INPT.SRVON_CERT_FNL_CHG_DT, '-') = NVL(TRGT.SRVON_CERT_FNL_CHG_DT, '-') 
+               												THEN TRGT.SRVON_CERT_YN           
+               									   ELSE INPT.SRVON_CERT_YN                
+               								   END  /* 자체증빙여부           */
+               								   
+               , SRVON_CERT_FNL_CHG_DT      = CASE WHEN NVL(INPT.SRVON_CERT_YN   , '-') = NVL(TRGT.SRVON_CERT_YN   , '-') 
+               											AND NVL(INPT.SRVON_CERT_FNL_CHG_DT, '-') = NVL(TRGT.SRVON_CERT_FNL_CHG_DT, '-') 
+               												THEN TRGT.SRVON_CERT_FNL_CHG_DT   
+               									   ELSE DECODE(INPT.SRVON_CERT_YN, 'Y', INPT.SRVON_CERT_FNL_CHG_DT, NULL) 
+               								   END  /* 자체증빙최종변경일시   */
+               								   
+               , SRVON_CERT_UPD_DTM         = CASE WHEN NVL(INPT.SRVON_CERT_YN   , '-') = NVL(TRGT.SRVON_CERT_YN   , '-') 
+               											AND NVL(INPT.SRVON_CERT_FNL_CHG_DT, '-') = NVL(TRGT.SRVON_CERT_FNL_CHG_DT, '-') 
+               												THEN TRGT.SRVON_CERT_UPD_DTM
+               									   ELSE DECODE(INPT.SRVON_CERT_YN, 'Y', INPT.SRVON_CERT_UPD_DTM, TRGT.SRVON_CERT_UPD_DTM)      
+               								   END  /* 자체증빙수정일시       */
+               								   
+               , SRVON_CERT_UPDPSN_ID       = CASE WHEN NVL(INPT.SRVON_CERT_YN   , '-') = NVL(TRGT.SRVON_CERT_YN   , '-') 
+               											AND NVL(INPT.SRVON_CERT_FNL_CHG_DT, '-') = NVL(TRGT.SRVON_CERT_FNL_CHG_DT, '-') 
+               												THEN TRGT.SRVON_CERT_UPDPSN_ID
+               									   ELSE DECODE(INPT.SRVON_CERT_YN, 'Y', INPT.SRVON_CERT_UPDPSN_ID, TRGT.SRVON_CERT_UPDPSN_ID)    
+               								   END  /* 자체증빙수정자         */
+</sql>
+<update id="updateMsdsMng" parameterType="HashMap">
+/* MsdsMng.updateMsdsMng MSDS관리 수정 */
+BEGIN
+
+<include refid="sqlMerge4Msds" />
+;
+
+	/* MRO_CRT_YN 변경 : S => U */
+    UPDATE 	SSP_APP.TB_PR_PRD_INFO
+    SET 	MRO_CRT_YN  	= 'U'                     		/* MRO 동기화필요상품 */
+        	, UPD_DTM     	= SYSDATE
+        	, UPDPSN_ID   	= #{UPDPSN_ID}
+    WHERE 	CO_CD       	= #{CO_CD    }
+    AND 	PRD_ID      	= LPAD(#{PRD_ID   }, 18, '0')
+    AND 	MALL_SPR_CD 	= '20'                    		/* RnD Mall       */
+    AND 	MRO_CRT_YN  	= 'S';                     		/* MRO 동기화완료상품 */
+    
+END;
+/* MsdsMng.updateMsdsMng MSDS관리 수정 */
+</update>
+<!-- /2023.02.07 sg.park - AI-009 MSDS파일 2년경과 갱신처리 -->
+
+
+    <select id="selectMsdsMngDtl" parameterType="HashMap" resultType="HashMap" >
+        /* MsdsMng.selectMsdsMngDtl MSDS상세 조회 */
+            SELECT A2.CO_CD                                                                   AS CO_CD
+                 , A2.PRD_ID                                                                  AS PRD_ID
+                 , TO_CHAR(TO_NUMBER(A2.PRD_ID))                                              AS PRD_VIEW_ID
+                 , '('|| TO_NUMBER(A2.PRD_ID) || ') ' || A2.PRD_NM                            AS PRD_NM
+                 , A2.MNFR_NO                                                                 AS MNFR_NO
+                 , CASE WHEN A2.MNFR_NO IS NOT NULL
+                        THEN '('|| A2.MNFR_NO || ') ' || A2.MRO_MNFR_NM
+                         END                                                                  AS MRO_MNFR_NM
+                 , A2.PRD_CLCD                                                                AS PRD_CLCD
+                 , CASE WHEN A2.PRD_CLCD IS NOT NULL
+                        THEN '('|| A2.PRD_CLCD || ') ' || A2.PRD_CLCD_NM
+                         END                                                                  AS PRD_CLCD_NM
+                 , A2.TB_PR_PRD_INFO_ORDER                                                    AS TB_PR_PRD_INFO_ORDER
+                 , A2.CPRTCP_ID                                                               AS CPRTCP_ID
+                 , CASE WHEN A2.CPRTCP_ID IS NOT NULL
+                        THEN '('|| A2.CPRTCP_ID || ') ' || A2.CPRTCP_KOR_NM
+                         END                                                                  AS CPRTCP_KOR_NM
+                 , A2.REG_DTM                                                                 AS REG_DTM
+                 , A2.UPD_DTM                                                                 AS UPD_DTM
+                 , A2.FNL_UPD_DTM                                                             AS FNL_UPD_DTM
+                 , A2.UPDPSN_NM                                                               AS UPDPSN_NM
+                 , A2.PRVL_LIST                                                               AS PRVL_LIST
+                 , A2.TB_PR_PRD_INFO_ATTR_MAPP_ORDER                                          AS TB_PR_PRD_INFO_ATTR_MAPP_ORDER
+                 , B2.PRD_CLSF_CHRPSN_ID                                                      AS PRD_CLSF_CHRPSN_ID                     /*구매담당자ID*/
+                 , CASE WHEN B2.PRD_CLSF_CHRPSN_ID IS NOT NULL
+                        THEN '('|| B2.PRD_CLSF_CHRPSN_ID || ') ' || C2.OPRTR_NM
+                         END                                                                  AS PRD_CLSF_CHRPSN_NM                     /*구매담당자명*/
+                 , ROW_NUMBER() OVER (PARTITION BY A2.CO_CD, A2.PRD_ID, A2.CPRTCP_ID ORDER BY
+                                           CASE WHEN B2.MNFR_NO != '*' AND B2.PRD_CLCD != '*'
+                                           THEN 1
+                                           WHEN B2.MNFR_NO != '*'
+                                           THEN 2
+                                           ELSE 3 END)                                        AS TB_PR_PRD_CLSF_CHRPSN_INFO_ORDER
+                 
+                 <!-- 2023.02.07 sg.park - AI-009 MSDS파일 2년경과 갱신처리 -->
+                 ,         A2.MSDS_DATA_SRCE                                                               MSDS_DATA_SRCE
+                 
+                 ,         A2.MSDS_ATTC_FILEID                                                             MSDS_ATTC_FILEID
+                 ,         A2.MSDS_ATTC_FILESEQ                                                            MSDS_ATTC_FILESEQ
+                 ,         A2.MSDS_ATTC_FILENM                                                             MSDS_ATTC_FILENM
+                 ,         A2.RND_MSDS_URL                                                                 RND_MSDS_URL
+                 ,         A2.MSDS_FNL_CHG_DT                                                              MSDS_FNL_CHG_DT
+                 
+                 ,         A2.LOC_ATTC_FILEID                                                              LOC_ATTC_FILEID              /* 레터첨부파일ID        */
+                 ,         A2.LOC_ATTC_FILENM                                                              LOC_ATTC_FILENM              /* 레터첨부파일명        */
+                 ,         A2.LOC_ATFL_FNL_CHG_DT                                                          LOC_ATFL_FNL_CHG_DT          /* 레터첨부파일최종변경일*/ 
+                 , TO_CHAR(A2.LOC_ATFL_UPD_DTM    , 'YYYY-MM-DD HH24:MI:SS')                               LOC_ATFL_UPD_DATE            /* 레터첨부파일수정일시  */
+                 , (SELECT FN_CC_GET_MBR_IDNM(A2.CO_CD, A2.LOC_ATTC_FILE_UPDPSN_ID) FROM DUAL)             LOC_ATTC_FILE_UPDPSN_IDNM    /* 레터첨부파일수정자    */
+                 , NVL    (A2.SRVON_CERT_YN         , 'N'                    )                             SRVON_CERT_YN                /* 자체증빙여부          */
+                 ,         A2.SRVON_CERT_FNL_CHG_DT                                                        SRVON_CERT_FNL_CHG_DT        /* 자체증빙최종변경일시  */
+                 , TO_CHAR(A2.SRVON_CERT_UPD_DTM    , 'YYYY-MM-DD HH24:MI:SS')                             SRVON_CERT_UPD_DATE          /* 자체증빙수정일시      */
+                 , (SELECT FN_CC_GET_MBR_IDNM(A2.CO_CD, A2.SRVON_CERT_UPDPSN_ID) FROM DUAL)                SRVON_CERT_UPDPSN_IDNM       /* 자체증빙수정자        */
+                 <!-- /2023.02.07 sg.park - AI-009 MSDS파일 2년경과 갱신처리 -->
+                 
+            FROM (
+                     SELECT A1.CO_CD                                                                                      AS CO_CD
+                          , A1.PRD_ID                                                                                     AS PRD_ID
+                          , A1.PRD_NM                                                                                     AS PRD_NM
+                          , A1.MNFR_NO                                                                                    AS MNFR_NO
+                          , A1.MRO_MNFR_NM                                                                                AS MRO_MNFR_NM
+                          , A1.PRD_CLCD                                                                                   AS PRD_CLCD
+                          , A1.PRD_CLCD_NM                                                                                AS PRD_CLCD_NM
+                          , A1.TB_PR_PRD_INFO_ORDER                                                                       AS TB_PR_PRD_INFO_ORDER
+                          , A1.CPRTCP_ID                                                                                  AS CPRTCP_ID
+                          , A1.CPRTCP_KOR_NM                                                                              AS CPRTCP_KOR_NM
+                          , A1.REG_DTM                                                                                    AS REG_DTM
+                          , A1.UPD_DTM                                                                                    AS UPD_DTM
+                          , CASE WHEN A1.UPD_DTM IS NULL
+                                 THEN A1.REG_DTM
+                                 ELSE A1.UPD_DTM END                                                                      AS FNL_UPD_DTM
+                          , A1.UPDPSN_NM
+                          , LISTAGG(B1.PRVL,';') WITHIN GROUP(ORDER BY B1.SRT_SO) OVER (PARTITION BY A1.CO_CD, A1.PRD_ID) AS PRVL_LIST                      /*대표규격*/
+                          , ROW_NUMBER() OVER (PARTITION BY A1.CO_CD, A1.PRD_ID,A1.CPRTCP_ID ORDER BY 1)                  AS TB_PR_PRD_INFO_ATTR_MAPP_ORDER
+                          
+                          <!-- 2023.02.07 sg.park - AI-009 MSDS파일 2년경과 갱신처리 -->
+                          
+                          , A1.MSDS_DATA_SRCE
+                          
+                          , A1.MSDS_ATTC_FILEID                                                                           AS MSDS_ATTC_FILEID
+                          , A1.MSDS_ATTC_FILESEQ                                                                          AS MSDS_ATTC_FILESEQ
+                          , A1.MSDS_ATTC_FILENM                                                                           AS MSDS_ATTC_FILENM
+                          , A1.RND_MSDS_URL                                                                               AS RND_MSDS_URL
+                          , A1.MSDS_FNL_CHG_DT                                                                            AS MSDS_FNL_CHG_DT
+                          
+                          , A1.LOC_ATTC_FILEID                   /* 레터첨부파일ID         */
+                          , A1.LOC_ATTC_FILESEQ                  /* 레터첨부파일순번       */
+                          , A1.LOC_ATTC_FILENM                   /* 레터첨부파일명         */
+                          , A1.LOC_ATFL_FNL_CHG_DT               /* 레터첨부파일최종변경일 */
+                          , A1.LOC_ATFL_UPD_DTM                  /* 레터첨부파일수정일시   */
+                          , A1.LOC_ATTC_FILE_UPDPSN_ID           /* 레터첨부파일수정자     */
+                          , A1.SRVON_CERT_YN                     /* 자체증빙여부           */
+                          , A1.SRVON_CERT_FNL_CHG_DT             /* 자체증빙최종변경일시   */
+                          , A1.SRVON_CERT_UPD_DTM                /* 자체증빙수정일시       */
+                          , A1.SRVON_CERT_UPDPSN_ID              /* 자체증빙수정자         */
+                          <!-- /2023.02.07 sg.park - AI-009 MSDS파일 2년경과 갱신처리 -->
+                          
+                       FROM (
+                                SELECT A.CO_CD                                                                   AS CO_CD                                   /*회사코드 PK*/
+                                     , A.PRD_ID                                                                  AS PRD_ID                                  /*상품ID PK*/
+                                     , A.PRD_NM                                                                  AS PRD_NM                                  /*상품명*/
+                                     , C.MNFR_NO                                                                 AS MNFR_NO                                 /*제조원ID*/
+                                     , D.MRO_MNFR_NM                                                             AS MRO_MNFR_NM                             /*제조원*/
+                                     , A.PRD_CLCD                                                                AS PRD_CLCD                                /*카테고리코드*/  /*카테고리ID*/
+                                     , (SELECT SSP_APP.FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD) FROM DUAL)        AS PRD_CLCD_NM                             /*카테고리명*/
+                                     , ROW_NUMBER() OVER (PARTITION BY A.CO_CD, A.PRD_ID,E.CPRTCP_ID ORDER BY 1) AS TB_PR_PRD_INFO_ORDER
+                                     , E.CPRTCP_ID                                                                                                          /*협력사ID*/
+                                     , F.CPRTCP_KOR_NM                                                                                                      /*협력사명*/
+                                     , TO_CHAR(E.REG_DTM,'YYYY-MM-DD HH24:MI:SS')                                AS REG_DTM                                 /*등록일*/
+                                     , TO_CHAR(E.UPD_DTM,'YYYY-MM-DD HH24:MI:SS')                                AS UPD_DTM                                 /*최종수정일*/
+                                     <!-- , '(' || CASE WHEN E.UPDPSN_ID IS NULL
+                                                   THEN E.REGPSN_ID
+                                                   ELSE E.UPDPSN_ID
+                                                    END || ') ' || G.OPRTR_NM                                    AS UPDPSN_NM -->
+                                     , (SELECT FN_CC_GET_MBR_IDNM(A.CO_CD, E.UPDPSN_ID) FROM DUAL)				 AS UPDPSN_NM
+                                     <!-- 2023.02.07 sg.park - AI-009 MSDS파일 2년경과 갱신처리 -->
+                                     , 'TB_PC_CPRTCP_PRD_INFO'                MSDS_DATA_SRCE
+                                     
+                                     , E.MSDS_ATTC_FILEID                                                                                                   /* 파일아이디                       */
+                                     , B.DOC_REG_SEQ                                                             AS MSDS_ATTC_FILESEQ                       /* MSDS파일순번                     */
+                                     , B.ATFL_NM                                                                 AS MSDS_ATTC_FILENM                        /* MSDS파일명                       */
+                                     , E.RND_MSDS_URL                                                            AS RND_MSDS_URL                            /* 협력사상품에 칼럼추가해서 바꿀것 */
+                                     , E.MSDS_FNL_CHG_DT                                                                                                    /* MSDS 최종개정일                  */
+                                     
+                                     <!-- , E.LOC_ATTC_FILEID                   /* 레터첨부파일ID         */ -->
+                                     , E.MSDS_ATTC_FILEID                     LOC_ATTC_FILEID
+                                     , A9A.DOC_REG_SEQ                        LOC_ATTC_FILESEQ
+                                     , A9A.ATFL_NM                            LOC_ATTC_FILENM
+                                     , E.LOC_ATFL_FNL_CHG_DT               /* 레터첨부파일최종변경일 */
+                                     , E.LOC_ATFL_UPD_DTM                  /* 레터첨부파일수정일시   */
+                                     , E.LOC_ATTC_FILE_UPDPSN_ID           /* 레터첨부파일수정자     */
+                                     , E.SRVON_CERT_YN                     /* 자체증빙여부           */
+                                     , E.SRVON_CERT_FNL_CHG_DT             /* 자체증빙최종변경일시   */
+                                     , E.SRVON_CERT_UPD_DTM                /* 자체증빙수정일시       */
+                                     , E.SRVON_CERT_UPDPSN_ID              /* 자체증빙수정자         */
+                                     <!-- /2023.02.07 sg.park - AI-009 MSDS파일 2년경과 갱신처리 -->
+                                     
+                                  FROM SSP_APP.TB_PR_PRD_INFO A
+                                  LEFT JOIN SSP_APP.TB_PR_MRO_PRD_INFO     C
+                                    ON 1=1
+                                   AND C.CO_CD         = A.CO_CD
+                                   AND C.PRD_ID        = A.PRD_ID
+                                  LEFT JOIN SSP_APP.TB_PR_MNFR_INFO        D
+                                    ON 1=1
+                                   AND D.CO_CD         = C.CO_CD
+                                   AND D.MNFR_NO       = C.MNFR_NO
+                                  LEFT JOIN SSP_APP.TB_PC_CPRTCP_PRD_INFO  E
+                                    ON 1=1
+                                   AND E.CO_CD         = A.CO_CD
+                                   AND E.PRD_ID        = A.PRD_ID
+                                   AND E.SPL_PSB_YN    = 'Y'
+                                  LEFT JOIN SSP_APP.TB_CO_ATFL_DTLS        B   ON   B.DOC_REG_ID=E.MSDS_ATTC_FILEID AND   B.ETC_FDS_2='95' AND   B.DOC_REG_SEQ=(SELECT MAX(DOC_REG_SEQ) FROM SSP_APP.TB_CO_ATFL_DTLS WHERE DOC_REG_ID=  B.DOC_REG_ID AND ETC_FDS_2=  B.ETC_FDS_2)  /*첨부파일유형코드-95:MSDS, 9A:LOC, S2:시약정보요약서*/
+                                  LEFT JOIN SSP_APP.TB_CO_ATFL_DTLS      A9A   ON A9A.DOC_REG_ID=E.MSDS_ATTC_FILEID AND A9A.ETC_FDS_2='9A' AND A9A.DOC_REG_SEQ=(SELECT MAX(DOC_REG_SEQ) FROM SSP_APP.TB_CO_ATFL_DTLS WHERE DOC_REG_ID=A9A.DOC_REG_ID AND ETC_FDS_2=A9A.ETC_FDS_2)  /*첨부파일유형코드-95:MSDS, 9A:LOC, S2:시약정보요약서*/
+                                  LEFT JOIN SSP_APP.TB_CP_CPRTCP_BASIS     F
+                                    ON 1=1
+                                   AND F.CO_CD         = E.CO_CD
+                                   AND F.CPRTCP_ID     = E.CPRTCP_ID
+                                  LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO   G
+                                    ON 1=1
+                                   AND G.CO_CD         = E.CO_CD
+                                   AND G.OPRTR_ID      = CASE WHEN E.UPDPSN_ID IS NULL
+                                                              THEN E.REGPSN_ID
+                                                              ELSE E.UPDPSN_ID END
+                                 WHERE 1=1
+                                   AND (
+                                           E.RND_MSDS_URL IS NOT NULL
+                                           OR E.MSDS_ATTC_FILEID IS NOT NULL
+                                       )
+                            ) A1
+                         LEFT JOIN SSP_APP.TB_PR_PRD_INFO_ATTR_MAPP B1
+                           ON 1=1
+                          AND B1.CO_CD                = A1.CO_CD
+                          AND B1.PRD_ID               = A1.PRD_ID
+                        WHERE 1=1
+                          AND A1.TB_PR_PRD_INFO_ORDER = 1
+                 ) A2
+              LEFT JOIN SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO B2
+                ON 1=1
+               AND B2.CO_CD                     = A2.CO_CD
+               AND B2.MNFR_NO                   = CASE WHEN A2.MNFR_NO IS NULL
+                                                       THEN '*'
+                                                       ELSE A2.MNFR_NO END
+               AND B2.PRD_CLCD                  = CASE WHEN A2.PRD_CLCD IS NULL
+                                                       THEN '*'
+                                                       ELSE A2.PRD_CLCD END
+               AND B2.MALL_SPR_CD               = '20'                                    /*10 SSP,20 RD*/
+               AND B2.PRD_CLSF_CHRPSN_TP_CD     = '30'                                    /*10 상품담당자,20 MD담당자,30 RND 구매담당자*/
+               AND B2.PRD_CLSF_CHRPSN_SPR_CD    = '10'                                    /*10 정, 20 부*/
+               AND B2.PRD_CLSF_CHRPSN_USEYN     = 'Y'
+              LEFT JOIN SSP_APP.TB_CO_MBR_OPRTR_INFO       C2
+                ON 1=1
+               AND C2.CO_CD      = B2.CO_CD
+               AND C2.OPRTR_ID   = B2.PRD_CLSF_CHRPSN_ID
+               
+               
+               
+               
+             WHERE 1=1
+               AND A2.TB_PR_PRD_INFO_ATTR_MAPP_ORDER = 1
+               AND A2.CO_CD                          = #{CO_CD}
+               AND A2.PRD_ID                         = #{PRD_ID}
+               AND A2.CPRTCP_ID                      = #{CPRTCP_ID}
+    </select>
+
+    <select id="selectAttcFileDtlsInq_old" parameterType="HashMap" resultType="HashMap">
+        /* MsdsMng.selectAttcFileDtlsInq 첨부파일내역 조회 */
+        <![CDATA[
+        SELECT A.DOC_REG_ID                  /*문서등록ID*/
+             , A.DOC_REG_SEQ                 /*문서등록순번*/
+             , A.ATFL_NM                     /*첨부파일명*/
+             , A.ATFL_LEN                    /*첨부파일길이*/
+             , A.ATFL_STOR_PATH              /*첨부파일저장경로*/
+             , A.STOR_PLC_SPR_CD             /*저장장소구분코드*/
+             , A.ORI_ATFL_NM                 /*원첨부파일명*/
+             , A.SAP_DOC_ID                  /*SAP문서ID*/
+             , A.RMKS_CTS                    /*비고내용*/
+             , A.ETC_FDS_1                   /*기타필드1*/
+             , A.ETC_FDS_2                   /*기타필드2*/
+             , A.ETC_FDS_3                   /*기타필드3*/
+             , A.ETC_FDS_4                   /*기타필드4*/
+             , A.ETC_FDS_5                   /*기타필드5*/
+             , A.REG_DTM                     /*등록일시*/
+             , A.REGPSN_ID                   /*등록자ID*/
+             , A.UPD_DTM                     /*수정일시*/
+             , A.UPDPSN_ID                   /*수정자ID*/
+          FROM SSP_APP.TB_CO_ATFL_DTLS A
+         WHERE 1=1
+           AND A.DOC_REG_ID = #{DOC_REG_ID}
+        ]]>
+    </select>
+    <select id="selectAttcFileDtlsInq" parameterType="HashMap" resultType="HashMap">
+    /* MsdsMng.selectAttcFileDtlsInq 첨부파일내역 조회 */
+        SELECT A.DOC_REG_ID                  /*문서등록ID*/
+             , A.DOC_REG_SEQ                 /*문서등록순번*/
+             , A.ATFL_NM                     /*첨부파일명*/
+             , A.ATFL_LEN                    /*첨부파일길이*/
+             , A.ATFL_STOR_PATH              /*첨부파일저장경로*/
+             , A.STOR_PLC_SPR_CD             /*저장장소구분코드*/
+             , A.ORI_ATFL_NM                 /*원첨부파일명*/
+             , A.SAP_DOC_ID                  /*SAP문서ID*/
+             , A.RMKS_CTS                    /*비고내용*/
+             , A.ETC_FDS_1                   /*기타필드1*/
+             , A.ETC_FDS_2                   /*기타필드2*/
+             , A.ETC_FDS_3                   /*기타필드3*/
+             , A.ETC_FDS_4                   /*기타필드4*/
+             , A.ETC_FDS_5                   /*기타필드5*/
+             , A.REG_DTM                     /*등록일시*/
+             , A.REGPSN_ID                   /*등록자ID*/
+             , A.UPD_DTM                     /*수정일시*/
+             , A.UPDPSN_ID                   /*수정자ID*/
+          FROM SSP_APP.TB_CO_ATFL_DTLS A
+         WHERE 1=1
+           <if test="MSDS_ATTC_FILEID != null or LOC_ATTC_FILEID != null">
+           AND A.DOC_REG_ID IN ( #{MSDS_ATTC_FILEID}, #{LOC_ATTC_FILEID} )
+           </if>
+         ORDER BY
+               DECODE(A.ETC_FDS_2, '95', 1, '9A', 2, 9)
+    /* /MsdsMng.selectAttcFileDtlsInq 첨부파일내역 조회 */
+    </select>
+    
+    <select id="selectCodeChkYn" parameterType="HashMap" resultType="HashMap">
+        /* MsdsMng.selectCodeChkYn  저장 코드체크여부 조회  */
+        <![CDATA[
+            SELECT MAX(PRD_ID_YN)    AS PRD_ID_YN          /*상품ID*/
+                 , MAX(CPRTCP_ID_YN) AS CPRTCP_ID_YN       /*협력사 코드*/
+              FROM (
+                       SELECT CASE WHEN COUNT(1) > 0
+                                   THEN 'Y'
+                                   ELSE 'N'
+                              END                     AS PRD_ID_YN
+                            , ''                      AS CPRTCP_ID_YN
+                         FROM SSP_APP.TB_PR_PRD_INFO
+                        WHERE CO_CD        = #{CO_CD}
+                          AND MALL_SPR_CD  = #{MALL_SPR_CD}
+                          AND PRD_ID       = LPAD(#{PRD_ID}, 18, '0')
+                        UNION ALL
+                       SELECT ''                      AS PRD_ID_YN
+                            , CASE WHEN COUNT(1) > 0
+                                   THEN 'Y'
+                                   ELSE 'N'
+                              END                     AS CPRTCP_ID_YN
+                         FROM SSP_APP.TB_CP_CPRTCP_BASIS
+                        WHERE CO_CD        = #{CO_CD}
+                          AND CPRTCP_ID    = #{CPRTCP_ID}
+
+                   )
+        ]]>
+    </select>
+    
+    
+<!--
+MSDS 첨부파일 처리 변경 : SP_RD_CPRTCP_MSDS_MUTI_FILE_UPLD > SP_RD_CPRTCP_MSDS_LOC_MUTI_FILE_UPLD
+-->
+<!--<update id="saveSpRdCprtrMsdsLocMultiUpld_xx" statementType="CALLABLE" parameterType="HashMap">
+/* MsdsMng.saveSpRdCprtrMsdsLocMultiUpld - MSDS + LOC 파일 저장 */
+DECLARE
+    O_RTN_CD  VARCHAR2(1);
+    O_RTN_MSG VARCHAR2(4000);
+BEGIN
+
+SELECT      CO_CD                   CO_CD                
+     , LPAD(PRD_ID   , 10, '0')     PRD_ID               
+     , LPAD(CPRTCP_ID, 18, '0')     CPRTCP_ID            
+     ,      MSDS_FNL_CHG_DT         MSDS_FNL_CHG_DT      
+     ,      ATCH_TP_CD              ATCH_TP_CD           
+     ,      RND_MSDS_URL            RND_MSDS_URL         
+     ,      ORI_ATFL_NM             ORI_ATFL_NM          
+     ,      ATFL_STOR_PATH          ATFL_STOR_PATH       
+     ,      ATFL_LEN                ATFL_LEN             
+     ,      ATFL_NM                 ATFL_NM              
+     ,      USER_ID                 USER_ID              
+     ,      LOC_ATTC_FILENM         LOC_ATTC_FILENM      
+     ,      LOC_ATTC_FILEPATH       LOC_ATTC_FILEPATH    
+     ,      LOC_ATTC_FILESIZE       LOC_ATTC_FILESIZE    
+     ,      LOC_ATTC_FILE_ORI_NM    LOC_ATTC_FILE_ORI_NM 
+     ,      LOC_ATFL_FNL_CHG_DT     LOC_ATFL_FNL_CHG_DT  
+     ,      SRVON_CERT_YN           SRVON_CERT_YN        
+     ,      SRVON_CERT_FNL_CHG_DT   SRVON_CERT_FNL_CHG_DT
+  FROM (SELECT NULL CO_CD, NULL PRD_ID, NULL CPRTCP_ID, NULL MSDS_FNL_CHG_DT, NULL ATCH_TP_CD, NULL RND_MSDS_URL, NULL ORI_ATFL_NM, NULL ATFL_STOR_PATH, NULL ATFL_LEN, NULL ATFL_NM, NULL USER_ID, NULL LOC_ATTC_FILENM, NULL LOC_ATTC_FILEPATH, NULL LOC_ATTC_FILESIZE, NULL LOC_ATTC_FILE_ORI_NM, NULL LOC_ATFL_FNL_CHG_DT, NULL SRVON_CERT_YN, NULL SRVON_CERT_FNL_CHG_DT FROM DUAL
+        <if test='lsXlsx != null and lsXlsx .size() > 0'><foreach collection="lsXlsx" item="item">
+        UNION ALL
+        SELECT #{item.I_CO_CD                , jdbcType=VARCHAR}
+             , #{item.I_PRD_ID               , jdbcType=VARCHAR}
+             , #{item.I_CPRTCP_ID            , jdbcType=VARCHAR}
+             , #{item.I_MSDS_FNL_CHG_DT      , jdbcType=VARCHAR}
+             , #{item.I_ATCH_TP_CD           , jdbcType=VARCHAR}
+             , #{item.I_RND_MSDS_URL         , jdbcType=VARCHAR}
+             , #{item.I_ORI_ATFL_NM          , jdbcType=VARCHAR}
+             , #{item.I_ATFL_STOR_PATH       , jdbcType=VARCHAR}
+             , #{item.I_ATFL_LEN             , jdbcType=VARCHAR}
+             , #{item.I_ATFL_NM              , jdbcType=VARCHAR}
+             , #{item.I_USER_ID              , jdbcType=VARCHAR}
+             , #{item.I_LOC_ATTC_FILENM      , jdbcType=VARCHAR}
+             , #{item.I_LOC_ATTC_FILEPATH    , jdbcType=VARCHAR}
+             , #{item.I_LOC_ATTC_FILESIZE    , jdbcType=VARCHAR}
+             , #{item.I_LOC_ATTC_FILE_ORI_NM , jdbcType=VARCHAR}
+             , #{item.I_LOC_ATFL_FNL_CHG_DT  , jdbcType=VARCHAR}
+             , #{item.I_SRVON_CERT_YN        , jdbcType=VARCHAR}
+             , #{item.I_SRVON_CERT_FNL_CHG_DT, jdbcType=VARCHAR}
+          FROM DUAL</foreach></if>
+       )
+ WHERE CO_CD IS NOT NULL
+;
+
+    COMMIT;
+
+EXCEPTION WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE(SQLERRM);
+    O_RTN_CD  := PG_OD_CONST.C_RTN_CD_ERROR;
+    O_RTN_MSG := PG_OD_TRACE_INFO.EXTRACT_BIZ_ERROR(SQLERRM);
+    ROLLBACK;
+    
+END;
+/* /MsdsMng.saveSpRdCprtrMsdsLocMultiUpld - MSDS + LOC 파일 저장 */
+</update>-->
+<update id="saveSpRdCprtrMsdsLocMultiUpld" statementType="CALLABLE" parameterType="HashMap">
+/* MsdsMng.saveSpRdCprtrMsdsLocMultiUpld - MSDS + LOC 파일 저장 */
+DECLARE
+	O_RTN_CD  VARCHAR2(1);
+	O_RTN_MSG VARCHAR2(4000);
+BEGIN
+    <if test='lsXlsx != null and lsXlsx .size() > 0'><foreach collection="lsXlsx" item="item">
+    SSP_APP.SP_RD_CPRTCP_MSDS_LOC_MUTI_FILE_UPLD(
+            O_RTN_CD   <!-- /* 리턴 코드                 *//* S : 성공 , E : 오류                */ -->
+          , O_RTN_MSG  <!-- /* 실패시 메시지             */                                         -->
+          , #{item.I_CO_CD                , mode=IN , jdbcType=VARCHAR}   /* 회사코드 필수             */                                         
+          , #{item.I_PRD_ID               , mode=IN , jdbcType=VARCHAR}   /* 상품ID 필수               */                                         
+          , #{item.I_CPRTCP_ID            , mode=IN , jdbcType=VARCHAR}   /* 협력사ID 필수             */                                         
+          , #{item.I_MSDS_FNL_CHG_DT      , mode=IN , jdbcType=VARCHAR}   /* MSDS최종변경일자          */                                         
+          , #{item.I_ATCH_TP_CD           , mode=IN , jdbcType=VARCHAR}   /* 첨부파일유형코드          *//* 95:MSDS, 9A:LOC,S2:시약확인서 등등 */ 
+          , #{item.I_RND_MSDS_URL         , mode=IN , jdbcType=VARCHAR}   /* RNDMSDSURL                */                                         
+          , #{item.I_ORI_ATFL_NM          , mode=IN , jdbcType=VARCHAR}   /* 물리파일명                */                                         
+          , #{item.I_ATFL_STOR_PATH       , mode=IN , jdbcType=VARCHAR}   /* 첨부파일저장경로          */                                         
+          , #{item.I_ATFL_LEN             , mode=IN , jdbcType=VARCHAR}   /* 첨부파일길이              */                                         
+          , #{item.I_ATFL_NM              , mode=IN , jdbcType=VARCHAR}   /* 논리파일명                */                                         
+          , #{item.I_USER_ID              , mode=IN , jdbcType=VARCHAR}   /* 수정자ID                  */                                         
+          , #{item.I_LOC_ATTC_FILENM      , mode=IN , jdbcType=VARCHAR}   /* LOC 첨부파일 논리명       */                                         
+          , #{item.I_LOC_ATTC_FILEPATH    , mode=IN , jdbcType=VARCHAR}   /* LOC 첨부파일 저장경로     */                                         
+          , #{item.I_LOC_ATTC_FILESIZE    , mode=IN , jdbcType=VARCHAR}   /* LOC 첨부파일 길이         */                                         
+          , #{item.I_LOC_ATTC_FILE_ORI_NM , mode=IN , jdbcType=VARCHAR}   /* LOC 첨부파일 물리명       */                                         
+          , #{item.I_LOC_ATFL_FNL_CHG_DT  , mode=IN , jdbcType=VARCHAR}   /* LOC 첨부파일 최종변경일자 */                                         
+          , #{item.I_SRVON_CERT_YN        , mode=IN , jdbcType=VARCHAR}   /* 서브원 인증 여부          */                                         
+          , #{item.I_SRVON_CERT_FNL_CHG_DT, mode=IN , jdbcType=VARCHAR}   /* 서브원 인증 최종변경일자  */                                         
+    );
+    </foreach></if>
+    
+    COMMIT;
+
+EXCEPTION WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE(SQLERRM);
+    O_RTN_CD  := PG_OD_CONST.C_RTN_CD_ERROR;
+    O_RTN_MSG := PG_OD_TRACE_INFO.EXTRACT_BIZ_ERROR(SQLERRM);
+    ROLLBACK;
+    
+END;
+/* /MsdsMng.saveSpRdCprtrMsdsLocMultiUpld - MSDS + LOC 파일 저장 */
+</update>
+
+
+
+<!-- ㅡMSDS 관련  -->
+<select id="selectPcCprtPrdInfo" parameterType="HashMap" resultType="HashMap">
+        /* MsdsMng.selectPcCprtPrdInfo 협력사상품정보 TABLE 이전정보  조회 */
+      
+SELECT #{I_CO_CD}                 CO_CD
+     , LPAD(#{I_PRD_ID}   , 18, '0')   PRD_ID
+     , LPAD(#{I_CPRTCP_ID}, 10, '0')   CPRTCP_ID
+
+     , CASE WHEN #{I_ATFL_NM} IS NOT NULL OR #{I_LOC_ATTC_FILENM} IS NOT NULL  THEN NVL(MSDS_ATTC_FILEID, (SELECT FN_RD_GET_UUID() FROM DUAL)) END  V_DOC_REG_ID
+     , #{I_RND_MSDS_URL}               RND_MSDS_URL
+     , #{I_MSDS_FNL_CHG_DT}            MSDS_FNL_CHG_DT
+
+     , #{I_LOC_ATTC_FILENM}            LOC_ATTC_FILENM
+     , #{I_LOC_ATFL_FNL_CHG_DT}        LOC_ATFL_FNL_CHG_DT
+
+     , #{I_SRVON_CERT_YN}              SRVON_CERT_YN
+     , #{I_SRVON_CERT_FNL_CHG_DT}      SRVON_CERT_FNL_CHG_DT
+
+     , #{I_USER_ID}                    UPDPSN_ID
+     , SYSDATE                         UPD_DTM     
+     , CASE WHEN (SELECT COUNT(DOC_REG_SEQ) FROM TB_CO_ATFL_DTLS WHERE DOC_REG_ID=MSDS_ATTC_FILEID AND ETC_FDS_2='95') > 0 THEN 'Y' END  V_OLD_EXISTS_MSDS_FILE_YN
+     , CASE WHEN (SELECT COUNT(DOC_REG_SEQ) FROM TB_CO_ATFL_DTLS WHERE DOC_REG_ID=MSDS_ATTC_FILEID AND ETC_FDS_2='9A') > 0 THEN 'Y' END  V_OLD_EXISTS_LOC__FILE_YN
+  FROM TB_PC_CPRTCP_PRD_INFO                       /* 협력사상품정보 TABLE */
+ WHERE CO_CD               = #{I_CO_CD}             /* 회사코드 */
+   AND CPRTCP_ID           = LPAD(#{I_CPRTCP_ID}   , 10, '0')         /* 협력사ID */
+   AND PRD_ID              = LPAD(#{I_PRD_ID}   , 18, '0')            /* 상품ID */
+      
+    </select>
+    
+<update id="updateKPcCprtPrdInfo" parameterType="HashMap">
+        /* MsdsMng.updateKPcCprtPrdInfo TB_PC_CPRTCP_PRD_INFO 업데이트 */
+        
+ MERGE INTO TB_PC_CPRTCP_PRD_INFO  TRGT
+    USING (SELECT      #{I_CO_CD}                 CO_CD
+                , LPAD(#{I_PRD_ID}   , 18, '0')   PRD_ID
+                , LPAD(#{I_CPRTCP_ID}, 10, '0')   CPRTCP_ID
+
+                , #{V_DOC_REG_ID}                 MSDS_ATTC_FILEID
+                , #{I_RND_MSDS_URL}               RND_MSDS_URL
+                , #{I_MSDS_FNL_CHG_DT}            MSDS_FNL_CHG_DT
+
+                , #{I_LOC_ATTC_FILENM}            LOC_ATTC_FILENM
+                , #{I_LOC_ATFL_FNL_CHG_DT}        LOC_ATFL_FNL_CHG_DT
+
+                , #{I_SRVON_CERT_YN}              SRVON_CERT_YN
+                , #{I_SRVON_CERT_FNL_CHG_DT}      SRVON_CERT_FNL_CHG_DT
+
+                , #{I_USER_ID}                    UPDPSN_ID
+                , SYSDATE                      UPD_DTM
+             FROM DUAL
+          )    INPT
+       ON (    INPT.CO_CD     = TRGT.CO_CD
+           AND INPT.PRD_ID    = TRGT.PRD_ID
+           AND INPT.CPRTCP_ID = TRGT.CPRTCP_ID   )
+
+     WHEN MATCHED THEN
+          UPDATE SET
+                 MSDS_ATTC_FILEID      = CASE WHEN NVL(INPT.MSDS_ATTC_FILEID     , '-') = NVL(TRGT.MSDS_ATTC_FILEID     , '-') THEN TRGT.MSDS_ATTC_FILEID      ELSE INPT.MSDS_ATTC_FILEID      END
+               , RND_MSDS_URL          = CASE WHEN NVL(INPT.RND_MSDS_URL         , '-') = NVL(TRGT.RND_MSDS_URL         , '-') THEN TRGT.RND_MSDS_URL          ELSE INPT.RND_MSDS_URL          END
+               , MSDS_FNL_CHG_DT       = CASE WHEN NVL(INPT.MSDS_FNL_CHG_DT      , '-') = NVL(TRGT.MSDS_FNL_CHG_DT      , '-') THEN TRGT.MSDS_FNL_CHG_DT       ELSE INPT.MSDS_FNL_CHG_DT       END
+               , LOC_ATTC_FILEID       = CASE WHEN NVL(INPT.MSDS_ATTC_FILEID     , '-') = NVL(TRGT.MSDS_ATTC_FILEID     , '-') THEN TRGT.MSDS_ATTC_FILEID      ELSE INPT.MSDS_ATTC_FILEID      END
+               , LOC_ATFL_FNL_CHG_DT   = CASE WHEN NVL(INPT.LOC_ATFL_FNL_CHG_DT  , '-') = NVL(TRGT.LOC_ATFL_FNL_CHG_DT  , '-') THEN TRGT.LOC_ATFL_FNL_CHG_DT   ELSE INPT.LOC_ATFL_FNL_CHG_DT   END
+               , SRVON_CERT_YN         = CASE WHEN NVL(INPT.SRVON_CERT_YN        , '-') = NVL(TRGT.SRVON_CERT_YN        , '-') THEN TRGT.SRVON_CERT_YN         ELSE INPT.SRVON_CERT_YN         END
+               , SRVON_CERT_FNL_CHG_DT = CASE WHEN NVL(INPT.SRVON_CERT_FNL_CHG_DT, '-') = NVL(TRGT.SRVON_CERT_FNL_CHG_DT, '-') THEN TRGT.SRVON_CERT_FNL_CHG_DT ELSE INPT.SRVON_CERT_FNL_CHG_DT END
+
+               , UPDPSN_ID             = CASE WHEN NVL(INPT.MSDS_ATTC_FILEID     , '-') = NVL(TRGT.MSDS_ATTC_FILEID     , '-')
+                                               AND NVL(INPT.RND_MSDS_URL         , '-') = NVL(TRGT.RND_MSDS_URL         , '-')
+                                               AND NVL(INPT.MSDS_FNL_CHG_DT      , '-') = NVL(TRGT.MSDS_FNL_CHG_DT      , '-')
+                                               AND NVL(INPT.LOC_ATFL_FNL_CHG_DT  , '-') = NVL(TRGT.LOC_ATFL_FNL_CHG_DT  , '-')
+                                               AND NVL(INPT.SRVON_CERT_YN        , '-') = NVL(TRGT.SRVON_CERT_YN        , '-')
+                                               AND NVL(INPT.SRVON_CERT_FNL_CHG_DT, '-') = NVL(TRGT.SRVON_CERT_FNL_CHG_DT, '-') THEN TRGT.UPDPSN_ID             ELSE TRGT.UPDPSN_ID             END
+               , UPD_DTM               = CASE WHEN NVL(INPT.MSDS_ATTC_FILEID     , '-') = NVL(TRGT.MSDS_ATTC_FILEID     , '-')
+                                               AND NVL(INPT.RND_MSDS_URL         , '-') = NVL(TRGT.RND_MSDS_URL         , '-')
+                                               AND NVL(INPT.MSDS_FNL_CHG_DT      , '-') = NVL(TRGT.MSDS_FNL_CHG_DT      , '-')
+                                               AND NVL(INPT.LOC_ATFL_FNL_CHG_DT  , '-') = NVL(TRGT.LOC_ATFL_FNL_CHG_DT  , '-')
+                                               AND NVL(INPT.SRVON_CERT_YN        , '-') = NVL(TRGT.SRVON_CERT_YN        , '-')
+                                               AND NVL(INPT.SRVON_CERT_FNL_CHG_DT, '-') = NVL(TRGT.SRVON_CERT_FNL_CHG_DT, '-') THEN TRGT.UPD_DTM               ELSE TRGT.UPD_DTM               END
+
+</update>
+
+
+<update id="updateKPcCprtPrdInfo_old" parameterType="HashMap">
+        /* MsdsMng.updateKPcCprtPrdInfo TB_PC_CPRTCP_PRD_INFO 업데이트 */
+UPDATE TB_PC_CPRTCP_PRD_INFO TRGT SET                                /* 협력사상품정보 TABLE */
+         MSDS_ATTC_FILEID      = CASE WHEN NVL(#{I_MSDS_ATTC_FILEID}     , '-') = NVL(TRGT.MSDS_ATTC_FILEID     , '-') THEN TRGT.MSDS_ATTC_FILEID      ELSE #{I_MSDS_ATTC_FILEID}      END
+       , RND_MSDS_URL          = CASE WHEN NVL(#{I_RND_MSDS_URL}         , '-') = NVL(TRGT.RND_MSDS_URL         , '-') THEN TRGT.RND_MSDS_URL          ELSE #{I_RND_MSDS_URL}          END
+       , MSDS_FNL_CHG_DT       = CASE WHEN NVL(#{I_MSDS_FNL_CHG_DT}      , '-') = NVL(TRGT.MSDS_FNL_CHG_DT      , '-') THEN TRGT.MSDS_FNL_CHG_DT       ELSE #{I_MSDS_FNL_CHG_DT}       END
+       , LOC_ATTC_FILEID       = CASE WHEN NVL(#{I_MSDS_ATTC_FILEID}     , '-') = NVL(TRGT.MSDS_ATTC_FILEID     , '-') THEN TRGT.MSDS_ATTC_FILEID      ELSE #{I_MSDS_ATTC_FILEID}      END
+       , LOC_ATFL_FNL_CHG_DT   = CASE WHEN NVL(#{I_LOC_ATFL_FNL_CHG_DT}  , '-') = NVL(TRGT.LOC_ATFL_FNL_CHG_DT  , '-') THEN TRGT.LOC_ATFL_FNL_CHG_DT   ELSE #{I_LOC_ATFL_FNL_CHG_DT}   END
+       , SRVON_CERT_YN         = CASE WHEN NVL(#{I_SRVON_CERT_YN}        , '-') = NVL(TRGT.SRVON_CERT_YN        , '-') THEN TRGT.SRVON_CERT_YN         ELSE #{I_SRVON_CERT_YN}         END
+       , SRVON_CERT_FNL_CHG_DT = CASE WHEN NVL(#{I_SRVON_CERT_FNL_CHG_DT}, '-') = NVL(TRGT.SRVON_CERT_FNL_CHG_DT, '-') THEN TRGT.SRVON_CERT_FNL_CHG_DT ELSE #{I_SRVON_CERT_FNL_CHG_DT} END
+
+       , UPDPSN_ID             = CASE WHEN NVL(#{I_MSDS_ATTC_FILEID}     , '-') = NVL(TRGT.MSDS_ATTC_FILEID     , '-')
+                                       AND NVL(#{I_RND_MSDS_URL}         , '-') = NVL(TRGT.RND_MSDS_URL         , '-')
+                                       AND NVL(#{I_MSDS_FNL_CHG_DT}      , '-') = NVL(TRGT.MSDS_FNL_CHG_DT      , '-')
+                                       AND NVL(#{I_LOC_ATFL_FNL_CHG_DT}  , '-') = NVL(TRGT.LOC_ATFL_FNL_CHG_DT  , '-')
+                                       AND NVL(#{I_SRVON_CERT_YN}        , '-') = NVL(TRGT.SRVON_CERT_YN        , '-')
+                                       AND NVL(#{I_SRVON_CERT_FNL_CHG_DT}, '-') = NVL(TRGT.SRVON_CERT_FNL_CHG_DT, '-') THEN TRGT.UPDPSN_ID             ELSE TRGT.UPDPSN_ID             END
+       , UPD_DTM               = CASE WHEN NVL(#{I_MSDS_ATTC_FILEID}     , '-') = NVL(TRGT.MSDS_ATTC_FILEID     , '-')
+                                       AND NVL(#{I_RND_MSDS_URL}         , '-') = NVL(TRGT.RND_MSDS_URL         , '-')
+                                       AND NVL(#{I_MSDS_FNL_CHG_DT}      , '-') = NVL(TRGT.MSDS_FNL_CHG_DT      , '-')
+                                       AND NVL(#{I_LOC_ATFL_FNL_CHG_DT}  , '-') = NVL(TRGT.LOC_ATFL_FNL_CHG_DT  , '-')
+                                       AND NVL(#{I_SRVON_CERT_YN}        , '-') = NVL(TRGT.SRVON_CERT_YN        , '-')
+                                       AND NVL(#{I_SRVON_CERT_FNL_CHG_DT}, '-') = NVL(TRGT.SRVON_CERT_FNL_CHG_DT, '-') THEN TRGT.UPD_DTM               ELSE SYSDATE               END
+WHERE CO_CD               = #{I_CO_CD}             /* 회사코드 */
+   AND CPRTCP_ID           = LPAD(#{I_CPRTCP_ID}   , 10, '0')         /* 협력사ID */
+   AND PRD_ID              = LPAD(#{I_PRD_ID}   , 18, '0')            /* 상품ID */
+</update>
+
+
+
+<update id="disableTbCoAtflDtlsTriger">
+        /* MsdsMng.disableTbCoAtflDtlsTriger TR_TB_CO_ATFL_DTLS_AR_IUD DISABLE */
+	ALTER TRIGGER TR_TB_CO_ATFL_DTLS_AR_IUD DISABLE
+</update>
+
+<update id="enableTbCoAtflDtlsTriger">
+        /* MsdsMng.enableTbCoAtflDtlsTriger TR_TB_CO_ATFL_DTLS_AR_IUD ENABLE */
+	ALTER TRIGGER TR_TB_CO_ATFL_DTLS_AR_IUD ENABLE
+</update>
+
+
+<delete id="deleteTbCoAtflDtls" parameterType="HashMap">
+        /* MsdsMng.deleteTbCoAtflDtls msds및 loc 파일테이블 삭제 */
+        <![CDATA[
+DELETE FROM TB_CO_ATFL_DTLS A
+             WHERE DOC_REG_ID = (SELECT MSDS_ATTC_FILEID
+                                   FROM TB_PC_CPRTCP_PRD_INFO
+                                  WHERE CO_CD     =      #{I_CO_CD}
+                                    AND PRD_ID    = LPAD(#{I_PRD_ID}   , 18, '0')
+                                    AND CPRTCP_ID = LPAD(#{I_CPRTCP_ID}, 10, '0')   )
+               AND ETC_FDS_2  = #{I_ATCH_TP_CD}
+        ]]>
+</delete>
+
+
+<insert id="insertTbCoAtflDtls" parameterType="HashMap">
+        /* MsdsMng.insertTbCoAtflDtls  저장 */	
+        <![CDATA[
+INSERT INTO TB_CO_ATFL_DTLS (
+                   DOC_REG_ID
+                 , DOC_REG_SEQ
+                 , ATFL_NM
+                 , ATFL_LEN
+                 , ATFL_STOR_PATH
+                 , STOR_PLC_SPR_CD
+                 , ORI_ATFL_NM
+                 , ETC_FDS_1
+                 , ETC_FDS_2
+                 , REG_DTM
+                 , REGPSN_ID
+                 , UPD_DTM
+                 , UPDPSN_ID
+            )
+            SELECT #{V_DOC_REG_ID}             DOC_REG_ID
+                 , NVL((SELECT MAX(DOC_REG_SEQ) FROM TB_CO_ATFL_DTLS Z WHERE Z.DOC_REG_ID=#{V_DOC_REG_ID} ), 0)+1   DOC_REG_SEQ
+                 , #{I_ATFL_NM}                ATFL_NM
+                 , #{I_ATFL_LEN}               ATFL_LEN
+                 , #{I_ATFL_STOR_PATH}         ATFL_STOR_PATH
+                 , '1'                      STOR_PLC_SPR_CD
+                 , #{I_ORI_ATFL_NM}            ORI_ATFL_NM
+                 , '1'                      ETC_FDS_1
+                 , #{I_ATCH_TP_CD}             ETC_FDS_2
+                 , SYSDATE                  REG_DTM
+                 , #{I_USER_ID}                REGPSN_ID
+                 , SYSDATE                  UPD_DTM
+                 , #{U_USER_ID}                UPDPSN_ID
+              FROM DUAL
+        ]]>
+</insert>
+
+
+<insert id="insertTbRdChmMtlChgMailSndBatDtls" parameterType="HashMap">
+        /* MsdsMng.insertTbRdChmMtlChgMailSndBatDtls  저장 */	
+        <![CDATA[
+INSERT INTO TB_RD_CHM_MTL_CHG_MAIL_SND_BAT_DTLS/* 화학물질변경메일송신배치내역 TABLE */
+(
+      SEQ                           /* 순번 */
+    , CO_CD                         /* 회사코드 */
+    , PRD_ID                        /* 상품ID */
+    , ATFL_TP_CD                    /* 첨부파일유형코드 */
+    , PROC_SPR_CD                   /* 처리구분코드 */
+    , REGPSN_ID                     /* 등록자ID */
+    , REG_DTM                       /* 등록일시 */
+)
+VALUES
+(
+      (SELECT TO_NUMBER(TO_CHAR(SYSTIMESTAMP, 'YYYYMMDDHH24MISSFF6')) FROM DUAL) /* 순번 */
+    , #{I_CO_CD}                       /* 회사코드 */
+    , LPAD(#{I_PRD_ID}   , 18, '0')    /* 상품ID */
+    , #{I_ATCH_TP_CD}                  /* 첨부파일유형코드 */
+    , 'N'                              /* 처리구분코드 */
+    , 'TR_CO_ATFL'                     /* 등록자ID */
+    , SYSDATE                          /* 등록일시 */
+)
+        ]]>
+</insert>
+
+
+
+
+
+</mapper>

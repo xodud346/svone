@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_RD_56" width="900" height="540" onload="fn_onLoad" titletext="배송가능지역" scrollbartype="none none">
+    <Layouts>
+      <Layout height="540" width="900" description="배송가능지역">
+        <Grid id="grd_list" taborder="0" left="20" top="75" binddataset="ds_list" autofittype="col" cellsizebandtype="allband" oncelldblclick="grd_list_oncelldblclick" autosizingtype="row" bottom="110" right="20" autosizebandtype="body">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="100"/>
+                <Column size="250"/>
+                <Column size="100"/>
+                <Column size="250"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="배송권역"/>
+                <Cell col="1" text="배송권역명"/>
+                <Cell col="2" text="세부권역"/>
+                <Cell col="3" text="세부권역명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:ID" wordWrap="char"/>
+                <Cell col="1" text="bind:COL" wordWrap="char"/>
+                <Cell col="2" text="bind:ASIS" wordWrap="char"/>
+                <Cell col="3" text="bind:TOBE" wordWrap="char"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="div_paging" taborder="1" height="grd_list:30" formscrollbartype="none none" url="COMM::cmmPaging.xfdl" top="grd_list:30" left="20" right="20"/>
+        <Static id="totalPageCount" taborder="2" text="(총 0건 1/1)" left="20" top="51" width="200" height="14" usedecorate="true"/>
+        <Static id="staticTitle" taborder="3" left="20" top="20" width="235" height="22" font="bold 14pt &quot;Arial&quot;" text="(협력사명)사 배송가능지역"/>
+        <Button id="btn_close" taborder="4" text="취소" left="420" top="490" width="70" height="30" onclick="div_btn_btn_close_onclick"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="ID" type="STRING" size="256"/>
+          <Column id="COL" type="STRING" size="256"/>
+          <Column id="ASIS" type="STRING" size="256"/>
+          <Column id="TOBE" type="STRING" size="256"/>
+          <Column id="UPD_RSN" type="STRING" size="256"/>
+          <Column id="UPD_ID" type="STRING" size="256"/>
+          <Column id="UPD_NAME" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+          <Column id="DATA_CHG_TP_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="HISTORY_TYPE" type="STRING" size="256"/>
+          <Column id="KEY1" type="STRING" size="256"/>
+          <Column id="KEY2" type="STRING" size="256"/>
+          <Column id="KEY3" type="STRING" size="256"/>
+          <Column id="KEY4" type="STRING" size="256"/>
+          <Column id="KEY5" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[//##############################################################################################
+//#  화면ID : SSP_BO_LA_26.xfdl
+//#  화면명 : R&D[팝업]변경이력관리
+//#  개발자 : 김진섭
+//#  CREATION DATES :  2022-04-01
+//##############################################################################################
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+    this.gfn_formOnLoad(this);
+    
+	//조회
+	this.ds_search.setColumn(0, "HISTORY_TYPE", this.parent.historyType);	//이력유형(필수)
+	//키값 파라미터(필요에따라)
+	this.ds_search.setColumn(0, "KEY1", this.parent.key1);
+	this.ds_search.setColumn(0, "KEY2", this.parent.key2);
+	this.ds_search.setColumn(0, "KEY3", this.parent.key3);
+	this.ds_search.setColumn(0, "KEY4", this.parent.key4);//PRD_CLSF_CHRPSN_TP_CD(상품분류담당자유형코드)
+	this.ds_search.setColumn(0, "KEY5", this.parent.key5);
+
+    this.fn_search(true);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (bInit)
+{
+    var sSvcId = "search";    
+    var sUrl = "/rd/productHistory/selectProductHistory.do";  
+    var inDs = "ds_search=ds_search";
+    var outDs = "ds_list=historyList";
+    var arg = "";
+    
+    if(bInit) {
+        this.div_paging.uPage = 1;
+        this.div_paging.uPageNum = 0;
+        this.ds_search.setColumn(0,"START_NUM",0);
+        this.ds_search.setColumn(0,"ROW_COUNT",this.fv_oApp.gv_pageViewCnt);
+    }
+    
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+    switch(svcID) {
+        case "search" :
+            this.div_paging.form.cfn_createPage(this.div_paging,this.totalCount,this.fv_oApp.gv_pageViewCnt,"fn_pageCallback");
+            break;
+            
+    }
+};
+
+this.fn_pageCallback = function(sFlag){
+    var oPaging = this.div_paging;  
+    
+    if(sFlag){
+        this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+        this.ds_search.setColumn(0,"ROW_COUNT", this.fv_oApp.gv_pageViewCnt);
+        this.fn_search();
+    }
+
+    var sTotText = "(<b v='true'>총 "+ oPaging.uTotCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+    this.totalPageCount.set_text(sTotText);
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+]]></Script>
+  </Form>
+</FDL>

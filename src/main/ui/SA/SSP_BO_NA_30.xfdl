@@ -1,0 +1,2168 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_NA_30" width="1000" height="760" titletext="프로모션 팝업 등록/상세/수정" onload="fn_onLoad" onkeydown="fn_onkeydown">
+    <Layouts>
+      <Layout height="760" width="1000">
+        <Static id="Static09" taborder="47" left="20" top="478" height="108" cssclass="sta_cm_box02L" right="20"/>
+        <Button id="btn_cancel" taborder="1" text="취소" left="465" width="70" onclick="btn_cancel_onclick" height="30" bottom="-661"/>
+        <Button id="btn_delete" taborder="0" text="삭제" onclick="btn_delete_onclick" height="30" bottom="-661" right="btn_cancel:4" width="70"/>
+        <Button id="btn_save" taborder="2" text="저장" left="btn_cancel:4" width="70" cssclass="btn_WF_select" onclick="btn_save_onclick" height="30" bottom="-661"/>
+        <Static id="Static07" taborder="4" left="20" top="585" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Static id="Static03" taborder="5" left="20" top="230" height="32" cssclass="sta_cm_box02L" right="20"/>
+        <Static id="Static01" taborder="6" left="20" top="51" cssclass="sta_cm_box02L" right="20" text="" height="180"/>
+        <Static id="Static02" taborder="7" left="20" top="447" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Static id="sta_expsNoticSprCd" taborder="9" text="게시 구분" left="20" top="51" width="130" height="180" cssclass="sta_cm_box01L"/>
+        <Radio id="rdo_expsNoticSprCd" left="158" top="65" width="152" height="134" innerdataset="ds_expsNoticSprCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" direction="horizontal" text="" onitemchanged="rdo_expsNoticSprCd_onitemchanged" taborder="10" value="" index="-1">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">N</Col>
+                <Col id="datacolumn">없음</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">Y</Col>
+                <Col id="datacolumn">산업군</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Radio>
+        <Grid id="grd_oprUnitList" taborder="11" top="61" binddataset="ds_oprUnitList" autofittype="col" oncellclick="grd_oprUnitList_oncellclick" height="159" width="590" left="320">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="126"/>
+                <Column size="200"/>
+                <Column size="48"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="운영단위ID"/>
+                <Cell col="1" text="운영단위명"/>
+                <Cell col="2"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:OPR_UNIT_ID"/>
+                <Cell col="1" text="bind:OPR_UNIT_NM"/>
+                <Cell col="2" displaytype="buttoncontrol" edittype="button" text="삭제"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_oprUnitMulti" taborder="12" left="grd_oprUnitList:4" top="60" height="24" cssclass="btn_WF_multi" width="24" onclick="btn_oprUnitMulti_onclick"/>
+        <Button id="btn_oprUnitMultiText" taborder="13" left="btn_oprUnitMulti:2" top="60" height="24" cssclass="btn_WF_document" width="24" onclick="btn_oprUnitMultiText_onclick" text=""/>
+        <Static id="sta_dispPeriod" taborder="14" text="전시 기간" left="20" top="230" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Calendar id="cal_dispStrDt" taborder="15" left="160" top="234" width="100" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd"/>
+        <Calendar id="cal_dispEndDt" taborder="16" left="407" top="234" width="100" height="24" cssclass="cal_WF_calendar" dateformat="yyyy-MM-dd"/>
+        <Static id="Static08" taborder="17" text="~" left="394" top="234" width="9" height="24"/>
+        <Static id="Static06" taborder="18" left="20" top="323" height="64" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Static id="sta_url" taborder="19" text="Link URL" left="20" top="323" width="130" height="64" cssclass="sta_cm_box01L"/>
+        <Radio id="rdo_urlCnsolSprCd" taborder="20" left="160" top="327" width="300" height="24" direction="vertical" innerdataset="ds_urlCnsolSprCd" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" onitemchanged="rdo_urlCnsolSprCd_onitemchanged"/>
+        <Edit id="edt_urdAddr" taborder="21" left="160" top="358" height="24" right="30"/>
+        <Static id="sta_useYn" taborder="22" text="사용여부" left="20" top="585" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Radio id="rdo_useYn" taborder="24" left="160" top="589" width="150" height="24" direction="vertical" innerdataset="ds_useYn" codecolumn="USE_YN" datacolumn="USE_YN_NM"/>
+        <Static id="sta_nlookSet" taborder="25" text="다시보지않기설정" left="20" top="447" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Static id="sta_totalCountOprUnit" taborder="30" text="(총 0건)" left="250" top="62" width="56" height="25" usedecorate="true"/>
+        <Static id="Static04" taborder="35" left="20" top="416" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+        <Static id="sta_pstSet" taborder="36" text="위치설정" left="20" top="416" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Edit id="edt_topPst" taborder="37" left="321" top="420" width="60" height="24" inputtype="number" maxlength="5"/>
+        <Static id="sta_topPst" taborder="39" text="px" left="edt_topPst:3" top="417" width="20" height="30"/>
+        <Edit id="edt_leftPst" taborder="38" left="192" top="420" width="60" height="24" inputtype="number" maxlength="5"/>
+        <Static id="sta_dispSo" taborder="40" text="전시순서" left="678" top="230" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Edit id="edt_dispSo" taborder="41" left="814" top="234" width="60" height="24" inputtype="number" maxlength="5"/>
+        <Static id="Static10" taborder="42" left="20" top="20" height="32" cssclass="sta_cm_box02L_tdt" right="20"/>
+        <Static id="sta_pmtPopupNm" taborder="43" text="프로모션명" left="20" top="20" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+        <Edit id="edt_pmtPopupNm" taborder="8" left="160" top="24" height="24" right="120" onkeyup="edt_pmtPopupNm_onkeyup"/>
+        <Static id="sta_pmtPopupNmSize" taborder="28" text="(0 / 300 Byte)" left="edt_pmtPopupNm:4" top="24" height="24" textAlign="right" width="88" usedecorate="true"/>
+        <Static id="sta_pmtPopupDesc" taborder="44" text="프로모션 설명" left="20" top="478" width="130" height="108" cssclass="sta_cm_box01L"/>
+        <TextArea id="edt_pmtPopupDesc" taborder="45" left="160" top="482" height="77" wordWrap="char" onkeyup="edt_pmtPopupDesc_onkeyup" right="30"/>
+        <Static id="sta_pmtPopupDescSize" taborder="46" text="(0 / 2000 Byte)" left="830" top="559" height="24" textAlign="right" usedecorate="true" right="40"/>
+        <Static id="sta_leftPst" taborder="48" text="px" left="edt_leftPst:4" top="417" width="20" height="30"/>
+        <CheckBox id="chk_fltgYn" taborder="49" text="플로팅" left="427" top="420" width="90" height="24" truevalue="Y" falsevalue="N" value="N"/>
+        <Static id="Static12" taborder="51" cssclass="sta_cm_box02L" text="" height="176" left="20" top="678" right="20"/>
+        <Static id="sta_expsPageUrl" taborder="50" text="노출 페이지 URL" left="20" top="678" width="130" height="176" cssclass="sta_cm_box01L"/>
+        <Static id="Static11" taborder="53" left="20" top="647" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Static id="sta_expsPageSprCd" taborder="52" text="구분" left="20" top="647" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Radio id="rdo_expsPageSprCd" taborder="54" left="160" top="650" width="180" height="24" direction="vertical" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" innerdataset="ds_pmtPopupExpsPageSprCd" onitemchanged="rdo_expsPageSprCd_onitemchanged"/>
+        <Static id="Static13" taborder="55" text="노출페이지 설정" left="20" top="616" height="30" cssclass="sta_WF_title02" width="126"/>
+        <Grid id="grd_aplyDtlList" taborder="32" left="160" top="717" width="81.10%" height="128" nodatatext="등록된 노출페이지가 없습니다." binddataset="ds_aplyDtlList" selecttype="row" autoenter="select" autofittype="col">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="30"/>
+                <Column size="730"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="URL"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="checkboxcontrol" textAlign="center" cssclass="cell_Icon_Asending" edittype="checkbox" text="bind:COL_CHK"/>
+                <Cell col="1" text="bind:PMT_POPUP_PROC_TXT" edittype="text"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_aplyAdd" taborder="33" text="추가" onclick="btn_dtlAdd_onclick" height="28" top="684" width="81" right="115"/>
+        <Button id="btn_aplyMultiText" taborder="56" top="686" height="24" cssclass="btn_WF_document" width="24" onclick="btn_dtlMultiText_onclick" right="btn_aplyAdd:4" text=""/>
+        <Button id="btn_aplyDelete" taborder="34" text="삭제" onclick="btn_dtlDelete_onclick" top="684" height="28" width="81" right="30"/>
+        <Static id="Static16" taborder="57" cssclass="sta_cm_box02L" text="" height="176" left="20" top="933" right="20"/>
+        <Static id="sta_excptPageUrl" taborder="58" text="제외 페이지 URL" left="20" top="933" width="130" height="176" cssclass="sta_cm_box01L"/>
+        <Static id="Static15" taborder="59" left="20" top="902" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Static id="sta_excptPageSetYn" taborder="60" text="구분" left="20" top="902" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Radio id="rdo_excptPageSetYn" taborder="61" left="160" top="905" width="180" height="24" direction="vertical" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" onitemchanged="rdo_excptPageSetYn_onitemchanged">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">N</Col>
+                <Col id="datacolumn">제외없음</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">Y</Col>
+                <Col id="datacolumn">제외페이지</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Radio>
+        <Static id="Static14" taborder="62" text="제외페이지 설정" left="20" top="871" height="30" cssclass="sta_WF_title02" width="126"/>
+        <Grid id="grd_excptDtlList" taborder="63" left="160" top="972" width="81.10%" height="128" nodatatext="등록된 제외페이지가 없습니다." binddataset="ds_excptDtlList" selecttype="row" autoenter="select" autofittype="col">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="30"/>
+                <Column size="730"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="URL"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="checkboxcontrol" textAlign="center" cssclass="cell_Icon_Asending" edittype="checkbox" text="bind:COL_CHK"/>
+                <Cell col="1" text="bind:PMT_POPUP_PROC_TXT" edittype="text"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_excptAdd" taborder="64" text="추가" onclick="btn_dtlAdd_onclick" height="28" top="939" width="81" right="115"/>
+        <Button id="btn_excptMultiText" taborder="65" top="941" height="24" cssclass="btn_WF_document" width="24" onclick="btn_dtlMultiText_onclick" right="200"/>
+        <Button id="btn_excptDelete" taborder="66" text="삭제" onclick="btn_dtlDelete_onclick" top="939" height="28" width="81" right="30"/>
+        <Static id="Static19" taborder="67" cssclass="sta_cm_box02L" text="" height="176" left="20" top="1185" right="20"/>
+        <Static id="sta_param" taborder="68" text="파라미터" left="20" top="1185" width="130" height="176" cssclass="sta_cm_box01L"/>
+        <Static id="Static18" taborder="69" left="20" top="1154" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Static id="sta_prmSetYn" taborder="70" text="구분" left="20" top="1154" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Radio id="rdo_prmSetYn" taborder="71" left="160" top="1157" width="200" height="24" direction="vertical" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn" onitemchanged="rdo_prmSetYn_onitemchanged">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">N</Col>
+                <Col id="datacolumn">없음</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">Y</Col>
+                <Col id="datacolumn">파라미터 설정</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Radio>
+        <Static id="Static17" taborder="72" text="외부 인입 설정" left="20" top="1123" height="30" cssclass="sta_WF_title02" width="126"/>
+        <Grid id="grd_prmDtlList" taborder="73" left="160" top="1224" width="81.10%" height="128" nodatatext="등록된 파라미터가 없습니다." binddataset="ds_prmDtlList" selecttype="row" autoenter="select" autofittype="col">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="30"/>
+                <Column size="730"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="파라미터"/>
+              </Band>
+              <Band id="body">
+                <Cell displaytype="checkboxcontrol" textAlign="center" cssclass="cell_Icon_Asending" edittype="checkbox" text="bind:COL_CHK"/>
+                <Cell col="1" text="bind:PMT_POPUP_PROC_TXT" edittype="text"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_prmAdd" taborder="74" text="추가" onclick="btn_dtlAdd_onclick" height="28" top="1191" width="81" right="115"/>
+        <Button id="btn_prmMultiText" taborder="75" top="1193" height="24" cssclass="btn_WF_document" width="24" onclick="btn_dtlMultiText_onclick" right="200"/>
+        <Button id="btn_prmDelete" taborder="76" text="삭제" onclick="btn_dtlDelete_onclick" top="1191" height="28" width="81" right="30"/>
+        <Static id="Static00_01" taborder="77" left="20" top="1421" width="960" height="20" background="white" visible="true" textAlign="center"/>
+        <Static id="Static20" taborder="78" left="20" top="385" height="32" cssclass="sta_cm_box02L" right="20"/>
+        <Static id="Static51" taborder="79" text="쿠폰 선택" left="20" top="385" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Edit id="edt_cpnEvtNm" taborder="80" left="160" top="389" width="420" height="24" readonly="true"/>
+        <Edit id="edt_cpnEvtNo" taborder="81" left="125" top="389" width="20" height="24" visible="false"/>
+        <Button id="btn_cpnEvtNo" taborder="82" left="584" top="389" height="24" cssclass="btn_WF_search02" width="24" text="" onclick="btn_cpnEvtNo_onclick"/>
+        <Button id="btn_cpnEvtNoDelete" taborder="83" left="612" top="389" height="24" text="X" visible="true" width="24" onclick="btn_cpnEvtNoDelete_onclick"/>
+        <Static id="sta_top" taborder="84" text="/  TOP" left="280" top="417" width="40" height="30"/>
+        <Static id="sta_top00" taborder="85" text="LEFT" left="162" top="417" width="35" height="30"/>
+        <Button id="btn_prev" taborder="86" top="420" width="80" height="24" text="미리보기" left="504" onclick="btn_prev_onclick"/>
+        <Radio id="rdo_nlookSetYn" taborder="87" left="160" top="451" width="295" height="24" direction="vertical" codecolumn="codecolumn" datacolumn="datacolumn" innerdataset="innerdataset">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">Y</Col>
+                <Col id="datacolumn">오늘 다시 보지 않기</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">N</Col>
+                <Col id="datacolumn">사용안함</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Radio>
+        <CheckBox id="chk_closeSetYn" taborder="88" text="닫기 버튼" left="407" top="451" width="90" height="24" truevalue="Y" falsevalue="N" value="N"/>
+        <Combo id="cbo_dispStrHr" taborder="89" text="1주일" left="264" top="234" width="60" height="24" codecolumn="HR_CD" datacolumn="HR_NM" index="0" value="2" innerdataset="ds_dispHr"/>
+        <Combo id="cbo_dispStrMn" taborder="90" text="1주일" left="328" top="234" width="60" height="24" innerdataset="ds_dispMn" codecolumn="MN_CD" datacolumn="MN_NM" index="0" value="2"/>
+        <Combo id="cbo_dispEndHr" taborder="91" text="1주일" left="514" top="234" width="60" height="24" innerdataset="ds_dispHr" codecolumn="HR_CD" datacolumn="HR_NM" index="0" value="2"/>
+        <Combo id="cbo_dispEndMn" taborder="92" text="1주일" left="578" top="234" width="60" height="24" innerdataset="ds_dispMn" codecolumn="MN_CD" datacolumn="MN_NM" index="0" value="2"/>
+        <Edit id="edt_dispStrDtm" taborder="94" left="105" top="234" width="20" height="24" visible="false"/>
+        <Edit id="edt_dispEndDtm" taborder="95" left="126" top="234" width="20" height="24" visible="false"/>
+        <ImageViewer id="img_view" taborder="31" left="1040" top="0" width="100" imagealign="center middle" padding="0px" stretch="fixaspectratio" text="" height="100" visible="false"/>
+        <CheckBox id="chk_notLogn_Inc_Yn" taborder="96" text="미로그인 포함" left="160" top="204" width="134" height="20" falsevalue="N" truevalue="Y"/>
+        <Static id="Static07_00" taborder="97" left="20" top="261" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Static id="sta_popupSprCD" taborder="98" text="소재" left="20" top="261" width="130" height="32" cssclass="sta_cm_box01L" onclick="sta_useYn00_onclick"/>
+        <Radio id="rdo_popupSprCD" taborder="99" left="160" top="265" width="150" height="24" direction="vertical" onitemchanged="rdo_popupSprCD_onitemchanged" innerdataset="innerdataset" codecolumn="codecolumn" datacolumn="datacolumn">
+          <Dataset id="innerdataset">
+            <ColumnInfo>
+              <Column id="codecolumn" size="256"/>
+              <Column id="datacolumn" size="256"/>
+            </ColumnInfo>
+            <Rows>
+              <Row>
+                <Col id="codecolumn">10</Col>
+                <Col id="datacolumn">이미지</Col>
+              </Row>
+              <Row>
+                <Col id="codecolumn">20</Col>
+                <Col id="datacolumn">유튜브</Col>
+              </Row>
+            </Rows>
+          </Dataset>
+        </Radio>
+        <Static id="Static05_1" taborder="100" left="20" top="292" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Static id="sta_yTube" taborder="101" text="유튜브" left="20" top="292" width="130" height="32" cssclass="sta_cm_box01L" onclick="sta_img00_onclick"/>
+        <Static id="sta_yTubeUrlAddr" taborder="102" text="화면에 노출할 유튜브 주소를 입력해주세요." left="471" top="296" height="24" textAlign="left" width="239"/>
+        <Edit id="edt_yTubeUrlAddr" taborder="103" left="160" top="296" height="24" right="535"/>
+        <Static id="sta_wdtLen" taborder="104" text="사이즈 : Width = " left="750" top="296" height="24" textAlign="left" width="104"/>
+        <Edit id="edt_wdtLen" taborder="105" left="850" top="296" height="24" right="48"/>
+        <Static id="Static05" taborder="3" left="20" top="292" height="32" cssclass="sta_cm_box02L" text="" right="20"/>
+        <Static id="sta_img" taborder="23" text="이미지" left="20" top="292" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Edit id="edt_atflNm" taborder="26" left="160" top="296" height="24" width="420" readonly="true" oneditclick="edt_atflNm_onclick" onmouseenter="edt_atflNm_onmouseenter" onmouseleave="edt_atflNm_onmouseleave" text="11111"/>
+        <Button id="btn_imgAdd" taborder="27" text="파일찾기" top="296" width="60" height="24" left="584" onclick="btn_imgAdd_onclick"/>
+        <Button id="btn_imgDelete" taborder="29" left="648" top="296" height="24" text="X" visible="true" width="24" onclick="btn_imgDelete_onclick"/>
+        <Static id="sta_imgSize" taborder="93" text="용량 : 10M미만 / 형식 : PNG, JPG" left="677" top="296" height="24" textAlign="left" width="328"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_SEQ" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_expsNoticSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_pmtPopupInfo">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_SEQ" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_NM" type="STRING" size="256"/>
+          <Column id="EXPS_NOTIC_SPR_CD" type="STRING" size="256"/>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="URL_CNSOL_SPR_CD" type="STRING" size="256"/>
+          <Column id="URL_ADDR" type="STRING" size="256"/>
+          <Column id="CPN_EVT_NO" type="STRING" size="256"/>
+          <Column id="CPN_EVT_NM" type="STRING" size="256"/>
+          <Column id="DISP_SO" type="STRING" size="256"/>
+          <Column id="DISP_STR_DT" type="STRING" size="256"/>
+          <Column id="DISP_END_DT" type="STRING" size="256"/>
+          <Column id="DISP_STR_DTM" type="STRING" size="256"/>
+          <Column id="DISP_END_DTM" type="STRING" size="256"/>
+          <Column id="DISP_STR_HR" type="STRING" size="256"/>
+          <Column id="DISP_STR_MN" type="STRING" size="256"/>
+          <Column id="DISP_END_HR" type="STRING" size="256"/>
+          <Column id="DISP_END_MN" type="STRING" size="256"/>
+          <Column id="TOP_PST" type="STRING" size="256"/>
+          <Column id="LEFT_PST" type="STRING" size="256"/>
+          <Column id="FLTG_YN" type="STRING" size="256"/>
+          <Column id="NLOOK_SET_YN" type="STRING" size="256"/>
+          <Column id="CLOSE_SET_YN" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_DESC" type="STRING" size="256"/>
+          <Column id="EXPS_PAGE_SPR_CD" type="STRING" size="256"/>
+          <Column id="EXCPT_PAGE_SET_YN" type="STRING" size="256"/>
+          <Column id="PRM_SET_YN" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_STATS" type="STRING" size="256"/>
+          <Column id="UNLMT_PUBC_YN" type="STRING" size="256"/>
+          <Column id="ATFL_NM" type="STRING" size="256"/>
+          <Column id="DOC_REG_SEQ" type="STRING" size="256"/>
+          <Column id="ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="NOTLOGN_INC_YN" type="STRING" size="256"/>
+          <Column id="POPUP_SPR_CD" type="STRING" size="256"/>
+          <Column id="YTUBE_URL_ADDR" type="STRING" size="256"/>
+          <Column id="WDT_LEN" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_oprUnitList">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_SEQ" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_urlCnsolSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_useYn">
+        <ColumnInfo>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="USE_YN_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="USE_YN">Y</Col>
+            <Col id="USE_YN_NM">사용</Col>
+          </Row>
+          <Row>
+            <Col id="USE_YN_NM">미 사용</Col>
+            <Col id="USE_YN">N</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <FileDialog id="fileDialog" onclose="fileDialog_onclose"/>
+      <FileUpTransfer id="fileUpTrans" onerror="fileUpTrans_onerror" onprogress="fileUpTrans_onprogress" onsuccess="fileUpTrans_onsuccess"/>
+      <FileDownTransfer id="FileDownTransfer" onsuccess="FileDownTransfer_onsuccess" onerror="FileDownTransfer_onerror"/>
+      <Dataset id="ds_file">
+        <ColumnInfo>
+          <Column id="DOC_REG_ID" type="STRING" size="256"/>
+          <Column id="DOC_REG_SEQ" type="STRING" size="256"/>
+          <Column id="ATFL_NM" type="STRING" size="256"/>
+          <Column id="ATFL_STOR_PATH" type="STRING" size="256"/>
+          <Column id="ORI_ATFL_NM" type="STRING" size="256"/>
+          <Column id="IMG_TYPE" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_searchOprUnitCheckList">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_rtnOprUnitCheckList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_aplyDtlList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="COL_CHK" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_SEQ" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_APLY_DTL_SEQ" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_PROC_TYPE_CD" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_PROC_TXT" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_oprUnitList_copy">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_SEQ" type="INT" size="256"/>
+          <Column id="BZPLC_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_ID" type="STRING" size="256"/>
+          <Column id="OPR_UNIT_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_pmtPopupExpsPageSprCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_excptDtlList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="COL_CHK" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_SEQ" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_APLY_DTL_SEQ" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_PROC_TYPE_CD" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_PROC_TXT" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_prmDtlList" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="COL_CHK" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_SEQ" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_APLY_DTL_SEQ" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_PROC_TYPE_CD" type="STRING" size="256"/>
+          <Column id="PMT_POPUP_PROC_TXT" type="STRING" size="256"/>
+          <Column id="REGPSN_ID" type="STRING" size="256"/>
+          <Column id="REG_DTM" type="STRING" size="256"/>
+          <Column id="UPDPSN_ID" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_dispHr">
+        <ColumnInfo>
+          <Column id="HR_CD" type="STRING" size="256"/>
+          <Column id="HR_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="HR_CD"/>
+            <Col id="HR_NM">시</Col>
+          </Row>
+          <Row>
+            <Col id="HR_NM">0</Col>
+            <Col id="HR_CD">00</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">01</Col>
+            <Col id="HR_NM">1</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">02</Col>
+            <Col id="HR_NM">2</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">03</Col>
+            <Col id="HR_NM">3</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">04</Col>
+            <Col id="HR_NM">4</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">05</Col>
+            <Col id="HR_NM">5</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">06</Col>
+            <Col id="HR_NM">6</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">07</Col>
+            <Col id="HR_NM">7</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">08</Col>
+            <Col id="HR_NM">8</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">09</Col>
+            <Col id="HR_NM">9</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">10</Col>
+            <Col id="HR_NM">10</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">11</Col>
+            <Col id="HR_NM">11</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">12</Col>
+            <Col id="HR_NM">12</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">13</Col>
+            <Col id="HR_NM">13</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">14</Col>
+            <Col id="HR_NM">14</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">15</Col>
+            <Col id="HR_NM">15</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">16</Col>
+            <Col id="HR_NM">16</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">17</Col>
+            <Col id="HR_NM">17</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">18</Col>
+            <Col id="HR_NM">18</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">19</Col>
+            <Col id="HR_NM">19</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">20</Col>
+            <Col id="HR_NM">20</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">21</Col>
+            <Col id="HR_NM">21</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">22</Col>
+            <Col id="HR_NM">22</Col>
+          </Row>
+          <Row>
+            <Col id="HR_CD">23</Col>
+            <Col id="HR_NM">23</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_dispMn">
+        <ColumnInfo>
+          <Column id="MN_CD" type="STRING" size="256"/>
+          <Column id="MN_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="MN_CD"/>
+            <Col id="MN_NM">분</Col>
+          </Row>
+          <Row>
+            <Col id="MN_NM">0</Col>
+            <Col id="MN_CD">00</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">01</Col>
+            <Col id="MN_NM">1</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">02</Col>
+            <Col id="MN_NM">2</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">03</Col>
+            <Col id="MN_NM">3</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">04</Col>
+            <Col id="MN_NM">4</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">05</Col>
+            <Col id="MN_NM">5</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">06</Col>
+            <Col id="MN_NM">6</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">07</Col>
+            <Col id="MN_NM">7</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">08</Col>
+            <Col id="MN_NM">8</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">09</Col>
+            <Col id="MN_NM">9</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">10</Col>
+            <Col id="MN_NM">10</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">11</Col>
+            <Col id="MN_NM">11</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">12</Col>
+            <Col id="MN_NM">12</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">13</Col>
+            <Col id="MN_NM">13</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">14</Col>
+            <Col id="MN_NM">14</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">15</Col>
+            <Col id="MN_NM">15</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">16</Col>
+            <Col id="MN_NM">16</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">17</Col>
+            <Col id="MN_NM">17</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">18</Col>
+            <Col id="MN_NM">18</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">19</Col>
+            <Col id="MN_NM">19</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">20</Col>
+            <Col id="MN_NM">20</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">21</Col>
+            <Col id="MN_NM">21</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">22</Col>
+            <Col id="MN_NM">22</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">23</Col>
+            <Col id="MN_NM">23</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">24</Col>
+            <Col id="MN_NM">24</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">25</Col>
+            <Col id="MN_NM">25</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">26</Col>
+            <Col id="MN_NM">26</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">27</Col>
+            <Col id="MN_NM">27</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">28</Col>
+            <Col id="MN_NM">28</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">29</Col>
+            <Col id="MN_NM">29</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">30</Col>
+            <Col id="MN_NM">30</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">31</Col>
+            <Col id="MN_NM">31</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">32</Col>
+            <Col id="MN_NM">32</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">33</Col>
+            <Col id="MN_NM">33</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">34</Col>
+            <Col id="MN_NM">34</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">35</Col>
+            <Col id="MN_NM">35</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">36</Col>
+            <Col id="MN_NM">36</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">37</Col>
+            <Col id="MN_NM">37</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">38</Col>
+            <Col id="MN_NM">38</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">39</Col>
+            <Col id="MN_NM">39</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">40</Col>
+            <Col id="MN_NM">40</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">41</Col>
+            <Col id="MN_NM">41</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">42</Col>
+            <Col id="MN_NM">42</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">43</Col>
+            <Col id="MN_NM">43</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">44</Col>
+            <Col id="MN_NM">44</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">45</Col>
+            <Col id="MN_NM">45</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">46</Col>
+            <Col id="MN_NM">46</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">47</Col>
+            <Col id="MN_NM">47</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">48</Col>
+            <Col id="MN_NM">48</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">49</Col>
+            <Col id="MN_NM">49</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">50</Col>
+            <Col id="MN_NM">50</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">51</Col>
+            <Col id="MN_NM">51</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">52</Col>
+            <Col id="MN_NM">52</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">53</Col>
+            <Col id="MN_NM">53</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">54</Col>
+            <Col id="MN_NM">54</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">55</Col>
+            <Col id="MN_NM">55</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">56</Col>
+            <Col id="MN_NM">56</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">57</Col>
+            <Col id="MN_NM">57</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">58</Col>
+            <Col id="MN_NM">58</Col>
+          </Row>
+          <Row>
+            <Col id="MN_CD">59</Col>
+            <Col id="MN_NM">59</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : 프로모션 팝업
+CREATION DATES : 2023.01.26
+CREATER        : 이민호
+*******************************************************/
+//인클루드
+include "CO::coUtils.xjs";
+include "OD::odUtils.xjs";
+include "SA::saUtils.xjs";
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+this.fv_oApp = nexacro.getApplication();
+this.fv_coCd = this.parent.coCd;
+this.pmtPopupSeq = this.parent.pmtPopupSeq;
+this.maxFileSize = "10";
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+
+	//공통코드 조회
+	this.fn_commonCodeSearch();
+};
+
+this.fn_onkeydown = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	//ESC : 닫기기능
+	if(e.keycode == 27){
+		this.close();
+	}
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드 조회
+this.fn_commonCodeSearch = function()
+{
+	var sSvcId = "commonCodeSearch";
+	var sUrl = "/co/select-common-code-list.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_expsNoticSprCd=ds_output1 ds_urlCnsolSprCd=ds_output2 ds_pmtPopupExpsPageSprCd=ds_output3";
+	var arg = "";
+
+	//조회 값 담기
+	this.ds_search.setColumn(0, "CODE_LIST", "EXPS_NOTIC_SPR_CD,URL_CNSOL_SPR_CD,PMT_POPUP_EXPS_PAGE_SPR_CD,PMT_POPUP_PST_SPR_CD");
+	this.ds_search.setColumn(0, "LANG_CD", "KO");
+	//전송
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+}
+
+//조회
+this.fn_search = function() {
+	var sSvcId = "selectPmtPopupInfo";
+	var sUrl = "/sa/pmtPopup/select-pmt-popup-info.do";
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_pmtPopupInfo=ds_output1 ds_oprUnitList=ds_output2 ds_aplyDtlList=ds_output3 ds_excptDtlList=ds_output4 ds_prmDtlList=ds_output5";
+	var arg = "";
+	
+	// 파라미터 값 ds setcolumn
+	this.ds_search.setColumn(0, "CO_CD", this.fv_coCd);
+	this.ds_search.setColumn(0, "PMT_POPUP_SEQ", this.pmtPopupSeq);
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//저장
+this.fn_save = function()
+{
+	var sSvcId = "savePmtPopupInfo";
+	var sUrl = "/sa/pmtPopup/save-pmt-popup-info.do";
+	var inDs = "ds_save=ds_pmtPopupInfo:A ds_oprUnitList=ds_oprUnitList:A ds_aplyDtlList=ds_aplyDtlList:U ds_excptDtlList=ds_excptDtlList:U ds_prmDtlList=ds_prmDtlList:U"
+	var outDs = "";
+	var arg = "";
+
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+}
+
+// 삭제
+this.fn_delete = function() {
+	var sSvcId = "deletePmtPopupInfo";
+	var sUrl = "/sa/pmtPopup/delete-pmt-popup-info.do";
+	var inDs = "ds_delete=ds_pmtPopupInfo"
+	var outDs = "";
+	var arg = "";
+
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+}
+
+// 운영단위ID 유효성 검사
+this.fn_oprUnitCheck = function() {
+	var sSvcId = "oprUnitCheck";  
+	var sUrl = "/sa/com/select-opr-unit-check-list.do";
+	var inDs = "ds_searchOprUnitCheckList=ds_searchOprUnitCheckList:A"
+	var outDs = "ds_rtnOprUnitCheckList=ds_output1";
+	var arg = "";
+	 
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+
+	switch(svcID) {
+		case "commonCodeSearch" :
+			
+			if(!this.gfn_isNull(this.pmtPopupSeq)) {
+				
+				this.fn_search();
+				
+			} else { 
+				this.btn_prev.set_visible(false); // 미리보기 버튼 미노출
+				
+				// 등록 위한 화면 세팅
+				this.ds_pmtPopupInfo.addRow();
+				this.ds_pmtPopupInfo.setColumn(0, "CO_CD", this.fv_coCd);
+				this.ds_pmtPopupInfo.setColumn(0, "PMT_POPUP_SEQ", this.pmtPopupSeq);
+				
+				this.rdo_expsNoticSprCd.set_index(0);
+				this.rdo_urlCnsolSprCd.set_index(0);
+				this.rdo_nlookSetYn.set_index(0);
+				this.rdo_useYn.set_index(0);
+				this.rdo_expsPageSprCd.set_index(0);
+				this.rdo_excptPageSetYn.set_index(0);
+				this.rdo_prmSetYn.set_index(0);
+				this.rdo_popupSprCD.set_index(0); // 초기값은 이미지
+				
+				this.edt_wdtLen.set_value("560"); // width 초기값 560세팅
+					
+				this.cbo_dispStrHr.set_index(0);
+				this.cbo_dispStrMn.set_index(0);
+				this.cbo_dispEndHr.set_index(0);
+				this.cbo_dispEndMn.set_index(0);
+				
+				this.ds_pmtPopupInfo.setColumn(0, "FLTG_YN", "N")
+				this.ds_pmtPopupInfo.setColumn(0, "CLOSE_SET_YN", "N")
+				this.ds_pmtPopupInfo.setColumn(0, "NOTLOGN_INC_YN", "N");
+				
+				this.chk_notLogn_Inc_Yn.set_enable(true);
+			    this.chk_notLogn_Inc_Yn.set_value(false);
+			    				
+				this.fn_setPopupSprCd();
+				this.fn_chgExpsNoticSprCd();
+				this.fn_urlCnsolSprCd();
+				this.fn_setExpsSprCd();
+				this.fn_setExcptPageSetYn();
+				this.fn_setPrmSetYn();
+				
+				
+				
+			}
+			
+			break;
+
+		case "selectPmtPopupInfo" :
+			this.fn_setLenByte(this.edt_pmtPopupNm.value, 300, "pmtPopupNm");
+			this.fn_setLenByte(this.edt_pmtPopupDesc.value, 2000, "pmtPopupDesc");
+			if( this.ds_oprUnitList.rowcount == 0 ) {
+				this.ds_oprUnitList.copyData(this.ds_oprUnitList_copy);
+			}
+
+			this.fn_urlCnsolSprCd(); // URL구분코드 상태별 세팅
+			this.fn_chgExpsNoticSprCd(); // 게시구분 disable 세팅
+			
+			var sTotText = "(<b v='true'>총 " + this.ds_oprUnitList.getRowCount() + "건 </b>)";			
+			this.sta_totalCountOprUnit.set_text(sTotText);
+			
+			this.fn_setExpsSprCd(); // 적용페이지
+			this.fn_setExcptPageSetYn(); // 제외페이지
+			this.fn_setPrmSetYn(); // 파라미터
+			this.fn_setPopupSprCd(); // 소재구분
+
+			break;
+
+		case "savePmtPopupInfo" :
+			if(errorCode == ""){
+				alert(this.fn_getMessage("ERRN000030")); // 저장되었습니다.
+				this.opener.fn_search(0);
+				this.close();
+			}else{
+				alert(errorMsg);
+			}
+			break;
+		case "deletePmtPopupInfo" :
+			if(errorCode == ""){
+				alert(this.fn_getMessage("ERRN000031")); // 삭제되었습니다.
+				this.opener.fn_search(0);
+				this.close();
+			} else {
+				alert(this.fn_getMessage("ERRN000032")); // 삭제에 실패하였습니다.
+			}
+			break;
+			
+		case "oprUnitCheck" :
+
+			var tempOprUnitId = "";
+			
+			for (var x = 0; x < this.ds_rtnOprUnitCheckList.getRowCount(); x++) {
+				var sBzplcId = this.ds_rtnOprUnitCheckList.getColumn(x, "BZPLC_ID");
+				var sOprUnitId = this.ds_rtnOprUnitCheckList.getColumn(x, "OPR_UNIT_ID");
+				var sOprUnitNm = this.ds_rtnOprUnitCheckList.getColumn(x, "OPR_UNIT_NM");
+
+				if (sOprUnitNm == "" || sOprUnitNm == undefined) {
+					tempOprUnitId = tempOprUnitId + "사업장ID : " + sBzplcId + " / 운영단위ID : " + sOprUnitId + "\n";
+				}
+			}
+			
+			if (tempOprUnitId != "") {
+				this.fn_textCopy(this.fn_getMessage("ERRN000023", tempOprUnitId));
+				alert(this.fn_getMessage("ERRN000023", tempOprUnitId)); // 없는 운영단위ID를 입력하였습니다. 운영단위ID를 확인해주세요.\n&1
+			}
+
+			var totalCount2 = 0;
+			tempOprUnitId = "";
+	
+			for (var x = 0; x < this.ds_rtnOprUnitCheckList.getRowCount(); x++) {
+				var sBzplcId = this.ds_rtnOprUnitCheckList.getColumn(x, "BZPLC_ID");
+				var sOprUnitId = this.ds_rtnOprUnitCheckList.getColumn(x, "OPR_UNIT_ID");
+				var sOprUnitNm = this.ds_rtnOprUnitCheckList.getColumn(x, "OPR_UNIT_NM");
+			
+				if (sOprUnitNm != "" && sOprUnitNm != undefined) {
+					var findRow = this.ds_oprUnitList.findRowExpr("BZPLC_ID == '" + sBzplcId + "' && OPR_UNIT_ID == '" + sOprUnitId + "'");
+					
+					if(findRow < 0) {
+						var nRow = this.ds_oprUnitList.addRow();
+
+						this.ds_oprUnitList.setColumn(nRow, "CO_CD", this.fv_coCd);
+						this.ds_oprUnitList.setColumn(nRow, "PMT_POPUP_SEQ", "");
+						this.ds_oprUnitList.setColumn(nRow, "BZPLC_ID", sBzplcId);
+						this.ds_oprUnitList.setColumn(nRow, "OPR_UNIT_ID", sOprUnitId);
+						this.ds_oprUnitList.setColumn(nRow, "OPR_UNIT_NM", sOprUnitNm);
+					} else {
+						totalCount2 = totalCount2 + 1;
+							
+						tempOprUnitId = tempOprUnitId + "사업장ID : " + sBzplcId + " / 운영단위ID : " + sOprUnitId + "\n";
+					}
+				}
+			}
+		
+			if (totalCount2 > 0) {
+				this.fn_textCopy(this.fn_getMessage("ERRN000024", tempOprUnitId));
+				alert(this.fn_getMessage("ERRN000024", tempOprUnitId)); // 운영단위ID가 중복되었습니다. 운영단위ID를 확인해주세요.\n&1
+			}
+			
+			var sTotText = "(<b v='true'>총 " + this.ds_oprUnitList.getRowCount() + "건 </b>)";			
+			this.sta_totalCountOprUnit.set_text(sTotText);
+
+			break;
+			
+		default :
+
+			break;
+	}
+}
+
+this.fn_popupCallback = function(sPopupId, sRetValue)
+{
+	if(this.gfn_isNull(sRetValue)) {
+		return;
+	}
+	var retObj = JSON.parse(sRetValue);
+
+	switch(sPopupId) {
+		case "btn_oprUnitMulti" :
+			var totalCount2 = 0;
+			var tempOprUnitId = "";
+			
+			for(var i=0; i < retObj.length; i++) {
+				var rowData = JSON.parse(retObj[i]);
+				var findRow = this.ds_oprUnitList.findRowExpr("BZPLC_ID == '" + rowData.OPR_BZPLC_ID + "' && OPR_UNIT_ID == '" + rowData.OPR_UNIT_ID + "'");
+				if(findRow < 0) {
+					var nRow = this.ds_oprUnitList.addRow();
+					this.ds_oprUnitList.setColumn(nRow, "CO_CD", this.fv_coCd);
+					this.ds_oprUnitList.setColumn(nRow, "PMT_POPUP_SEQ", "");
+					this.ds_oprUnitList.setColumn(nRow, "BZPLC_ID", rowData.OPR_BZPLC_ID);
+					this.ds_oprUnitList.setColumn(nRow, "OPR_UNIT_ID", rowData.OPR_UNIT_ID);
+					this.ds_oprUnitList.setColumn(nRow, "OPR_UNIT_NM", rowData.OPR_UNIT_NM);
+				} else {
+					totalCount2 = totalCount2 + 1;						
+					tempOprUnitId = tempOprUnitId + "사업장ID : " + rowData.OPR_BZPLC_ID + " / 운영단위ID : " + rowData.OPR_UNIT_ID + "\n";
+				}
+			}
+			
+			if (totalCount2 > 0) {
+				this.fn_textCopy(this.fn_getMessage("ERRN000024", tempOprUnitId));
+				alert(this.fn_getMessage("ERRN000024", tempOprUnitId)); // 운영단위ID가 중복되었습니다. 운영단위ID를 확인해주세요.\n&1
+			}
+			
+			var sTotText = "(<b v='true'>총 " + this.ds_oprUnitList.getRowCount() + "건 </b>)";			
+			this.sta_totalCountOprUnit.set_text(sTotText);
+			
+			break;
+
+		case "btn_oprUnitMultiText" :
+
+			var retValue = retObj.textValue;
+
+			if (retValue != "") {
+				this.ds_searchOprUnitCheckList.clearData();
+				
+				var sTempValue = retValue.split(",");
+
+				for (var x = 0; x < sTempValue.length; x++) {
+					var sTempValueSplit = sTempValue[x].split("	");
+					
+					var sBzplcId = sTempValueSplit[0];
+					var sOprUnitId = sTempValueSplit[1];
+
+					if (sBzplcId != "" && sBzplcId != undefined && sOprUnitId != "" && sOprUnitId != undefined) {
+						var nRow = this.ds_searchOprUnitCheckList.addRow();
+						
+						this.ds_searchOprUnitCheckList.setColumn(nRow, "CO_CD", this.fv_coCd);
+						this.ds_searchOprUnitCheckList.setColumn(nRow, "BZPLC_ID", sBzplcId);
+						this.ds_searchOprUnitCheckList.setColumn(nRow, "OPR_UNIT_ID", sOprUnitId);
+					}
+				}
+				
+				this.fn_oprUnitCheck();
+			}
+
+			break;
+			
+		case "btn_cpnEvtNo" :
+			var rowData = JSON.parse(sRetValue);
+			
+			this.edt_cpnEvtNo.set_value(rowData.CPN_EVT_NO);
+			this.edt_cpnEvtNm.set_value(rowData.CPN_NM);
+			
+			break;
+		case "btn_aplyMultiText" :
+		case "btn_excptMultiText" :
+		case "btn_prmMultiText" :
+			
+			var retValue = retObj.textValue;
+			var selDs = "";
+			var sPmtPopupProcTypeCd = "";
+			var sProcType = "";
+			if (retValue != "") {
+				if(sPopupId == "btn_aplyMultiText") {
+					selDs = this.ds_aplyDtlList;
+					sPmtPopupProcTypeCd = "10";
+					sProcType = "적용페이지 URL";
+				} else if(sPopupId == "btn_excptMultiText") {
+					selDs = this.ds_excptDtlList;
+					sPmtPopupProcTypeCd = "20";
+					sProcType = "제외페이지 URL";
+				} else if(sPopupId == "btn_prmMultiText") {
+					selDs = this.ds_prmDtlList;
+					sPmtPopupProcTypeCd = "30";
+					sProcType = "파라미터";
+				}
+				 
+ 				var sTempValue = retValue.split(",");
+				var duplCnt = 0;
+				var sDuplTxt = "";
+				for(var i = 0; i < sTempValue.length; i++) {
+					var sDtlTxt = sTempValue[i];
+					if(!this.gfn_isNull(sDtlTxt)) {
+						var findRow = selDs.findRowExpr("PMT_POPUP_PROC_TXT == '" + sDtlTxt + "'");
+						if(findRow < 0) {
+							var nRow = selDs.addRow();
+							selDs.setColumn(nRow, "COL_CHK", "0");
+							selDs.setColumn(nRow, "CO_CD", this.fv_coCd);
+							selDs.setColumn(nRow, "PMT_POPUP_SEQ", this.pmtPopupSeq);
+							selDs.setColumn(nRow, "PMT_POPUP_PROC_TYPE_CD", sPmtPopupProcTypeCd);
+							selDs.setColumn(nRow, "PMT_POPUP_PROC_TXT", sDtlTxt);
+						} else {
+							duplCnt = duplCnt + 1;
+							sDuplTxt = sDuplTxt + "\n";
+						}
+					}
+				}
+				if (duplCnt > 0) {
+					//alert(this.fn_getMessage("ERRR000169", sProcType)); // &1이(가) 중복됩니다.
+				}
+			}
+			break;
+
+		default :
+
+			break;
+	}
+}
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+	//search static 초기 설정
+	this.sta_expsNoticSprCd.uEssentiel = "true";
+	this.sta_pmtPopupNm.uEssentiel = "true";
+	this.sta_dispPeriod.uEssentiel = "true";
+	this.sta_dispSo.uEssentiel = "true";
+	this.sta_img.uEssentiel = "true";
+	this.sta_url.uEssentiel = "true";
+	this.sta_pstSet.uEssentiel = "true";	
+	this.sta_nlookSet.uEssentiel = "true";
+	this.sta_useYn.uEssentiel = "true";
+	this.sta_expsPageSprCd.uEssentiel = "true";
+	this.sta_excptPageSetYn.uEssentiel = "true";
+	this.sta_prmSetYn.uEssentiel = "true";
+	this.sta_yTube.uEssentiel = "true";
+	this.sta_popupSprCD.uEssentiel = "true";
+	
+	
+	
+	
+	// grid 초기 설정
+	this.grd_oprUnitList.uSortFlag = "true";
+	this.grd_oprUnitList.uServerSortFlag = "false";
+	this.grd_oprUnitList.uCellSizeType = "true";
+}
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+// 글자 byte 체크 함수
+this.fn_setLenByte = function(sVal, maxByte, sGubun)
+{
+	var expsText = "";
+	
+	var count = 0;
+	if(!this.gfn_isNull(sVal)) {
+		count = nexacro._getUtf8Length(sVal);
+	}
+
+	if (count < 0) {
+		count = 0;
+	}
+
+	if(count <= maxByte) {
+		expsText = "(<fc v='red'>" + count + "</fc> / " + maxByte + " Byte)";
+
+		if(sGubun == "pmtPopupNm") {
+			this.sta_pmtPopupNmSize.set_text(expsText);
+		} else if(sGubun == "pmtPopupDesc") {
+			this.sta_pmtPopupDescSize.set_text(expsText);
+		}
+		return;
+	}
+
+	var tempVal = "";
+
+	tempVal = nexacro._substrByUtf8(sVal, 0, maxByte);
+	count = nexacro._getUtf8Length(tempVal);
+
+	expsText = "(<fc v='red'>" + count + "</fc> / " + maxByte + " Byte)";
+
+	if(sGubun == "pmtPopupNm") {
+		this.edt_pmtPopupNm.set_value("");
+		this.edt_pmtPopupNm.set_value(tempVal);
+		this.sta_pmtPopupNmSize.set_text(expsText);
+	} else if(sGubun == "pmtPopupDesc") {
+		this.edt_pmtPopupDesc.set_value("");
+		this.edt_pmtPopupDesc.set_value(tempVal);
+		this.sta_pmtPopupDescSize.set_text(expsText);
+	}
+};
+
+// 게시구분코드 변경
+this.fn_chgExpsNoticSprCd = function() {
+	// SSP-2971
+	if(this.rdo_expsNoticSprCd.value == "30" || this.rdo_expsNoticSprCd.value == "50"
+		|| this.rdo_expsNoticSprCd.value == "60" || this.rdo_expsNoticSprCd.value == "70") {
+		this.grd_oprUnitList.set_enable(true);
+
+		this.btn_oprUnitMulti.set_enable(true);
+		this.btn_oprUnitMultiText.set_enable(true);
+		
+		this.chk_notLogn_Inc_Yn.set_enable(true);
+	} else {
+		this.grd_oprUnitList.set_enable(false);
+
+		this.btn_oprUnitMulti.set_enable(false);
+		this.btn_oprUnitMultiText.set_enable(false);
+		
+		this.chk_notLogn_Inc_Yn.set_value(false);
+		this.chk_notLogn_Inc_Yn.set_enable(false);
+		this.ds_pmtPopupInfo.setColumn(0, "NOTLOGN_INC_YN", "N");
+	}
+}
+
+// URL 연결여부구분 수정 시
+this.fn_urlCnsolSprCd = function() {
+	if(this.rdo_urlCnsolSprCd.value == "10") {
+		this.edt_urdAddr.set_enable(false);
+		this.btn_cpnEvtNo.set_enable(true);
+	} else {
+		this.edt_urdAddr.set_enable(true);
+		this.btn_cpnEvtNo.set_enable(false);
+	}
+}
+
+// 적용페이지 구분값 변경
+this.fn_setExpsSprCd = function() {
+	if(this.rdo_expsPageSprCd.value == "20") { // 특정페이지
+		// 적용페이지 set
+		this.grd_aplyDtlList.set_enable(true);
+		this.btn_aplyAdd.set_enable(true);
+		this.btn_aplyDelete.set_enable(true);
+		this.btn_aplyMultiText.set_enable(true);
+		// 제외페이지 set (특정페이지로 할 경우 제외페이지는 설정 못함)
+		this.rdo_excptPageSetYn.set_value("N");
+		this.rdo_excptPageSetYn.set_enable(false);
+		this.fn_setExcptPageSetYn();
+	} else { // 전체페이지
+		// 적용페이지 set
+		this.grd_aplyDtlList.set_enable(false);
+		this.btn_aplyAdd.set_enable(false);
+		this.btn_aplyDelete.set_enable(false);
+		this.btn_aplyMultiText.set_enable(false);
+		// 제외페이지 set
+		this.rdo_excptPageSetYn.set_enable(true);		
+		this.fn_setExcptPageSetYn();
+	}
+}
+
+// 제외페이지 설정여부 구분값 변경
+this.fn_setExcptPageSetYn = function() {
+	if(this.rdo_excptPageSetYn.value == "Y") {
+		this.grd_excptDtlList.set_enable(true);
+		this.btn_excptAdd.set_enable(true);
+		this.btn_excptDelete.set_enable(true);
+		this.btn_excptMultiText.set_enable(true);
+	} else {
+		this.grd_excptDtlList.set_enable(false);
+		this.btn_excptAdd.set_enable(false);
+		this.btn_excptDelete.set_enable(false);
+		this.btn_excptMultiText.set_enable(false);
+	}
+}
+
+// 파라미터 설정여부 구분값 변경
+this.fn_setPrmSetYn = function() {
+	if(this.rdo_prmSetYn.value == "Y") {
+		this.grd_prmDtlList.set_enable(true);
+		this.btn_prmAdd.set_enable(true);
+		this.btn_prmDelete.set_enable(true);
+		this.btn_prmMultiText.set_enable(true);
+	} else {
+		this.grd_prmDtlList.set_enable(false);
+		this.btn_prmAdd.set_enable(false);
+		this.btn_prmDelete.set_enable(false);
+		this.btn_prmMultiText.set_enable(false);
+	}
+}
+
+// 소재 구분값 변경
+this.fn_setPopupSprCd = function() {
+	
+	// 이미지
+	if(this.rdo_popupSprCD.value == "10"){
+	
+		// 이미지 관련요소 노출
+		this.Static05.set_visible(true);
+		this.sta_img.set_visible(true);
+		this.edt_atflNm.set_visible(true);
+		this.btn_imgAdd.set_visible(true);
+		this.btn_imgDelete.set_visible(true);
+		this.sta_imgSize.set_visible(true);
+		this.edt_atflNm.set_enable(true);
+		
+		// 유튜브관련 요소 숨김처리
+		this.Static05_1.set_visible(false);
+		this.sta_yTube.set_visible(false);		
+		this.sta_yTubeUrlAddr.set_visible(false);
+		this.sta_wdtLen.set_visible(false);		
+		this.edt_yTubeUrlAddr.set_visible(false);
+		this.edt_wdtLen.set_visible(false);
+		this.edt_yTubeUrlAddr.set_enable(false);
+		this.edt_wdtLen.set_enable(false);
+		
+		// 이미지 링크 URL, 쿠폰영역 활성화
+		this.rdo_urlCnsolSprCd.set_enable(true);
+// 		if(this.rdo_urlCnsolSprCd.value == "10"){
+// 			this.edt_urdAddr.set_enable(false);
+// 		} else {
+// 			this.edt_urdAddr.set_enable(true);
+// 		}
+		
+		
+		this.edt_cpnEvtNm.set_enable(true);
+		this.btn_cpnEvtNo.set_enable(true);
+		this.btn_cpnEvtNoDelete.set_enable(true);	
+			
+	} else {
+		// 유튜브 관련요소 노출처리
+		this.Static05_1.set_visible(true);
+		this.sta_yTube.set_visible(true);
+		this.edt_yTubeUrlAddr.set_visible(true);		
+		this.sta_yTubeUrlAddr.set_visible(true);
+		this.sta_wdtLen.set_visible(true);
+		this.edt_wdtLen.set_visible(true);
+		this.edt_yTubeUrlAddr.set_enable(true);
+		this.edt_wdtLen.set_enable(true);
+		
+		// 이미지 관련요소 숨김처리
+		this.Static05.set_visible(false);
+		this.sta_img.set_visible(false);
+		this.edt_atflNm.set_visible(false);
+		this.btn_imgAdd.set_visible(false);
+		this.btn_imgDelete.set_visible(false);
+		this.sta_imgSize.set_visible(false);
+		this.edt_atflNm.set_enable(false);
+		
+		// 이미지 링크 URL, 쿠폰영역 비활성화
+		this.rdo_urlCnsolSprCd.set_index(0);
+		this.rdo_urlCnsolSprCd.set_enable(false);
+		this.edt_urdAddr.set_value("");
+		this.edt_urdAddr.set_enable(false);
+		
+		this.edt_cpnEvtNm.set_value("");
+		this.edt_cpnEvtNm.set_enable(false);
+		this.btn_cpnEvtNo.set_enable(false);
+		this.btn_cpnEvtNoDelete.set_enable(false);
+		
+	}
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//운영단위 멀티 검색 버튼
+this.btn_oprUnitMulti_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var oArg = {coCd:this.fv_coCd
+			   };
+
+	var oOption = { top : "-1"
+				  , left : "-1"
+				  , width : "-1"
+				  , height : "-1"
+				  , popuptype : "modal"	// modal:showModal, modeless:application.open, modalsync:showModalSync, modalwindow:showModalWindow
+				  , layered : "false"
+				  , opacity : "100"
+				  , autosize : "true"
+				  , titlebar : "true"
+				  , title : "운영단위 조회"
+				  };
+
+	this.gfn_openPopup(e.fromobject.id, "CO_POP::SSP_BO_PP_23.xfdl", oArg, "fn_popupCallback", oOption);
+};
+
+//운영단위 멀티텍스트 검색 버튼
+this.btn_oprUnitMultiText_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = { textId : this.btn_oprUnitMultiText };
+	var options = {};
+	options.title = "멀티 텍스트 팝업";
+
+	this.gfn_openPopup(e.fromobject.id, "SA::SSP_BO_SA_MSEARCH.xfdl", params,  "fn_popupCallback", options);
+};
+
+//게시구분 변경 이벤트
+this.rdo_expsNoticSprCd_onitemchanged = function(obj:nexacro.Radio,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_chgExpsNoticSprCd();
+};
+
+// 쿠폰 조회
+this.btn_cpnEvtNo_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var oArg = { coCd : this.fv_coCd
+	           }; 
+
+	var oOption = { top : "-1"
+	              , left : "-1"
+	              , width : "-1"
+	              , height : "-1"
+	              , popuptype : "modal"	// modal:showModal, modeless:application.open, modalsync:showModalSync, modalwindow:showModalWindow
+	              , layered : "false"
+	              , opacity : "100"
+	              , autosize : "true"
+	              , titlebar : "true"
+	              , title : "쿠폰 조회"
+	              };	
+
+	this.gfn_openPopup(e.fromobject.id, "SA::SSP_BO_PP_29.xfdl", oArg, "fn_popupCallback", oOption);		
+};
+
+// 쿠폰 삭제
+this.btn_cpnEvtNoDelete_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.edt_cpnEvtNo.set_value("");
+	this.edt_cpnEvtNm.set_value("");
+};
+
+// 미리보기
+this.btn_prev_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var foDomain = this.fv_oApp.gds_sspHosts.getColumn(0, "HOST_SSP");
+	var paramStart = "?";
+	var param = "pmtPopupSeq=" + this.pmtPopupSeq + "&topPst=" + this.edt_topPst.value + "&leftPst=" + this.edt_leftPst.value + "&fltgYn=" + this.chk_fltgYn.value;
+	var prevUrl = foDomain + "/";
+	var foUrl = "";
+	if(this.rdo_expsPageSprCd.value == "10" && this.gfn_isNull(this.ds_aplyDtlList.getColumn(0, "PMT_POPUP_PROC_TXT"))) {
+		foUrl = "/ssp/main/index.do";
+	} else {
+		foUrl = this.ds_aplyDtlList.getColumn(0, "PMT_POPUP_PROC_TXT");
+		if(this.ds_aplyDtlList.getColumn(0, "PMT_POPUP_PROC_TXT").indexOf("?") >= 0) {
+			paramStart = "&";
+		}
+	}
+	prevUrl = foDomain + foUrl + paramStart + param;
+	system.execBrowser(prevUrl);
+};
+
+// 취소 버튼
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(confirm(this.fn_getMessage("ERRN000053"))) { // 취소하시겠습니까?
+		this.close();
+	}
+};
+
+// 저장 버튼
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.gfn_isNull(this.edt_pmtPopupNm.value)) {
+		alert(this.fn_getMessage("ERRN000001", "프로모션 명은")); // 프로모션 명은 필수 입력항목입니다.
+		this.edt_pmtPopupNm.setFocus();
+		return;
+	}
+	if(this.gfn_isNull(this.rdo_expsNoticSprCd.value)) {
+		alert(this.fn_getMessage("ERRN000001", "게시구분은")); // 게시구분은 필수 입력항목입니다.
+		this.rdo_expsNoticSprCd.setFocus();
+		return;
+	}	
+	if(this.rdo_expsNoticSprCd.value == "30") {
+		if (this.ds_oprUnitList.getRowCount() <= 0) {
+			alert(this.fn_getMessage("ERRN000001", "로그인 운영단위를 선택하시면, 최소 1개의 운영단위는")); // 로그인 운영단위를 선택하시면, 최소 1개의 운영단위는 필수 입력항목입니다.
+			return;
+		}
+	}	
+	if(this.gfn_isNull(this.cal_dispStrDt.value) || this.gfn_isNull(this.cbo_dispStrHr.value) || this.gfn_isNull(this.cbo_dispStrMn.value)) {
+		alert(this.fn_getMessage("ERRN000001", "전시 시작일은")); // 전시 시작일은 필수 입력항목입니다.
+		this.cal_dispStrDt.setFocus();
+		return;
+	}
+	if(this.gfn_isNull(this.cal_dispEndDt.value) || this.gfn_isNull(this.cbo_dispEndHr.value) || this.gfn_isNull(this.cbo_dispEndMn.value)) {
+		alert(this.fn_getMessage("ERRN000001", "전시 종료일은")); // 전시 종료일은 필수 입력항목입니다.
+		this.cal_dispEndDt.setFocus();
+		return;
+	}
+	if(this.cal_dispStrDt.value > this.cal_dispEndDt.value) {
+		alert(this.fn_getMessage("ERRN000002", "전시 종료일이 전시 시작일보다")); // 전시 종료일이 전시 시작일보다 작습니다.
+		return;
+	} else if(this.cal_dispStrDt.value == this.cal_dispEndDt.value) {
+		var strHrmn = this.cbo_dispStrHr.value + "" + this.cbo_dispStrMn.value;
+		var endHrmn = this.cbo_dispEndHr.value + "" + this.cbo_dispEndMn.value;
+		if(strHrmn > endHrmn) {
+			alert(this.fn_getMessage("ERRN000002", "전시 종료 시간이 전시 시작 시간보다")); // 전시 종료 시간이 전시 시작 시간보다 작습니다.
+			return;
+		}
+	}
+	if(this.gfn_isNull(this.edt_dispSo.value)) {
+		alert(this.fn_getMessage("ERRN000001", "전시순서는")); // 전시순서는 필수 입력항목입니다.
+		this.rdo_expsNoticSprCd.setFocus();
+		return;
+	}
+	// 팝업구분코드가 이미지일경우
+	if(this.rdo_popupSprCD.value == "10") {
+	
+		if(this.gfn_isNull(this.edt_atflNm.value)) {
+		alert(this.fn_getMessage("ERRN000001", "이미지는")); // 이미지는 필수 입력항목입니다.
+		this.edt_atflNm.setFocus();
+		return;
+		}
+		if(this.gfn_isNull(this.rdo_urlCnsolSprCd.value)) {
+			alert(this.fn_getMessage("ERRN000001", "URL은")); // URL은 필수 입력항목입니다.
+			this.rdo_urlCnsolSprCd.setFocus();
+			return;
+		}
+		if(this.rdo_urlCnsolSprCd.value != 10) {
+			if(this.gfn_isNull(this.edt_urdAddr.value)) {
+				alert(this.fn_getMessage("ERRN000001", "링크없음이 아니면 URL은")); // 링크없음이 아니면 URL은 필수 입력항목입니다.
+				this.edt_urdAddr.setFocus();
+				return;
+			}
+		}
+	// 유튜브일경우
+	} else {
+		var url = this.edt_yTubeUrlAddr.value;
+			
+		if(this.gfn_isNull(url)) {
+		    alert(this.fn_getMessage("ERRN000001", "유튜브 주소는")); // 유튜브주소는 필수 입력항목입니다.
+			this.edt_yTubeUrlAddr.setFocus();
+			return;
+		}
+		
+		if(url.indexOf("youtube.com") < 0 && url.indexOf("youtu.be") < 0) {
+			alert(this.fn_getMessage("ERRN000124")); // 유효한 유튜브 주소를 입력해주세요.
+			this.edt_yTubeUrlAddr.setFocus();
+			return;			
+		}
+		if(this.gfn_isNull(this.edt_wdtLen.value)) {
+		    alert(this.fn_getMessage("ERRN000001", "Width는")); // Width는 필수 입력항목입니다.
+			this.edt_wdtLen.setForcus();
+			return;
+		}
+		// 등록한 이미지 삭제 처리
+		this.ds_pmtPopupInfo.setColumn(0,"ATFL_NM", "");		
+		this.fileUpTrans.clearFileList();
+		this.ds_file.clearData();
+		
+		// 이미지문서ID는 0으로 세팅(컬럼속성이 not null이므로)
+		this.ds_pmtPopupInfo.setColumn(0, "DOC_REG_ID", "0");
+	}
+	
+	if(this.gfn_isNull(this.edt_topPst.value)) {
+		alert(this.fn_getMessage("ERRN000001", "TOP위치 설정은")); // TOP위치 설정은 필수 입력항목입니다.
+		this.edt_topPst.setFocus();
+		return;
+	}	
+	if(this.gfn_isNull(this.edt_leftPst.value)) {
+		alert(this.fn_getMessage("ERRN000001", "LEFT위치 설정은")); // LEFT위치설정은 필수 입력항목입니다.
+		this.edt_leftPst.setFocus();
+		return;
+	}
+	if(this.gfn_isNull(this.rdo_nlookSetYn.value)) {
+		alert(this.fn_getMessage("ERRN000001", "다시보지않기설정은")); // 다시보지않기설정은 필수 입력항목입니다.
+		this.rdo_nlookSetYn.setFocus();
+		return;
+	}
+	if(this.gfn_isNull(this.rdo_useYn.value)) {
+		alert(this.fn_getMessage("ERRN000001", "사용여부는")); // 사용여부는 필수 입력항목입니다.
+		this.rdo_useYn.setFocus();
+		return;
+	}
+
+	for(var i = 0; i< this.ds_aplyDtlList.rowcount; i++) {
+		if(this.gfn_isNull(this.ds_aplyDtlList.getColumn(i, "PMT_POPUP_PROC_TXT"))) {
+			alert(this.fn_getMessage("ERRR000199", "노출페이지 URL")); // 노출페이지URL을(를) 입력해 주세요.
+			return;
+		}
+	}	
+	for(var i = 0; i< this.ds_excptDtlList.rowcount; i++) {
+		if(this.gfn_isNull(this.ds_excptDtlList.getColumn(i, "PMT_POPUP_PROC_TXT"))) {
+			alert(this.fn_getMessage("ERRR000199", "제외페이지 URL")); // 제외페이지URL을(를) 입력해 주세요.
+			return;
+		}
+	}
+	for(var i = 0; i< this.ds_prmDtlList.rowcount; i++) {
+		if(this.gfn_isNull(this.ds_prmDtlList.getColumn(i, "PMT_POPUP_PROC_TXT"))) {
+			alert(this.fn_getMessage("ERRR000199", "외부 인입 설정 파라미터")); // 외부 인입 설정 파라미터을(를) 입력해 주세요.
+			return;
+		}
+	}
+	
+	if(this.rdo_expsPageSprCd.value == "20" && this.ds_aplyDtlList.rowcount == 0) {
+		alert(this.fn_getMessage("ERRR000199", "노출페이지 설정 구분 값이 '특정페이지' 일 경우 노출페이지 URL")); // 노출페이지 설정 구분 값이 특정페이지일 경우 노출페이지 URL을(를) 입력해 주세요.
+		return;
+	}
+	
+	if(this.rdo_excptPageSetYn.value == "Y" && this.ds_excptDtlList.rowcount == 0) {
+		alert(this.fn_getMessage("ERRR000199", "제외페이지 설정 구분 값이 '제외페이지' 일 경우 제외페이지 URL")); // 제외페이지 설정 구분 값이 제외페이지일 경우 제외페이지 URL을(를) 입력해 주세요.
+		return;
+	}
+	
+	if(this.rdo_prmSetYn.value == "Y" && this.ds_prmDtlList.rowcount == 0) {
+		alert(this.fn_getMessage("ERRR000199", "외부 인입 설정 구분 값이 '파라미터 설정' 일 경우 파라미터 값")); // 외부 인입 설정 구분 값이 파라미터 설정 일 경우 파라미터 값을(를) 입력해 주세요.
+		return;
+	}
+	
+	for(var i = 0; i< this.ds_aplyDtlList.rowcount; i++) {
+		var sDtlTxt = this.ds_aplyDtlList.getColumn(i, "PMT_POPUP_PROC_TXT");
+		var chkCnt = this.ds_aplyDtlList.getCaseCount("PMT_POPUP_PROC_TXT == '" + sDtlTxt +"'");
+		if(chkCnt > 1) {
+			alert(this.fn_getMessage("ERRR000169", "노출페이지 URL")); // &1이(가) 중복됩니다.
+			return;
+		}
+	}
+	
+	for(var i = 0; i< this.ds_excptDtlList.rowcount; i++) {
+		var sDtlTxt = this.ds_excptDtlList.getColumn(i, "PMT_POPUP_PROC_TXT");
+		var chkCnt = this.ds_excptDtlList.getCaseCount("PMT_POPUP_PROC_TXT == '" + sDtlTxt +"'");
+		if(chkCnt > 1) {
+			alert(this.fn_getMessage("ERRR000169", "제외페이지 URL")); // &1이(가) 중복됩니다.
+			return;
+		}
+	}
+	
+	for(var i = 0; i< this.ds_prmDtlList.rowcount; i++) {
+		var sDtlTxt = this.ds_prmDtlList.getColumn(i, "PMT_POPUP_PROC_TXT");
+		var chkCnt = this.ds_prmDtlList.getCaseCount("PMT_POPUP_PROC_TXT == '" + sDtlTxt +"'");
+		if(chkCnt > 1) {
+			alert(this.fn_getMessage("ERRR000169", "파라미터")); // &1이(가) 중복됩니다.
+			return;
+		}
+	}
+				
+	// 게시구분코드가 운영단위가 아니면 아니면 작성된 운영단위 정보 삭제
+	if(this.rdo_expsNoticSprCd.value != "30" && this.rdo_expsNoticSprCd.value != "50"
+		&& this.rdo_expsNoticSprCd.value != "60" && this.rdo_expsNoticSprCd.value != "70") {
+		var aDelArr = new Array();
+		for(var i = 0; i< this.ds_oprUnitList.rowcount; i++) {
+			aDelArr.push(i);
+		}
+		this.ds_oprUnitList.deleteMultiRows(aDelArr);
+	}
+	
+	// 노출페이지가 전체페이지면 작성된 정보 삭제
+	if(this.rdo_expsPageSprCd.value == "10") {
+		var aDelArr = new Array();
+		for(var i = 0; i< this.ds_aplyDtlList.rowcount; i++) {
+			aDelArr.push(i);
+		}
+		this.ds_aplyDtlList.deleteMultiRows(aDelArr);
+	}
+	
+	// 제외페이지 설정여부 구분값이 제외없음이면 작성된 정보 삭제
+	if(this.rdo_excptPageSetYn.value == "N") {
+		var aDelArr = new Array();
+		for(var i = 0; i< this.ds_excptDtlList.rowcount; i++) {
+			aDelArr.push(i);
+		}
+		this.ds_excptDtlList.deleteMultiRows(aDelArr);
+	}
+	
+	// 외부인입 설정여부 구분값이 없음이면 작성된 정보 삭제
+	if(this.rdo_prmSetYn.value == "N") {
+		var aDelArr = new Array();
+		for(var i = 0; i< this.ds_prmDtlList.rowcount; i++) {
+			aDelArr.push(i);
+		}
+		this.ds_prmDtlList.deleteMultiRows(aDelArr);
+	}
+	
+	//this.ds_pmtPopupInfo.setColumn(0, "DISP_STR_DTM", this.cal_dispStrDt.value + this.cbo_dispStrHr.value + this.cbo_dispStrMn.value);
+	//this.ds_pmtPopupInfo.setColumn(0, "DISP_END_DTM", this.cal_dispEndDt.value + this.cbo_dispEndHr.value + this.cbo_dispEndMn.value);
+	this.edt_dispStrDtm.set_value(this.cal_dispStrDt.value + this.cbo_dispStrHr.value + this.cbo_dispStrMn.value);
+	this.edt_dispEndDtm.set_value(this.cal_dispEndDt.value + this.cbo_dispEndHr.value + this.cbo_dispEndMn.value);
+	
+	// URL 구분코드가 링크없음이 아니면 쿠폰 값 초기화
+	if(this.rdo_urlCnsolSprCd.value != "10") {
+		this.edt_cpnEvtNo.set_value("");
+		this.edt_cpnEvtNm.set_value("");
+	}
+	
+	// 파일업로드
+	if( this.ds_file.rowcount > 0 ) {
+		if(this.fn_dataCheck(this.ds_file) ) {
+			var jsonObj		= new Object();
+			var oriAtflNm = this.ds_pmtPopupInfo.getColumn(0, "ORI_ATFL_NM") == undefined ? "" :this.ds_pmtPopupInfo.getColumn(0, "ORI_ATFL_NM");
+			var atflStorPath = this.ds_pmtPopupInfo.getColumn(0, "ATFL_STOR_PATH") == undefined ? "" :this.ds_pmtPopupInfo.getColumn(0, "ATFL_STOR_PATH");
+			var docRegId = this.ds_pmtPopupInfo.getColumn(0, "DOC_REG_ID") == undefined ? "" :this.ds_pmtPopupInfo.getColumn(0, "DOC_REG_ID");
+			var docRegSeq = this.ds_pmtPopupInfo.getColumn(0, "DOC_REG_SEQ") == undefined ? "1" :this.ds_pmtPopupInfo.getColumn(0, "DOC_REG_SEQ").toString();
+			
+			// 파일삭제 및 첨부파일테이블에 insert 위하여 값 세팅.
+			this.fileUpTrans.setPostData("oriAtflNm", oriAtflNm);
+			this.fileUpTrans.setPostData("atflStorPath", atflStorPath);
+			this.fileUpTrans.setPostData("docRegId", docRegId);
+			this.fileUpTrans.setPostData("docRegSeq",  docRegSeq);
+			this.fileUpTrans.upload('/sa/com/singlec-file-upload.do')
+		} else {
+			this.fn_save();
+		}
+	} else {
+		this.fn_save();
+	}
+};
+
+// 운영단위 삭제
+this.grd_oprUnitList_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var sEditType = obj.getCellProperty("body", e.cell, "edittype");
+
+	if(sEditType == "button") {
+		if(confirm(this.fn_getMessage("ERRN000048"))) { // 삭제하시겠습니까?
+			this.ds_oprUnitList.deleteRow(e.row);
+			
+			var sTotText = "(<b v='true'>총 " + this.ds_oprUnitList.getRowCount() + "건 </b>)";			
+			this.sta_totalCountOprUnit.set_text(sTotText);
+		}
+	}
+};
+
+// 배너 삭제
+this.btn_delete_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(confirm(this.fn_getMessage("ERRN000048"))) { // 삭제하시겠습니까?
+		this.fn_delete();
+	}
+};
+
+//  제목 keyup
+this.edt_pmtPopupNm_onkeyup = function(obj:nexacro.Edit,e:nexacro.KeyEventInfo)
+{
+	this.fn_setLenByte(obj.value, 300, "pmtPopupNm");
+};
+
+//  프로모션 팝업 설명 keyup
+this.edt_pmtPopupDesc_onkeyup = function(obj:nexacro.TextArea,e:nexacro.KeyEventInfo)
+{
+	this.fn_setLenByte(obj.value, 2000, "pmtPopupDesc");
+};
+
+// URL 연결 구분코드
+this.rdo_urlCnsolSprCd_onitemchanged = function(obj:nexacro.Radio,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_urlCnsolSprCd();
+};
+
+// 이미지 업로드
+this.btn_imgAdd_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	curImgBtnName = e.fromobject.id;
+	this.fileDialog.set_accept(this.fileType);
+	this.fileDialog.open('nexacro17', FileDialog.MULTILOAD);
+};
+
+// 이미지 삭제
+this.btn_imgDelete_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_pmtPopupInfo.setColumn(0,"ATFL_NM", "");
+		
+	this.fileUpTrans.clearFileList();
+	this.ds_file.clearData();
+	
+};
+
+// 첨부파일 클릭
+this.edt_atflNm_onclick = function(obj:nexacro.Edit,e:nexacro.EditClickEventInfo)
+{
+// 	if(e.fromobject.id == "edt_atflNm") {
+// 		if(!this.gfn_isNull(this.edt_atflNm.value)) {
+// 			if(this.confirm(this.edt_atflNm.value + " 파일을 저장 하시겠습니까?")) {
+// 				this.downloadfile("main");
+// 			}
+// 		}
+// 	} else if(e.fromobject.id == "edt_subAtflNm") {
+// 		if(!this.gfn_isNull(this.edt_subAtflNm.value)) {
+// 			if(this.confirm(this.edt_subAtflNm.value + " 파일을 저장 하시겠습니까?")) {
+// 				this.downloadfile("sub");
+// 			}
+// 		}
+// 	}
+};
+
+// 이미지 노출 처리
+this.edt_atflNm_onmouseenter = function(obj:nexacro.Edit,e:nexacro.MouseEventInfo)
+{
+	var docRegId = this.ds_pmtPopupInfo.getColumn(0, "DOC_REG_ID");
+	var docRegSeq = this.ds_pmtPopupInfo.getColumn(0, "DOC_REG_SEQ");
+	
+	this.img_view.set_width(300);
+	this.img_view.set_height(300);
+	
+	if(!this.gfn_isNull(docRegId)) {
+		this.fn_imgView(this.img_view, obj, docRegId, docRegSeq);
+	}
+};
+this.edt_atflNm_onmouseleave = function(obj:nexacro.Edit,e:nexacro.MouseEventInfo)
+{
+	this.img_view.set_visible(false);
+};
+
+this.btn_dtlAdd_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+ 	if(e.fromobject.id == "btn_aplyAdd") {
+		var nRow = this.ds_aplyDtlList.addRow();
+		this.ds_aplyDtlList.setColumn(nRow, "COL_CHK", "0");
+		this.ds_aplyDtlList.setColumn(nRow, "CO_CD", this.fv_coCd);
+		this.ds_aplyDtlList.setColumn(nRow, "PMT_POPUP_SEQ", this.pmtPopupSeq);
+		this.ds_aplyDtlList.setColumn(nRow, "PMT_POPUP_PROC_TYPE_CD", "10");
+ 	} else if(e.fromobject.id == "btn_excptAdd") {
+		var nRow = this.ds_excptDtlList.addRow();
+		this.ds_excptDtlList.setColumn(nRow, "COL_CHK", "0");
+		this.ds_excptDtlList.setColumn(nRow, "CO_CD", this.fv_coCd);
+		this.ds_excptDtlList.setColumn(nRow, "PMT_POPUP_SEQ", this.pmtPopupSeq);
+		this.ds_excptDtlList.setColumn(nRow, "PMT_POPUP_PROC_TYPE_CD", "20");
+	} else if(e.fromobject.id == "btn_prmAdd") {
+		var nRow = this.ds_prmDtlList.addRow();
+		this.ds_prmDtlList.setColumn(nRow, "COL_CHK", "0");
+		this.ds_prmDtlList.setColumn(nRow, "CO_CD", this.fv_coCd);
+		this.ds_prmDtlList.setColumn(nRow, "PMT_POPUP_SEQ", this.pmtPopupSeq);
+		this.ds_prmDtlList.setColumn(nRow, "PMT_POPUP_PROC_TYPE_CD", "30");
+	}
+};
+
+// 상세상품 선택 삭제 버튼 클릭 시
+this.btn_dtlDelete_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var selDelDs = "";
+	if(e.fromobject.id == "btn_aplyDelete") {
+		selDelDs = this.ds_aplyDtlList;
+	} else if(e.fromobject.id == "btn_excptDelete") {
+		selDelDs = this.ds_excptDtlList;
+	} else if(e.fromobject.id == "btn_prmDelete") {
+		selDelDs = this.ds_prmDtlList;
+	}
+	
+	var chkCnt = selDelDs.getCaseCount("COL_CHK == 1");
+	
+	if(chkCnt == 0) {
+		alert(this.fn_getMessage("ERRN000033")); // 선택된 항목이 없습니다.
+		return;
+	}
+	
+	if (confirm(this.fn_getMessage("ERRN000048"))) { // 삭제하시겠습니까?
+		var aDelArr = new Array();
+		
+		for(var i = 0; i< selDelDs.rowcount; i++) {
+			if(selDelDs.getColumn(i, "COL_CHK") == 1) {
+				aDelArr.push(i);
+			}
+		}
+		
+		selDelDs.deleteMultiRows(aDelArr);
+	}
+};
+
+this.btn_dtlMultiText_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var params = { textId : e.fromobject.id };
+	var options = {};
+	options.title = "멀티 텍스트 팝업";
+	
+	this.gfn_openPopup(e.fromobject.id, "CO_POP::SSP_BO_PP_13.xfdl", params,  "fn_popupCallback", options);
+};
+
+// 적용 페이지 구분값 변경
+this.rdo_expsPageSprCd_onitemchanged = function(obj:nexacro.Radio,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_setExpsSprCd();
+};
+
+// 제외페이지 설정여부 구분값 변경
+this.rdo_excptPageSetYn_onitemchanged = function(obj:nexacro.Radio,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_setExcptPageSetYn();
+};
+
+// 파라미터 설정여부 구분값 변경
+this.rdo_prmSetYn_onitemchanged = function(obj:nexacro.Radio,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_setPrmSetYn();
+};
+
+// 소재 버튼 클릭시
+this.rdo_popupSprCD_onitemchanged = function(obj:nexacro.Radio,e:nexacro.ItemChangeEventInfo)
+{	
+	this.fn_setPopupSprCd();
+};
+
+
+
+
+/***********************************************************************************************
+*  파일 관련 영역
+************************************************************************************************/
+
+//해당 row에 파일 추가
+this.addFileList = function(filelists)
+{
+	var vFile= filelists[0];
+	vFile.addEventHandler("onsuccess", this.fileList_onsuccess, this);
+	vFile.addEventHandler("onerror", this.fileList_onerror, this);
+	vFile.open(null, VirtualFile.openRead);
+	vFile.getFileSize();	//return file size
+	vFile.close();
+};
+
+//업로드용 Virtual 파일 onsuccess 이벤트
+this.fileList_onsuccess = function(obj:nexacro.VirtualFile, e:nexacro.VirtualFileEventInfo)
+{
+	if (e.reason == 1){
+		//파일사이즈 체크
+		obj.getFileSize();
+	}
+
+	if (e.reason == 9) {
+		if( !this.fn_fileSizeCheck(obj, e.filesize) ) return false;
+
+
+		// 같은 이름의 파일을 업로드했을 경우 대비
+// 		this.ds_pmtPopupInfo.set_updatecontrol(false);
+// 		this.ds_pmtPopupInfo.setRowType(0, Dataset.ROWTYPE_UPDATE);
+// 		this.ds_pmtPopupInfo.set_updatecontrol(true);
+
+		this.fileUpTrans.removeFile(this.ds_pmtPopupInfo.getColumn(0, "ATFL_NM"));
+		this.ds_file.clearData();
+
+		// 수정 후 다시 저장 시에 기존 파일 데이터도 같이 전송하여 삭제 처리.
+		var nRowIdx = this.ds_file.addRow();
+		this.ds_file.setColumn(nRowIdx, "ATFL_NM", obj.filename);
+		this.ds_pmtPopupInfo.setColumn(0, "ATFL_NM", obj.filename);
+		this.fileUpTrans.addFile(obj.filename, obj)
+
+	}
+};
+
+//업로드용 Virtual 파일 oneroor 이벤트
+this.fileList_onerror = function(obj:nexacro.VirtualFile, e:nexacro.VirtualFileErrorEventInfo)
+{
+	var msg = ">>>>>>>>> VirtualFile event ERROR >>>>>>>>\n";
+	msg += "errortype : "+e.errortype+"\n";
+	msg += "errormsg : "+e.errormsg+"\n";
+	msg += "statuscode : "+e.statuscode;
+	this.nRow = -1;
+	alert(msg);
+};
+
+// 파일 다운로드
+this.downloadfile = function() {
+	this.FileDownTransfer.clearPostDataList();
+	this.FileDownTransfer.set_downloadfilename(this.ds_pmtPopupInfo.getColumn(0, "ATFL_NM"));	//runtime 전용 프로퍼티
+	this.FileDownTransfer.setPostData("docRegId",this.ds_pmtPopupInfo.getColumn(0, "DOC_REG_ID"));
+	this.FileDownTransfer.setPostData("docRegSeq",this.ds_pmtPopupInfo.getColumn(0, "DOC_REG_SEQ"));
+	this.FileDownTransfer.download('/co/file-download.do');
+};
+
+//파일 확장자 검증
+this.fn_fileSizeCheck = function(obj, fileSize) {
+	var fileName = obj.filename;
+	var extNm  = fileName.substr(fileName.lastIndexOf(".") + 1); // 맨 뒤 확장자만 자르기
+	var fileGbn = ".jpg, .png";
+
+	extNm = extNm.toLowerCase();
+
+	//10485760 - 10메가
+	//메가바이트 변환
+	var mbSize = fileSize / 1024 / 1024;
+
+	if( this.maxFileSize < mbSize ) {
+		alert(this.fn_getMessage("ERRN000039", extNm)); // &1 파일은 10MB 이상으로 첨부하실 수 없습니다.
+		return false;
+	}
+
+	if( fileGbn.indexOf(extNm) == -1 ) {
+		alert(this.fn_getMessage("ERRN000040", extNm)); // &1 파일은 허용되지 않는 파일 타입입니다.
+		return false;
+	}
+
+	return true;
+};
+
+//파일 DIALOG CLOSE 이벤트
+this.fileDialog_onclose = function(obj:nexacro.FileDialog,e:nexacro.FileDialogEventInfo)
+{
+	if(this.gfn_isNull(e.virtualfiles)){
+		return;
+	}
+
+	var vFile = e.virtualfiles[0];
+	//VirtualFile 이벤트 생성
+	vFile.addEventHandler("onsuccess", this.fileList_onsuccess, this);
+	vFile.addEventHandler("onerror", this.fileList_onerror, this);
+	vFile.open(null, 1);
+};
+
+//다운 완료
+this.FileDownTransfer_onsuccess = function(obj:nexacro.FileDownTransfer,e:nexacro.FileDownTransferEventInfo)
+{
+	console.log(e);
+	console.log(obj);
+};
+
+//다운 실패
+this.FileDownTransfer_onerror = function(obj:nexacro.FileDownTransfer,e:nexacro.FileDownTransferErrorEventInfo)
+{
+	console.log(e);
+	console.log(obj);
+};
+
+//저장 -> 파일 업로드 성공 시
+this.fileUpTrans_onsuccess = function(obj:nexacro.FileUpTransfer,e:nexacro.FileUpTransferEventInfo)
+{
+	var objCallDs = e.datasets[0];
+	if(objCallDs.rowcount  == 0 ){
+		alert(this.fn_getMessage("ERRN000041")); // 파일 업로드 오류입니다.
+	}
+
+	for(var i = 0 ; i < objCallDs.rowcount ; i++){
+// 		if(objCallDs.getColumn(i, "result") == "none") {
+// 			alert("파일이 없습니다.");
+// 			return;
+// 		}
+		this.ds_pmtPopupInfo.setColumn(0, "DOC_REG_ID", objCallDs.getColumn(i, "docRegId"));
+	}
+	this.ds_file.clearData(); // 업로드 완료 후 ds_file 클리어
+	this.fileUpTrans.clearFileList();
+
+	this.fn_save();
+
+};
+
+// 파일전송 실패
+this.fileUpTrans_onerror = function(obj:nexacro.FileUpTransfer,e:nexacro.FileUpTransferErrorEventInfo)
+{
+	alert(e.errormsg);
+};
+
+
+
+
+]]></Script>
+    <InitValue>
+      <Radio id="rdo_useYn" innerdataset="ds_useYn" datacolumn="USE_YN_NM" codecolumn="USE_YN"/>
+      <Radio id="rdo_nlookSetYn" innerdataset="ds_useYn" datacolumn="USE_YN_NM" codecolumn="USE_YN"/>
+      <Radio id="rdo_popupSprCD" innerdataset="ds_useYn" datacolumn="USE_YN_NM" codecolumn="USE_YN"/>
+    </InitValue>
+    <Bind>
+      <BindItem id="item0" compid="edt_pmtPopupNm" propid="value" datasetid="ds_pmtPopupInfo" columnid="PMT_POPUP_NM"/>
+      <BindItem id="item1" compid="rdo_expsNoticSprCd" propid="value" datasetid="ds_pmtPopupInfo" columnid="EXPS_NOTIC_SPR_CD"/>
+      <BindItem id="item2" compid="cal_dispStrDt" propid="value" datasetid="ds_pmtPopupInfo" columnid="DISP_STR_DT"/>
+      <BindItem id="item3" compid="cal_dispEndDt" propid="value" datasetid="ds_pmtPopupInfo" columnid="DISP_END_DT"/>
+      <BindItem id="item4" compid="rdo_urlCnsolSprCd" propid="value" datasetid="ds_pmtPopupInfo" columnid="URL_CNSOL_SPR_CD"/>
+      <BindItem id="item5" compid="edt_urdAddr" propid="value" datasetid="ds_pmtPopupInfo" columnid="URL_ADDR"/>
+      <BindItem id="item6" compid="rdo_useYn" propid="value" datasetid="ds_pmtPopupInfo" columnid="USE_YN"/>
+      <BindItem id="item7" compid="edt_atflNm" propid="value" datasetid="ds_pmtPopupInfo" columnid="ATFL_NM"/>
+      <BindItem id="item9" compid="edt_topPst" propid="value" datasetid="ds_pmtPopupInfo" columnid="TOP_PST"/>
+      <BindItem id="item10" compid="edt_leftPst" propid="value" datasetid="ds_pmtPopupInfo" columnid="LEFT_PST"/>
+      <BindItem id="item8" compid="edt_dispSo" propid="value" datasetid="ds_pmtPopupInfo" columnid="DISP_SO"/>
+      <BindItem id="item13" compid="edt_pmtPopupDesc" propid="value" datasetid="ds_pmtPopupInfo" columnid="PMT_POPUP_DESC"/>
+      <BindItem id="item14" compid="chk_fltgYn" propid="value" datasetid="ds_pmtPopupInfo" columnid="FLTG_YN"/>
+      <BindItem id="item15" compid="rdo_expsPageSprCd" propid="value" datasetid="ds_pmtPopupInfo" columnid="EXPS_PAGE_SPR_CD"/>
+      <BindItem id="item16" compid="rdo_excptPageSetYn" propid="value" datasetid="ds_pmtPopupInfo" columnid="EXCPT_PAGE_SET_YN"/>
+      <BindItem id="item17" compid="rdo_prmSetYn" propid="value" datasetid="ds_pmtPopupInfo" columnid="PRM_SET_YN"/>
+      <BindItem id="item18" compid="edt_cpnEvtNm" propid="value" datasetid="ds_pmtPopupInfo" columnid="CPN_EVT_NM"/>
+      <BindItem id="item19" compid="edt_cpnEvtNo" propid="value" datasetid="ds_pmtPopupInfo" columnid="CPN_EVT_NO"/>
+      <BindItem id="item20" compid="rdo_nlookSetYn" propid="value" datasetid="ds_pmtPopupInfo" columnid="NLOOK_SET_YN"/>
+      <BindItem id="item21" compid="chk_closeSetYn" propid="value" datasetid="ds_pmtPopupInfo" columnid="CLOSE_SET_YN"/>
+      <BindItem id="item11" compid="edt_dispStrDtm" propid="value" datasetid="ds_pmtPopupInfo" columnid="DISP_STR_DTM"/>
+      <BindItem id="item12" compid="edt_dispEndDtm" propid="value" datasetid="ds_pmtPopupInfo" columnid="DISP_END_DTM"/>
+      <BindItem id="item22" compid="cbo_dispStrHr" propid="value" datasetid="ds_pmtPopupInfo" columnid="DISP_STR_HR"/>
+      <BindItem id="item23" compid="cbo_dispStrMn" propid="value" datasetid="ds_pmtPopupInfo" columnid="DISP_STR_MN"/>
+      <BindItem id="item24" compid="cbo_dispEndHr" propid="value" datasetid="ds_pmtPopupInfo" columnid="DISP_END_HR"/>
+      <BindItem id="item25" compid="cbo_dispEndMn" propid="value" datasetid="ds_pmtPopupInfo" columnid="DISP_END_MN"/>
+      <BindItem id="item26" compid="chk_notLogn_Inc_Yn" propid="value" datasetid="ds_pmtPopupInfo" columnid="NOTLOGN_INC_YN"/>
+      <BindItem id="item27" compid="rdo_popupSprCD" propid="value" datasetid="ds_pmtPopupInfo" columnid="POPUP_SPR_CD"/>
+      <BindItem id="item28" compid="edt_yTubeUrlAddr" propid="value" datasetid="ds_pmtPopupInfo" columnid="YTUBE_URL_ADDR"/>
+      <BindItem id="item29" compid="edt_wdtLen" propid="value" datasetid="ds_pmtPopupInfo" columnid="WDT_LEN"/>
+    </Bind>
+  </Form>
+</FDL>

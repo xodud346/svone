@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="FileUploadDowload">
+
+    <select id="selectAttcFileDtlsInq" parameterType="HashMap" resultType="HashMap">
+        /* FileUploadDowload.selectAttcFileDtlsInq 첨부파일내역 조회 */
+        <![CDATA[
+        SELECT A.DOC_REG_ID                  /* 문서등록ID */
+             , A.DOC_REG_SEQ                 /* 문서등록순번 */
+             , A.ATFL_NM                     /* 첨부파일명 */
+             , A.ATFL_LEN                    /* 첨부파일길이 */
+             , A.ATFL_STOR_PATH              /* 첨부파일저장경로 */
+             , A.STOR_PLC_SPR_CD             /* 저장장소구분코드 */
+             , A.ORI_ATFL_NM                 /* 원첨부파일명 */
+             , A.SAP_DOC_ID                  /* SAP문서ID */
+             , A.RMKS_CTS                    /* 비고내용 */
+             , A.ETC_FDS_1                   /* 기타필드1 */
+             , A.ETC_FDS_2                   /* 기타필드2 */
+             , A.ETC_FDS_3                   /* 기타필드3 */
+             , A.ETC_FDS_4                   /* 기타필드4 */
+             , A.ETC_FDS_5                   /* 기타필드5 */
+             , A.REG_DTM                     /* 등록일시 */
+             , A.REGPSN_ID                   /* 등록자ID */
+             , A.UPD_DTM                     /* 수정일시 */
+             , A.UPDPSN_ID                   /* 수정자ID */
+          FROM SSP_APP.TB_CO_ATFL_DTLS A
+         WHERE 1=1
+        ]]>
+        <if test="DOC_REG_ID != null and DOC_REG_ID != ''">
+            <![CDATA[
+               AND A.DOC_REG_ID  = #{DOC_REG_ID}
+            ]]>
+        </if>
+        <if test="DOC_REG_SEQ != null and DOC_REG_SEQ != ''">
+            <![CDATA[
+               AND A.DOC_REG_SEQ = #{DOC_REG_SEQ}
+            ]]>
+        </if>
+        <if test="ETC_FDS_2 != null and ETC_FDS_2 != ''">
+            <![CDATA[
+               AND A.ETC_FDS_2 = #{ETC_FDS_2}
+            ]]>
+        </if>
+    </select>
+
+    <select id="selectAttcFileDtlsPKey" parameterType="String" resultType="int">
+        /* FileUploadDowload.selectAttcFileDtlsPKey 첨부파일내역 PK 조회 */
+        SELECT NVL(MAX(A.DOC_REG_SEQ),0) + 1 AS CNT
+          FROM SSP_APP.TB_CO_ATFL_DTLS A
+         WHERE A.DOC_REG_ID = #{DOC_REG_ID}
+    </select>
+
+    <insert id="insertFileUploadDowload" parameterType="java.util.List">
+        /* FileUploadDowload.insertFileUploadDowload 첨부파일내역 저장 */	
+           INSERT INTO SSP_APP.TB_CO_ATFL_DTLS
+           (
+             DOC_REG_ID
+           , DOC_REG_SEQ
+           , ATFL_NM
+           , ATFL_LEN
+           , ATFL_STOR_PATH
+           , STOR_PLC_SPR_CD
+           , ORI_ATFL_NM
+           , SAP_DOC_ID
+           , RMKS_CTS
+           , ETC_FDS_1
+           , ETC_FDS_2
+           , ETC_FDS_3
+           , ETC_FDS_4
+           , ETC_FDS_5
+           , REG_DTM
+           , REGPSN_ID
+           )        
+           <foreach collection="list" item="item" separator=" union all">
+          SELECT  #{item.docRegId}
+                , #{item.docRegSeq}
+                , replace(#{item.atflNm},' ','')
+                , #{item.atflLen}
+                , #{item.atflStorPath}
+                , #{item.storPlcSprCd}
+                , #{item.oriAtflNm}
+                , #{item.sapDocId}
+                , #{item.rmksCts}
+                , #{item.etcFds1}
+                , #{item.etcFds2}
+                , #{item.etcFds3}
+                , #{item.etcFds4}
+                , #{item.etcFds5}
+                , SYSDATE
+                , #{item.regpsnId }
+             FROM DUAL
+        </foreach>
+    </insert>
+
+    <update id="updateAttcFileDtls" parameterType="HashMap">
+        /* FileUploadDowload.updateAttcFileDtls 첨부파일내역 수정 */
+        <![CDATA[
+            UPDATE SSP_APP.TB_CO_ATFL_DTLS
+               SET ETC_FDS_1   = '1'
+             WHERE DOC_REG_ID  = #{DOC_REG_ID}
+               AND DOC_REG_SEQ = #{DOC_REG_SEQ}
+        ]]>
+    </update>
+
+    <delete id="deleteAttcFileDtls" parameterType="HashMap">
+        /* FileUploadDowload.deleteAttcFileDtls 첨부파일내역 삭제 */
+        <![CDATA[
+            DELETE FROM SSP_APP.TB_CO_ATFL_DTLS
+             WHERE DOC_REG_ID  = #{DOC_REG_ID}
+               AND DOC_REG_SEQ = #{DOC_REG_SEQ}
+        ]]>
+    </delete>
+</mapper>

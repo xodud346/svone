@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+******************************************************************************
+* SELECT : 정산관리 - 정산 대사 팝업
+* 작성자 : 윤민우
+* 작성 일자 : 2022.04.04
+******************************************************************************
+-->
+<mapper namespace="com.ssp.bo.ad.adCalPopup">
+
+    <!-- 정산 확정 취소 팝업 목록 조회 -수정필요 -->
+    <select id="selectCalCxlList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.ad.adCalPopup.selectCalCxlList */
+        SELECT  T1.CO_CD,
+                T1.BZPLC_ID,
+                T1.ADJ_YM,
+                T1.ODR_NO||'-'||T1.ODR_ITM_NO     JNT_ODR_ITM_NO,
+                T1.ODR_NO,
+                T1.ODR_ITM_NO,
+                T5.ODR_QTY,
+                T8.DEPT_ID,
+                T9.DEPT_NM,
+                T8.ODRPSN_ID,
+                T10.MBR_NM  ODRPSN_NM,
+                LTRIM(T5.PRD_ID, '0')                                       As PRD_ID,
+                T6.PRD_NM,
+                T5.REPR_SPEC,
+                T5.SSP_REPR_ATTR,
+                T7.GI_DTM,
+                T7.GDPSN_ID,
+                T11.MBR_NM  GDPSN_NM,
+                T1.ADJ_DCN_DTM,
+                T1.ADJ_DCN_DEALR_ID,
+                NVL(T12.MBR_NM,T13.OPRTR_NM)  ADJ_DCN_DEALR_NM,
+                '' FW_RSN_CTS
+        FROM    (
+                Select    T1.CO_CD                   /* 회사코드 */
+                        , T1.BZPLC_ID                /* 사업장ID */
+                        , T1.ODR_NO                  /* 주문번호 */
+                        , T1.ODR_ITM_NO              /* 주문항목번호 */
+                        , T1.ADJ_YM                  /* 정산년월 */
+                        , T1.ADJ_DCN_YN              /* 정산확정여부 */
+                        , T1.ADJ_DCN_DEALR_ID
+                        , T1.ADJ_DCN_DTM
+                        , T1.FW_RSN_CTS
+                From    TB_AD_SSP_ADJ_HST        T1
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T2
+                        ON  T2.SES_ID = #{SES_ID}
+                        AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T2.COL_ITM = #{COL_ITM}
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,1) = T1.ADJ_YM
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2) = T1.BZPLC_ID
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,3) = T1.ODR_NO
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,4) = T1.ODR_ITM_NO
+                WHERE  T1.CO_CD = #{CO_CD}
+                Order By
+                     T1.ADJ_YM
+                    ,T1.ODR_NO
+                    ,T1.ODR_ITM_NO
+                )       T1
+                JOIN
+                TB_OD_ODR_DTL T5 --주문상세
+                ON   T5.CO_CD     = T1.CO_CD     --회사코드
+                AND  T5.BZPLC_ID  = T1.BZPLC_ID  --사업장ID
+                AND  T5.ODR_NO    = T1.ODR_NO    --주문번호
+                AND  T5.ODR_ITM_NO= T1.ODR_ITM_NO
+                JOIN
+                TB_PR_MRO_PRD_INFO T6 --MRO상품정보
+                ON   T6.CO_CD   = T5.CO_CD   --회사코드
+                AND  T6.PRD_ID  = T5.PRD_ID  --상품ID
+                LEFT JOIN /*나중에 JOIN으로 변경*/
+                TB_AD_GI_DCN_PROC   T7
+                ON   T7.CO_CD     = T1.CO_CD     --회사코드
+                AND  T7.BZPLC_ID  = T1.BZPLC_ID  --사업장ID
+                AND  T7.ODR_NO    = T1.ODR_NO    --주문번호
+                AND  T7.ODR_ITM_NO= T1.ODR_ITM_NO
+                JOIN
+                TB_OD_ODR_MST T8
+                ON   T8.CO_CD     = T1.CO_CD     --회사코드
+                AND  T8.BZPLC_ID  = T1.BZPLC_ID  --사업장ID
+                AND  T8.ODR_NO    = T1.ODR_NO    --주문번호
+                LEFT JOIN
+                TB_CC_DEPT_BASIS  T9
+                ON   T9.CO_CD     = T8.CO_CD     --회사코드
+                AND  T9.DEPT_ID   = T8.DEPT_ID
+                LEFT JOIN
+                TB_CC_MBR_BASIS         T10
+                ON  T10.CO_CD   = T8.CO_CD
+                AND T10.MBR_ID  = T8.ODRPSN_ID
+                LEFT JOIN
+                TB_CC_MBR_BASIS         T11
+                ON  T11.CO_CD   = T7.CO_CD
+                AND T11.MBR_ID  = T7.GDPSN_ID
+                LEFT JOIN
+                TB_CC_MBR_BASIS         T12
+                ON  T12.CO_CD   = T1.CO_CD
+                AND T12.MBR_ID  = T1.ADJ_DCN_DEALR_ID
+                LEFT JOIN
+                TB_CO_MBR_OPRTR_INFO    T13
+                ON  T13.CO_CD    = T1.CO_CD
+                AND T13.OPRTR_ID = T1.ADJ_DCN_DEALR_ID
+    </select>
+
+    <update id="saveCalCxlList" statementType="CALLABLE">
+        /* com.ssp.bo.ad.adCalPopup.saveCalCxlList */
+        { Call SP_AD_CNCL_SSP_ADJ_DTLS (
+            #{ RTN_CD, mode=OUT, jdbcType=VARCHAR }     /* 리턴 코드 S : 성공 , E : 오류 */
+          , #{ RTN_MSG, mode=OUT, jdbcType=VARCHAR }    /* 실패시 메시지 */
+          , #{ loginId, mode=IN, jdbcType=VARCHAR }     /* 등록자 또는 수정자 */
+          , #{ CO_CD, mode=IN, jdbcType=VARCHAR }       /* 회사코드         VARCHAR2(4) */
+          , #{ BZPLC_ID, mode=IN, jdbcType=VARCHAR }    /* 사업장ID        VARCHAR2(10) */
+          , #{ ODR_NO, mode=IN, jdbcType=VARCHAR }      /* 주문번호         VARCHAR2(10) */
+          , #{ ODR_ITM_NO, mode=IN, jdbcType=VARCHAR }  /* 주문항목번호       NUMBER(10) */
+          , #{ FW_RSN_CTS, mode=IN, jdbcType=VARCHAR }  /* 주문항목번호       NUMBER(10) */
+        ) }
+    </update>
+
+    <sql id="calculateListWhere">
+        WHERE 1=1
+        <if test="ODRPSN_ID != null and ODRPSN_ID != ''">
+        AND b.ODRPSN_ID = #{ODRPSN_ID}
+        </if>
+        <if test="ADJ_DCN_DEALR_ID != null and ADJ_DCN_DEALR_ID != ''">
+        AND a.ADJ_DCN_DEALR_ID = #{ADJ_DCN_DEALR_ID}
+        </if>
+        <if test="DCN_YN != null and DCN_YN != ''">
+        AND Nvl(a.DCN_YN,'N') = #{DCN_YN}
+        </if>
+    </sql>
+
+
+
+    <!-- 정산내역 이력 목록 전체 카운트 -예제 -->
+    <select id="selectCalHistoryListCount" parameterType="HashMap" resultType="Integer">
+        /* com.ssp.bo.ad.adCalPopup.selectCalHistoryListCount */
+        SELECT  COUNT(*)
+        FROM    (
+                Select  T1.CO_CD                   /* 회사코드 */
+                        , T1.BZPLC_ID                /* 사업장ID */
+                        , T1.ODR_NO                  /* 주문번호 */
+                        , T1.ODR_ITM_NO              /* 주문항목번호 */
+                        , T1.ADJ_HST_NO              /* 정산이력번호 */
+                        , T1.ADJ_YM                  /* 정산년월 */
+                        , T1.ADJ_DCN_YN              /* 정산확정여부 */
+                From    TB_AD_SSP_ADJ_HST        T1
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T2
+                        ON  T2.SES_ID = #{SES_ID}
+                        AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T2.COL_ITM = #{COL_ITM}
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,1) = T1.ADJ_YM
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2) = T1.BZPLC_ID
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,3) = T1.ODR_NO
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,4) = T1.ODR_ITM_NO
+                WHERE  T1.CO_CD = #{CO_CD}
+                )       T1
+    </select>
+
+
+    <!-- 정산내역 이력 목록 조회 -예제 -->
+    <select id="selectCalHistoryList" parameterType="HashMap" resultType="HashMap">
+        /* com.ssp.bo.ad.adCalPopup.selectCalHistoryList */
+        SELECT  T1.ODR_NO||'-'||T1.ODR_ITM_NO     JNT_ODR_ITM_NO,
+                T1.ADJ_HST_NO,
+                DECODE(T1.ADJ_DCN_YN,'Y','확정','미 확정')      ADJ_DCN_YN,
+                T1.ADJ_DCN_DTM,
+                /*T1.ADJ_DCN_DEALR_ID,*/
+                /*NVL(T2.MBR_NM,T3.OPRTR_NM)  ADJ_DCN_DEALR_NM,*/
+                T1.CNC_RSN,
+                LTRIM(T5.PRD_ID, '0')                                       As PRD_ID,
+                T6.PRD_NM,
+                T5.REPR_SPEC,
+                T5.SSP_REPR_ATTR,
+                CASE WHEN T1.ADJ_DCN_YN = 'Y' THEN T1.ADJ_DCN_DEALR_ID
+                     ELSE T1.UPDPSN_ID
+                END ADJ_DCN_DEALR_ID,
+                CASE WHEN T1.ADJ_DCN_YN = 'Y' THEN NVL(T2.MBR_NM,T3.OPRTR_NM)
+                     ELSE T4.OPRTR_NM
+                END ADJ_DCN_DEALR_NM
+        FROM    (
+                Select  T1.CO_CD                   /* 회사코드 */
+                        , T1.BZPLC_ID                /* 사업장ID */
+                        , T1.ODR_NO                  /* 주문번호 */
+                        , T1.ODR_ITM_NO              /* 주문항목번호 */
+                        , T1.ADJ_HST_NO              /* 정산이력번호 */
+                        , T1.ADJ_YM                  /* 정산년월 */
+                        , T1.ADJ_DCN_YN              /* 정산확정여부 */
+                        , T1.ADJ_DCN_DEALR_ID
+                        , T1.ADJ_DCN_DTM
+                        , T1.CNC_RSN
+                        , T1.UPDPSN_ID              /* 취소자 */
+                From    TB_AD_SSP_ADJ_HST        T1
+                        JOIN
+                        TB_OD_ODR_INQ_TGT_DTLS   T2
+                        ON  T2.SES_ID = #{SES_ID}
+                        AND T2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+                        AND T2.COL_ITM = #{COL_ITM}
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,1) = T1.ADJ_YM
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,2) = T1.BZPLC_ID
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,3) = T1.ODR_NO
+                        AND REGEXP_SUBSTR(T2.COND_DATA_VAL,'[^-]+',1,4) = T1.ODR_ITM_NO
+                WHERE  T1.CO_CD = #{CO_CD}
+                Order By
+                     T1.ADJ_YM
+                    ,T1.ODR_NO
+                    ,T1.ODR_ITM_NO
+                OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+                )       T1
+                LEFT JOIN
+                TB_CC_MBR_BASIS         T2
+                ON  T2.CO_CD   = T1.CO_CD
+                AND T2.MBR_ID  = T1.ADJ_DCN_DEALR_ID
+                LEFT JOIN
+                TB_CO_MBR_OPRTR_INFO    T3
+                ON  T3.CO_CD    = T1.CO_CD
+                AND T3.OPRTR_ID = T1.ADJ_DCN_DEALR_ID
+                LEFT JOIN
+                TB_CO_MBR_OPRTR_INFO    T4
+                ON  T4.CO_CD    = T1.CO_CD
+                AND T4.OPRTR_ID = T1.UPDPSN_ID
+                JOIN
+                TB_OD_ODR_DTL T5 --주문상세
+                ON   T5.CO_CD     = T1.CO_CD     --회사코드
+                AND  T5.BZPLC_ID  = T1.BZPLC_ID  --사업장ID
+                AND  T5.ODR_NO    = T1.ODR_NO    --주문번호
+                AND  T5.ODR_ITM_NO= T1.ODR_ITM_NO
+                JOIN
+                TB_PR_MRO_PRD_INFO T6 --MRO상품정보
+                ON   T6.CO_CD   = T5.CO_CD   --회사코드
+                AND  T6.PRD_ID  = T5.PRD_ID  --상품ID
+    </select>
+
+</mapper>

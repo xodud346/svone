@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Trm">
+	<sql id="trmWhere">
+		<if test="searchBrdCmnComIdx != null and searchBrdCmnComIdx != ''">
+			AND BRD_AGR_TYPE = #{searchBrdCmnComIdx}
+		</if>
+		<if test="searchText != null and searchText != ''">
+			AND ((BRD_AGR_TITLE LIKE '%' || #{searchText} || '%') OR (BRD_AGR_CONTENTS LIKE '%' || #{searchText} || '%'))
+		</if>
+		<if test="searchStrDt != null and searchStrDt != '' and searchEndDt != null and searchEndDt != ''">
+        	AND BRD_AGR_REG_DT BETWEEN REPLACE(#{searchStrDt},'-', '')||'000000' AND REPLACE(#{searchEndDt},'-', '')||'235959'
+        </if>
+        <if test="brdAgrUseYn != null and brdAgrUseYn != ''">
+				AND BRD_AGR_USE_YN = #{brdAgrUseYn}
+		</if>
+
+	</sql>
+	
+	
+		<!-- 고객센터관리 > 약관관리 > 약관관리 상세정보  -->
+	<resultMap id="resultTrmDetail" type="HashMap">
+		<result property="BRD_AGR_IDX"		column="BRD_AGR_IDX"/>
+		<result property="BRD_AGR_TITLE"	column="BRD_AGR_TITLE"/>
+		<result property="BRD_AGR_CONTENTS"	column="BRD_AGR_CONTENTS" jdbcType="CLOB" javaType="java.lang.String"/>
+		<result property="BRD_AGR_TYPE"		column="BRD_AGR_TYPE"/>
+		<result property="BRD_AGR_USE_YN"	column="BRD_AGR_USE_YN"/>
+		<result property="BRD_AGR_REG_DT"	column="BRD_AGR_REG_DT"/>
+		<result property="BRD_AGR_REG_ID"	column="BRD_AGR_REG_ID"/>
+		<result property="BRD_AGR_UPD_DT"	column="BRD_AGR_UPD_DT"/>
+		<result property="BRD_AGR_UPD_ID"	column="BRD_AGR_UPD_ID"/>
+	</resultMap>
+	
+	
+	<!-- 이용약관 목록 총 건수 -->
+	<select id="selectTrmCount" parameterType="hashMap" resultType="Integer">
+		/* Trm.selectTrmCount */
+      	SELECT 
+		    COUNT(BRD_AGR_IDX) AS CNT
+		FROM T_BRD_AGR
+		INNER JOIN T_CMM_COM CMM_COM_NM
+			ON CMM_COM_NM.CMN_COM_IDX = BRD_AGR_TYPE AND CMM_COM_NM.CMN_COM_USE_YN = 'Y'
+		WHERE 1=1 
+			<include refid="trmWhere"/> 
+	</select>
+	
+	<!-- 이용약관 목록 -->
+	<select id="selectTrmList" parameterType="hashMap" resultType="hashMap">
+		/* Trm.selectTrmList */
+		SELECT 
+	S2.*
+FROM
+	(	SELECT  
+			 ROWNUM AS RNUM
+			, S1.*
+		FROM
+			(	SELECT
+					 BRD_AGR_IDX
+					,BRD_AGR_TITLE
+					,BRD_AGR_ST_DT
+					,BRD_AGR_REG_DT
+					,BRD_AGR_REG_ID
+					,CASE WHEN BRD_AGR_USE_YN = 'Y' THEN '사용'
+						  WHEN BRD_AGR_USE_YN = 'N' THEN '미 사용'
+					 END AS BRD_AGR_USE_YN1
+					,BRD_AGR_TYPE
+					,CMM_COM_NM.CMN_COM_NM				AS BRD_CMN_COM_NM
+					,ADM_REG_NM.ADM_MST_NM				AS BRD_FAQ_REG_NM
+					,ADM_REG_NM.ADM_MST_ERP_NO  		AS BRD_FAQ_REG_ERP
+				FROM T_BRD_AGR
+				INNER JOIN T_CMM_COM CMM_COM_NM
+					ON CMM_COM_NM.CMN_COM_IDX = BRD_AGR_TYPE AND CMM_COM_NM.CMN_COM_USE_YN = 'Y'
+				LEFT OUTER JOIN T_ADM_MST ADM_REG_NM  
+					ON ADM_REG_NM.ADM_MST_ID = BRD_AGR_REG_ID
+				WHERE
+				1=1	
+					<include refid="trmWhere"/>
+			) S1
+		
+	)S2
+	WHERE
+		S2.RNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+	
+	
+	<!-- 이용약관 등록 -->
+	<insert id="insertTrm" parameterType="hashMap">
+	/* Trm.insertTrm */
+	   	<selectKey keyProperty="BRD_AGR_IDX" resultType="Integer" order="BEFORE">
+            SELECT SEQ_BRD_AGR_IDX.NEXTVAL AS BRD_AGR_IDX FROM DUAL
+        </selectKey> 
+		INSERT INTO
+			T_BRD_AGR
+			(		
+					BRD_AGR_IDX
+				,	BRD_AGR_TYPE
+				,	BRD_AGR_USE_YN
+				,	BRD_AGR_ST_DT
+				,	BRD_AGR_ED_DT
+				, 	BRD_AGR_TITLE
+				,	BRD_AGR_CONTENTS
+				,	BRD_AGR_REG_DT
+				,	BRD_AGR_REG_IP
+				,	BRD_AGR_REG_ID
+				
+			)VALUES
+				(	
+					#{BRD_AGR_IDX}
+				,	#{searchBrdCmnComIdx}
+				,	#{brdAgrUseYn}
+				,	#{brdAgrStDt}
+				,	#{brdAgrEdDt}
+				,	#{brdAgrTitle}
+				,	#{brdAgrContents}
+				,	TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+				,	#{brdAgrRegIp}
+				,	#{brdAgrRegId}
+				)
+	</insert>
+	<!-- 이용약관 상세 -->
+	<select id="selectTrmDetail" parameterType="hashMap" resultMap="resultTrmDetail">
+	/* Trm.selectTrmDetail */
+	SELECT
+			BRD_AGR_IDX
+		,	BRD_AGR_TYPE
+		,	BRD_AGR_CONTENTS
+		,	BRD_AGR_TITLE
+		,	BRD_AGR_USE_YN
+		,	BRD_AGR_REG_DT
+		,	BRD_AGR_ST_DT
+		,	BRD_AGR_ED_DT
+		,	BRD_AGR_REG_ID
+		,	NVL(BRD_AGR_UPD_DT,BRD_AGR_REG_DT)									AS BRD_AGR_UPD_DT
+		,	NVL(BRD_AGR_UPD_ID,BRD_AGR_REG_ID)									AS BRD_AGR_UPD_ID
+		,	ADM_REG_NM.ADM_MST_NM												AS BRD_AGR_REG_NM 
+		, NVL(ADM_UPD_NM.ADM_MST_NM, ADM_REG_NM.ADM_MST_NM)						AS BRD_AGR_UPD_NM
+		,   ADM_REG_NM.ADM_MST_ERP_NO                                           AS BRD_FAQ_REG_ERP
+		,   ADM_REG_NM.ADM_MST_ERP_NO                                           AS BRD_FAQ_UPD_ERP
+	FROM T_BRD_AGR
+		LEFT OUTER JOIN T_ADM_MST ADM_REG_NM
+			ON ADM_REG_NM.ADM_MST_ID = BRD_AGR_REG_ID
+		LEFT OUTER JOIN T_ADM_MST ADM_UPD_NM
+			ON ADM_UPD_NM.ADM_MST_ID = BRD_AGR_UPD_ID
+		WHERE BRD_AGR_IDX = #{BRD_AGR_IDX}
+	</select> 
+	<!-- 이용약관 수정 -->
+	<update id="updateTrm" parameterType="hashMap">
+	/* Trm.updateTrm */
+	UPDATE 
+		T_BRD_AGR
+	SET
+		  BRD_AGR_TYPE = #{BRD_AGR_TYPE}
+		, BRD_AGR_USE_YN = #{brdAgrUseYn}
+		, BRD_AGR_ST_DT = #{searchStrDt}
+		, BRD_AGR_ED_DT = #{searchEndDt}
+		, BRD_AGR_TITLE = #{BRD_AGR_TITLE}
+		, BRD_AGR_CONTENTS = #{BRD_AGR_CONTENTS}
+		, BRD_AGR_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		, BRD_AGR_UPD_IP = #{BRD_AGR_UPD_IP}
+		, BRD_AGR_UPD_ID = #{BRD_AGR_UPD_ID}
+	WHERE
+		BRD_AGR_IDX = #{BRD_AGR_IDX}
+		
+	</update>
+	
+</mapper>

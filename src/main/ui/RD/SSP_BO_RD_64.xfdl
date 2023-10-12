@@ -1,0 +1,294 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form" width="630" height="280" titletext="고객요청재이관사유등록" onclose="form_onclose" onload="form_onload" background="black">
+    <Layouts>
+      <Layout height="280" mobileorientation="landscape" width="630">
+        <Static id="sta_bg" taborder="6" left="0" top="22" right="0" background="white" height="258"/>
+        <Static id="Static03" taborder="0" text="20" left="-20" height="20" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" right="0" bottom="0"/>
+        <Static id="Static04" taborder="1" text="20" left="0" top="20" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" width="20" bottom="0"/>
+        <Static id="Static05" taborder="2" text="20" top="0" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" width="20" bottom="0" right="0"/>
+        <Static id="Static60_00" taborder="3" text="SSP이관 처리" left="20" top="23" height="36" cssclass="sta_WF_title04" width="300"/>
+        <Static id="Static01_01" taborder="4" text="20" left="0" top="60" height="10" cssclass="sta_GU_space" visible="false" background="aqua" opacity="0.5" textAlign="center" wordWrap="char" right="0"/>
+        <Static id="Static01_00_00" taborder="5" left="0" top="223" height="10" color="#000000" background="aqua" visible="false" text="10" textAlign="center" right="0"/>
+        <Button id="btn_close" taborder="7" top="0" width="20" height="20" text="X" visible="true" onclick="btn_close_onclick" background="black" cursor="pointer" right="0"/>
+        <Button id="btn_exit" taborder="8" text="닫기" left="243" top="233" width="70" height="30" onclick="btn_exit_onclick"/>
+        <Button id="btn_save" taborder="9" text="저장" left="317" top="233" width="70" height="30" cssclass="btn_WF_select" onclick="btn_save_onclick"/>
+        <Static id="Static21_00_01_00_00" taborder="10" left="21" top="70" height="152" cssclass="sta_cm_box02L_tdt" right="20"/>
+        <Static id="Static21_00_00_00" taborder="11" left="21" top="70" width="170" height="152" cssclass="sta_cm_box01L_tdt" text="상세사유 &lt;fc v=&quot;red&quot;&gt;&lt;b v=&quot;true&quot;&gt;* &lt;/b&gt;&lt;/fc&gt;" verticalAlign="middle" usedecorate="true"/>
+        <TextArea id="txt_regDisTip" taborder="12" left="201" top="73" width="340" height="145" oninput="txa_regDisTip_oninput" autoselect="true" wordWrap="char"/>
+        <Static id="sta_batySize" taborder="13" text="0/200" left="549" usedecorate="true" width="60" bottom="58" height="29" textAlign="right"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/**********************************************************************
+* FormID(화면   ID명): SSP_BO_RD_64.xfdl(고객요청재이관사유등록)
+* 작 성			일 명: 나용철
+* 작 성	    	일 자: 2022/04/29
+* 변 경     	일 자:
+* 변 경			자 명:
+* 변경 및 수정 로그 : 일자별로 변경자 및 변경사항을 간략히 기술
+*/
+/**********************************************************************
+	01. 전처리 공통 함수 선언
+***********************************************************************/
+include "RD::rdMain.xjs";
+/**********************************************************************
+	02. 폼 변수 정의
+***********************************************************************/
+this.sOptinoArg1;
+this.sOptinoArg2;
+this.sParamArg1;
+this.sParamArg2;
+this.sParamArg3;
+
+/**********************************************************************
+	03. 폼 로드 및 닫을때(폼이 포커스 갈때)
+***********************************************************************/
+/**
+ * 기능 : 폼 로드 완료후 초기값 Setting
+ */
+this.form_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//폼에 공통으로 로드시 사용하는 함수.
+	this.gfn_formOnLoad(this);
+	//사용자 초기화 함수
+	this.fn_formInit();
+};
+/**
+ * 기능 : 폼언 로드(닫기전 셋팅)  Setting
+ */
+this.form_onclose = function(obj:nexacro.Form,e:nexacro.CloseEventInfo)
+{
+
+};
+/**********************************************************************
+	04. 공통 코드 및 콤보 데이타 조회
+***********************************************************************/
+this.fn_formInit = function()
+{
+	/******************* 기본셋팅 *********************/
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sOp01))
+	{
+		 this.sOptinoArg1 = this.getOwnerFrame().pv_sOp01;
+	}
+
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sOp02))
+	{
+		 this.sOptinoArg2 = this.getOwnerFrame().pv_sOp02;
+	}
+
+	/******************* 넘어온 인자값 *********************/
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal01))
+	{
+		 this.sParamArg1 = this.getOwnerFrame().pv_sVal01;
+	}
+
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal02))
+	{
+		 this.sParamArg2 = this.getOwnerFrame().pv_sVal02;
+	}
+
+	if( !this.gfn_isNull(this.getOwnerFrame().pv_sVal03))
+	{
+		 this.sParamArg3 = this.getOwnerFrame().pv_sVal03;
+	}
+
+	this.postformInit();
+};
+
+this.postformInit = function()
+{
+	this.ds_list.clearData();
+	var nRow = this.ds_list.addRow();
+	this.ds_list.setColumn(nRow,"NEW_PRD_REQ_NO",      this.sParamArg1);
+	this.ds_list.setColumn(nRow,"CO_CD",               this.sParamArg2);
+	this.ds_list.setColumn(nRow,"MALL_SPR_CD",         this.sParamArg3);
+	this.ds_list.setColumn(nRow,"NEW_PRD_REQ_STATS_CD","35"); // SSP이관 : 35
+};
+
+/**
+ * 기능 : 콜백함수(후처리)
+ */
+this.fn_callBack = function(sSvcId,nErrorCode, sErrorMsg)
+{
+	if(nErrorCode != 0)
+	{
+		this.gfn_alert(sErrorMsg,"에러정보","","error");
+		return false;
+	}else
+	{
+		/*sSvcId (Transaction Id)*/
+		switch(sSvcId)
+		{
+			case "Init":
+				this.postformInit();
+				break;
+			case "Search":
+			    this.postSearch();
+				break;
+			case "Save":
+			    this.postSave();
+				break;
+
+			default:
+				break;
+		}
+	}
+};
+/**********************************************************************
+	05. 조회 함수 선언
+***********************************************************************/
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_save();
+};
+
+/**
+ * 기능 : 저장 전 실행
+ */
+this.preSave = function()
+{
+	var nByte = this.fn_getLengthB(this.txt_regDisTip.value,3);
+	if(nByte > 765)
+	{
+		this.fn_alert("ERRR000167","이관정보","상세사유,765Byte","warning");                    // 입력한 상세사유가 765Byte를 넘길수 없습니다.
+		this.txt_regDisTip.setFocus();
+		return false;
+	}
+
+	return true;
+};
+
+/**
+ * 기능 : 저장 실행
+ */
+this.fn_save = function()
+{
+	if(!this.preSave())
+	{
+		return false;
+	}
+	var strSvc 		= "Save";
+	var strUrl 		= "/rd/new-prd-req-lst/save-cust-req-proc.do";
+	var strInDs  	= "ds_master=ds_list";
+	var strOutDs    = "ds_res=ds_output";
+	var strArg 		= "";
+	var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack
+	var strASync    = true;			   //샏략이나 공백일시에는 ASync=true,싱크시는 false로
+	this.gfn_transaction(strSvc
+				   		, strUrl
+				   		, strInDs
+				   		, strOutDs
+				   		, strArg
+				   		, strCallBack
+				   		, strASync);
+}
+
+/**
+ * 기능 : 조회 후 실행
+ */
+this.postSave = function()
+{
+	if (this.ds_res.getColumn(0, "SUCCESS") == "Y") {
+		this.fn_alert("ERRR000007","저장","","question"); // 정상적으로 저장되었습니다
+		this.close("SAVE");
+	} else {
+		alert(this.ds_res.getColumn(0, "MESSAGE"));	// 중복처리 안내
+		this.close("SAVE");
+	}
+};
+
+/**********************************************************************
+	06. 닫기버튼
+***********************************************************************/
+this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close("CLOSE");
+};
+
+this.btn_exit_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close("EXIT");
+};
+/**********************************************************************
+	07.Get, Set Method
+***********************************************************************/
+this.txa_regDisTip_oninput = function(obj:nexacro.TextArea,e:nexacro.InputEventInfo)
+{
+	var nByte = this.fn_getLengthB(obj.value,3);
+	this.sta_batySize.set_text(nByte + "/200");
+};]]></Script>
+    <Objects>
+      <Dataset enableevent="true" id="dsDummy" preload="true" updatecontrol="true" useclientlayout="false"/>
+      <Dataset id="ds_prdRegDisTpCd" useclientlayout="false" updatecontrol="true" enableevent="true" loadkeymode="keep" loadfiltermode="keep" reversesubsum="false">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="32"/>
+          <Column id="COM_USR_DEFN_NM_2" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="32"/>
+          <Column id="COM_USR_DEFN_NM_1" type="STRING" size="256"/>
+          <Column id="USE_YN" type="STRING" size="256"/>
+          <Column id="COM_CLSF_CD" type="STRING" size="256"/>
+          <Column id="SRT_SO" type="BIGDECIMAL" size="16"/>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_4" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_3" type="STRING" size="256"/>
+          <Column id="COM_USR_DEFN_NM_5" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset enableevent="true" id="ds_list" preload="true" updatecontrol="true" useclientlayout="true" cancolumnchange="ds_list_cancolumnchange">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="NEW_PRD_REQ_NO" type="STRING" size="256"/>
+          <Column id="TRSF_RSN" type="STRING" size="256"/>
+          <Column id="MALL_SPR_CD" type="STRING" size="256"/>
+          <Column id="PRD_PRPS_SPR_CD" type="STRING" size="256"/>
+          <Column id="PRD_PRPS_STATS_CD" type="STRING" size="256"/>
+          <Column id="ALT_PRPS_RSN" type="STRING" size="256"/>
+          <Column id="RND_REQ_PRD_ID" type="STRING" size="256"/>
+          <Column id="NEW_PRD_REQ_STATS_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CO_CD"/>
+            <Col id="NEW_PRD_REQ_NO"/>
+            <Col id="TRSF_RSN"/>
+            <Col id="MALL_SPR_CD"/>
+            <Col id="PRD_PRPS_SPR_CD"/>
+            <Col id="PRD_PRPS_STATS_CD"/>
+            <Col id="ALT_PRPS_RSN"/>
+            <Col id="RND_REQ_PRD_ID"/>
+            <Col id="NEW_PRD_REQ_STATS_CD"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_search" useclientlayout="false" updatecontrol="true" enableevent="true" loadkeymode="keep" loadfiltermode="keep" reversesubsum="false">
+        <ColumnInfo>
+          <Column id="FORM_ID" type="STRING" size="32"/>
+          <Column id="FORM_PATH" type="STRING" size="256"/>
+          <Column id="FORM_NM" type="STRING" size="256"/>
+          <Column id="USER_YN" type="STRING" size="256"/>
+          <Column id="PROG_ID" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="FORM_ID"/>
+            <Col id="FORM_PATH"/>
+            <Col id="FORM_NM"/>
+            <Col id="USER_YN"/>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_res">
+        <ColumnInfo>
+          <Column id="SUCCESS" type="STRING" size="256"/>
+          <Column id="MESSAGE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item1" compid="txt_regDisTip" propid="value" datasetid="ds_list" columnid="TRSF_RSN"/>
+    </Bind>
+  </Form>
+</FDL>

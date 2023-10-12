@@ -1,0 +1,940 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Plan">
+
+	<!-- 기획전관리 기획전 갯수 -->
+	<select id="selectPlanCount" parameterType="hashMap" resultType="integer">
+		/* Plan.selectPlanCount */
+		<!-- SELECT
+			COUNT(0)
+		FROM
+			(
+			SELECT
+				ROWNUM RNUM,
+				A1.*,
+				( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = A1.PLN_MST_REG_ID ) PLN_MST_REG_NM
+			FROM
+				(
+				SELECT
+					PLN_MST_IDX,
+					PLN_MST_TITLE,
+					PLN_MST_TYPE,
+					PLN_MST_ST_DT,
+					PLN_MST_ST_HH,
+					PLN_MST_ST_MI,
+					PLN_MST_ED_DT,
+					PLN_MST_ED_HH,
+					PLN_MST_ED_MI,
+					PLN_MST_USE_YN,
+					PLN_MST_PRD_DPL_YN,
+					PLN_MST_REG_DT,
+					PLN_MST_REG_ID,
+					PLN_MST_UPD_DT,
+					PLN_MST_UPD_ID,
+					PLN_MST_CAT_KILLER,
+					PLN_MST_MAIN_YN
+				FROM
+					T_PLN_MST
+				WHERE
+					1 = 1
+				AND
+					PLN_MST_MAIN_YN = 'Y'
+				AND
+					PLN_MST_USE_YN = 'Y'
+				AND
+					TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN PLN_MST_ST_DT AND PLN_MST_ED_DT
+				<if test="PLN_MST_TITLE != '' and PLN_MST_TITLE != null">
+				AND
+					PLN_MST_TITLE LIKE '%'||#{PLN_MST_TITLE}||'%'
+				</if>
+				<if test="SEARCH_START_DT != '' and SEARCH_START_DT != null">
+					<if test="SEARCH_END_DT != '' and SEARCH_END_DT != null">
+				AND
+					SUBSTR(PLN_MST_REG_DT, 0, 8) BETWEEN #{SEARCH_START_DT} AND #{SEARCH_END_DT}
+					</if>
+				</if>
+				<if test="PLN_MST_OPR_ID != '' and PLN_MST_OPR_ID != null">
+				AND
+					PLN_MST_OPR_ID IN
+					<foreach collection="PLN_MST_OPR_IDs" item="PLN_MST_OPR_ID" open="(" close=")" separator=",">
+						#{PLN_MST_OPR_ID}
+					</foreach>
+				</if>
+				<if test="PLN_MST_CAT_KILLER != '' and PLN_MST_CAT_KILLER != null">
+				AND
+					PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER}
+				</if>
+				ORDER BY
+						PLN_MST_REG_DT DESC
+				) A1
+			WHERE
+				ROWNUM &lt; 4
+
+			UNION ALL
+
+			SELECT
+				S2.*
+			FROM
+				(
+				SELECT
+					ROWNUM RNUM,
+					S1.*,
+					( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = S1.PLN_MST_REG_ID ) PLN_MST_REG_NM
+				FROM
+					(
+					SELECT
+						PLN_MST_IDX,
+						PLN_MST_TITLE,
+						PLN_MST_TYPE,
+						PLN_MST_ST_DT,
+						PLN_MST_ST_HH,
+						PLN_MST_ST_MI,
+						PLN_MST_ED_DT,
+						PLN_MST_ED_HH,
+						PLN_MST_ED_MI,
+						PLN_MST_USE_YN,
+						PLN_MST_PRD_DPL_YN,
+						PLN_MST_REG_DT,
+						PLN_MST_REG_ID,
+						PLN_MST_UPD_DT,
+						PLN_MST_UPD_ID,
+						PLN_MST_CAT_KILLER,
+						PLN_MST_MAIN_YN
+					FROM
+						T_PLN_MST
+					WHERE
+						1 = 1
+					AND
+						PLN_MST_MAIN_YN = 'N'
+					<choose>
+						<when test='PLN_MST_USE_YN == "Y"'> 전시여부
+							AND
+								PLN_MST_USE_YN = 'Y'
+							AND
+								TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN PLN_MST_ST_DT AND PLN_MST_ED_DT
+						</when>
+						<when test='PLN_MST_USE_YN == "N"'>
+							AND
+								PLN_MST_USE_YN = 'N'
+						</when>
+					</choose>
+					<if test="PLN_MST_TITLE != '' and PLN_MST_TITLE != null">
+					AND
+						PLN_MST_TITLE LIKE '%'||#{PLN_MST_TITLE}||'%'
+					</if>
+					<if test="SEARCH_START_DT != '' and SEARCH_START_DT != null">
+						<if test="SEARCH_END_DT != '' and SEARCH_END_DT != null">
+					AND
+						SUBSTR(PLN_MST_REG_DT, 0, 8) BETWEEN #{SEARCH_START_DT} AND #{SEARCH_END_DT}
+						</if>
+					</if>
+					<if test="PLN_MST_OPR_ID != '' and PLN_MST_OPR_ID != null">
+					AND
+						PLN_MST_OPR_ID IN
+						<foreach collection="PLN_MST_OPR_IDs" item="PLN_MST_OPR_ID" open="(" close=")" separator=",">
+							#{PLN_MST_OPR_ID}
+						</foreach>
+					</if>
+					<if test="PLN_MST_CAT_KILLER != '' and PLN_MST_CAT_KILLER != null">
+					AND
+						PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER}
+					</if>
+					ORDER BY
+						PLN_MST_REG_DT DESC
+					) S1
+				) S2
+			) -->
+
+		SELECT
+			 COUNT(DISTINCT TPM.PLN_MST_IDX)
+		FROM
+			T_PLN_MST TPM
+		LEFT JOIN T_PLN_OPR TPO
+		ON TPM.PLN_MST_IDX = TPO.PLN_MST_IDX
+		WHERE
+			1 = 1
+			<if test="mainList != null and mainList.size > 0">
+				AND TPM.PLN_MST_IDX NOT IN
+				<foreach collection="mainList" item="item" open="(" close=")" separator=",">
+					#{item.PLN_MST_IDX}
+				</foreach>
+			</if>
+		<choose>
+			<when test='PLN_MST_USE_YN == "Y"'>
+				AND
+					TPM.PLN_MST_USE_YN = 'Y'
+				AND
+					TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN TPM.PLN_MST_ST_DT AND TPM.PLN_MST_ED_DT
+			</when>
+			<when test='PLN_MST_USE_YN == "N"'>
+				AND
+					(TPM.PLN_MST_USE_YN = 'N'
+				OR
+					TO_CHAR(SYSDATE, 'YYYYMMDD') > TPM.PLN_MST_ED_DT
+					)
+			</when>
+		</choose>
+		<if test="PLN_MST_TITLE != '' and PLN_MST_TITLE != null">
+			AND
+				TPM.PLN_MST_TITLE LIKE '%'||#{PLN_MST_TITLE}||'%'
+		</if>
+		<if test="SEARCH_START_DT != '' and SEARCH_START_DT != null">
+			<if test="SEARCH_END_DT != '' and SEARCH_END_DT != null">
+				AND
+					SUBSTR(TPM.PLN_MST_REG_DT, 0, 8) BETWEEN #{SEARCH_START_DT} AND #{SEARCH_END_DT}
+			</if>
+		</if>
+		<if test='PLN_MST_OPR_YN == "Y"'>
+			<if test="PLN_MST_OPR_ID != '' and PLN_MST_OPR_ID != null">
+				AND
+					TPO.PLN_BZPLC_ID IN
+					<foreach collection="PLN_MST_OPR_IDs" item="PLN_MST_OPR_ID" open="(" close=")" separator=",">
+						#{PLN_MST_OPR_ID}
+					</foreach>
+			</if>
+		</if>
+		<if test="PLN_MST_CAT_KILLER != '' and PLN_MST_CAT_KILLER != null">
+			AND
+				TPM.PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER}
+		</if>
+	</select>
+
+	<select id="selectPlanMainList" parameterType="hashMap" resultType="hashMap">
+		SELECT
+			ROWNUM RNUM,
+			A1.*,
+			( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = A1.PLN_MST_REG_ID ) PLN_MST_REG_NM
+		FROM
+			(
+			SELECT
+				PLN_MST_IDX,
+				PLN_MST_TITLE,
+				PLN_MST_TYPE,
+				PLN_MST_ST_DT,
+				PLN_MST_ST_HH,
+				PLN_MST_ST_MI,
+				PLN_MST_ED_DT,
+				PLN_MST_ED_HH,
+				PLN_MST_ED_MI,
+				PLN_MST_USE_YN,
+				PLN_MST_PRD_DPL_YN,
+				PLN_MST_REG_DT,
+				PLN_MST_REG_ID,
+				PLN_MST_UPD_DT,
+				PLN_MST_UPD_ID,
+				PLN_MST_CAT_KILLER,
+				PLN_MST_MAIN_YN
+			FROM
+				T_PLN_MST
+			WHERE
+				1 = 1
+			AND
+				PLN_MST_MAIN_YN = 'Y'
+			AND
+				PLN_MST_USE_YN = 'Y'
+			AND
+				TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN PLN_MST_ST_DT AND PLN_MST_ED_DT
+			AND
+				PLN_MST_OPR_YN = 'N'
+			<if test="PLN_MST_TITLE != '' and PLN_MST_TITLE != null">
+			AND
+				PLN_MST_TITLE LIKE '%'||#{PLN_MST_TITLE}||'%'
+			</if>
+			<if test="SEARCH_START_DT != '' and SEARCH_START_DT != null">
+				<if test="SEARCH_END_DT != '' and SEARCH_END_DT != null">
+			AND
+				SUBSTR(PLN_MST_REG_DT, 0, 8) BETWEEN #{SEARCH_START_DT} AND #{SEARCH_END_DT}
+				</if>
+			</if>
+<!-- 			<if test="PLN_MST_OPR_ID != '' and PLN_MST_OPR_ID != null">
+			AND
+				PLN_MST_OPR_ID IN
+				<foreach collection="PLN_MST_OPR_IDs" item="PLN_MST_OPR_ID" open="(" close=")" separator=",">
+					#{PLN_MST_OPR_ID}
+				</foreach>
+			</if> -->
+			<if test="PLN_MST_CAT_KILLER != '' and PLN_MST_CAT_KILLER != null">
+			AND
+				PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER}
+			</if>
+			ORDER BY
+					PLN_MST_CAT_KILLER, PLN_MST_REG_DT DESC
+			) A1
+		WHERE
+			ROWNUM &lt;= #{catKillerCount}
+	</select>
+	
+		<!-- 기획전관리 카테고리 킬러 갯수 -->
+	<select id="selectCatKillerCount" parameterType="hashMap" resultType="hashMap">
+		/* Plan.selectCatKillerCount */
+		SELECT
+			CMN_COM_IDX,
+			CMN_COM_NM
+		FROM
+			T_CMM_COM
+		WHERE
+			CMN_COM_UP_IDX = #{CMN_COM_UP_IDX}
+		ORDER BY 
+			CMN_COM_REG_DT
+	</select>
+
+	<!-- 기획전관리 기획전 목록 -->
+	<select id="selectPlanList" parameterType="hashMap" resultType="hashMap">
+		/* Plan.selectPlanList */
+<!-- 		SELECT
+			ROWNUM RNUM,
+			A1.*,
+			( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = A1.PLN_MST_REG_ID ) PLN_MST_REG_NM
+		FROM
+			(
+			SELECT
+				PLN_MST_IDX,
+				PLN_MST_TITLE,
+				PLN_MST_TYPE,
+				PLN_MST_ST_DT,
+				PLN_MST_ST_HH,
+				PLN_MST_ST_MI,
+				PLN_MST_ED_DT,
+				PLN_MST_ED_HH,
+				PLN_MST_ED_MI,
+				PLN_MST_USE_YN,
+				PLN_MST_PRD_DPL_YN,
+				PLN_MST_REG_DT,
+				PLN_MST_REG_ID,
+				PLN_MST_UPD_DT,
+				PLN_MST_UPD_ID,
+				PLN_MST_CAT_KILLER,
+				PLN_MST_MAIN_YN
+			FROM
+				T_PLN_MST
+			WHERE
+				1 = 1
+			AND
+				PLN_MST_MAIN_YN = 'Y'
+			AND
+				PLN_MST_USE_YN = 'Y'
+			AND
+				TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN PLN_MST_ST_DT AND PLN_MST_ED_DT
+			<if test="PLN_MST_TITLE != '' and PLN_MST_TITLE != null">
+			AND
+				PLN_MST_TITLE LIKE '%'||#{PLN_MST_TITLE}||'%'
+			</if>
+			<if test="SEARCH_START_DT != '' and SEARCH_START_DT != null">
+				<if test="SEARCH_END_DT != '' and SEARCH_END_DT != null">
+			AND
+				SUBSTR(PLN_MST_REG_DT, 0, 8) BETWEEN #{SEARCH_START_DT} AND #{SEARCH_END_DT}
+				</if>
+			</if>
+			<if test="PLN_MST_OPR_ID != '' and PLN_MST_OPR_ID != null">
+			AND
+				PLN_MST_OPR_ID IN
+				<foreach collection="PLN_MST_OPR_IDs" item="PLN_MST_OPR_ID" open="(" close=")" separator=",">
+					#{PLN_MST_OPR_ID}
+				</foreach>
+			</if>
+			<if test="PLN_MST_CAT_KILLER != '' and PLN_MST_CAT_KILLER != null">
+			AND
+				PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER}
+			</if>
+			ORDER BY
+					PLN_MST_REG_DT DESC
+			) A1
+		WHERE
+			ROWNUM &lt; 4
+
+		UNION ALL
+ -->
+		SELECT
+			S2.*
+		FROM
+			(
+			SELECT
+				ROWNUM RNUM,
+				S1.*,
+				( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = S1.PLN_MST_REG_ID ) PLN_MST_REG_NM
+			FROM
+				(
+				SELECT
+					DISTINCT
+					TPM.PLN_MST_IDX,
+					TPM.PLN_MST_TITLE,
+					TPM.PLN_MST_TYPE,
+					TPM.PLN_MST_ST_DT,
+					TPM.PLN_MST_ST_HH,
+					TPM.PLN_MST_ST_MI,
+					TPM.PLN_MST_ED_DT,
+					TPM.PLN_MST_ED_HH,
+					TPM.PLN_MST_ED_MI,
+					TPM.PLN_MST_USE_YN,
+					TPM.PLN_MST_PRD_DPL_YN,
+					TPM.PLN_MST_REG_DT,
+					TPM.PLN_MST_REG_ID,
+					TPM.PLN_MST_UPD_DT,
+					TPM.PLN_MST_UPD_ID,
+					TPM.PLN_MST_CAT_KILLER,
+					TPM.PLN_MST_MAIN_YN
+				FROM
+					T_PLN_MST TPM
+				LEFT JOIN T_PLN_OPR TPO
+				ON TPM.PLN_MST_IDX = TPO.PLN_MST_IDX
+				WHERE
+					1 = 1
+				<if test="mainList != null and mainList.size > 0">
+					AND TPM.PLN_MST_IDX NOT IN
+					<foreach collection="mainList" item="item" open="(" close=")" separator=",">
+						#{item.PLN_MST_IDX}
+					</foreach>
+				</if>
+				<choose>
+					<when test='PLN_MST_USE_YN == "Y"'> <!-- 전시여부 -->
+						AND
+							TPM.PLN_MST_USE_YN = 'Y'
+						AND
+							TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN TPM.PLN_MST_ST_DT AND TPM.PLN_MST_ED_DT
+					</when>
+					<when test='PLN_MST_USE_YN == "N"'>
+						AND
+							(
+							TPM.PLN_MST_USE_YN = 'N'
+						OR
+							TO_CHAR(SYSDATE, 'YYYYMMDD') > TPM.PLN_MST_ED_DT
+							)
+					</when>
+				</choose>
+				<if test="PLN_MST_TITLE != '' and PLN_MST_TITLE != null">
+				AND
+					TPM.PLN_MST_TITLE LIKE '%'||#{PLN_MST_TITLE}||'%'
+				</if>
+				<if test="SEARCH_START_DT != '' and SEARCH_START_DT != null">
+					<if test="SEARCH_END_DT != '' and SEARCH_END_DT != null">
+				AND
+					SUBSTR(TPM.PLN_MST_REG_DT, 0, 8) BETWEEN #{SEARCH_START_DT} AND #{SEARCH_END_DT}
+					</if>
+				</if>
+				<if test='PLN_MST_OPR_YN == "Y"'>
+					<if test="PLN_MST_OPR_ID != '' and PLN_MST_OPR_ID != null">
+					AND
+						TPO.PLN_BZPLC_ID IN
+						<foreach collection="PLN_MST_OPR_IDs" item="PLN_MST_OPR_ID" open="(" close=")" separator=",">
+							#{PLN_MST_OPR_ID}
+						</foreach>
+					</if>
+				</if>
+				<if test="PLN_MST_CAT_KILLER != '' and PLN_MST_CAT_KILLER != null">
+				AND
+					TPM.PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER}
+				</if>
+				ORDER BY
+<!-- 				<if test="PLN_MST_MAIN_YN = 'N'">
+					PLN_MST_REG_DT DESC
+				</if> -->
+					TPM.PLN_MST_REG_DT DESC
+				) S1
+			) S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+
+	<!-- 기획전관리 기획전 상세 -->
+	<select id="selectPlanDetail" parameterType="hashMap" resultType="hashMap">
+		/* Plan.selectPlanDetail */
+		SELECT
+			S1.*,
+			( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = S1.PLN_MST_REG_ID ) PLN_MST_REG_NM,
+			( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = S1.PLN_MST_UPD_ID ) PLN_MST_UPD_NM,
+			( SELECT CPN_MST_TITLE FROM T_CPN_MST WHERE CPN_MST_IDX = S1.PLN_MST_CPN_ID ) PLN_MST_CPN_NM
+		FROM
+			(
+			SELECT
+				MAX(PM.PLN_MST_IDX) PLN_MST_IDX,
+				MAX(PM.PLN_MST_TITLE) PLN_MST_TITLE,
+				MAX(PM.PLN_MST_TYPE) PLN_MST_TYPE,
+				MAX(PM.PLN_MST_ST_DT) PLN_MST_ST_DT,
+				MAX(PM.PLN_MST_ED_DT) PLN_MST_ED_DT,
+				MAX(PM.PLN_MST_USE_YN) PLN_MST_USE_YN,
+				MAX(PM.PLN_MST_REG_DT) PLN_MST_REG_DT,
+				MAX(PM.PLN_MST_REG_ID) PLN_MST_REG_ID,
+				MAX(PM.PLN_MST_UPD_DT) PLN_MST_UPD_DT,
+				MAX(PM.PLN_MST_UPD_ID) PLN_MST_UPD_ID,
+				MAX(PM.PLN_MST_MEMO) PLN_MST_MEMO,
+				MAX(PM.PLN_MST_LOGIN_YN) PLN_MST_LOGIN_YN,
+				MAX(PM.PLN_MST_OPR_YN) PLN_MST_OPR_YN,
+				MAX(PM.PLN_MST_CAT_KILLER) PLN_MST_CAT_KILLER,
+				MAX(PM.PLN_MST_MAIN_YN) PLN_MST_MAIN_YN,
+				MAX(PM.PLN_MST_CPN_ID) PLN_MST_CPN_ID,
+				MAX(PM.ATFL_ID) ATFL_ID,
+				LISTAGG(BO.OPR_UNT_NM, ', ') WITHIN GROUP (ORDER BY BO.OPR_UNT_ID) PLN_MST_OPR_NM,
+				LISTAGG(PO.PLN_BZPLC_ID, ', ') WITHIN GROUP (ORDER BY PO.PLN_BZPLC_ID) PLN_MST_OPR_ID
+			FROM
+				T_PLN_MST PM, T_PLN_OPR PO, TB_FC_BZPLC_OPR_UNT BO
+			WHERE
+				PM.PLN_MST_IDX = PO.PLN_MST_IDX(+)
+			AND
+				PO.PLN_BZPLC_ID = BO.OPR_UNT_ID(+)
+			AND
+				PM.PLN_MST_IDX = #{PLN_MST_IDX}
+			) S1
+	</select>
+
+	<!-- 기획전관리 기획전 상세 이미지 목록 -->
+	<select id="selectPlanImageList" parameterType="hashMap" resultType="sspMap">
+		/* Plan.selectPlanImageList */
+		SELECT
+			TSAFD.ATFL_ID,
+			TSAFD.FILE_SEQ,
+			TSAFD.ORIGNL_FILE_NM,
+			DBMS_LOB.SUBSTR(FILE_CTS, 4000, 1) AS FILE_CTS,
+			TSAFD.FILE_SZ,
+			TSAFD.FILE_CD_ID,
+			TSAFD.FILE_USE_YN
+		FROM
+		T_PLN_MST TPM
+		JOIN TB_SB_ATCH_FILE_DTL TSAFD
+		ON TSAFD.ATFL_ID = TPM.ATFL_ID
+		WHERE
+			TPM.PLN_MST_IDX = #{PLN_MST_IDX}
+		AND
+			TSAFD.FILE_USE_YN = 'Y'
+		ORDER BY
+			TSAFD.FILE_SEQ
+	</select>
+
+	<!--  기획전관리 기획전 상세 메인 노출 상품 -->
+	<select id="selectPlanMainProduct" parameterType="hashMap" resultType="hashMap">
+		/* Plan."selectPlanMainProduct" */
+		SELECT
+			LISTAGG(TPD.PLN_PRD_MST_CD, ', ') WITHIN GROUP(ORDER BY TPD.PLN_DTL_ORDER) AS PLN_PRD_MST_CD
+		FROM
+		T_PLN_DTL TPD
+		JOIN T_PLN_GRP TPG
+			ON TPG.PLN_GRP_IDX = TPD.PLN_GRP_IDX
+		JOIN T_PLN_MST TPM
+			ON TPM.PLN_MST_IDX = TPG.PLN_MST_IDX
+		WHERE
+			TPM.PLN_MST_IDX = #{PLN_MST_IDX}
+		AND
+			TPG.PLN_MAIN_YN = 'Y'
+	</select>
+
+	<!--  기획전관리 기획전 상세 상품그룹 목록 -->
+	<select id="selectPlanProductList" parameterType="hashMap" resultType="hashMap">
+		/* Plan.selectPlanProductList */
+		SELECT
+			PLN_MST_IDX,
+			PLN_GRP_IDX,
+			PLN_GRP_TITLE,
+			PLN_GRP_TYPE,
+			PLN_GRP_SORT,
+			PLN_MAIN_YN,
+			LISTAGG(PLN_PRD_MST_CD, ', ') WITHIN GROUP(ORDER BY PLN_DTL_ORDER) AS PLN_PRD_MST_CD
+		FROM
+			(
+			SELECT
+				G.PLN_MST_IDX,
+				G.PLN_GRP_IDX,
+				G.PLN_GRP_TYPE,
+				G.PLN_GRP_TITLE,
+				G.PLN_GRP_COL,
+				G.PLN_GRP_SORT,
+				G.PLN_MAIN_YN,
+				D.PLN_DTL_IDX,
+				D.PLN_PRD_MST_CD,
+				D.PLN_DTL_ORDER
+			FROM
+				T_PLN_GRP G, T_PLN_DTL D
+			WHERE
+				G.PLN_MST_IDX = D.PLN_MST_IDX
+			AND
+				G.PLN_GRP_IDX = D.PLN_GRP_IDX
+			AND
+				G.PLN_MST_IDX = #{PLN_MST_IDX}
+			ORDER BY
+				G.PLN_GRP_IDX, G.PLN_GRP_SORT, D.PLN_DTL_ORDER
+			)
+		GROUP BY
+			PLN_MST_IDX, PLN_GRP_IDX, PLN_GRP_TITLE, PLN_GRP_TYPE, PLN_GRP_SORT, PLN_MAIN_YN
+		ORDER BY
+			PLN_GRP_SORT
+	</select>
+
+	<!-- 기획전관리 상품등록 팝업 상품 갯수 -->
+	<select id="selectPlanProductPopupCount" parameterType="hashMap" resultType="integer">
+		/* Plan.selectPlanProductPopupCount */
+		SELECT
+			COUNT(0)
+		FROM
+			TB_FV_PRD
+		WHERE
+			1 = 1
+		<if test="PRD_MST_CDs != null and PRD_MST_CDs != ''">
+		AND
+			PRD_ID IN
+			<foreach collection="PRD_MST_CDs" item="PRD_MST_CD" open="(" close=")" separator=",">
+				#{PRD_MST_CD}
+			</foreach>
+		</if>
+	</select>
+
+	<!-- 기획전관리 상품등록 팝업 상품 목록 -->
+	<select id="selectPlanProductPopupList" parameterType="hashMap" resultType="hashMap">
+		/* Plan.selectPlanProductPopupList */
+		SELECT
+			IV2.*
+		FROM
+			(
+			SELECT
+				ROWNUM RNUM,
+				IV1.*
+			FROM
+				(
+				SELECT
+					PRD_ID,
+
+					PRD_NM,
+					REPR_SPEC,
+
+					ODR_UNT
+
+
+				FROM
+					TB_FV_PRD
+				WHERE
+					1 = 1
+				<if test="PRD_MST_CDs != null and PRD_MST_CDs != ''">
+				AND
+					PRD_ID IN
+					<foreach collection="PRD_MST_CDs" item="PRD_MST_CD" open="(" close=")" separator=",">
+						#{PRD_MST_CD}
+					</foreach>
+				</if>
+				ORDER BY REG_DTM DESC, PRD_ID ASC
+				) IV1
+			) IV2
+		WHERE
+			RNUM BETWEEN #{startNum} AND #{endNum}
+		ORDER BY
+			RNUM
+	</select>
+
+	<!-- 기획전관리 메인노출 기획전 수량 -->
+	<select id="selectPlanMainCount" parameterType="hashMap" resultType="integer">
+		/* Plan.selectPlanMainCount */
+		SELECT
+			COUNT(0)
+		FROM
+			T_PLN_MST
+		WHERE
+			1 = 1
+		AND
+			PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER}
+		AND
+			PLN_MST_MAIN_YN = 'Y'
+		AND
+			PLN_MST_USE_YN = 'Y'
+	</select>
+
+	<!--  -->
+	<select id="selectPlanMainIdx" parameterType="hashMap" resultType="string">
+		/* Plan.selectPlanMainChange */
+		SELECT
+			PLN_MST_IDX
+		FROM
+			T_PLN_MST
+		WHERE
+			PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER}
+		AND
+			PLN_MST_MAIN_YN = 'Y'
+		AND
+			PLN_MST_REG_DT = ( SELECT MIN(PLN_MST_REG_DT) FROM T_PLN_MST WHERE PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER} AND PLN_MST_MAIN_YN = 'Y' )
+	</select>
+
+	<!--  -->
+	<update id="updatePlanMain" parameterType="hashMap">
+		/* Plan.updatePlanMain */
+		UPDATE
+			T_PLN_MST
+		SET
+			PLN_MST_MAIN_YN = 'N',
+			PLN_MST_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			PLN_MST_UPD_ID = #{PLN_MST_REG_ID}
+		WHERE
+			PLN_MST_IDX = #{CHANGE_MAIN_IDX}
+	</update>
+
+	<!-- 기획전관리 기획전등록 -->
+	<insert id="insertPlan" parameterType="hashMap">
+		/* Plan.insertPlan */
+		<selectKey keyProperty="PLN_MST_IDX" resultType="Integer" order="BEFORE">
+			SELECT SEQ_PLN_MST_IDX.NEXTVAL AS PLN_MST_IDX FROM DUAL
+		</selectKey>
+		INSERT INTO T_PLN_MST
+			(
+			PLN_MST_IDX,
+			PLN_MST_TITLE,
+			PLN_MST_ST_DT,
+			PLN_MST_ST_HH,
+			PLN_MST_ST_MI,
+			PLN_MST_ED_DT,
+			PLN_MST_ED_HH,
+			PLN_MST_ED_MI,
+			PLN_MST_USE_YN,
+			PLN_MST_REG_DT,
+			PLN_MST_REG_ID,
+			PLN_MST_UPD_DT,
+			PLN_MST_UPD_ID,
+			PLN_MST_MEMO,
+			PLN_MST_LOGIN_YN,
+			PLN_MST_OPR_YN,
+			PLN_MST_CAT_KILLER,
+			PLN_MST_MAIN_YN,
+			PLN_MST_CPN_ID,
+			ATFL_ID
+			)
+		VALUES
+			(
+			#{PLN_MST_IDX},
+			#{PLN_MST_TITLE},
+			#{PLN_MST_ST_DT},
+			'00',
+			'00',
+			#{PLN_MST_ED_DT},
+			'23',
+			'59',
+			#{PLN_MST_USE_YN},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{PLN_MST_REG_ID},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{PLN_MST_REG_ID},
+			#{PLN_MST_MEMO},
+			#{PLN_MST_LOGIN_YN},
+			#{PLN_MST_OPR_YN},
+			#{PLN_MST_CAT_KILLER},
+			#{PLN_MST_MAIN_YN},
+			#{PLN_MST_CPN_ID},
+			#{atflId}
+			)
+	</insert>
+
+	<!-- 기획전관리 운영단위 등록 -->
+	<insert id="insertPlanOperation" parameterType="hashMap">
+		/* Plan.insertPlanOperation */
+		INSERT INTO T_PLN_OPR
+			(
+			PLN_OPR_IDX,
+			PLN_MST_IDX,
+			PLN_BZPLC_ID,
+			PLN_REG_DT,
+			PLN_REG_ID
+			)
+		VALUES
+			(
+			(SELECT NVL(MAX(PLN_OPR_IDX), 0) + 1 FROM T_PLN_OPR),
+			#{PLN_MST_IDX},
+			#{PLN_MST_OPR_ID},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{PLN_MST_REG_ID}
+			)
+	</insert>
+
+	<!-- 기획전관리 상품그룹 등록 -->
+	<insert id="insertPlanGroup" parameterType="hashMap">
+		/* Plan.insertPlanGroup */
+		<selectKey keyProperty="PLN_GRP_IDX" resultType="Integer" order="BEFORE">
+			SELECT SEQ_PLN_GRP_IDX.NEXTVAL AS PLN_GRP_IDX FROM DUAL
+		</selectKey>
+		INSERT INTO T_PLN_GRP
+			(
+			PLN_GRP_IDX,
+			PLN_MST_IDX,
+			PLN_GRP_TYPE,
+			PLN_GRP_TITLE,
+			PLN_GRP_COL,
+			PLN_GRP_SORT,
+			PLN_MAIN_YN
+			)
+		VALUES
+			(
+			#{PLN_GRP_IDX},
+			#{PLN_MST_IDX},
+			'T',
+			#{PLN_GRP_TITLE},
+			#{PLN_GRP_COL},
+			#{PLN_GRP_SORT},
+			#{PLN_MAIN_YN}
+			)
+	</insert>
+
+	<!-- 기획전관리 상품구성 등록 -->
+	<insert id="insertPlanDetail" parameterType="hashMap">
+		/* Plan.insertPlanDetail */
+		<selectKey keyProperty="PLN_DTL_IDX" resultType="Integer" order="BEFORE">
+			SELECT SEQ_PLN_DTL_IDX.NEXTVAL AS PLN_DTL_IDX FROM DUAL
+		</selectKey>
+		INSERT INTO T_PLN_DTL
+			(
+			PLN_DTL_IDX,
+			PLN_MST_IDX,
+			PLN_GRP_IDX,
+			PLN_PRD_MST_CD,
+			PLN_DTL_ORDER
+			)
+		VALUES
+			(
+			#{PLN_DTL_IDX},
+			#{PLN_MST_IDX},
+			#{PLN_GRP_IDX},
+			#{PLN_PRD_MST_CD},
+			#{PLN_DTL_ORDER}
+			)
+	</insert>
+
+	<!-- 기획전관리 삭제 -->
+	<delete id="deletePlan" parameterType="hashMap">
+		/* Plan.deletePlan */
+		DELETE FROM
+			T_PLN_MST
+		WHERE
+			PLN_MST_IDX = #{PLN_MST_IDX}
+	</delete>
+
+	<!-- 기획전관리 수정 -->
+	<update id="updateFileCn" parameterType="hashMap">
+		/* Plan.updateFileCn */
+		UPDATE
+			TB_SB_ATCH_FILE_DTL TSAFD
+		SET
+			FILE_SEQ = #{fileSeq}
+		WHERE
+			ATFL_ID = #{atflId}
+		AND
+			FILE_CD_ID = #{fileCdId}
+	</update>
+
+	<!-- 기획전관리 수정 -->
+	<update id="updatePlan" parameterType="hashMap">
+		/* Plan.updatePlan */
+		UPDATE
+			T_PLN_MST
+		SET
+			PLN_MST_TITLE = #{PLN_MST_TITLE},
+			PLN_MST_ST_DT = #{PLN_MST_ST_DT},
+			PLN_MST_ED_DT = #{PLN_MST_ED_DT},
+			PLN_MST_USE_YN = #{PLN_MST_USE_YN},
+			PLN_MST_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			PLN_MST_UPD_ID = #{PLN_MST_REG_ID},
+			PLN_MST_MEMO = #{PLN_MST_MEMO},
+			PLN_MST_LOGIN_YN = #{PLN_MST_LOGIN_YN},
+			PLN_MST_OPR_YN = #{PLN_MST_OPR_YN},
+			PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER},
+			<if test='PLN_MST_USE_YN == "Y"'>
+				PLN_MST_MAIN_YN = #{PLN_MST_MAIN_YN},
+			</if>
+			<if test='PLN_MST_USE_YN == "N"'>
+				PLN_MST_MAIN_YN = 'N',
+			</if>
+			<!-- PLN_MST_MAIN_YN = #{PLN_MST_MAIN_YN}, -->
+			PLN_MST_CPN_ID = #{PLN_MST_CPN_ID}
+		WHERE
+			PLN_MST_IDX = #{PLN_MST_IDX}
+	</update>
+
+	<!--  -->
+	<select id="selectPlanOperationCount" parameterType="hashMap" resultType="integer">
+		/* Plan.selectPlanOperationCount */
+		SELECT
+			COUNT(0)
+		FROM
+			T_PLN_OPR
+		WHERE
+			1 = 1
+		AND
+			PLN_MST_IDX = #{PLN_MST_IDX}
+	</select>
+
+	<delete id="deletePlanOperation" parameterType="hashMap">
+		/* Plan.deletePlanOperation */
+		DELETE FROM
+			T_PLN_OPR
+		WHERE
+			PLN_MST_IDX = #{PLN_MST_IDX}
+	</delete>
+
+	<delete id="deletePlanGroup" parameterType="hashMap">
+		/* Plan.deletePlanGroup */
+		DELETE FROM
+			T_PLN_GRP
+		WHERE
+			PLN_MST_IDX = #{PLN_MST_IDX}
+	</delete>
+
+	<delete id="deletePlanDetail" parameterType="hashMap">
+		/* Plan.deletePlanDetail */
+		DELETE FROM
+			T_PLN_DTL
+		WHERE
+			PLN_MST_IDX = #{PLN_MST_IDX}
+	</delete>
+
+	<!-- 기획전관리 엑셀 -->
+	<select id="selectPlanListExcel" parameterType="hashMap" resultType="hashMap">
+		/* Plan.selectPlanListExcel */
+		SELECT
+			ROWNUM RNUM,
+			S1.*,
+			( SELECT ADM_MST_NM || ' (' || ADM_MST_ERP_NO || ')' FROM T_ADM_MST WHERE ADM_MST_ID = S1.PLN_MST_REG_ID ) PLN_MST_REG_NM
+		FROM
+			(
+			SELECT
+				PLN_MST_IDX,
+				PLN_MST_TITLE,
+				PLN_MST_TYPE,
+				PLN_MST_ST_DT,
+				PLN_MST_ST_HH,
+				PLN_MST_ST_MI,
+				PLN_MST_ED_DT,
+				PLN_MST_ED_HH,
+				PLN_MST_ED_MI,
+				CASE
+					WHEN PLN_MST_USE_YN = 'Y' THEN '전시'
+					ELSE '미전시'
+				END PLN_MST_USE_YN,
+				PLN_MST_PRD_DPL_YN,
+				PLN_MST_REG_DT,
+				PLN_MST_REG_ID,
+				PLN_MST_UPD_DT,
+				PLN_MST_UPD_ID,
+				PLN_MST_CAT_KILLER,
+				CASE
+					WHEN PLN_MST_MAIN_YN = 'Y' THEN '노출'
+					ELSE '미노출'
+				END PLN_MST_MAIN_YN
+			FROM
+				T_PLN_MST
+			WHERE
+				1 = 1
+			<if test="PLN_MST_USE_YN != '' and PLN_MST_USE_YN != null">
+				<if test="PLN_MST_USE_YN != 'ALL'">
+					AND
+						PLN_MST_USE_YN = #{PLN_MST_USE_YN}
+				</if>
+			</if>
+			<if test="PLN_MST_TITLE != '' and PLN_MST_TITLE != null">
+			AND
+				PLN_MST_TITLE LIKE '%'||#{PLN_MST_TITLE}||'%'
+			</if>
+			<if test="SEARCH_START_DT != '' and SEARCH_START_DT != null">
+				<if test="SEARCH_END_DT != '' and SEARCH_END_DT != null">
+			AND
+				SUBSTR(PLN_MST_REG_DT, 0, 8) BETWEEN #{SEARCH_START_DT} AND #{SEARCH_END_DT}
+				</if>
+			</if>
+			<if test="PLN_MST_CAT_KILLER != '' and PLN_MST_CAT_KILLER != null">
+			AND
+				PLN_MST_CAT_KILLER = #{PLN_MST_CAT_KILLER}
+			</if>
+			ORDER BY PLN_MST_MAIN_YN DESC, PLN_MST_UPD_DT DESC
+			) S1
+		ORDER BY RNUM DESC
+	</select>
+</mapper>

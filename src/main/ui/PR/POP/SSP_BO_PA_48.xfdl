@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PA_48" width="1200" height="584" onload="fn_onLoad" titletext="변경이력관리" scrollbartype="none none" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="584" width="1200">
+        <Grid id="grd_list" taborder="0" left="20" top="90" binddataset="ds_list" cellsizebandtype="allband" oncelldblclick="grd_list_oncelldblclick" bottom="120" right="20" autofittype="none" cellsizingtype="col" scrollbartype="auto fixed" oncellclick="grd_list_oncellclick" selecttype="cell">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="140"/>
+                <Column size="140"/>
+                <Column size="150"/>
+                <Column size="150"/>
+                <Column size="250"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="150"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="ID"/>
+                <Cell col="1" text="변경항목"/>
+                <Cell col="2" text="기존값"/>
+                <Cell col="3" text="신규값"/>
+                <Cell col="4" text="변경사유"/>
+                <Cell col="5" text="변경자ID"/>
+                <Cell col="6" text="변경자명"/>
+                <Cell col="7" text="변경일시"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:ID" wordWrap="char" displaytype="text"/>
+                <Cell col="1" text="bind:COL" wordWrap="char"/>
+                <Cell col="2" text="expr:COL=='상품상세설명'?'내용보기':ASIS" wordWrap="char" expandshow="expr:COL=='상품상세설명'?'show':'hide'"/>
+                <Cell col="3" text="expr:COL=='상품상세설명'?'내용보기':TOBE" wordWrap="char" expandshow="expr:COL=='상품상세설명'?'show':'hide'" displaytype="normal"/>
+                <Cell col="4" text="bind:UPD_RSN" wordWrap="char" textAlign="left"/>
+                <Cell col="5" text="bind:UPD_ID" wordWrap="char"/>
+                <Cell col="6" text="bind:UPD_NAME" wordWrap="char"/>
+                <Cell col="7" text="bind:UPD_DTM" wordWrap="char" calendardateformat="yyyy-MM-dd HH:mm:ss" calendareditformat="yyyy-MM-dd HH:mm:ss" calendardisplaynulltype="none"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Div id="div_paging" taborder="1" height="grd_list:30" formscrollbartype="none none" url="COMM::cmmPaging.xfdl" top="grd_list:30" left="20" right="20"/>
+        <Static id="totalPageCount" taborder="2" text="(총 0건 1/1)" left="20" top="70" width="200" height="14" usedecorate="true"/>
+        <Static id="staticTitle" taborder="3" left="20" top="20" width="155" height="22" text="| 변경이력관리" cssclass="sta_WF_title02"/>
+        <Button id="btn_close" taborder="4" text="닫기" left="568" width="65" height="30" positionstep="0" bottom="20" onclick="btn_close_onclick"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="HST_SEQ" type="STRING" size="256"/>
+          <Column id="ID" type="STRING" size="256"/>
+          <Column id="COL" type="STRING" size="256"/>
+          <Column id="ASIS" type="STRING" size="256"/>
+          <Column id="TOBE" type="STRING" size="256"/>
+          <Column id="UPD_RSN" type="STRING" size="256"/>
+          <Column id="UPD_ID" type="STRING" size="256"/>
+          <Column id="UPD_NAME" type="STRING" size="256"/>
+          <Column id="UPD_DTM" type="STRING" size="256"/>
+          <Column id="DATA_CHG_TP_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="HISTORY_TYPE" type="STRING" size="256"/>
+          <Column id="KEY1" type="STRING" size="256"/>
+          <Column id="KEY2" type="STRING" size="256"/>
+          <Column id="KEY3" type="STRING" size="256"/>
+          <Column id="KEY4" type="STRING" size="256"/>
+          <Column id="KEY5" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : ssp_bo
+CREATION DATES : 2022.03.10
+DESC : 상품파트 공용 변경이력 팝업
+
+* 호출예)
+var params = {
+	historyType:'person', //히스토리 유형 필수값
+	key1:'111',	//파라미터1
+	key2:'222' //파라미터2
+	//필요에따라 추가
+};
+var options = {};
+this.gfn_openPopup(e.fromobject.id, "PR_POP::SSP_BO_PA_48.xfdl", params,  "fn_popupCallback", options);
+
+* ======================= 변경 내역 ======================
+* 날짜			담당자		유형코드		유형명칭
+* 2020.03.10	조지훈 	person			담당자변경이력
+*******************************************************/
+
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fv_oApp = nexacro.getApplication();
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+    this.gfn_formOnLoad(this);
+    
+	//조회
+	this.ds_search.setColumn(0, "HISTORY_TYPE", this.parent.historyType);	//이력유형(필수)
+	//키값 파라미터(필요에따라)
+	this.ds_search.setColumn(0, "KEY1", this.parent.key1);
+	this.ds_search.setColumn(0, "KEY2", this.parent.key2);
+	this.ds_search.setColumn(0, "KEY3", this.parent.key3);
+	this.ds_search.setColumn(0, "KEY4", this.parent.key4);
+	this.ds_search.setColumn(0, "KEY5", this.parent.key5);
+
+    this.fn_search(true);
+};
+
+// 화면 단축키
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	if (e.keycode == 27) {// ESC
+		this.close();// 팝업 화면 닫기
+		e.stopPropagation();
+	}
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (bInit)
+{
+    var sSvcId = "search";    
+    var sUrl = "/pr/prd-hst/select-product-history.do";  
+    var inDs = "ds_search=ds_search";
+    var outDs = "ds_list=historyList";
+    var arg = "";
+    
+    if(bInit) {
+        this.div_paging.uPage = 1;
+        this.div_paging.uPageNum = 0;
+        this.ds_search.setColumn(0,"START_NUM",0);
+        this.ds_search.setColumn(0,"ROW_COUNT",this.fv_oApp.gv_pageViewCnt);
+    }
+    
+    this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+    switch(svcID) {
+        case "search" :
+            this.div_paging.form.cfn_createPage(this.div_paging,this.totalCount,this.fv_oApp.gv_pageViewCnt,"fn_pageCallback");
+            break;
+            
+    }
+};
+
+this.fn_pageCallback = function(sFlag){
+    var oPaging = this.div_paging;  
+    
+    if(sFlag){
+        this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+        this.ds_search.setColumn(0,"ROW_COUNT", this.fv_oApp.gv_pageViewCnt);
+        this.fn_search();
+    }
+
+    var sTotText = "(<b v='true'>총 "+ oPaging.uTotCount+"건 </b><fc v='red'>"+ oPaging.uPage +"</fc> / "+ oPaging.uPageCnt +")";
+    this.totalPageCount.set_text(sTotText);
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+this.btn_close_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+this.grd_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var hstType = this.parent.historyType;
+	var col = this.ds_list.getColumn(e.row, "COL");
+	if(hstType == 'productDetail' && col == '상품상세설명'){
+		if(obj.getCellPos() == 2){
+			var params = {
+				PRD_ID:this.ds_list.getColumn(e.row, "ID"),
+				HST_SEQ:this.ds_list.getColumn(e.row, "ASIS")
+			};
+			this.gfn_openPopup('historyHtmlView', "PR_POP::SSP_BO_PA_48_01.xfdl", params,  "fn_popupCallback", {title:'상품상세설명'});
+		}else if(obj.getCellPos() == 3){
+			var params = {
+				PRD_ID:this.ds_list.getColumn(e.row, "ID"),
+				HST_SEQ:this.ds_list.getColumn(e.row, "TOBE")
+			};
+			this.gfn_openPopup('historyHtmlView', "PR_POP::SSP_BO_PA_48_01.xfdl", params,  "fn_popupCallback", {title:'상품상세설명'});
+		}
+		
+	}
+};
+]]></Script>
+  </Form>
+</FDL>

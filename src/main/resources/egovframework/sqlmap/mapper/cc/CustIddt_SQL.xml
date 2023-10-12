@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="custIddt">
+
+   <!--
+    ******************************************************************************
+    * SELECT : custIddt
+    * 작성자 : moonjooh
+    * 작성 일자 : 2022-02-21
+    ******************************************************************************
+    -->
+    <select id="selectCustIddtList" parameterType="HashMap" resultType="HashMap">
+        /* custIddt.selectCustIddtList 산업군조회 목록 */
+        SELECT LIST.CHK
+        	 , LIST.ROW_STATE
+        	 , LIST.USE_YN
+        	 , LIST.IDDT_ID
+        	 , LIST.IDDT_NM
+        	 , LIST.BZPLC_CHR_MD_ID
+        	 , LIST.BZPLC_CHR_MD_NM
+        	 , LIST.BZPLC_CHR_CS_ID
+        	 , LIST.BZPLC_CHR_CS_NM
+        	 , LIST.SALS_CHR_CD
+        	 , LIST.SALS_TEAM_CD
+			 , LIST.ORG_CD AS SALS_ORG_CD
+			 , LIST.SVC_ORG_CD
+			 , LIST.OPR_ORG_CD 
+			 , LIST.CHR_MD_ID 
+        	 , LIST.CHR_MD_NM
+			 , LIST.CHR_CS_ID 
+        	 , LIST.CHR_CS_NM
+			 , LIST.CHR_OP_ID 
+        	 , LIST.CHR_OP_NM
+			 , LIST.PRD_REG_CS_ID 
+        	 , LIST.PRD_REG_CS_NM
+ 	 		 , LIST.EXPS_SO
+			 , LIST.EXPS_YN
+			 , LIST.ICON_ON_PC_DOC_REG_ID
+			 , LIST.ICON_OFF_PC_DOC_REG_ID
+			 , 1 AS DOC_REG_SEQ
+			 , LIST.PACKAGE_COUNT
+			 , LIST.MRO_IDDT_ID
+        	 , LIST.REGPSN_ID
+			 , (SELECT FN_CC_GET_MBR_NM(#{coCd}, LIST.REGPSN_ID) FROM DUAL) AS REGPSN_NM
+			 , LIST.REG_DTM
+			 , LIST.UPDPSN_ID
+			 , (SELECT FN_CC_GET_MBR_NM(#{coCd}, LIST.UPDPSN_ID) FROM DUAL) UPDPSN_NM
+			 , LIST.UPD_DTM
+        FROM (
+        	SELECT '0' AS CHK
+	        	 , '' AS ROW_STATE
+	        	 , IDDT.USE_YN 
+				 , IDDT.IDDT_ID
+				 , IDDT.IDDT_NM 
+				 , IDDT.BZPLC_CHR_MD_ID
+				 , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE OPRTR_ID = IDDT.BZPLC_CHR_MD_ID ), IDDT.BZPLC_CHR_MD_ID) AS BZPLC_CHR_MD_NM
+				 , IDDT.BZPLC_CHR_CS_ID
+				 , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE OPRTR_ID = IDDT.BZPLC_CHR_CS_ID ), IDDT.BZPLC_CHR_CS_ID) AS BZPLC_CHR_CS_NM
+				 , IDDT.SALS_CHR_CD 
+				 , IDDT.SALS_TEAM_CD 
+				 , IDDT.ORG_CD 
+				 , IDDT.SVC_ORG_CD 
+				 , IDDT.OPR_ORG_CD 
+				 , IDDT.CHR_MD_ID 
+				 , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE OPRTR_ID = IDDT.CHR_MD_ID ), IDDT.CHR_MD_ID) AS CHR_MD_NM
+				 , IDDT.CHR_CS_ID 
+				 , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE OPRTR_ID = IDDT.CHR_CS_ID ), IDDT.CHR_CS_ID) AS CHR_CS_NM
+				 , IDDT.CHR_OP_ID 
+				 , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE OPRTR_ID = IDDT.CHR_OP_ID ), IDDT.CHR_OP_ID) AS CHR_OP_NM
+				 , IDDT.PRD_REG_CS_ID 
+				 , NVL((SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE OPRTR_ID = IDDT.PRD_REG_CS_ID ), IDDT.PRD_REG_CS_ID) AS PRD_REG_CS_NM
+				 , IMI.EXPS_SO
+				 , IMI.EXPS_YN
+				 , IMI.ICON_ON_PC_DOC_REG_ID
+				 , IMI.ICON_OFF_PC_DOC_REG_ID
+				 , PREPKG.PACKAGE_COUNT
+				 , IDDT.MRO_IDDT_ID
+				 , IDDT.REGPSN_ID
+				 , IDDT.REG_DTM
+				 , IDDT.UPDPSN_ID
+				 , IDDT.UPD_DTM
+			  FROM TB_CC_IDDT_BASIS IDDT 
+			  LEFT JOIN TB_CC_IDDT_MKTG_INFO IMI ON IDDT.IDDT_ID = IMI.IDDT_ID
+			  LEFT JOIN (SELECT IDDT_ID,COUNT(IDDT_ID) AS PACKAGE_COUNT FROM TB_SA_PRE_PKG_INFO PPI
+                JOIN TB_SA_PRE_PKG_IDDT_DTL  PPID ON PPI.PRE_PKG_SEQ = PPID.PRE_PKG_SEQ AND PPI.USE_YN ='Y' GROUP BY IDDT_ID) PREPKG ON PREPKG.IDDT_ID = IDDT.IDDT_ID
+			  
+			  <where>
+	          	<if test='useYn != null and !"A".equals(useYn)'>
+	        		IDDT.USE_YN= #{useYn}
+	            </if>
+	          </where>
+        )LIST
+        <if test="sortColumn != null and sortColumn != ''"> 
+        ORDER BY ${sortColumn} ${sortType} 
+        </if> 
+        <if test="sortColumn == null or sortColumn == ''"> 
+        ORDER BY USE_YN DESC, EXPS_YN DESC , EXPS_SO, TO_NUMBER(IDDT_ID) 
+        </if>
+    </select>
+    
+    <select id="selectCustIddtCount" parameterType="HashMap" resultType="int">
+        /* custIddt.selectCustIddtCount 산업군조회 목록 카운트 */
+        SELECT COUNT(*)
+		  FROM TB_CC_IDDT_BASIS IDDT
+		  <where>
+          	<if test='useYn != null and !"A".equals(useYn)'>
+        		IDDT.USE_YN= #{useYn}
+            </if>
+          </where>
+    </select>
+    
+    <update id="saveCustIddt" parameterType="HashMap">
+		/* custIddt.saveCustIddt 산업군조회 merge */
+		<selectKey keyProperty="iddtId" resultType="String" order="BEFORE">
+			SELECT
+		    CASE WHEN (SELECT COUNT(IDDT_ID) FROM TB_CC_IDDT_BASIS WHERE IDDT_ID =  #{iddtId})>0 then  #{iddtId}
+			ELSE TO_CHAR((SELECT MAX(TO_NUMBER(IDDT_ID))+10 FROM TB_CC_IDDT_BASIS WHERE IDDT_ID!='999'))
+			END
+			FROM dual
+		</selectKey>
+		MERGE INTO TB_CC_IDDT_BASIS
+		USING DUAL 
+		ON ( IDDT_ID = #{iddtId} )
+		WHEN MATCHED THEN
+		UPDATE SET USE_YN = #{useYn}
+			 , BZPLC_CHR_MD_ID = #{bzplcChrMdId}
+			 , BZPLC_CHR_CS_ID = #{bzplcChrCsId}
+			 , SALS_CHR_CD = #{salsChrCd}
+			 , SALS_TEAM_CD = #{salsTeamCd}
+			 , ORG_CD = #{salsOrgCd}
+			 , OPR_ORG_CD = #{oprOrgCd}
+			 , SVC_ORG_CD = #{svcOrgCd}
+			 , CHR_MD_ID = #{chrMdId}
+			 , CHR_CS_ID = #{chrCsId}
+			 , CHR_OP_ID = #{chrOpId}
+			 , PRD_REG_CS_ID = #{prdRegCsId}
+		     , IDDT_NM = #{iddtNm}
+		   	 , UPDPSN_ID = #{oprtrId}
+		   	 , UPD_DTM = SYSDATE
+		WHEN NOT MATCHED THEN
+        INSERT(
+        	IDDT_ID
+			, IDDT_NM
+			, BZPLC_CHR_MD_ID
+			, BZPLC_CHR_CS_ID
+			, SALS_CHR_CD
+			, SALS_TEAM_CD
+			, ORG_CD
+			, OPR_ORG_CD
+			, SVC_ORG_CD
+			, CHR_MD_ID
+			, CHR_CS_ID
+			, CHR_OP_ID
+			, PRD_REG_CS_ID
+			, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+        )VALUES(
+        	#{iddtId}
+        	, #{iddtNm}
+        	, #{bzplcChrMdId}
+        	, #{bzplcChrCsId}
+        	, #{salsChrCd}
+        	, #{salsTeamCd}
+        	, #{salsOrgCd}
+        	, #{oprOrgCd}
+        	, #{svcOrgCd}
+        	, #{chrMdId}
+        	, #{chrCsId}
+        	, #{chrOpId}
+        	, #{prdRegCsId}
+        	, #{useYn}
+        	, #{oprtrId}
+        	, SYSDATE
+		)
+	</update>
+	
+    <update id="saveCustIddtMktg" parameterType="HashMap">
+	/* custIddt.saveCustIddtMktg 산업군 마케팅(패키지)정보 merge */
+		MERGE INTO TB_CC_IDDT_MKTG_INFO
+		USING DUAL
+		ON ( IDDT_ID = #{iddtId} )
+		WHEN NOT MATCHED THEN
+        INSERT(
+        	IDDT_ID
+        	,EXPS_YN
+			, REGPSN_ID
+			, REG_DTM
+        )VALUES(
+ 			#{iddtId}
+ 			,'N'
+        	, #{oprtrId}
+        	, SYSDATE
+		)
+	</update>
+	
+	<delete id="deleteCustIddt" parameterType="HashMap">
+		/* custIddt.deleteCustIddt 산업군조회 Delete */
+		DELETE FROM TB_CC_IDDT_BASIS 
+		 WHERE IDDT_ID = #{iddtId}
+	</delete>
+    
+    <select id="selectCombo" parameterType="HashMap" resultType="HashMap">
+        /* custIddt.selectCombo 산업군조회 영업담당 콤보박스 조회 */
+		SELECT SALS_CHR_CD
+			 , SALS_CHR_NM 
+		  FROM TB_CC_SALS_CHR_BASIS
+		 ORDER BY SALS_CHR_CD 
+    </select>
+    
+    <select id="selectBzplcIddtChk" parameterType="HashMap" resultType="int">
+        /* custIddt.selectBzplcIddtChk 해당 산업군 정보가 사용중인지 체크 */
+        SELECT COUNT(*) 
+		  FROM TB_CC_BZPLC_BASIS
+		 WHERE IDDT_ID IS NOT NULL
+		   AND IDDT_ID = (	SELECT I.IDDT_ID 
+							  FROM TB_CC_IDDT_BASIS I
+							 WHERE IDDT_ID = #{iddtId} 
+							   AND USE_YN = 'Y' )
+    </select>
+    
+    <select id="selectDuplNmChk" parameterType="HashMap" resultType="int">
+        /* custIddt.selectDuplNmChk 산업군명 중복여부 체크 */
+        SELECT COUNT(*)
+          FROM TB_CC_IDDT_BASIS
+         WHERE IDDT_NM = #{iddtNm}
+    </select>
+    
+    <select id="selectPrdPlcdList" parameterType="HashMap" resultType="HashMap">
+    	/*  custIddt.selectPrdPlcdList 상품군 조회  */
+    	SELECT * 
+    	FROM TB_PR_PRD_CLSF_IDDT_MAPP
+    	WHERE CO_CD = #{CO_CD}
+    	AND IDDT_ID = #{IDDT_ID} 
+    </select>
+    
+    <select id="selectIddtMktgInfo" parameterType="HashMap" resultType="HashMap">
+    	/*  custIddt.selectIddtMktgInfo 산업군 상세 패키지 정보 조회  */
+		SELECT
+		    TCIB.IDDT_ID 			AS IDDT_ID
+		    ,TCIB.MRO_IDDT_ID 		AS MRO_IDDT_ID
+		    ,NVL(TCIMI.EXPS_YN, 'N') 			AS EXPS_YN
+		    ,TCIMI.EXPS_SO 			AS EXPS_SO
+		    ,TCADON.DOC_REG_ID 		AS ICON_ON_PC_DOC_REG_ID
+		    ,TCADON.DOC_REG_SEQ 	AS ICON_ON_PC_DOC_REG_SEQ
+		    ,TCADON.ATFL_NM 		AS ICON_ON_PC_DOC_REG_ID_NM
+		    ,TCADON.ATFL_STOR_PATH 	AS ICON_ON_PC_DOC_REG_ID_ATFL_STOR_PATH
+		    ,TCADON.ATFL_NM 		AS ICON_ON_PC_DOC_REG_ID_ORI_ATFL_NM
+		    ,TCTDOFF.DOC_REG_ID 	AS ICON_OFF_PC_DOC_REG_ID
+		    ,TCTDOFF.DOC_REG_SEQ 	AS ICON_OFF_PC_DOC_REG_SEQ
+		    ,TCTDOFF.ATFL_NM 		AS ICON_OFF_PC_DOC_REG_ID_NM
+		    ,TCTDOFF.ATFL_STOR_PATH AS ICON_OFF_PC_DOC_REG_ID_ATFL_STOR_PATH
+		    ,TCTDOFF.ATFL_NM 		AS ICON_OFF_PC_DOC_REG_ID_ORI_ATFL_NM
+		    FROM TB_CC_IDDT_BASIS TCIB
+		LEFT JOIN TB_CC_IDDT_MKTG_INFO TCIMI 	ON TCIB.IDDT_ID = TCIMI.IDDT_ID
+		LEFT JOIN TB_CO_ATFL_DTLS TCADON 		ON TCADON.DOC_REG_ID = TCIMI.ICON_ON_PC_DOC_REG_ID
+		LEFT JOIN TB_CO_ATFL_DTLS TCTDOFF 		ON TCTDOFF.DOC_REG_ID = TCIMI.ICON_OFF_PC_DOC_REG_ID
+		WHERE TCIB.IDDT_ID = #{iddtId}
+    </select>
+    
+    <update id="saveIddtMktgInfo" parameterType="HashMap" >
+    	/*  custIddt.saveIddtMktgInfo 산업군 상세 패키지 정보 저장  */
+		MERGE INTO TB_CC_IDDT_MKTG_INFO TCIMI
+	    USING  DUAL
+	    ON (TCIMI.IDDT_ID =  #{iddtId})
+		WHEN MATCHED THEN
+	    UPDATE SET
+	        EXPS_SO = #{expsSo}
+	        ,EXPS_YN = #{expsYn}
+	        , ICON_ON_PC_DOC_REG_ID = #{iconOnPcDocRegId}
+	        , ICON_OFF_PC_DOC_REG_ID = #{iconOffPcDocRegId}
+	        , UPD_DTM = SYSDATE
+	        , UPDPSN_ID = #{updpsnId}
+	    WHEN NOT MATCHED THEN
+	    INSERT(
+		    IDDT_ID
+		    , EXPS_SO
+		    , EXPS_YN
+		    , ICON_ON_PC_DOC_REG_ID
+		    , ICON_OFF_PC_DOC_REG_ID
+		    , REGPSN_ID
+		    , REG_DTM
+		    , UPDPSN_ID
+		    , UPD_DTM
+	    )
+	    VALUES (
+		    #{iddtId}
+		    , #{expsSo}
+		    , #{expsYn}
+		    , #{iconOnPcDocRegId}
+		    , #{iconOffPcDocRegId}
+		    , #{regpsnId}
+		    , SYSDATE
+		    , #{updpsnId}
+		    , SYSDATE
+	    )
+    </update>
+	
+	<update id="updateIddtInfo" parameterType="HashMap" >
+	/*  custIddt.updateIddtInfo 산업군 MRO 산업군 ID  저장  */
+		UPDATE SSP_APP.TB_CC_IDDT_BASIS
+		SET MRO_IDDT_ID = #{mroIddtId}
+		    , UPDPSN_ID = #{updpsnId}
+		    , UPD_DTM = SYSDATE
+		WHERE IDDT_ID = #{iddtId}
+	</update>
+</mapper>

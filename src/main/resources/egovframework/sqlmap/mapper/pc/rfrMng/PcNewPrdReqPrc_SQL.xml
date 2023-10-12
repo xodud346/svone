@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcNewPrdReqPrc">
+
+    <update id="updatePcNewPrdReqPrc" parameterType="hashMap">
+		/* PcNewPrdReqPrc.updatePcNewPrdReqPrc */
+		MERGE INTO TB_PC_NEW_PRD_REQ_PRC_INFO a
+		USING DUAL
+		ON (a.CO_CD = #{coCd} and a.NEW_PRD_REQ_NO = #{newPrdReqNo} and a.PRD_ID = LPAD(#{prdId},18,'0'))
+			WHEN MATCHED THEN
+				UPDATE SET
+					UPDPSN_ID = #{updpsnId}
+					 ,UPD_DTM = SYSDATE
+					<if test="prcProcStatsCd != null and prcProcStatsCd!= ''.toString()">
+					    , PRC_PROC_STATS_CD = #{prcProcStatsCd}
+					</if>
+					<if test="regDisRsn != null and regDisRsn!= ''.toString()">
+					    , REG_DIS_RSN = #{regDisRsn}
+					</if>
+					<if test="prcRegDisTpCd != null and prcRegDisTpCd != ''.toString()">
+					    , PRC_REG_DIS_TP_CD = #{prcRegDisTpCd}
+					</if>
+				WHERE a.CO_CD = #{coCd} and a.NEW_PRD_REQ_NO = #{newPrdReqNo} and a.PRD_ID = LPAD(#{prdId},18,'0')
+			WHEN NOT MATCHED THEN
+				INSERT (
+				CO_CD
+				, NEW_PRD_REQ_NO
+				, PRD_ID
+				, PRC_PROC_STATS_CD
+				, REGPSN_ID
+				, REG_DTM)
+				VALUES (
+				#{coCd}
+				, #{newPrdReqNo}
+				, LPAD(#{prdId},18,'0')
+				, #{prcProcStatsCd}
+				, #{regpsnId}
+				, SYSDATE
+				)
+	</update>
+	
+	<insert id="insertEmailNewPrdReqExcept" statementType="CALLABLE">
+        { Call SP_PC_SND_MAIL_NEW_PRD_REQ_EXCEPT(
+       			     #{rtnCd,          mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴코드 */
+                   , #{rtnMsg,        mode=OUT, jdbcType=VARCHAR, javaType=String}    /* OUT VARCHAR2  리턴메시지 */
+                   , #{coCd,          mode=IN, jdbcType=VARCHAR}
+                   , #{prdId,       mode=IN, jdbcType=VARCHAR}
+                   , #{newPrdReqNo,         mode=IN, jdbcType=VARCHAR}
+        )}
+    </insert>
+    
+      <insert id="insertEmailSendRequest" parameterType="hashMap">
+		/* PcNewPrdReqPrc.insertEmailSendRequest */
+		INSERT INTO TB_PC_NEW_PRD_CRT_MAIL_BAT_PROC_DTLS
+			( CO_CD
+			,PRD_ID
+			,NEW_PRD_REQ_NO
+			,LANG_CD
+			,MAIL_SEND_YN
+			,REGPSN_ID
+			,REG_DTM
+			,UPDPSN_ID
+			,UPD_DTM        
+			) VALUES
+			( #{coCd}
+			, LPAD(#{prdId},18,'0')
+			, #{newPrdReqNo}
+			, #{langCd}
+			, 'N'
+			, #{usrId}
+			, SYSDATE
+			, #{usrId}
+			, SYSDATE
+			)
+	</insert>
+	
+	<select id="checkDuplicateRequest" parameterType="hashMap" resultType="String">
+	SELECT 
+		DECODE(NVL(PRD_PRPS_SPR_CD,'') ,'20', 'Y', 'N') AS DUPLYN
+	FROM SSP_APP.TB_PR_NEW_PRD_REQ_PROC 
+	WHERE NEW_PRD_REQ_NO = #{newPrdReqNo}
+	AND CO_CD = #{coCd}
+	</select>
+	
+</mapper>

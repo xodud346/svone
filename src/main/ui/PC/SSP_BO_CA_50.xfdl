@@ -1,0 +1,208 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="work04" width="1340" height="990" titletext="절사관리" onload="fn_onLoad">
+    <Layouts>
+      <Layout height="990" mobileorientation="landscape" width="1340">
+        <Grid id="grd_detr" taborder="1" left="20" top="20" binddataset="ds_list" scrollbartype="auto auto" treeusecheckbox="false" autofittype="col" treeinitstatus="expand,all" cellmovingtype="none" scrolltype="both" right="20" oncellclick="grd_detr_oncellclick" selecttype="row" autoenter="select" onselectchanged="grd_detr_onselectchanged" height="437">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="0"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+                <Column size="80"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="DETR_UNIT_SEQ"/>
+                <Cell col="1" text="가격구간"/>
+                <Cell col="2" text="절사기준"/>
+                <Cell col="3" text="절사방식"/>
+                <Cell col="4" text="최근수정일"/>
+                <Cell col="5" text="수정자"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:DETR_UNIT_SEQ"/>
+                <Cell col="1" text="bind:DETR_UNIT_NM"/>
+                <Cell col="2" text="bind:DETR_BSS_CD" displaytype="combocontrol" edittype="combo" combodataset="ds_detrBssCd" combodatacol="COM_DTL_CD_NM" combocodecol="COM_DTL_CD"/>
+                <Cell col="3" text="bind:DETR_MTHD_CD" combodataset="ds_detrMthdCd" combodatacol="COM_DTL_CD_NM" combocodecol="COM_DTL_CD" displaytype="combocontrol" edittype="combo"/>
+                <Cell col="4" text="bind:UPD_DTM"/>
+                <Cell col="5" text="bind:UPDPSN_ID"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_save" taborder="0" text="저장" left="47.99%" top="grd_detr:20" width="70" height="30" cssclass="btn_WF_select" onclick="btn_save_onclick"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="codeList" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list">
+        <ColumnInfo>
+          <Column id="DETR_UNIT_SEQ" type="INT" size="16"/>
+          <Column id="DETR_UNIT_NM" type="string" size="32"/>
+          <Column id="DETR_BSS_CD" type="string" size="0"/>
+          <Column id="DETR_MTHD_CD" type="string" size="0"/>
+          <Column id="UPD_DTM" type="datetime" size="17"/>
+          <Column id="UPDPSN_ID" type="string" size="32"/>
+          <Column id="MAX_PRC_LENGTH" type="INT" size="16"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_detrBssCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_detrMthdCd">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : 메뉴관리
+CREATION DATES : 2022.01.26
+*******************************************************
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{	
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//공통코드 조회
+	this.fn_commonCodeSearch();
+	
+	//절사관리 조회
+	this.fn_search();
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회  
+this.fn_search = function()	{
+	
+	var sSvcId = "detrSelect";    
+	var sUrl = "/pc/detrInfo/select-detr-info-list.do";  
+	var inDs = "";
+	var outDs = "ds_list=ds_output";
+	var arg = "";
+	
+	
+	//전송
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	//trace(this.ds_list.saveXML());
+};
+
+//공통코드조회
+this.fn_commonCodeSearch = function()
+{	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_detrBssCd=ds_output1 ds_detrMthdCd=ds_output2";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "codeList", "DETR_BSS_CD,DETR_MTHD_CD");
+	this.ds_search.setColumn(0, "langCd", "KO");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+//저장  
+this.fn_save = function()	{
+	
+	var sSvcId = "detrInfoUpdate";    
+	var sUrl = "/pc/detrInfo/detr-info-update.do";  
+	var inDs = "ds_search=ds_search ds_list=ds_list:U";
+	var outDs = "ds_list=ds_output";
+	var arg = "";
+	
+	
+	//전송
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(errorCode != 0)
+	{
+		this.alert(errorCode+"\n"+errorMsg);
+		return;
+	}
+	
+	switch(svcID)
+	{
+	case "detrSelect":
+		break;
+	case "detrInfoUpdate":
+		alert(this.fn_getMessage("ERRS000156"));
+		this.fn_search();
+		break;
+
+	default: 
+		break;
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	
+	if(!this.gfn_dsIsUpdated(this.ds_list)) {
+		//alert("수정한 절사 정보가 없습니다.");
+		this.alert(this.fn_getMessage("ERRP000264"));
+		return;
+	}
+	
+	var sReturn = this.confirm(this.fn_getMessage("ERRC000080"));
+	if(sReturn == true){
+		this.fn_save();
+	}
+};
+
+this.grd_detr_onselectchanged = function(obj:nexacro.Grid,e:nexacro.GridSelectEventInfo)
+{
+	var sFilter = "COM_DTL_CD < "+ this.ds_list.getColumn(this.ds_list.rowposition,"MAX_PRC_LENGTH");
+	
+	this.ds_detrBssCd.filter(sFilter);
+};
+
+
+this.grd_detr_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	//trace("111" + obj.dropdownCombo());
+	obj.dropdownCombo();
+};
+]]></Script>
+  </Form>
+</FDL>

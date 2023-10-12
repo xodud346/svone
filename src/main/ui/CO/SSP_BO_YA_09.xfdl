@@ -1,0 +1,536 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_YA_09" width="1336" height="846" titletext="OGG로그조회" onload="fn_onload" onkeyup="SSP_BO_YA_09_onkeyup">
+    <Layouts>
+      <Layout height="846" mobileorientation="landscape" width="1336">
+        <Grid id="grd_ogg" taborder="3" left="20" top="178" positionstep="0" binddataset="ds_ogg" autofittype="none" autosizingtype="none" bottom="96" right="20" nodatatext="조회된 데이터가 없습니다." cellsizingtype="both" selecttype="area" cellmovingtype="col">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="63"/>
+                <Column size="119"/>
+                <Column size="80"/>
+                <Column size="141"/>
+                <Column size="144"/>
+                <Column size="156"/>
+                <Column size="97"/>
+                <Column size="221"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="순번"/>
+                <Cell col="1" text="실행일시"/>
+                <Cell col="2" text="OGG ID"/>
+                <Cell col="3" text="소스테이블"/>
+                <Cell col="4" text="대상테이블"/>
+                <Cell col="5" text="실행자료"/>
+                <Cell col="6" text="성공여부"/>
+                <Cell col="7" text="비고"/>
+              </Band>
+              <Band id="body">
+                <Cell text="expr:currow+1"/>
+                <Cell col="1" text="bind:EXCE_DTM" calendardateformat="yyyy-MM-dd"/>
+                <Cell col="2" text="bind:OGG_ID"/>
+                <Cell col="3" text="bind:SRC_TBL"/>
+                <Cell col="4" text="bind:TGT_TBL"/>
+                <Cell col="5" text="bind:EXCE_DATA"/>
+                <Cell col="6" text="bind:SUCC_YN"/>
+                <Cell col="7" text="bind:RMKS"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <PopupDiv id="PopupDiv3" left="610" top="975" width="330" height="230" positionstep="0" background="#fffff" visible="false" text="" oncloseup="PopupDiv3_oncloseup">
+          <Layouts>
+            <Layout>
+              <Calendar id="searchStartDate" taborder="1" left="6" top="10" width="149" height="172" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd" type="monthonly" value=""/>
+              <Calendar id="searchEndDate" taborder="0" left="165" top="10" height="172" dateformat="yyyy-MM-dd" editformat="yyyy-MM-dd" type="monthonly" width="149"/>
+              <Button id="btn_confirm" taborder="3" text="Confirm" left="99" top="192" width="60" height="24" uWord="popup.ok" onclick="PopupDiv3_btn_confirm_onclick"/>
+              <Button id="btn_cancel" taborder="2" text="Cancel" left="169" top="192" width="60" height="24" uWord="popup.cancel" onclick="PopupDiv3_btn_cancel_onclick"/>
+            </Layout>
+          </Layouts>
+        </PopupDiv>
+        <Div id="div_paging" taborder="17" left="20" height="36" url="COMM::cmmPaging.xfdl" formscrollbartype="none none" top="grd_ogg:30" text="" right="20"/>
+        <Static id="totalPageCount" taborder="18" text="(총 0건, 1 / 1)" left="20" width="300" usedecorate="true" height="25" top="151"/>
+        <Div id="Div00" taborder="19" text="Div00" left="0" top="0" height="110" cssclass="div_WF_SearchArea" right="0">
+          <Layouts>
+            <Layout>
+              <Button id="btn_search" taborder="0" text="조회" top="64" height="26" positionstep="0" cssclass="btn_WF_require" right="20" width="60" onclick="Div00_btn_search_onclick"/>
+              <Static id="Static02" taborder="1" text="실행일자" left="20" top="22" width="96" height="32" positionstep="0" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="Static00" taborder="2" text="Static00" left="115" top="22" height="32" cssclass="sta_cm_box02L_tdt" right="20"/>
+              <Calendar id="searchStartDate" taborder="3" left="Static02:10" top="26" width="181" height="24" positionstep="0" dateformat="yyyy-MM-dd" cssclass="cal_WF_calendar" oncloseup="fn_date_oncloseup"/>
+              <Static id="Static02_00" taborder="4" text="~" left="searchStartDate:5" top="26" width="10" height="24" positionstep="0"/>
+              <Calendar id="searchEndDate" taborder="5" left="Static02_00:5" top="26" width="181" height="24" positionstep="0" dateformat="yyyy-MM-dd" cssclass="cal_WF_calendar" oncloseup="fn_date_oncloseup"/>
+              <Button id="btn_clear" taborder="6" text="초기화" top="64" width="60" height="26" right="btn_search:4" onclick="Div00_btnClear_onclick"/>
+              <Static id="Static02_01" taborder="7" text="OGG ID" left="658" top="22" width="70" height="32" positionstep="0" cssclass="sta_cm_box01L_tdt"/>
+              <Edit id="OGG_ID" taborder="8" left="Static02_01:10" top="26" height="24" positionstep="0" right="416"/>
+              <Static id="Static02_02" taborder="9" text="성공여부" left="OGG_ID:10" top="22" width="96" height="32" positionstep="0" cssclass="sta_cm_box01L_tdt"/>
+              <Combo id="SUCC_YN" taborder="10" text="Combo00" left="Static02_02:10" top="26" width="164" height="24" innerdataset="ds_success" codecolumn="CODE" datacolumn="NAME"/>
+              <Combo id="DATE_TERM" taborder="11" left="searchEndDate:4" top="26" height="24" text="" index="-1" innerdataset="ds_trem" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM" right="Static02_01:10" onitemchanged="Div00_DATE_TERM_onitemchanged"/>
+            </Layout>
+          </Layouts>
+        </Div>
+        <Button id="btnLayoutClear" taborder="6" text="레이아웃 초기화" textPadding="0px" width="110" bottom="grd_ogg:10" right="20" onclick="btnLayoutClear_onclick" height="28"/>
+        <Button id="btnLayoutSave" taborder="5" text="레이아웃 저장" textPadding="0px" width="110" right="btnLayoutClear:4" onclick="btnLayoutSave_onclick" height="28" top="140"/>
+        <Button id="Button01" taborder="6" text="엑셀다운로드" top="140" height="28" cssclass="btn_WF_excel" textPadding="0px" width="110" right="btnLayoutSave:4" onclick="Button01_onclick"/>
+        <Grid id="grd_ogg_excel" taborder="7" left="54" top="960" positionstep="0" binddataset="ds_ogg_excel" autofittype="col" autosizingtype="none" bottom="-176" right="1006" nodatatext="조회된 데이터가 없습니다." cellsizingtype="both" visible="false">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="63"/>
+                <Column size="119"/>
+                <Column size="80"/>
+                <Column size="141"/>
+                <Column size="144"/>
+                <Column size="156"/>
+                <Column size="97"/>
+                <Column size="221"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell text="순번"/>
+                <Cell col="1" text="실행일시"/>
+                <Cell col="2" text="OGG ID"/>
+                <Cell col="3" text="소스테이블"/>
+                <Cell col="4" text="대상테이블"/>
+                <Cell col="5" text="실행자료"/>
+                <Cell col="6" text="성공여부"/>
+                <Cell col="7" text="비고"/>
+              </Band>
+              <Band id="body">
+                <Cell text="expr:currow+1"/>
+                <Cell col="1" text="bind:EXCE_DTM" calendardateformat="yyyy-MM-dd"/>
+                <Cell col="2" text="bind:OGG_ID"/>
+                <Cell col="3" text="bind:SRC_TBL"/>
+                <Cell col="4" text="bind:TGT_TBL"/>
+                <Cell col="5" text="bind:EXCE_DATA"/>
+                <Cell col="6" text="bind:SUCC_YN"/>
+                <Cell col="7" text="bind:RMKS"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_ogg">
+        <ColumnInfo>
+          <Column id="EXCE_DTM" type="STRING" size="256"/>
+          <Column id="OGG_ID" type="STRING" size="256"/>
+          <Column id="SRC_TBL" type="STRING" size="256"/>
+          <Column id="TGT_TBL" type="STRING" size="256"/>
+          <Column id="SUCC_YN" type="STRING" size="256"/>
+          <Column id="EXCE_DATA" type="STRING" size="256"/>
+          <Column id="RMKS" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="FORM_DATE" type="STRING" size="256"/>
+          <Column id="TO_DATE" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="OGG_ID" type="STRING" size="256"/>
+          <Column id="SUCC_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_success">
+        <ColumnInfo>
+          <Column id="CODE" type="STRING" size="256"/>
+          <Column id="NAME" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="NAME">전체</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">Y</Col>
+            <Col id="NAME">성공</Col>
+          </Row>
+          <Row>
+            <Col id="CODE">N</Col>
+            <Col id="NAME">실패</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_search_clear">
+        <ColumnInfo>
+          <Column id="FORM_DATE" type="STRING" size="256"/>
+          <Column id="TO_DATE" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="OGG_ID" type="STRING" size="256"/>
+          <Column id="SUCC_YN" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_trem">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_ogg_excel">
+        <ColumnInfo>
+          <Column id="EXCE_DTM" type="STRING" size="256"/>
+          <Column id="OGG_ID" type="STRING" size="256"/>
+          <Column id="SRC_TBL" type="STRING" size="256"/>
+          <Column id="TGT_TBL" type="STRING" size="256"/>
+          <Column id="SUCC_YN" type="STRING" size="256"/>
+          <Column id="EXCE_DATA" type="STRING" size="256"/>
+          <Column id="RMKS" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_YA_09
+/* 작 성 일 자 : 2022.03.23
+/* 작  성   자 : 이성민
+/* 설       명 : OGG 로그조회 
+/***********************************************************/
+
+include "OD::odUtils.xjs";
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+this.pageCount = 20;
+this.fv_oApp = nexacro.getApplication();	//application object 
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+//onload 
+this.fn_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	var objDate = new Date();
+	var sToday = objDate.getFullYear()
+			   + ((objDate.getMonth() + 1) + "").padLeft(2, '0')
+			   + (objDate.getDate() + "").padLeft(2, '0');
+
+     this.Div00.form.searchStartDate.set_value(sToday.substring(0,6) + "01");
+     this.Div00.form.searchEndDate.set_value(sToday);	
+
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	//공통코드 조회
+	this.fn_commonCodeSearch();	
+	
+	//초기 콤보
+	this.Div00.form.SUCC_YN.set_index(0);	
+	
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_doSearch = function(page) {
+	 var sSvcId = "oggLogSearch";  
+     var sUrl = "/co/select-ogg-log-list.do";
+	 var inDs = "ds_search=ds_search"
+     var outDs = "ds_ogg=ds_output";
+     var arg;
+     var callback = "fn_callback";
+	 
+	 // 조회버튼 클릭시 페이징 초기화 시킨다.
+	 if( page == 0 ) {
+		this.div_paging.uPage=1;
+		this.div_paging.uPageNum=0;
+		this.ds_search.setColumn(0,"START_NUM", 0);
+		this.ds_search.setColumn(0,"ROW_COUNT",this.pageCount);
+	 }
+	 
+	 this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_trem=ds_output1";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "CODE_LIST", "INQ_PERD_SPR_CD");
+	this.ds_search.setColumn(0, "LANG_CD", "KO");
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callback");
+};
+
+//엑셀 다운로드 조회
+this.fn_search_excel = function() {
+	var sSvcId = "oggLogSearchExcel";  
+    var sUrl = "/co/select-ogg-log-list.do";
+	var inDs = "ds_search=ds_search"
+    var outDs = "ds_ogg_excel=ds_output1";
+    var arg;
+    var callback = "fn_callback";
+	 
+	this.ds_search.setColumn(0,"START_NUM", null);
+	this.ds_search.setColumn(0,"ROW_COUNT", null);
+	 
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+}
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callback = function(svcID, errorCode, errorMsg) {
+
+	if( svcID == "oggLogSearch" ) {
+		//console.log(this.ds_ogg);
+		this.div_paging.form.cfn_createPage(this.div_paging,this.totalCount,this.fv_oApp.gv_pageViewCnt,"fn_pageCallback");
+		
+	} else if( svcID == "commonCodeSearch" ) { 		
+		//초기 조회기간
+		this.Div00.form.DATE_TERM.set_index((this.ds_trem.rowcount-1));		
+		this.fn_setSearchDate();	
+		
+		//초기 검색값
+		this.ds_search_clear.copyData(this.ds_search);		
+	} else if( svcID == "oggLogSearchExcel" ) {
+		this.ofn_exportExcel({ form:this, grid:this.grd_ogg_excel, fileName:"OGG 로그조회" });
+	}
+	
+	
+}
+
+//페이징 콜백
+this.fn_pageCallback = function(sFlag){
+	var oPaging = this.div_paging;
+	if(sFlag){
+		//this.ds_search.setColumn(0,"START_NUM", (oPaging.uPageNum == 0 || oPaging.uPageNum == 1 ? 0 : ( oPaging.uPageNum -1 ) * 10));
+		this.ds_search.setColumn(0,"START_NUM", oPaging.uPageNum);
+		this.ds_search.setColumn(0,"ROW_COUNT", this.pageCount);	
+		this.fn_doSearch();
+	}	
+	
+	var sTotText = "(총 "+ this.gfn_appendComma(oPaging.uTotCount, 0)+"건, "+ oPaging.uPage +" / "+ oPaging.uPageCnt +")";
+	this.totalPageCount.set_text(sTotText);
+}
+
+//정렬 콜백
+/*
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_ogg"){
+		oSortInfo = this.grd_ogg.uaSortInfo;
+		
+		this.ds_search.setColumn(0,"SORT_COLUMN", oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE", oSortInfo.status);
+		
+		this.fn_doSearch();
+	}
+};
+*/
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+
+	//grid 초기 설정
+	//this.grd_ogg.uSortFlag = "false";	//그리드 내 소팅
+	//this.grd_ogg.uServerSortFlag = "true";	// 쿼리 소팅
+	//this.grd_ogg.uSortCallback = "fn_sortCallback";
+	
+	this.grd_ogg.uCellSizeType = "true";
+	
+	//페이징 초기 설정
+	this.div_paging.uPage = 1;
+	this.div_paging.uPageNum = 0;
+	this.div_paging.uPageRowCnt = 10;
+	this.div_paging.uPageCnt = 0;
+	this.div_paging.uTotCount = 0;
+	
+	//grid 개인화(전제조건 : grid Head가 무조건 1Row인 경우)
+	this.uGridList = "grd_ogg";
+	this.grd_ogg.uRightMouse = "true";
+	this.grd_ogg.uPersonalFlag = "true";
+	this.grd_ogg.uDefaultFormat = "";
+}
+
+
+this.cfn_personalPopupClose = function(sRet){
+	this.grd_ogg.set_formats(sRet);
+	this.pdiv_personal.closePopup();
+}
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+this.PopupDiv3_oncloseup = function(obj:nexacro.PopupDiv,e:nexacro.EventInfo)
+{
+	if(this.PopupDiv3.form.searchStartDate.value > this.PopupDiv3.form.searchEndDate.value){
+		alert(this.gfn_getMessage("ERRC000192")); //시작일이 종료일보다 클 수 없습니다.
+		this.Div00.form.searchEndDate.set_value("");
+	}
+};
+
+
+//조회기간 재설정
+this.fn_setSearchDate = function() {
+	
+	var term = this.Div00.form.DATE_TERM.value;
+	var objDate = new Date();
+	var sToday = objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0');
+
+	/*
+	1	1일
+	2	1주일
+	3	2주일
+	4	1개월
+	5	3개월
+	6	6개월
+	7	1년
+	*/
+	trace(term);
+	if( term == undefined ) term = "2";
+	
+	objDate.setDate(objDate.getDate()+1);
+	
+	if( term == "1" ) {
+		objDate.setDate(objDate.getDate() -1);
+	} else if( term == "2" ) {
+		objDate.setDate(objDate.getDate() -7);		
+	} else if( term == "3" ) {
+		objDate.setDate(objDate.getDate() -14);
+	} else if( term == "4" ) {
+		objDate.setMonth(objDate.getMonth() -1);
+	} else if( term == "5" ) {
+		objDate.setMonth(objDate.getMonth() -3);
+	} else if( term == "6" ) {
+		objDate.setMonth(objDate.getMonth() -6);
+	} else if( term == "7" ) {
+		objDate.setMonth(objDate.getMonth() -12);
+	}
+	//console.log(objDate + "/" + objDate.getFullYear() + "/" + (objDate.getMonth() +1) + "/" + objDate.getDate());
+	
+    this.Div00.form.searchStartDate.set_value(objDate.getFullYear() + ((objDate.getMonth() + 1) + "").padLeft(2, '0') + (objDate.getDate() + "").padLeft(2, '0'));
+    this.Div00.form.searchEndDate.set_value(sToday);	
+}
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+//달력의 확인버튼
+this.PopupDiv3_btn_confirm_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var sFrom = this.PopupDiv3.form.searchStartDate.value;
+	var sTo = this.PopupDiv3.form.searchEndDate.value;	
+	
+	this.ds_search.setColumn(0, "FORM_DATE", sFrom);
+	this.ds_search.setColumn(0, "TO_DATE", sTo);
+
+	//this.searchStartDate.set_value(sFrom);
+	//this.searchEndDate.set_value(sTo);
+	
+	this.PopupDiv3.closePopup();
+
+};
+
+
+//달력 취소버튼
+this.PopupDiv3_btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.PopupDiv3.closePopup();
+};
+
+
+//달력 드롭다운 이벤트
+this.searchStartDate_ondropdown = function(obj:nexacro.Calendar,e:nexacro.EventInfo)
+{
+	this.PopupDiv3.form.searchStartDate.set_value(this.ds_search.getColumn(0, "FORM_DATE"));
+	this.PopupDiv3.form.searchEndDate.set_value(this.ds_search.getColumn(0, "TO_DATE"));
+	this.PopupDiv3.trackPopupByComponent(this.Div00.form.searchStartDate, 0, obj.height);
+};
+
+
+//레이아웃 저장 버튼
+this.btnLayoutSave_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{	
+	this.gfn_personalSave("grd_ogg", this.grd_ogg.getCurFormatString()); 
+};
+
+//레이아웃 초기화
+this.btnLayoutClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	//suOrgFormat
+	this.gfn_personalReset("grd_ogg"); 
+	this.grd_ogg.set_formats(this.grd_ogg.uOrgFormat);
+};
+
+//초기화
+this.Div00_btnClear_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.copyData(this.ds_search_clear);
+};
+
+//엔터이벤트
+this.SSP_BO_YA_09_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	if( e.keycode == 13 ) {
+		if( e.fromobject.valueOf() == "[object Edit]" ) {			
+			this.fn_search(0);	
+		}
+	}
+};
+
+//검색버튼
+this.Div00_btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_doSearch(0);	 
+};
+
+this.fn_date_oncloseup = function(obj:nexacro.Calendar,e:nexacro.CalendarCloseUpEventInfo)
+{
+	if(this.Div00.form.searchStartDate.value > this.Div00.form.searchEndDate.value){
+		alert(this.gfn_getMessage("ERRC000192")); //시작일이 종료일보다 클 수 없습니다.
+		this.Div00.form.searchStartDate.set_value(this.ds_search_clear.getColumn(0, "FORM_DATE"));
+		this.Div00.form.searchStartDate.dropdown();
+	}
+};
+
+this.Div00_DATE_TERM_onitemchanged = function(obj:nexacro.Combo,e:nexacro.ItemChangeEventInfo)
+{
+	this.fn_setSearchDate();
+};
+
+//엑셀 다운로드
+this.Button01_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_search.getRowType(0) == Dataset.ROWTYPE_UPDATE) {
+		alert(this.gfn_getMessage("COMS000007")); //조회 조건이 변경 되었습니다.\n다시 조회하시기 바랍니다.
+		return false;
+	}
+	this.fn_search_excel();
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="Div00.form.searchStartDate" propid="value" datasetid="ds_search" columnid="FORM_DATE"/>
+      <BindItem id="item1" compid="Div00.form.searchEndDate" propid="value" datasetid="ds_search" columnid="TO_DATE"/>
+      <BindItem id="item2" compid="Div00.form.OGG_ID" propid="value" datasetid="ds_search" columnid="OGG_ID"/>
+      <BindItem id="item3" compid="Div00.form.SUCC_YN" propid="value" datasetid="ds_search" columnid="SUCC_YN"/>
+    </Bind>
+  </Form>
+</FDL>

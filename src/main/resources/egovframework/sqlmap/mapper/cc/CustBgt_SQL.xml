@@ -1,0 +1,2164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.cc.custBgt">
+
+   <!--
+    ******************************************************************************
+    * SELECT : 
+    * 작성자 : 차상영
+    * 작성 일자 : 2022-02-10
+    ******************************************************************************
+    -->
+
+    <select id="selectBgtList" parameterType="java.util.Map" resultType="java.util.Map">
+	    <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+		     		 
+		    SELECT
+		        A.*
+		    FROM (
+		        SELECT /*+ USE_MERGE(A B) */
+		            A.*
+		            ,B.BGT_CHG_SPR_CD_3_ADD_AMT
+		            ,B.BGT_CHG_SPR_CD_4_ADD_AMT
+		            ,B.BGT_CHG_SPR_CD_3_DEC_AMT
+		            ,B.BGT_CHG_SPR_CD_4_DEC_AMT
+		            ,ABS(B.CHG_BGT_AMT_10) AS CHG_BGT_AMT_10
+		            ,ABS(B.CHG_BGT_AMT_20) AS CHG_BGT_AMT_20
+		            ,ABS(B.CHG_BGT_AMT_30) AS CHG_BGT_AMT_30
+		            ,ABS(B.CHG_BGT_AMT_40) AS CHG_BGT_AMT_40
+		            ,(A.BGT_AMT - (NVL(CHG_BGT_AMT_10, 0) + NVL(CHG_BGT_AMT_20, 0) + NVL(CHG_BGT_AMT_30, 0) + NVL(CHG_BGT_AMT_40, 0))) AS ODR_AVIL_AMT /*예산금액*/
+		        FROM (
+					/*예산내역 메인 정보 조회*/		        
+					SELECT 
+					    A.CO_CD
+					    ,A.BZPLC_ID
+					    ,A.ACCT_ID
+					    ,C.ACCT_NM
+					    ,A.DEPT_ID
+					    ,B.DEPT_NM
+					    ,B.OPR_UNIT_ID
+					    ,A.BGT_YY
+					    ,A.BGT_YM
+					    ,A.BGT_APLY_PERD_CD
+					    ,CASE					    			    
+					    	WHEN A.BGT_APLY_PERD_CD BETWEEN '01' AND '12' THEN SUBSTR(A.BGT_YM,1,4) || '/'  || SUBSTR(A.BGT_YM,5,2)  	
+					    	WHEN A.BGT_APLY_PERD_CD BETWEEN '21' AND '24' THEN SUBSTR(A.BGT_YM,1,4) || '/'  || SUBSTR(A.BGT_YM,5,2) || ' (' || SUBSTR(A.BGT_APLY_PERD_CD,2,1) || '분기)'
+					    END AS BGT_YYMM					    					    			    					    					    					    					    					   					    			    
+					    ,NVL(A.BGT_AMT, 0) AS BGT_AMT /*주문가능 금액*/
+					    ,NVL(A.BGT_ADD_AMT, 0) AS BGT_ADD_AMT /*예산추가금액*/
+					    ,NVL(A.BGT_DEC_AMT,0) AS BGT_DEC_AMT /*예산감소금액*/					                
+					FROM TB_CC_BGT_DTLS A, /*예산 내역*/
+				        TB_CC_DEPT_BASIS B, /* 부서 기본 */
+				        TB_CC_BGT_ACCT_BASIS C /* 예산계정기본 */
+					WHERE A.CO_CD=B.CO_CD 
+				        AND A.BZPLC_ID=B.BZPLC_ID 
+				        AND A.DEPT_ID=B.DEPT_ID
+				        AND A.CO_CD=C.CO_CD 
+				        AND A.BZPLC_ID=C.BZPLC_ID 
+				        AND A.ACCT_ID=C.ACCT_ID
+				        AND C.ACCT_TP_CD = '1' /*계정유형코드(1:일반, 2:공통)*/ 		        
+						AND A.CO_CD = #{coCd}		        				         
+				        <if test="bzplcId != null and bzplcId != ''">
+							AND A.BZPLC_ID = #{bzplcId}
+						</if>
+						<if test="oprUnitId != null and oprUnitId != ''">
+				        	AND B.OPR_UNIT_ID = #{oprUnitId}
+				        </if>						
+				        <if test="deptId != null and deptId != ''">
+				        	AND A.DEPT_ID = #{deptId}
+				        </if>
+				        <if test="acctId != null and acctId != ''">
+				        	AND A.ACCT_ID = #{acctId}
+				        </if>
+				        <if test="fromYymm != null and fromYymm != '' and toYymm != null and toYymm != ''">
+				        	AND (A.BGT_YM BETWEEN #{fromYymm} AND #{toYymm})
+				        </if>  		        				        						     
+		            ) A, (
+		            	/*주문내역 + 이체,이월 증가,감소 조회*/
+		            	SELECT
+		            		CO_CD
+		            		,BZPLC_ID
+		            		,DEPT_ID
+		            		,ACCT_ID
+		            		,BGT_YY
+		            		,BGT_YM
+		            		,SUM(BGT_CHG_SPR_CD_3_ADD_AMT) AS BGT_CHG_SPR_CD_3_ADD_AMT /*이체 증가*/
+		            		,SUM(BGT_CHG_SPR_CD_4_ADD_AMT) AS BGT_CHG_SPR_CD_4_ADD_AMT /*이월 증가*/
+		            		,SUM(BGT_CHG_SPR_CD_3_DEC_AMT) AS BGT_CHG_SPR_CD_3_DEC_AMT /*이체 감소*/ 
+		            		,SUM(BGT_CHG_SPR_CD_4_DEC_AMT) AS BGT_CHG_SPR_CD_4_DEC_AMT /*이월 감소*/ 
+		            		,SUM(CHG_BGT_AMT_10) AS CHG_BGT_AMT_10 /*결재중(10)*/
+		            		,SUM(CHG_BGT_AMT_20) AS CHG_BGT_AMT_20 /*상품준비중(20)*/
+		            		,SUM(CHG_BGT_AMT_30) AS CHG_BGT_AMT_30 /*배송중(30)*/
+		            		,SUM(CHG_BGT_AMT_40) AS CHG_BGT_AMT_40 /*배송완료(40)*/	 	            				            				            				            				            				            				            				            				            				            				            				            				            		
+		            	FROM (
+		            				            				            				            						           		            				          				            
+				                /*주문내역 조회*/			            
+				                SELECT
+				                    A.CO_CD
+				                    ,A.BZPLC_ID
+				                    ,A.AFCHG_DEPT_ID AS DEPT_ID
+				                    ,A.AFCHG_ACCT_ID AS ACCT_ID
+				                    ,A.AFCHG_BGT_YY AS BGT_YY
+				                    ,A.AFCHG_BGT_APLY_PERD_CD AS BGT_YM
+				                    ,NULL AS BGT_CHG_SPR_CD_3_ADD_AMT /*이체 증가*/  
+				                    ,NULL AS BGT_CHG_SPR_CD_4_ADD_AMT /*이월 증가*/  
+				                    ,NULL AS BGT_CHG_SPR_CD_3_DEC_AMT /*이체 감소*/  
+				                    ,NULL AS BGT_CHG_SPR_CD_4_DEC_AMT /*이월 감소*/  
+				                    ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '10' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_10 /*결재중(10)*/
+				                    ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '20' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_20 /*상품준비중(20)*/
+				                    ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '30' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_30 /*배송중(30)*/
+				                    ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '40' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_40 /*배송완료(40)*/
+				                FROM TB_CC_BGT_CHG_HST A, /*예산변경이력*/
+				                    TB_CC_DEPT_BASIS B,  /*부서기본*/
+				                    TB_CO_COM_CD_DTL C,  /*공통코드관리*/
+				                    TB_CC_BGT_ACCT_BASIS D /* 예산계정기본 */
+				                WHERE A.CO_CD = B.CO_CD
+				                AND A.BZPLC_ID = B.BZPLC_ID
+				                AND A.AFCHG_DEPT_ID = B.DEPT_ID
+				                AND A.ODR_STATS_CD = C.COM_DTL_CD
+				                AND C.COM_CLSF_CD = 'ODR_STATS_CD'
+				                AND C.COM_USR_DEFN_NM_4 IN ('10','20','30','40')  /*주문상태코드(결재중(10), 상품준비중(20), 배송중(30), 배송완료(40)) */
+				                AND A.CO_CD = D.CO_CD
+				                AND A.BZPLC_ID = D.BZPLC_ID
+				                AND A.AFCHG_ACCT_ID = D.ACCT_ID
+				                AND D.ACCT_TP_CD = '1' /*계정유형코드(1:일반, 2:공통)*/ 	
+				                AND A.CO_CD = #{coCd}
+						        <if test="bzplcId != null and bzplcId != ''">
+									AND A.BZPLC_ID = #{bzplcId}
+								</if>
+								<if test="oprUnitId != null and oprUnitId != ''">
+						        	AND B.OPR_UNIT_ID = #{oprUnitId}
+						        </if>		                
+						        <if test="deptId != null and deptId != ''">
+						        	AND A.AFCHG_DEPT_ID = #{deptId}
+						        </if>
+						        <if test="acctId != null and acctId != ''">
+						        	AND A.AFCHG_ACCT_ID = #{acctId}
+						        </if>
+						        <if test="fromYymm != null and fromYymm != '' and toYymm != null and toYymm != ''">
+						        	AND (A.AFCHG_BGT_YM BETWEEN #{fromYymm} AND #{toYymm})
+						        </if>            				        		                
+				                GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_DEPT_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD
+		                        UNION ALL	
+		                        /*이체,이월 증가 + 감소 조회*/ 		                        	                        
+		                        SELECT  
+		                            A.CO_CD
+		                            , A.BZPLC_ID
+		                            , A.DEPT_ID
+		                            , A.ACCT_ID
+		                            , A.BGT_YY
+		                            , A.BGT_YM       
+		                            , SUM(BGT_CHG_SPR_CD_3_ADD_AMT) AS BGT_CHG_SPR_CD_3_ADD_AMT
+		                            , SUM(BGT_CHG_SPR_CD_4_ADD_AMT) AS BGT_CHG_SPR_CD_4_ADD_AMT
+		                            , SUM(BGT_CHG_SPR_CD_3_DEC_AMT) AS BGT_CHG_SPR_CD_3_DEC_AMT
+		                            , SUM(BGT_CHG_SPR_CD_4_DEC_AMT) AS BGT_CHG_SPR_CD_4_DEC_AMT
+		                            , NULL AS CHG_BGT_AMT_10
+		                            , NULL AS CHG_BGT_AMT_20
+		                            , NULL AS CHG_BGT_AMT_30
+		                            , NULL AS CHG_BGT_AMT_40
+		                        FROM (
+		                            /*이체,이월 증가 조회*/                        
+		                            SELECT
+		                                A.CO_CD
+		                                ,A.BZPLC_ID                           
+		                                ,A.AFCHG_DEPT_ID AS DEPT_ID
+		                                ,A.AFCHG_ACCT_ID AS ACCT_ID
+		                                ,A.AFCHG_BGT_YY AS BGT_YY
+		                                ,A.AFCHG_BGT_APLY_PERD_CD AS BGT_YM
+		                                ,CASE 
+		                                    WHEN A.BGT_CHG_SPR_CD='3' THEN CHG_BGT_AMT                            
+		                                END AS  BGT_CHG_SPR_CD_3_ADD_AMT /*이체 증가*/  
+		                                ,CASE 
+		                                    WHEN A.BGT_CHG_SPR_CD IN ('4','5') THEN CHG_BGT_AMT                            
+		                                END AS  BGT_CHG_SPR_CD_4_ADD_AMT /*이월 증가*/
+		                                ,NULL AS BGT_CHG_SPR_CD_3_DEC_AMT /*이체 감소*/
+		                                ,NULL AS BGT_CHG_SPR_CD_4_DEC_AMT /*이월 감소*/
+		                            FROM TB_CC_BGT_CHG_HST A, 
+		                                TB_CC_DEPT_BASIS B,
+		                                TB_CC_BGT_ACCT_BASIS C
+		                            WHERE A.CO_CD = B.CO_CD
+		                            AND A.BZPLC_ID = B.BZPLC_ID
+		                            AND A.AFCHG_DEPT_ID = B.DEPT_ID	/*증가분은 이월이후부서로 조회*/
+		                            AND A.BGT_CHG_SPR_CD IN ('3','4','5') /*예산변경구분코드(1:최초생성,2:변경,3:이체변경,4:이월변경,5:자동이월변경,6:주문)*/
+		                            AND A.CO_CD = C.CO_CD
+		                            AND A.BZPLC_ID = C.BZPLC_ID
+		                            AND A.AFCHG_ACCT_ID = C.ACCT_ID		
+		                            AND C.ACCT_TP_CD = '1' /*계정유형코드(1:일반, 2:공통)*/ 	                            
+		                            AND A.CO_CD = #{coCd}
+							        <if test="bzplcId != null and bzplcId != ''">
+										AND A.BZPLC_ID = #{bzplcId}
+									</if>
+									<if test="oprUnitId != null and oprUnitId != ''">
+							        	AND B.OPR_UNIT_ID = #{oprUnitId}
+							        </if>		                
+							        <if test="deptId != null and deptId != ''">
+							        	AND A.AFCHG_DEPT_ID = #{deptId}
+							        </if>
+							        <if test="acctId != null and acctId != ''">
+							        	AND A.AFCHG_ACCT_ID = #{acctId}
+							        </if>
+							        <if test="fromYymm != null and fromYymm != '' and toYymm != null and toYymm != ''">
+							        	AND (A.AFCHG_BGT_YM BETWEEN #{fromYymm} AND #{toYymm})
+							        </if>   
+		                            UNION ALL
+		                            /*이체,이월 감소 조회*/                             
+		                            SELECT
+		                                A.CO_CD
+		                                ,A.BZPLC_ID
+		                                ,A.BFCHG_DEPT_ID AS DEPT_ID
+		                                ,A.BFCHG_ACCT_ID AS ACCT_ID
+		                                ,A.BFCHG_BGT_YY AS BGT_YY
+		                                ,A.BFCHG_BGT_APLY_PERD_CD AS BGT_YM                            
+		                                ,NULL AS  BGT_CHG_SPR_CD_3_ADD_AMT  /*이체 증가*/ 
+		                                ,NULL AS  BGT_CHG_SPR_CD_4_ADD_AMT  /*이월 증가*/
+		                                ,CASE 
+		                                    WHEN A.BGT_CHG_SPR_CD='3' THEN CHG_BGT_AMT                            
+		                                END AS  BGT_CHG_SPR_CD_3_DEC_AMT   /*이체 감소*/
+		                                ,CASE 
+		                                    WHEN A.BGT_CHG_SPR_CD IN ('4','5') THEN CHG_BGT_AMT                            
+		                                END AS  BGT_CHG_SPR_CD_4_DEC_AMT  /*이월 감소*/                          
+		                            FROM TB_CC_BGT_CHG_HST A, 
+		                                TB_CC_DEPT_BASIS B,
+		                                TB_CC_BGT_ACCT_BASIS C
+		                            WHERE A.CO_CD = B.CO_CD
+		                            AND A.BZPLC_ID = B.BZPLC_ID
+		                            AND A.BFCHG_DEPT_ID = B.DEPT_ID	/*감소분은 이월이전부서로 조회*/
+		                            AND A.BGT_CHG_SPR_CD IN ('3','4','5') /*예산변경구분코드(1:최초생성,2:변경,3:이체변경,4:이월변경,5:자동이월변경,6:주문)*/
+		                            AND A.CO_CD = C.CO_CD
+		                            AND A.BZPLC_ID = C.BZPLC_ID
+		                            AND A.BFCHG_ACCT_ID = C.ACCT_ID
+		                            AND C.ACCT_TP_CD = '1' /*계정유형코드(1:일반, 2:공통)*/ 				                            
+		                            AND A.CO_CD = #{coCd}
+							        <if test="bzplcId != null and bzplcId != ''">
+										AND A.BZPLC_ID = #{bzplcId}
+									</if>
+									<if test="oprUnitId != null and oprUnitId != ''">
+							        	AND B.OPR_UNIT_ID = #{oprUnitId}
+							        </if>		                
+							        <if test="deptId != null and deptId != ''">
+							        	AND A.BFCHG_DEPT_ID = #{deptId}
+							        </if>
+							        <if test="acctId != null and acctId != ''">
+							        	AND A.BFCHG_ACCT_ID = #{acctId}
+							        </if>
+							        <if test="fromYymm != null and fromYymm != '' and toYymm != null and toYymm != ''">
+							        	AND (A.BFCHG_BGT_YM BETWEEN #{fromYymm} AND #{toYymm})
+							        </if>   
+		                        ) A 
+		                        GROUP BY A.CO_CD, A.BZPLC_ID, A.DEPT_ID, A.ACCT_ID, A.BGT_YY, A.BGT_YM 
+
+		            	)
+		            	GROUP BY CO_CD, BZPLC_ID, DEPT_ID, ACCT_ID, BGT_YY, BGT_YM 		            			                        
+		                                                                   
+		            ) B
+		            WHERE A.CO_CD = B.CO_CD(+)
+		            AND A.BZPLC_ID = B.BZPLC_ID(+)
+		            AND A.DEPT_ID = B.DEPT_ID(+)
+		            AND A.ACCT_ID = B.ACCT_ID(+)
+		            AND A.BGT_YY = B.BGT_YY(+)
+		            AND A.BGT_APLY_PERD_CD = B.BGT_YM(+)
+		     ) A 		      
+	        <choose>
+	        	<when test="sortColumn != null and sortColumn != ''">        		
+	        		<choose>
+	        			<when test="sortColumn == 'BGT_YYMM'">ORDER BY (A.BGT_YY || A.BGT_YM) ${sortType}</when>
+	        			<otherwise>ORDER BY ${sortColumn} ${sortType}</otherwise>
+	        		</choose>
+	        	</when>
+	        	<otherwise>ORDER BY A.DEPT_ID ASC, A.ACCT_ID ASC, (A.BGT_YY || A.BGT_YM) ASC</otherwise>
+	        </choose>
+			
+	    <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+            
+    </select>
+        
+    <select id="selectBgtCommonList" parameterType="java.util.Map" resultType="java.util.Map">
+	    <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+		     		 
+		    SELECT
+		        A.*
+		    FROM (
+		        SELECT /*+ USE_MERGE(A B) */
+		            A.*
+		            ,B.BGT_CHG_SPR_CD_3_ADD_AMT
+		            ,B.BGT_CHG_SPR_CD_4_ADD_AMT
+		            ,B.BGT_CHG_SPR_CD_3_DEC_AMT
+		            ,B.BGT_CHG_SPR_CD_4_DEC_AMT
+		            ,ABS(B.CHG_BGT_AMT_10) AS CHG_BGT_AMT_10
+		            ,ABS(B.CHG_BGT_AMT_20) AS CHG_BGT_AMT_20
+		            ,ABS(B.CHG_BGT_AMT_30) AS CHG_BGT_AMT_30
+		            ,ABS(B.CHG_BGT_AMT_40) AS CHG_BGT_AMT_40
+		            ,(A.BGT_AMT - (NVL(CHG_BGT_AMT_10, 0) + NVL(CHG_BGT_AMT_20, 0) + NVL(CHG_BGT_AMT_30, 0) + NVL(CHG_BGT_AMT_40, 0))) AS ODR_AVIL_AMT
+		        FROM (
+					/*예산내역 메인 정보 조회*/		        
+					SELECT 
+					    A.CO_CD
+					    ,A.BZPLC_ID
+					    ,A.ACCT_ID
+					    ,B.ACCT_NM					    
+					    ,A.BGT_YY
+					    ,A.BGT_YM
+					    ,A.BGT_APLY_PERD_CD
+					    ,CASE					    			    
+					    	WHEN A.BGT_APLY_PERD_CD BETWEEN '01' AND '12' THEN SUBSTR(A.BGT_YM,1,4) || '/'  || SUBSTR(A.BGT_YM,5,2)  	
+					    	WHEN A.BGT_APLY_PERD_CD BETWEEN '21' AND '24' THEN SUBSTR(A.BGT_YM,1,4) || '/'  || SUBSTR(A.BGT_YM,5,2) || ' (' || SUBSTR(A.BGT_APLY_PERD_CD,2,1) || '분기)'
+					    END AS BGT_YYMM					    					    			    					    					    					    					    					   					    			    
+					    ,NVL(A.BGT_AMT, 0) AS BGT_AMT /*주문 가능 금액*/
+					    ,NVL(A.BGT_ADD_AMT, 0) AS BGT_ADD_AMT /*예산추가금액*/
+					    ,NVL(A.BGT_DEC_AMT,0) AS BGT_DEC_AMT /*예산감소금액*/					                
+					FROM TB_CC_BGT_DTLS A, /*예산 내역*/				        
+				        TB_CC_BGT_ACCT_BASIS B /* 예산계정기본 */
+					WHERE A.CO_CD=B.CO_CD 
+				        AND A.BZPLC_ID=B.BZPLC_ID 
+				        AND A.ACCT_ID=B.ACCT_ID
+				        AND B.ACCT_TP_CD = '2' /*계정유형코드(1:일반, 2:공통)*/ 				        
+						AND A.CO_CD = #{coCd}		        				         
+				        <if test="bzplcId != null and bzplcId != ''">
+							AND A.BZPLC_ID = #{bzplcId}
+						</if>									
+				        <if test="deptId != null and deptId != ''">
+				        	AND A.DEPT_ID = #{deptId}
+				        </if>
+				        <if test="acctId != null and acctId != ''">
+				        	AND A.ACCT_ID = #{acctId}
+				        </if>
+				        <if test="fromYymm != null and fromYymm != '' and toYymm != null and toYymm != ''">
+				        	AND (A.BGT_YM BETWEEN #{fromYymm} AND #{toYymm})
+				        </if>  		        				        						     
+		            ) A, (
+		            	/*주문내역 + 이체,이월 증가,감소 조회*/
+		            	SELECT
+		            		CO_CD
+		            		,BZPLC_ID
+		            		,ACCT_ID
+		            		,BGT_YY
+		            		,BGT_YM
+		            		,SUM(BGT_CHG_SPR_CD_3_ADD_AMT) AS BGT_CHG_SPR_CD_3_ADD_AMT /*이체 증가*/
+		            		,SUM(BGT_CHG_SPR_CD_4_ADD_AMT) AS BGT_CHG_SPR_CD_4_ADD_AMT /*이월 증가*/
+		            		,SUM(BGT_CHG_SPR_CD_3_DEC_AMT) AS BGT_CHG_SPR_CD_3_DEC_AMT /*이체 감소*/ 
+		            		,SUM(BGT_CHG_SPR_CD_4_DEC_AMT) AS BGT_CHG_SPR_CD_4_DEC_AMT /*이월 감소*/ 
+		            		,SUM(CHG_BGT_AMT_10) AS CHG_BGT_AMT_10 /*결재중(10)*/
+		            		,SUM(CHG_BGT_AMT_20) AS CHG_BGT_AMT_20 /*상품준비중(20)*/
+		            		,SUM(CHG_BGT_AMT_30) AS CHG_BGT_AMT_30 /*배송중(30)*/
+		            		,SUM(CHG_BGT_AMT_40) AS CHG_BGT_AMT_40 /*배송완료(40)*/	 	            				            				            				            				            				            				            				            				            				            				            				            				            		
+		            	FROM (
+		            				            				            				            						           		            				          				            
+				                /*주문내역 조회*/			            
+				                SELECT
+				                    A.CO_CD
+				                    ,A.BZPLC_ID
+				                    ,A.AFCHG_ACCT_ID AS ACCT_ID
+				                    ,A.AFCHG_BGT_YY AS BGT_YY
+				                    ,A.AFCHG_BGT_APLY_PERD_CD AS BGT_YM
+				                    ,NULL AS BGT_CHG_SPR_CD_3_ADD_AMT /*이체 증가*/  
+				                    ,NULL AS BGT_CHG_SPR_CD_4_ADD_AMT /*이월 증가*/  
+				                    ,NULL AS BGT_CHG_SPR_CD_3_DEC_AMT /*이체 감소*/  
+				                    ,NULL AS BGT_CHG_SPR_CD_4_DEC_AMT /*이월 감소*/  
+				                    ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '10' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_10 /*결재중(10)*/
+				                    ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '20' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_20 /*상품준비중(20)*/
+				                    ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '30' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_30 /*배송중(30)*/
+				                    ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '40' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_40 /*배송완료(40)*/
+				                FROM TB_CC_BGT_CHG_HST A, /*예산변경이력*/
+				                    TB_CO_COM_CD_DTL C, /*공통코드관리*/
+				                    TB_CC_BGT_ACCT_BASIS D /* 예산계정기본 */
+				                WHERE A.ODR_STATS_CD = C.COM_DTL_CD
+				                AND C.COM_CLSF_CD = 'ODR_STATS_CD'
+				                AND C.COM_USR_DEFN_NM_4 IN ('10','20','30','40')  /*주문상태코드(결재중(10), 상품준비중(20), 배송중(30), 배송완료(40)) */
+				                AND A.CO_CD = D.CO_CD
+				                AND A.BZPLC_ID = D.BZPLC_ID
+				                AND A.AFCHG_ACCT_ID = D.ACCT_ID	
+				                AND D.ACCT_TP_CD = '2' /*계정유형코드(1:일반, 2:공통)*/			                
+				                AND A.CO_CD = #{coCd}
+						        <if test="bzplcId != null and bzplcId != ''">
+									AND A.BZPLC_ID = #{bzplcId}
+								</if>
+						        <if test="acctId != null and acctId != ''">
+						        	AND A.AFCHG_ACCT_ID = #{acctId}
+						        </if>
+						        <if test="fromYymm != null and fromYymm != '' and toYymm != null and toYymm != ''">
+						        	AND (A.AFCHG_BGT_YM BETWEEN #{fromYymm} AND #{toYymm})
+						        </if>            				        		                
+				                GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD
+		                        UNION ALL	
+		                        /*이체,이월 증가 + 감소 조회*/ 		                        	                        
+		                        SELECT  
+		                            A.CO_CD
+		                            , A.BZPLC_ID
+		                            , A.ACCT_ID
+		                            , A.BGT_YY
+		                            , A.BGT_YM       
+		                            , SUM(BGT_CHG_SPR_CD_3_ADD_AMT) AS BGT_CHG_SPR_CD_3_ADD_AMT
+		                            , SUM(BGT_CHG_SPR_CD_4_ADD_AMT) AS BGT_CHG_SPR_CD_4_ADD_AMT
+		                            , SUM(BGT_CHG_SPR_CD_3_DEC_AMT) AS BGT_CHG_SPR_CD_3_DEC_AMT
+		                            , SUM(BGT_CHG_SPR_CD_4_DEC_AMT) AS BGT_CHG_SPR_CD_4_DEC_AMT
+		                            , NULL AS CHG_BGT_AMT_10
+		                            , NULL AS CHG_BGT_AMT_20
+		                            , NULL AS CHG_BGT_AMT_30
+		                            , NULL AS CHG_BGT_AMT_40
+		                        FROM (
+		                            /*이체,이월 증가 조회*/                        
+		                            SELECT
+		                                A.CO_CD
+		                                ,A.BZPLC_ID                           
+		                                ,A.AFCHG_ACCT_ID AS ACCT_ID
+		                                ,A.AFCHG_BGT_YY AS BGT_YY
+		                                ,A.AFCHG_BGT_APLY_PERD_CD AS BGT_YM
+		                                ,CASE 
+		                                    WHEN A.BGT_CHG_SPR_CD='3' THEN CHG_BGT_AMT                            
+		                                END AS  BGT_CHG_SPR_CD_3_ADD_AMT /*이체 증가*/  
+		                                ,CASE 
+		                                    WHEN A.BGT_CHG_SPR_CD IN ('4','5') THEN CHG_BGT_AMT                            
+		                                END AS  BGT_CHG_SPR_CD_4_ADD_AMT /*이월 증가*/
+		                                ,NULL AS BGT_CHG_SPR_CD_3_DEC_AMT /*이체 감소*/
+		                                ,NULL AS BGT_CHG_SPR_CD_4_DEC_AMT /*이월 감소*/
+		                            FROM TB_CC_BGT_CHG_HST A, 
+		                                TB_CC_BGT_ACCT_BASIS C
+		                            WHERE A.BGT_CHG_SPR_CD IN ('3','4','5') /*예산변경구분코드(1:최초생성,2:변경,3:이체변경,4:이월변경,5:자동이월변경,6:주문)*/
+		                            AND A.CO_CD = C.CO_CD
+		                            AND A.BZPLC_ID = C.BZPLC_ID
+		                            AND A.AFCHG_ACCT_ID = C.ACCT_ID	/*증가분은 이월이후부서로 조회*/
+		                            AND C.ACCT_TP_CD = '2' /*계정유형코드(1:일반, 2:공통)*/		                            
+		                            AND A.CO_CD = #{coCd}
+							        <if test="bzplcId != null and bzplcId != ''">
+										AND A.BZPLC_ID = #{bzplcId}
+									</if>									
+							        <if test="acctId != null and acctId != ''">
+							        	AND A.AFCHG_ACCT_ID = #{acctId}
+							        </if>
+							        <if test="fromYymm != null and fromYymm != '' and toYymm != null and toYymm != ''">
+							        	AND (A.AFCHG_BGT_YM BETWEEN #{fromYymm} AND #{toYymm})
+							        </if>   
+		                            UNION ALL
+		                            /*이체,이월 감소 조회*/                             
+		                            SELECT
+		                                A.CO_CD
+		                                ,A.BZPLC_ID
+		                                ,A.BFCHG_ACCT_ID AS ACCT_ID
+		                                ,A.BFCHG_BGT_YY AS BGT_YY
+		                                ,A.BFCHG_BGT_APLY_PERD_CD AS BGT_YM                            
+		                                ,NULL AS  BGT_CHG_SPR_CD_3_ADD_AMT  /*이체 증가*/ 
+		                                ,NULL AS  BGT_CHG_SPR_CD_4_ADD_AMT  /*이월 증가*/
+		                                ,CASE 
+		                                    WHEN A.BGT_CHG_SPR_CD='3' THEN CHG_BGT_AMT                            
+		                                END AS  BGT_CHG_SPR_CD_3_DEC_AMT   /*이체 감소*/
+		                                ,CASE 
+		                                    WHEN A.BGT_CHG_SPR_CD IN ('4','5') THEN CHG_BGT_AMT                            
+		                                END AS  BGT_CHG_SPR_CD_4_DEC_AMT  /*이월 감소*/                          
+		                            FROM TB_CC_BGT_CHG_HST A, 
+		                                TB_CC_BGT_ACCT_BASIS C
+		                            WHERE A.BGT_CHG_SPR_CD IN ('3','4','5') /*예산변경구분코드(1:최초생성,2:변경,3:이체변경,4:이월변경,5:자동이월변경,6:주문)*/
+		                            AND A.CO_CD = C.CO_CD
+		                            AND A.BZPLC_ID = C.BZPLC_ID
+		                            AND A.BFCHG_ACCT_ID = C.ACCT_ID	/*감소분은 이월이전부서로 조회*/
+		                            AND C.ACCT_TP_CD = '2' /*계정유형코드(1:일반, 2:공통)*/		                            
+		                            AND A.CO_CD = #{coCd}
+							        <if test="bzplcId != null and bzplcId != ''">
+										AND A.BZPLC_ID = #{bzplcId}
+									</if>									
+							        <if test="acctId != null and acctId != ''">
+							        	AND A.BFCHG_ACCT_ID = #{acctId}
+							        </if>
+							        <if test="fromYymm != null and fromYymm != '' and toYymm != null and toYymm != ''">
+							        	AND (A.BFCHG_BGT_YM BETWEEN #{fromYymm} AND #{toYymm})
+							        </if>   
+		                        ) A 
+		                        GROUP BY A.CO_CD, A.BZPLC_ID, A.ACCT_ID, A.BGT_YY, A.BGT_YM 
+
+		            	)
+		            	GROUP BY CO_CD, BZPLC_ID, ACCT_ID, BGT_YY, BGT_YM 		            			                        
+		                                                                   
+		            ) B
+		            WHERE A.CO_CD = B.CO_CD(+)
+		            AND A.BZPLC_ID = B.BZPLC_ID(+)
+		            AND A.ACCT_ID = B.ACCT_ID(+)
+		            AND A.BGT_YY = B.BGT_YY(+)
+		            AND A.BGT_APLY_PERD_CD = B.BGT_YM(+)
+		     ) A 		      
+	        <choose>
+	        	<when test="sortColumn != null and sortColumn != ''">        		
+	        		<choose>
+	        			<when test="sortColumn == 'BGT_YYMM'">ORDER BY (A.BGT_YY || A.BGT_YM) ${sortType}</when>
+	        			<otherwise>ORDER BY ${sortColumn} ${sortType}</otherwise>
+	        		</choose>
+	        	</when>
+	        	<otherwise>ORDER BY A.ACCT_ID ASC, (A.BGT_YY || A.BGT_YM) ASC</otherwise>
+	        </choose>
+			
+	    <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+            
+    </select>        
+        
+	<select id="selectBgtTransMonthList" parameterType="java.util.Map" resultType="java.util.Map">			         
+		SELECT LIST.*
+		FROM (
+	        SELECT
+			    A.*
+			    ,B.CHG_BGT_AMT_10
+			    ,B.CHG_BGT_AMT_20
+			    ,B.CHG_BGT_AMT_30
+			    ,B.CHG_BGT_AMT_40
+			    ,NULL AS TRANS_AMT		    
+			    ,A.BGT_AMT_TO AS ORG_BGT_AMT_TO		    		    
+			    ,(A.BGT_AMT - (NVL(CHG_BGT_AMT_10, 0) + NVL(CHG_BGT_AMT_20, 0) + NVL(CHG_BGT_AMT_30, 0) + NVL(CHG_BGT_AMT_40, 0))) AS ODR_AVIL_AMT /*주문가능금액*/    
+			FROM (
+			    SELECT 
+			        A.CO_CD
+			        ,A.BZPLC_ID
+			        ,A.BGT_NO
+			        ,A.BGT_PERD_SPR_CD
+			        ,A.BGT_YY
+			        ,#{toYear} AS BGT_YY_TO		        
+			        ,A.BGT_APLY_PERD_CD
+			        ,#{toMonth} AS BGT_APLY_PERD_CD_TO		        
+			        ,A.BGT_YM
+			        ,A.BGT_REG_SPR_CD	        
+			        ,A.ACCT_ID
+			        ,A.DEPT_ID
+			        ,NVL(A.BGT_AMT,0) AS BGT_AMT
+			        ,NVL(A.BGT_ADD_AMT,0) AS BGT_ADD_AMT
+			        ,NVL(A.BGT_DEC_AMT,0) AS BGT_DEC_AMT		        
+			        ,B.DEPT_NM		        		        
+			        ,C.HRNK_ACCT_ID
+			        ,C.ACCT_NM
+			        ,(SELECT ACCT_NM FROM TB_CC_BGT_ACCT_BASIS TMP WHERE TMP.CO_CD=C.CO_CD AND TMP.BZPLC_ID=C.BZPLC_ID AND TMP.ACCT_ID=C.HRNK_ACCT_ID) AS HRNK_ACCT_NM
+			        ,(SELECT ACCT_CD FROM TB_CC_BGT_ACCT_BASIS TMP WHERE TMP.CO_CD=C.CO_CD AND TMP.BZPLC_ID=C.BZPLC_ID AND TMP.ACCT_ID=C.HRNK_ACCT_ID) AS HRNK_ACCT_CD		        
+			        ,C.ACCT_CD
+			        ,C.ACCT_LVL
+			        ,C.ACCT_TP_CD			        
+			        ,(SELECT BGT_AMT FROM TB_CC_BGT_DTLS TMP WHERE TMP.CO_CD=A.CO_CD AND TMP.BZPLC_ID=A.BZPLC_ID AND TMP.DEPT_ID=A.DEPT_ID AND TMP.ACCT_ID=A.ACCT_ID AND TMP.BGT_YY=#{toYear} AND TMP.BGT_APLY_PERD_CD=#{toMonth}) AS BGT_AMT_TO 
+			    FROM TB_CC_BGT_DTLS A, TB_CC_DEPT_BASIS B, TB_CC_BGT_ACCT_BASIS C
+			    WHERE A.CO_CD = B.CO_CD
+			    AND A.BZPLC_ID = B.BZPLC_ID
+			    AND A.DEPT_ID = B.DEPT_ID
+			    AND A.CO_CD = C.CO_CD
+			    AND A.BZPLC_ID = C.BZPLC_ID
+			    AND A.ACCT_ID = C.ACCT_ID
+			    AND A.BGT_YY = #{fromYear}		    
+			    AND A.BGT_APLY_PERD_CD = #{fromMonth}    		    
+			    AND A.BGT_PERD_SPR_CD = #{bgtPerdSprCd}  /*예산기간구분코드(1:월, 2:분기)*/    
+			    AND A.BGT_REG_SPR_CD = #{bgtRegSprCd} /*예산등록구분코드(10:계정별, 20:부서별) */
+			    AND C.ACCT_TP_CD = #{acctTpCd} /*계정유형코드(1:일반, 2:공통)*/
+			    AND A.CO_CD = #{coCd}
+			    AND A.BZPLC_ID = #{bzplcId}
+			    AND B.OPR_UNIT_ID = #{oprUnitId}
+				<if test="arrDeptId != null and arrDeptId.length > 0">	        	
+				    AND (0, A.DEPT_ID) IN
+				    <foreach collection="arrDeptId" item="item" open="(" close=")" separator=",">
+				        (0, #{item})
+				    </foreach>
+				</if>								        	    		    		    
+			) A, (
+			    SELECT
+			        A.CO_CD
+			        ,A.BZPLC_ID
+			        ,A.AFCHG_DEPT_ID
+			        ,A.AFCHG_ACCT_ID
+			        ,A.AFCHG_BGT_YY
+			        ,A.AFCHG_BGT_APLY_PERD_CD
+			        ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '10' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_10 /*결재중(10)*/
+			        ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '20' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_20 /*상품준비중(20)*/
+			        ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '30' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_30 /*배송중(30)*/
+			        ,SUM(CASE WHEN C.COM_USR_DEFN_NM_4 = '40' THEN A.CHG_BGT_AMT ELSE 0 END) AS CHG_BGT_AMT_40 /*배송완료(40)*/
+			    FROM TB_CC_BGT_CHG_HST A, /*예산변경이력*/
+			        TB_CC_DEPT_BASIS B,  /*부서기본*/
+			        TB_CO_COM_CD_DTL C /*공통코드관리*/
+			    WHERE A.CO_CD = B.CO_CD
+			    AND A.BZPLC_ID = B.BZPLC_ID
+			    AND A.AFCHG_DEPT_ID = B.DEPT_ID
+			    AND A.ODR_STATS_CD = C.COM_DTL_CD
+			    AND C.COM_CLSF_CD = 'ODR_STATS_CD'
+			    AND C.COM_USR_DEFN_NM_4 IN ('10','20','30','40')  /*주문상태코드(결재중(10), 상품준비중(20), 배송중(30), 배송완료(40)) */
+			    AND A.CO_CD = #{coCd}
+			    AND A.BZPLC_ID = #{bzplcId}	
+			    AND B.OPR_UNIT_ID = #{oprUnitId}	
+				<if test="arrDeptId != null and arrDeptId.length > 0">	        	
+				    AND (0, A.AFCHG_DEPT_ID) IN
+				    <foreach collection="arrDeptId" item="item" open="(" close=")" separator=",">
+				        (0, #{item})
+				    </foreach>
+				</if>								        	    		    		    		    		    		    		    	    	    
+			    GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_DEPT_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD
+			) B
+			WHERE A.CO_CD = B.CO_CD(+)
+			AND A.BZPLC_ID = B.BZPLC_ID(+)
+			AND A.DEPT_ID = B.AFCHG_DEPT_ID(+)
+			AND A.ACCT_ID = B.AFCHG_ACCT_ID(+)
+			AND A.BGT_YY = B.AFCHG_BGT_YY(+)
+			AND A.BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD(+)		   
+		) LIST
+		<if test="sortColumn != null and sortColumn != ''"> 
+        ORDER BY ${sortColumn} ${sortType} 
+        </if> 
+	</select>
+		            
+    <insert id="saveBgtTransMonthDtlFrom" parameterType="HashMap">		
+	<![CDATA[
+		UPDATE TB_CC_BGT_DTLS		
+		SET BGT_AMT = (NVL(BGT_AMT,0) - #{transAmt})
+		    ,BGT_DEC_AMT = (NVL(BGT_DEC_AMT,0) + #{transAmt})		        
+		    ,UPDPSN_ID = #{userId}		        		        
+		    ,UPD_DTM = SYSDATE
+		WHERE CO_CD = #{coCd} 
+		AND BZPLC_ID = #{bzplcId} 
+		AND DEPT_ID = #{deptId} 
+		AND ACCT_ID = #{acctId} 
+		AND BGT_PERD_SPR_CD = #{bgtPerdSprCd} 
+		AND BGT_YY = #{bgtYy} 
+		AND BGT_APLY_PERD_CD = #{bgtAplyPerdCd} 
+		AND BGT_REG_SPR_CD = #{bgtRegSprCd} 			
+	]]>	    		  
+	</insert>        
+       
+    <insert id="saveBgtTransMonthDtlTo" parameterType="HashMap">		
+	<![CDATA[
+		MERGE INTO TB_CC_BGT_DTLS
+		USING DUAL ON (CO_CD = #{coCd} AND BZPLC_ID = #{bzplcId} AND DEPT_ID = #{deptId} AND ACCT_ID = #{acctId} AND BGT_PERD_SPR_CD = #{bgtPerdSprCd} AND BGT_YY = #{bgtYyTo} AND BGT_APLY_PERD_CD = #{bgtAplyPerdCdTo} AND BGT_REG_SPR_CD = #{bgtRegSprCd})
+		WHEN MATCHED THEN
+		    UPDATE SET
+		        BGT_AMT = (NVL(BGT_AMT,0) + #{transAmt})
+		        ,BGT_ADD_AMT = (NVL(BGT_ADD_AMT,0) + #{transAmt})		        
+		        ,UPDPSN_ID = #{userId}		        		        
+		        ,UPD_DTM = SYSDATE
+		WHEN NOT MATCHED THEN                    
+		    INSERT (
+		        CO_CD
+		        ,BZPLC_ID
+		        ,DEPT_ID
+		        ,ACCT_ID
+		        ,BGT_NO
+		        ,BGT_PERD_SPR_CD
+		        ,BGT_YY
+		        ,BGT_APLY_PERD_CD
+		        ,BGT_YM		        
+		        ,BGT_REG_SPR_CD
+		        ,BGT_AMT
+		        ,BGT_ADD_AMT
+		        ,CURR_UNIT_CD		        		        		        
+		        ,REGPSN_ID
+		        ,REG_DTM
+		        ,UPDPSN_ID
+		        ,UPD_DTM        
+		    )
+		    VALUES (
+		        #{coCd}
+		        ,#{bzplcId}
+		        ,#{deptId}
+		        ,#{acctId}
+		        ,FN_CC_BGT_NO_CRT()
+		        ,#{bgtPerdSprCd}
+		        ,#{bgtYyTo}
+		        ,#{bgtAplyPerdCdTo}
+		        ,(CASE 
+		        	WHEN #{bgtAplyPerdCdTo} BETWEEN '01' AND '12' THEN #{bgtYyTo} || #{bgtAplyPerdCdTo}
+		        	WHEN #{bgtAplyPerdCdTo} = '21' THEN #{bgtYyTo} || '01'
+		        	WHEN #{bgtAplyPerdCdTo} = '22' THEN #{bgtYyTo} || '04'
+		        	WHEN #{bgtAplyPerdCdTo} = '23' THEN #{bgtYyTo} || '07'
+		        	WHEN #{bgtAplyPerdCdTo} = '24' THEN #{bgtYyTo} || '10'
+		         END)			        
+		        ,#{bgtRegSprCd}  
+		        ,#{transAmt}
+		        ,#{transAmt}	
+		        ,'KRW'		        	        		        
+		        ,#{userId}
+		        ,SYSDATE
+		        ,#{userId}
+		        ,SYSDATE         
+		    )		
+	]]>	    		  
+	</insert>               
+        
+	<insert id="saveBgtTransMonthHst" parameterType="HashMap">		
+	<![CDATA[	
+		INSERT INTO TB_CC_BGT_CHG_HST (
+		    CO_CD
+		    ,BZPLC_ID
+		    ,GEN_BGT_CHG_NO
+		    ,BGT_CHG_SPR_CD
+		    ,BFCHG_ACCT_ID
+		    ,BFCHG_DEPT_ID
+		    ,BFCHG_BGT_YY
+		    ,BFCHG_BGT_APLY_PERD_CD
+		    ,BFCHG_BGT_YM
+		    ,AFCHG_ACCT_ID
+		    ,AFCHG_DEPT_ID
+		    ,AFCHG_BGT_YY
+		    ,AFCHG_BGT_APLY_PERD_CD
+		    ,AFCHG_BGT_YM			    
+		    ,CHG_BGT_AMT
+		    ,CHG_RSN
+		    ,CURR_UNIT_CD		    
+		    ,REG_DTM
+		    ,REGPSN_ID
+		    ,UPD_DTM
+		    ,UPDPSN_ID
+		)
+		VALUES (
+		    #{coCd}
+		    ,#{bzplcId}
+		    ,FN_CC_GEN_BGT_CHG_NO_CRT()
+		    ,'4'  /*예산변경구분코드(1:최초생성,2:변경,3:이체변경,4:이월변경,5:자동이월변경,6:주문)*/  
+		    ,#{acctId}
+		    ,#{deptId}
+		    ,#{bgtYy}
+		    ,#{bgtAplyPerdCd}
+	        ,(CASE 
+	        	WHEN #{bgtAplyPerdCd} BETWEEN '01' AND '12' THEN #{bgtYy} || #{bgtAplyPerdCd}
+	        	WHEN #{bgtAplyPerdCd} = '21' THEN #{bgtYy} || '01'
+	        	WHEN #{bgtAplyPerdCd} = '22' THEN #{bgtYy} || '04'
+	        	WHEN #{bgtAplyPerdCd} = '23' THEN #{bgtYy} || '07'
+	        	WHEN #{bgtAplyPerdCd} = '24' THEN #{bgtYy} || '10'
+	         END)
+		    ,#{acctId}
+		    ,#{deptId}
+		    ,#{bgtYyTo}
+		    ,#{bgtAplyPerdCdTo}
+	        ,(CASE 
+	        	WHEN #{bgtAplyPerdCdTo} BETWEEN '01' AND '12' THEN #{bgtYyTo} || #{bgtAplyPerdCdTo}
+	        	WHEN #{bgtAplyPerdCdTo} = '21' THEN #{bgtYyTo} || '01'
+	        	WHEN #{bgtAplyPerdCdTo} = '22' THEN #{bgtYyTo} || '04'
+	        	WHEN #{bgtAplyPerdCdTo} = '23' THEN #{bgtYyTo} || '07'
+	        	WHEN #{bgtAplyPerdCdTo} = '24' THEN #{bgtYyTo} || '10'
+	         END)		         	
+		    ,#{transAmt}
+		    ,#{chgRsn}
+		    ,'KRW'		    
+		    ,SYSDATE
+		    ,#{userId}
+		    ,SYSDATE
+		    ,#{userId}
+		)
+	]]>	
+	</insert>      
+      
+    <select id="selectBgtDeptMappList" parameterType="java.util.Map" resultType="java.util.Map">
+	    <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+			SELECT LIST.*
+			FROM (
+				SELECT
+				    A.*
+				    ,B.OPR_UNIT_NM
+				    ,(SELECT BZPLC_NM FROM TB_CC_BZPLC_BASIS BZPLC WHERE BZPLC.CO_CD=A.CO_CD AND BZPLC.BZPLC_ID=A.BZPLC_ID) AS BZPLC_NM    
+				FROM (
+				    SELECT
+				        A.CO_CD
+				        ,A.BZPLC_ID
+				        ,A.DEPT_ID
+				        ,B.DEPT_NM
+				        ,B.CCO_DEPT_CD
+				        ,B.OPR_UNIT_ID		    
+				    FROM (
+				        SELECT 
+				            A.CO_CD
+				            ,A.BZPLC_ID
+				            ,A.DEPT_ID
+				        FROM TB_CC_BGT_ACCT_DEPT_MAPP A, TB_CC_BGT_ACCT_BASIS B
+				        WHERE A.CO_CD = B.CO_CD
+				        AND A.BZPLC_ID = B.BZPLC_ID
+				        AND A.ACCT_ID = B.ACCT_ID
+				        AND B.ACCT_TP_CD = '1' /*계정유형코드(1:일반, 2:공통)*/ 
+				        AND A.CO_CD = #{coCd}
+				        <if test="bzplcId != null and bzplcId != ''">
+							AND A.BZPLC_ID = #{bzplcId}
+						</if>
+				        <if test="arrDeptId != null and arrDeptId.length > 0">	        	
+				        	AND A.DEPT_ID IN
+				        	<foreach collection="arrDeptId" item="item" open="(" close=")" separator=",">
+				        		 #{item}
+				        	</foreach>
+				        </if>								        
+				        GROUP BY A.CO_CD, A.BZPLC_ID, A.DEPT_ID
+				    ) A, TB_CC_DEPT_BASIS B
+				    WHERE A.CO_CD = B.CO_CD
+				    AND A.BZPLC_ID = B.BZPLC_ID
+				    AND A.DEPT_ID = B.DEPT_ID
+					<if test="arrOprUnitId != null and arrOprUnitId.length > 0">
+			        	AND B.OPR_UNIT_ID IN
+			        	<foreach collection="arrOprUnitId" item="item" open="(" close=")" separator=",">
+			        	 	#{item}
+			        	 </foreach>
+			        </if>
+				        
+				) A, TB_CC_OPR_UNIT_BASIS B
+				WHERE A.CO_CD = B.CO_CD
+				AND A.BZPLC_ID = B.BZPLC_ID
+				AND A.OPR_UNIT_ID = B.OPR_UNIT_ID
+				<if test="sortColumn == null or sortColumn == ''"> 
+		        ORDER BY A.BZPLC_ID, A.OPR_UNIT_ID, A.DEPT_ID
+		        </if> 
+			) LIST
+			<if test="sortColumn != null and sortColumn != ''"> 
+	        ORDER BY ${sortColumn} ${sortType} 
+	        </if> 
+	    <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />            
+    </select>
+    
+    <select id="selectBgtDeptMappListByAcct" parameterType="java.util.Map" resultType="java.util.Map">
+    	/* com.ssp.bo.cc.custBgt.selectBgtDeptMappListByAcct */
+	 	<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />
+	 		SELECT LIST.*
+	 		FROM(  
+	             SELECT /*+ USE_MERGE(A B C) */
+	                 A.*
+	                 ,B.ACCT_NM
+	                 ,B.ACCT_CD
+	                 ,B.ACCT_LVL
+	                 ,B.ACCT_TP_CD  /*계정유형코드(1:일반, 2:공통)*/
+	                 ,CASE 
+	                     WHEN B.ACCT_TP_CD = '1' THEN '일반'  
+	                     WHEN B.ACCT_TP_CD = '2' THEN '공통'  
+	                 END AS ACCT_TP_NM 
+	                 ,B.HRNK_ACCT_ID
+	                 ,B.BGT_USE_HRNK_ACCT_ID  /*예산사용상위계정ID*/
+	                 ,C.HRNK_BGT_USE_YN       /*상위예산사용여부(운영단위)*/                                            
+	                 ,(SELECT BZPLC_NM FROM TB_CC_BZPLC_BASIS BZPLC WHERE BZPLC.CO_CD=A.CO_CD AND BZPLC.BZPLC_ID=A.BZPLC_ID) AS BZPLC_NM 
+	                 ,(SELECT OPR_UNIT_NM FROM TB_CC_OPR_UNIT_BASIS OPR WHERE OPR.CO_CD=A.CO_CD AND OPR.BZPLC_ID=A.BZPLC_ID AND OPR.OPR_UNIT_ID=A.OPR_UNIT_ID) AS OPR_UNIT_NM
+	                 ,(SELECT ACCT_NM FROM TB_CC_BGT_ACCT_BASIS ACCT WHERE ACCT.CO_CD=A.CO_CD AND ACCT.BZPLC_ID=A.BZPLC_ID AND ACCT.ACCT_ID=B.HRNK_ACCT_ID) AS HRNK_ACCT_NM
+	                 ,(SELECT ACCT_NM FROM TB_CC_BGT_ACCT_BASIS ACCT WHERE ACCT.CO_CD=A.CO_CD AND ACCT.BZPLC_ID=A.BZPLC_ID AND ACCT.ACCT_ID=B.BGT_USE_HRNK_ACCT_ID) AS BGT_USE_HRNK_ACCT_NM
+	             FROM (
+	 		        SELECT 
+				         A.CO_CD
+				         ,A.BZPLC_ID
+	                     ,B.OPR_UNIT_ID			            
+	                     ,A.ACCT_ID                        
+			         FROM TB_CC_BGT_ACCT_DEPT_MAPP A, TB_CC_DEPT_BASIS B
+			         WHERE A.CO_CD = B.CO_CD
+	                 AND A.BZPLC_ID = B.BZPLC_ID
+	                 AND A.DEPT_ID = B.DEPT_ID
+	                 AND A.CO_CD = #{coCd}		        
+	                 AND A.BZPLC_ID = #{bzplcId}				
+			        <if test="arrAcctId != null and arrAcctId.length > 0">	        	
+			        	AND A.ACCT_ID IN
+			        	<foreach collection="arrAcctId" item="item" open="(" close=")" separator=",">
+			        		 #{item}
+			        	</foreach>
+			        </if>	                 
+					<if test="arrOprUnitId != null and arrOprUnitId.length > 0">
+			        	AND B.OPR_UNIT_ID IN
+			        	<foreach collection="arrOprUnitId" item="item" open="(" close=")" separator=",">
+			        	 	#{item}
+			        	 </foreach>
+			        </if>                 
+	                 GROUP BY A.CO_CD, A.BZPLC_ID, B.OPR_UNIT_ID, A.ACCT_ID
+	             ) A, TB_CC_BGT_ACCT_BASIS B, TB_CC_OPR_UNIT_CTL_AUTH_INFO C
+	             WHERE A.CO_CD = B.CO_CD
+	             AND A.BZPLC_ID = B.BZPLC_ID
+	             AND A.ACCT_ID = B.ACCT_ID
+	             AND A.CO_CD = C.CO_CD             
+	             AND A.BZPLC_ID = C.BZPLC_ID
+	             AND A.OPR_UNIT_ID = C.OPR_UNIT_ID             
+	             AND B.ACCT_TP_CD = #{acctTpCd} /*계정유형코드(1:일반, 2:공통)*/
+	             <if test="arrAcctId == null or arrAcctId.length == 0">
+		             START WITH B.HRNK_ACCT_ID IS NULL  /*전체 조회시만 계층 쿼리 적용*/
+		             CONNECT BY NOCYCLE PRIOR B.ACCT_ID = B.HRNK_ACCT_ID
+	             </if>    
+             )LIST
+             <if test="sortColumn != null and sortColumn != ''"> 
+	         ORDER BY ${sortColumn} ${sortType} 
+	         </if>                          
+    	<include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />                 
+    </select>    
+
+    <select id="selectBgtDeptMappListByCommonAcct" parameterType="java.util.Map" resultType="java.util.Map">
+    	/* com.ssp.bo.cc.custBgt.selectBgtDeptMappListByCommonAcct */
+	 	<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+             SELECT
+                 A.*
+                 ,CASE 
+                     WHEN A.ACCT_TP_CD = '1' THEN '일반'  
+                     WHEN A.ACCT_TP_CD = '2' THEN '공통'  
+                 END AS ACCT_TP_NM                                        
+                 ,(SELECT BZPLC_NM FROM TB_CC_BZPLC_BASIS BZPLC WHERE BZPLC.CO_CD=A.CO_CD AND BZPLC.BZPLC_ID=A.BZPLC_ID) AS BZPLC_NM                  
+                 ,(SELECT ACCT_NM FROM TB_CC_BGT_ACCT_BASIS ACCT WHERE ACCT.CO_CD=A.CO_CD AND ACCT.BZPLC_ID=A.BZPLC_ID AND ACCT.ACCT_ID=A.HRNK_ACCT_ID) AS HRNK_ACCT_NM
+                 ,(SELECT ACCT_NM FROM TB_CC_BGT_ACCT_BASIS ACCT WHERE ACCT.CO_CD=A.CO_CD AND ACCT.BZPLC_ID=A.BZPLC_ID AND ACCT.ACCT_ID=A.BGT_USE_HRNK_ACCT_ID) AS BGT_USE_HRNK_ACCT_NM
+             FROM TB_CC_BGT_ACCT_BASIS A
+             WHERE A.CO_CD = #{coCd}	        
+             AND A.BZPLC_ID = #{bzplcId}			
+	        <if test="arrAcctId != null and arrAcctId.length > 0">	        	
+	        	AND A.ACCT_ID IN
+	        	<foreach collection="arrAcctId" item="item" open="(" close=")" separator=",">
+	        		 #{item}
+	        	</foreach>
+	        </if>	          
+             AND A.ACCT_TP_CD = #{acctTpCd} /*계정유형코드(1:일반, 2:공통)*/
+             START WITH A.HRNK_ACCT_ID IS NULL
+             CONNECT BY NOCYCLE PRIOR A.ACCT_ID = A.HRNK_ACCT_ID      
+             <if test="sortColumn != null and sortColumn != ''"> 
+	         ORDER BY ${sortColumn} ${sortType} 
+	         </if>                             
+    	<include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />                 
+    </select>    
+    
+    <update id="updateBgtMappDept" parameterType="HashMap">		
+		UPDATE TB_CC_DEPT_BASIS
+		SET CCO_DEPT_CD = #{ccoDeptCd}
+		    ,UPDPSN_ID = '_UPDATE_ID'
+		    ,UPD_DTM = SYSDATE
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND OPR_UNIT_ID = #{oprUnitId}
+		AND DEPT_ID = #{deptId}
+    </update>
+    
+    <update id="updateBgtMappBgtUseHrnkAcct" parameterType="HashMap">		
+		UPDATE TB_CC_BGT_ACCT_BASIS
+		SET ACCT_CD = #{acctCd}		
+		    ,UPDPSN_ID = #{userId}
+		    ,UPD_DTM = SYSDATE
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND ACCT_ID = #{acctId}
+    </update>
+       
+    <select id="selectQrtBgtUseYn" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+		    QRT_BGT_USE_YN	/* 분기예산사용여부*/
+		    ,BGT_CLOS_DD_CD /*예산마감일코드*/
+		    ,BGT_FW_SPR_CD /*예산이월구분코드 (01:자동이월,02:수동이월,03:이월사용안함) */	    
+		    ,BGT_OVER_AGD_YN /*예산초과 사용유무 */
+		FROM TB_CC_OPR_UNIT_CTL_AUTH_INFO /*운영단위 제어권한*/
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND OPR_UNIT_ID = #{oprUnitId}    
+    </select>  
+
+    <select id="selectBzplcQrtBgtUseYn" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+		    BZPLC_QRT_BGT_USE_YN AS QRT_BGT_USE_YN	/* 분기예산사용여부*/
+		    ,BZPLC_BGT_FW_SPR_CD AS BGT_FW_SPR_CD /*사업장예산이월구분코드*/
+		    ,BZPLC_BGT_CLOS_DD_CD AS BGT_CLOS_DD_CD /*예산마감일코드*/	    
+		FROM TB_CC_BZPLC_CTL_AUTH_INFO /*사업장 제어권한*/
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}  
+    </select>  
+      
+	<select id="selectBgtDeptDtlMappListByDept" parameterType="java.util.Map" resultType="java.util.Map">
+		<![CDATA[		
+           WITH HST_LIST AS (
+			    SELECT
+			        CO_CD
+			        ,BZPLC_ID
+                    ,BGT_CHG_SPR_CD
+                    ,BFCHG_DEPT_ID
+                    ,AFCHG_DEPT_ID
+                    ,AFCHG_ACCT_ID
+			        ,AFCHG_BGT_YY    
+			        ,AFCHG_BGT_APLY_PERD_CD
+	                ,CHG_BGT_AMT
+	                ,GEN_BGT_CHG_NO
+	                ,CHG_RSN
+			    FROM TB_CC_BGT_CHG_HST A
+			    WHERE CO_CD = #{coCd}
+			    AND BZPLC_ID = #{bzplcId}
+                AND AFCHG_DEPT_ID = #{deptId}             
+			    AND AFCHG_BGT_YY = #{bgtYy}
+			    AND (BGT_CHG_SPR_CD = '1' OR BGT_CHG_SPR_CD = '2') /*최초등록건과 변경건만 조회*/      
+            ), MAX_ITEM AS ( /*해당 계정, 기간의 제일 큰 시퀀스번호 추출*/
+                SELECT
+                    A.CO_CD
+                    ,A.BZPLC_ID
+                    ,A.AFCHG_DEPT_ID
+                    ,A.AFCHG_ACCT_ID
+                    ,A.AFCHG_BGT_YY
+                    ,A.AFCHG_BGT_APLY_PERD_CD
+                    ,A.CHG_RSN_HST
+                    ,TO_NUMBER(REGEXP_SUBSTR( A.CHG_NO_CHG_CD , '[^-]+', 1, 1)) AS MAX_GEN_BGT_CHG_NO
+                    ,REGEXP_SUBSTR( A.CHG_NO_CHG_CD , '[^-]+', 1, 2) AS MAX_BGT_CHG_SPR_CD
+                    ,A.CNT_AFCHG_BGT_APLY_PERD_CD            
+                FROM (
+                    SELECT 
+                        A.CO_CD
+                        ,A.BZPLC_ID
+                        ,A.AFCHG_DEPT_ID
+                        ,A.AFCHG_ACCT_ID
+                        ,A.AFCHG_BGT_YY
+                        ,A.AFCHG_BGT_APLY_PERD_CD                    
+                        ,LISTAGG((CHG_RSN), ',') WITHIN GROUP(ORDER BY GEN_BGT_CHG_NO) AS CHG_RSN_HST
+                        ,MAX(TO_CHAR(GEN_BGT_CHG_NO) || '-' || BGT_CHG_SPR_CD) AS CHG_NO_CHG_CD 
+                        ,COUNT(A.AFCHG_BGT_APLY_PERD_CD) AS CNT_AFCHG_BGT_APLY_PERD_CD                      
+                    FROM HST_LIST A
+                    GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_DEPT_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD 
+                ) A                   
+            ), PAST_ITEM AS (
+                SELECT
+                    A.CO_CD
+                    ,A.BZPLC_ID
+                    ,A.AFCHG_DEPT_ID
+                    ,A.AFCHG_ACCT_ID
+                    ,A.AFCHG_BGT_YY
+                    ,A.AFCHG_BGT_APLY_PERD_CD                
+                    ,REGEXP_SUBSTR(MIN(A.GUBUN || '-' || A.PAST_GEN_BGT_CHG_NO) , '[^-]+', 1, 2) AS PAST_GEN_BGT_CHG_NO /*최초등록건과 변경건이 있으면 최초등록건과 변경건중에서 추출하고, 없으면 최초등록건과 변경건이 아닌 데이터중에서 추출*/
+                FROM (
+                    SELECT /*최초등록건과 변경건중 현재 시퀀스보다 작으면서 제일 큰 시퀀스번호 추출*/
+                        'REG' AS GUBUN
+                        ,A.CO_CD
+                        ,A.BZPLC_ID
+                        ,A.AFCHG_DEPT_ID
+                        ,A.AFCHG_ACCT_ID
+                        ,A.AFCHG_BGT_YY
+                        ,A.AFCHG_BGT_APLY_PERD_CD 
+                        ,MAX(A.GEN_BGT_CHG_NO) AS PAST_GEN_BGT_CHG_NO /*현재건보다 한 단계 과거건의 시퀀스 번호(WHERE 절에 현재보다 작은 조건을 줌)*/                    
+                    FROM HST_LIST A, MAX_ITEM B
+                    WHERE A.CO_CD = B.CO_CD
+                    AND A.BZPLC_ID = B.BZPLC_ID
+                    AND A.AFCHG_DEPT_ID = B.AFCHG_DEPT_ID
+                    AND A.AFCHG_ACCT_ID = B.AFCHG_ACCT_ID
+                    AND A.AFCHG_BGT_YY = B.AFCHG_BGT_YY
+                    AND A.AFCHG_BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD
+                    AND (A.BGT_CHG_SPR_CD = '1' OR A.BGT_CHG_SPR_CD = '2') /*최초등록건과 변경건만 조회*/
+                    AND A.GEN_BGT_CHG_NO <  B.MAX_GEN_BGT_CHG_NO                
+                    GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_DEPT_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD 
+                    UNION ALL
+                    SELECT /*최초등록건과 변경건이 아닌 데이터중 현재 시퀀스보다 작으면서 제일 큰 시퀀스번호 추출*/
+                        'TRAN' AS GUBUN
+                        ,A.CO_CD
+                        ,A.BZPLC_ID
+                        ,A.AFCHG_DEPT_ID
+                        ,A.AFCHG_ACCT_ID
+                        ,A.AFCHG_BGT_YY
+                        ,A.AFCHG_BGT_APLY_PERD_CD 
+                        ,MAX(A.GEN_BGT_CHG_NO) AS PAST_GEN_BGT_CHG_NO /*현재건보다 한 단계 과거건의 시퀀스 번호(WHERE 절에 현재보다 작은 조건을 줌)*/                    
+                    FROM HST_LIST A, MAX_ITEM B
+                    WHERE A.CO_CD = B.CO_CD
+                    AND A.BZPLC_ID = B.BZPLC_ID
+                    AND A.AFCHG_DEPT_ID = B.AFCHG_DEPT_ID
+                    AND A.AFCHG_ACCT_ID = B.AFCHG_ACCT_ID
+                    AND A.AFCHG_BGT_YY = B.AFCHG_BGT_YY
+                    AND A.AFCHG_BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD
+                    AND (A.BGT_CHG_SPR_CD != '1' AND A.BGT_CHG_SPR_CD != '2') /*최초등록건과 변경건이 아닌건만 조회*/
+                    AND A.GEN_BGT_CHG_NO <  B.MAX_GEN_BGT_CHG_NO                
+                    GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_DEPT_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD  
+                ) A
+                GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_DEPT_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD                  
+            ), ORG_LIST AS (
+               SELECT
+                    A.CO_CD
+                    ,A.BZPLC_ID
+                    ,A.AFCHG_DEPT_ID
+                    ,A.AFCHG_ACCT_ID
+                    ,A.AFCHG_BGT_YY
+                    ,A.AFCHG_BGT_APLY_PERD_CD 
+                    ,A.GEN_BGT_CHG_NO
+                    ,A.CHG_BGT_AMT  AS ORG_BGT_AMT /*원예산*/
+                    ,B.CHG_RSN_HST
+                    ,B.CNT_AFCHG_BGT_APLY_PERD_CD
+                FROM (
+                	/*과거 데이터가 있는 건만 조회(현재건보다 한 단계 이전의 과거건)*/
+                    SELECT
+                        A.CO_CD
+                        ,A.BZPLC_ID
+                        ,A.AFCHG_DEPT_ID
+                        ,A.AFCHG_ACCT_ID
+                        ,A.AFCHG_BGT_YY
+                        ,A.AFCHG_BGT_APLY_PERD_CD 
+                        ,A.GEN_BGT_CHG_NO
+                        ,A.CHG_BGT_AMT                
+                    FROM HST_LIST A
+                    WHERE EXISTS (
+                        SELECT
+                            'X'
+                        FROM PAST_ITEM B
+                        WHERE A.CO_CD = B.CO_CD
+                        AND A.BZPLC_ID = B.BZPLC_ID
+                        AND A.AFCHG_DEPT_ID = B.AFCHG_DEPT_ID
+                        AND A.AFCHG_ACCT_ID = B.AFCHG_ACCT_ID
+                        AND A.AFCHG_BGT_YY = B.AFCHG_BGT_YY
+                        AND A.AFCHG_BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD
+                        AND A.GEN_BGT_CHG_NO = B.PAST_GEN_BGT_CHG_NO /*과거건만 조회*/
+                    )  
+                    /*과거 데이터가 없는 현재 건만 조회(과거 데이터가 없는건은 현재건을 출력해주기 위해서...)*/          
+                    UNION ALL
+                    SELECT
+                        A.CO_CD
+                        ,A.BZPLC_ID
+                        ,A.AFCHG_DEPT_ID
+                        ,A.AFCHG_ACCT_ID
+                        ,A.AFCHG_BGT_YY
+                        ,A.AFCHG_BGT_APLY_PERD_CD
+                        ,A.GEN_BGT_CHG_NO
+                        ,A.CHG_BGT_AMT                
+                    FROM HST_LIST A
+                    WHERE NOT EXISTS (
+                        SELECT
+                            'X'
+                        FROM PAST_ITEM B
+                        WHERE A.CO_CD = B.CO_CD
+                        AND A.BZPLC_ID = B.BZPLC_ID
+                        AND A.AFCHG_DEPT_ID = B.AFCHG_DEPT_ID
+                        AND A.AFCHG_ACCT_ID = B.AFCHG_ACCT_ID
+                        AND A.AFCHG_BGT_YY = B.AFCHG_BGT_YY
+                        AND A.AFCHG_BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD                
+                    )
+            ) A, MAX_ITEM B
+            WHERE A.CO_CD = B.CO_CD
+            AND A.BZPLC_ID = B.BZPLC_ID
+            AND A.AFCHG_DEPT_ID = B.AFCHG_DEPT_ID
+            AND A.AFCHG_ACCT_ID = B.AFCHG_ACCT_ID
+            AND A.AFCHG_BGT_YY = B.AFCHG_BGT_YY
+            AND A.AFCHG_BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD                                
+        )			
+		SELECT
+		    A.*
+		    ,(CASE WHEN TO_NUMBER(B.CNT_AFCHG_BGT_APLY_PERD_CD) <= 1 THEN '0' ELSE DECODE(B.ORG_BGT_AMT,NULL,'-',B.ORG_BGT_AMT) END) AS ORG_BGT_AMT
+		    ,B.CHG_RSN_HST
+		FROM (
+		    SELECT
+		        A.*
+		        ,(SELECT ACCT_NM FROM TB_CC_BGT_ACCT_BASIS ACCT WHERE ACCT.CO_CD=A.CO_CD AND ACCT.BZPLC_ID=A.BZPLC_ID AND ACCT.ACCT_ID=A.HRNK_ACCT_ID) AS HRNK_ACCT_NM
+		        ,B.BGT_NO
+		        ,#{bgtYy} AS BGT_YY
+		        ,#{bgtPerdSprCd} AS BGT_PERD_SPR_CD		    
+		        ,A.NO AS BGT_APLY_PERD_CD		    
+		        ,(CASE
+		            WHEN #{bgtPerdSprCd} = '1' THEN #{bgtYy} || '.' || A.NO
+		            WHEN #{bgtPerdSprCd} = '2' THEN #{bgtYy} || '.' || SUBSTR(A.NO,2,1) || '분기'
+		        END) AS BGT_APLY_PERD_NM
+		        ,NVL(B.BGT_AMT,0)-NVL(B.TOT_ODR_AMT,0)  AS BGT_AMT
+		        ,DECODE(B.BGT_AMT,NULL,'-',B.BGT_AMT) AS CUR_BGT_AMT
+		        ,#{bgtRegSprCd} AS BGT_REG_SPR_CD	/*예산등록구분코드(10:계정별, 20:부서별) */	        		        
+		        ,NVL(B.TOT_ODR_AMT,0) AS TOT_ODR_AMT
+		    FROM (
+		        SELECT
+		            A.*
+		            ,B.NO
+		        FROM (
+		            SELECT 
+		                A.CO_CD
+		                ,A.BZPLC_ID
+		                ,A.ACCT_ID
+		                ,B.ACCT_NM
+		                ,B.ACCT_LVL
+		                ,A.DEPT_ID
+		                ,B.HRNK_ACCT_ID
+		            FROM TB_CC_BGT_ACCT_DEPT_MAPP A, TB_CC_BGT_ACCT_BASIS B
+		            WHERE B.USE_YN = 'Y'
+		            AND A.CO_CD = B.CO_CD
+		            AND A.BZPLC_ID = B.BZPLC_ID
+		            AND A.ACCT_ID = B.ACCT_ID
+		            AND B.ACCT_TP_CD = #{acctTpCd} /*계정유형코드(1:일반, 2:공통)*/
+		            AND A.CO_CD = #{coCd}
+		            AND A.BZPLC_ID = #{bzplcId}
+		            AND A.DEPT_ID = #{deptId}
+		        ) A, (SELECT
+		                LPAD(NO,2,'0') AS NO
+		            FROM (
+		                SELECT LEVEL AS NO
+		                FROM DUAL
+		                CONNECT BY LEVEL <= 31
+		            ) WHERE NO BETWEEN #{bgtAplyPerdCd1} AND #{bgtAplyPerdCd2}) B
+		    ) A, TB_CC_BGT_DTLS B
+		    WHERE A.CO_CD = B.CO_CD(+)
+		    AND A.BZPLC_ID = B.BZPLC_ID(+)
+		    AND A.ACCT_ID = B.ACCT_ID(+)
+		    AND A.DEPT_ID = B.DEPT_ID(+)
+		    AND B.BGT_YY(+) = #{bgtYy}
+		    AND B.BGT_PERD_SPR_CD(+) = #{bgtPerdSprCd} /*예산기간구분코드(1:월, 2:분기)*/
+		    AND B.BGT_REG_SPR_CD(+) = #{bgtRegSprCd} /*예산등록구분코드(10:계정별, 20:부서별) */
+		    AND A.NO = B.BGT_APLY_PERD_CD(+) /*예산적용기간코드(1:1월~12:12월, 21:1분기, 22:2분기, 23:3분기, 24:4분기, 31:년(시작월)) */ 
+		) A, ORG_LIST B
+		WHERE A.CO_CD = B.CO_CD(+)
+		AND A.BZPLC_ID = B.BZPLC_ID(+)
+		AND A.DEPT_ID = B.AFCHG_DEPT_ID(+)
+		AND A.ACCT_ID = B.AFCHG_ACCT_ID(+)
+		AND A.BGT_YY = B.AFCHG_BGT_YY(+)
+		AND A.BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD(+)
+		ORDER BY A.ACCT_ID, A.NO       
+
+		]]>
+	</select>
+      
+	<select id="selectBgtDeptDtlMappListByAcct" parameterType="java.util.Map" resultType="java.util.Map">
+		<![CDATA[				
+		WITH HST_LIST AS (
+		    SELECT
+		        CO_CD
+		        ,BZPLC_ID
+		        ,BGT_CHG_SPR_CD
+		        ,BFCHG_DEPT_ID		        		        
+		        ,AFCHG_DEPT_ID
+		        ,AFCHG_ACCT_ID
+		        ,AFCHG_BGT_YY    
+		        ,AFCHG_BGT_APLY_PERD_CD
+                ,CHG_BGT_AMT
+                ,GEN_BGT_CHG_NO
+                ,CHG_RSN                
+		    FROM TB_CC_BGT_CHG_HST
+		    WHERE CO_CD = #{coCd}
+		    AND BZPLC_ID = #{bzplcId}
+		    AND AFCHG_ACCT_ID = #{acctId} 
+		    AND AFCHG_BGT_YY = #{bgtYy}      
+		    AND (BGT_CHG_SPR_CD = '1' OR BGT_CHG_SPR_CD = '2') /*최초등록건과 변경건만 조회*/       
+		) , MAX_ITEM AS ( /*해당 계정, 기간의 제일 큰 시퀀스번호 추출*/
+                SELECT
+                    A.CO_CD
+                    ,A.BZPLC_ID
+                    ,A.AFCHG_DEPT_ID
+                    ,A.AFCHG_ACCT_ID
+                    ,A.AFCHG_BGT_YY
+                    ,A.AFCHG_BGT_APLY_PERD_CD
+                    ,A.CHG_RSN_HST
+                    ,TO_NUMBER(REGEXP_SUBSTR( A.CHG_NO_CHG_CD , '[^-]+', 1, 1)) AS MAX_GEN_BGT_CHG_NO
+                    ,REGEXP_SUBSTR( A.CHG_NO_CHG_CD , '[^-]+', 1, 2) AS MAX_BGT_CHG_SPR_CD 
+                    ,A.CNT_AFCHG_BGT_APLY_PERD_CD                  
+                FROM (
+                    SELECT 
+                        A.CO_CD
+                        ,A.BZPLC_ID
+                        ,A.AFCHG_DEPT_ID
+                        ,A.AFCHG_ACCT_ID
+                        ,A.AFCHG_BGT_YY
+                        ,A.AFCHG_BGT_APLY_PERD_CD                    
+                        ,LISTAGG((CHG_RSN), ',') WITHIN GROUP(ORDER BY GEN_BGT_CHG_NO) AS CHG_RSN_HST
+                        ,MAX(TO_CHAR(GEN_BGT_CHG_NO) || '-' || BGT_CHG_SPR_CD) AS CHG_NO_CHG_CD
+                        ,COUNT(A.AFCHG_BGT_APLY_PERD_CD) AS CNT_AFCHG_BGT_APLY_PERD_CD                        
+                    FROM HST_LIST A
+                    GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_DEPT_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD 
+                ) A                   
+            ), PAST_ITEM AS (
+                SELECT
+                    A.CO_CD
+                    ,A.BZPLC_ID
+                    ,A.AFCHG_DEPT_ID
+                    ,A.AFCHG_ACCT_ID
+                    ,A.AFCHG_BGT_YY
+                    ,A.AFCHG_BGT_APLY_PERD_CD                
+                    ,REGEXP_SUBSTR(MIN(A.GUBUN || '-' || A.PAST_GEN_BGT_CHG_NO) , '[^-]+', 1, 2) AS PAST_GEN_BGT_CHG_NO /*최초등록건과 변경건이 있으면 최초등록건과 변경건중에서 추출하고, 없으면 최초등록건과 변경건이 아닌 데이터중에서 추출*/
+                FROM (
+                    SELECT /*최초등록건과 변경건중 현재 시퀀스보다 작으면서 제일 큰 시퀀스번호 추출*/
+                        'REG' AS GUBUN
+                        ,A.CO_CD
+                        ,A.BZPLC_ID
+                        ,A.AFCHG_DEPT_ID
+                        ,A.AFCHG_ACCT_ID
+                        ,A.AFCHG_BGT_YY
+                        ,A.AFCHG_BGT_APLY_PERD_CD 
+                        ,MAX(A.GEN_BGT_CHG_NO) AS PAST_GEN_BGT_CHG_NO /*현재건보다 한 단계 과거건의 시퀀스 번호(WHERE 절에 현재보다 작은 조건을 줌)*/                    
+                    FROM HST_LIST A, MAX_ITEM B
+                    WHERE A.CO_CD = B.CO_CD
+                    AND A.BZPLC_ID = B.BZPLC_ID
+                    AND A.AFCHG_DEPT_ID = B.AFCHG_DEPT_ID
+                    AND A.AFCHG_ACCT_ID = B.AFCHG_ACCT_ID
+                    AND A.AFCHG_BGT_YY = B.AFCHG_BGT_YY
+                    AND A.AFCHG_BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD
+                    AND (A.BGT_CHG_SPR_CD = '1' OR A.BGT_CHG_SPR_CD = '2') /*최초등록건과 변경건만 조회*/
+                    AND A.GEN_BGT_CHG_NO <  B.MAX_GEN_BGT_CHG_NO                
+                    GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_DEPT_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD 
+                    UNION ALL
+                    SELECT /*최초등록건과 변경건이 아닌 데이터중 현재 시퀀스보다 작으면서 제일 큰 시퀀스번호 추출*/
+                        'TRAN' AS GUBUN
+                        ,A.CO_CD
+                        ,A.BZPLC_ID
+                        ,A.AFCHG_DEPT_ID
+                        ,A.AFCHG_ACCT_ID
+                        ,A.AFCHG_BGT_YY
+                        ,A.AFCHG_BGT_APLY_PERD_CD 
+                        ,MAX(A.GEN_BGT_CHG_NO) AS PAST_GEN_BGT_CHG_NO /*현재건보다 한 단계 과거건의 시퀀스 번호(WHERE 절에 현재보다 작은 조건을 줌)*/                    
+                    FROM HST_LIST A, MAX_ITEM B
+                    WHERE A.CO_CD = B.CO_CD
+                    AND A.BZPLC_ID = B.BZPLC_ID
+                    AND A.AFCHG_DEPT_ID = B.AFCHG_DEPT_ID
+                    AND A.AFCHG_ACCT_ID = B.AFCHG_ACCT_ID
+                    AND A.AFCHG_BGT_YY = B.AFCHG_BGT_YY
+                    AND A.AFCHG_BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD
+                    AND (A.BGT_CHG_SPR_CD != '1' AND A.BGT_CHG_SPR_CD != '2') /*최초등록건과 변경건이 아닌건만 조회*/
+                    AND A.GEN_BGT_CHG_NO <  B.MAX_GEN_BGT_CHG_NO                
+                    GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_DEPT_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD  
+                ) A
+                GROUP BY A.CO_CD, A.BZPLC_ID, A.AFCHG_DEPT_ID, A.AFCHG_ACCT_ID, A.AFCHG_BGT_YY, A.AFCHG_BGT_APLY_PERD_CD                  
+            ), ORG_LIST AS (
+               SELECT
+                    A.CO_CD
+                    ,A.BZPLC_ID
+                    ,A.AFCHG_DEPT_ID
+                    ,A.AFCHG_ACCT_ID
+                    ,A.AFCHG_BGT_YY
+                    ,A.AFCHG_BGT_APLY_PERD_CD 
+                    ,A.GEN_BGT_CHG_NO
+                    ,A.CHG_BGT_AMT  AS ORG_BGT_AMT /*원예산*/
+                    ,B.CHG_RSN_HST
+                    ,B.CNT_AFCHG_BGT_APLY_PERD_CD
+                FROM (
+                	/*과거 데이터가 있는 건만 조회(현재건보다 한 단계 이전의 과거건)*/
+                    SELECT
+                        A.CO_CD
+                        ,A.BZPLC_ID
+                        ,A.AFCHG_DEPT_ID
+                        ,A.AFCHG_ACCT_ID
+                        ,A.AFCHG_BGT_YY
+                        ,A.AFCHG_BGT_APLY_PERD_CD 
+                        ,A.GEN_BGT_CHG_NO
+                        ,A.CHG_BGT_AMT                
+                    FROM HST_LIST A
+                    WHERE EXISTS (
+                        SELECT
+                            'X'
+                        FROM PAST_ITEM B
+                        WHERE A.CO_CD = B.CO_CD
+                        AND A.BZPLC_ID = B.BZPLC_ID
+                        AND A.AFCHG_DEPT_ID = B.AFCHG_DEPT_ID
+                        AND A.AFCHG_ACCT_ID = B.AFCHG_ACCT_ID
+                        AND A.AFCHG_BGT_YY = B.AFCHG_BGT_YY
+                        AND A.AFCHG_BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD
+                        AND A.GEN_BGT_CHG_NO = B.PAST_GEN_BGT_CHG_NO /*과거건만 조회*/
+                    )  
+                    /*과거 데이터가 없는 현재 건만 조회(과거 데이터가 없는건은 현재건을 출력해주기 위해서...)*/          
+                    UNION ALL
+                    SELECT
+                        A.CO_CD
+                        ,A.BZPLC_ID
+                        ,A.AFCHG_DEPT_ID
+                        ,A.AFCHG_ACCT_ID
+                        ,A.AFCHG_BGT_YY
+                        ,A.AFCHG_BGT_APLY_PERD_CD
+                        ,A.GEN_BGT_CHG_NO
+                        ,A.CHG_BGT_AMT                
+                    FROM HST_LIST A
+                    WHERE NOT EXISTS (
+                        SELECT
+                            'X'
+                        FROM PAST_ITEM B
+                        WHERE A.CO_CD = B.CO_CD
+                        AND A.BZPLC_ID = B.BZPLC_ID
+                        AND A.AFCHG_DEPT_ID = B.AFCHG_DEPT_ID
+                        AND A.AFCHG_ACCT_ID = B.AFCHG_ACCT_ID
+                        AND A.AFCHG_BGT_YY = B.AFCHG_BGT_YY
+                        AND A.AFCHG_BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD                
+                    )
+            ) A, MAX_ITEM B
+            WHERE A.CO_CD = B.CO_CD
+            AND A.BZPLC_ID = B.BZPLC_ID
+            AND A.AFCHG_DEPT_ID = B.AFCHG_DEPT_ID
+            AND A.AFCHG_ACCT_ID = B.AFCHG_ACCT_ID
+            AND A.AFCHG_BGT_YY = B.AFCHG_BGT_YY
+            AND A.AFCHG_BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD                                
+        )				
+		SELECT
+		    A.*
+		    ,(CASE WHEN TO_NUMBER(B.CNT_AFCHG_BGT_APLY_PERD_CD) <= 1 THEN '0' ELSE DECODE(B.ORG_BGT_AMT,NULL,'-',B.ORG_BGT_AMT) END) AS ORG_BGT_AMT
+		    ,B.CHG_RSN_HST
+		FROM (
+		    SELECT
+		        A.*		        
+		        ,B.BGT_NO
+		        ,#{bgtYy} AS BGT_YY
+		        ,#{bgtPerdSprCd} AS BGT_PERD_SPR_CD		    
+		        ,A.NO AS BGT_APLY_PERD_CD		    
+		        ,(CASE
+		            WHEN #{bgtPerdSprCd} = '1' THEN #{bgtYy} || '.' || A.NO
+		            WHEN #{bgtPerdSprCd} = '2' THEN #{bgtYy} || '.' || SUBSTR(A.NO,2,1) || '분기'
+		        END) AS BGT_APLY_PERD_NM
+		        ,NVL(B.BGT_AMT,0)-NVL(B.TOT_ODR_AMT,0)  AS BGT_AMT
+		        ,DECODE(B.BGT_AMT,NULL,'-',B.BGT_AMT) AS CUR_BGT_AMT
+		        ,#{bgtRegSprCd} AS BGT_REG_SPR_CD	/*예산등록구분코드(10:계정별, 20:부서별) */
+		        ,NVL(B.TOT_ODR_AMT,0) AS TOT_ODR_AMT
+		    FROM (
+		        SELECT
+		            A.*
+		            ,B.NO
+		        FROM (
+		            SELECT 
+		                A.CO_CD
+		                ,A.BZPLC_ID
+		                ,A.ACCT_ID
+		                ,B.ACCT_NM
+		                ,B.ACCT_LVL
+		                ,B.HRNK_ACCT_ID	                		                		                
+		                ,A.DEPT_ID
+		                ,C.DEPT_NM		                
+		            FROM TB_CC_BGT_ACCT_DEPT_MAPP A, TB_CC_BGT_ACCT_BASIS B, TB_CC_DEPT_BASIS C
+		            WHERE A.USE_YN = 'Y'
+		            AND B.USE_YN = 'Y'
+		            AND A.CO_CD = B.CO_CD
+		            AND A.BZPLC_ID = B.BZPLC_ID
+		            AND A.ACCT_ID = B.ACCT_ID
+		            AND A.CO_CD = C.CO_CD
+		            AND A.BZPLC_ID = C.BZPLC_ID
+		            AND A.DEPT_ID = C.DEPT_ID		            
+		            AND B.ACCT_TP_CD = #{acctTpCd} /*계정유형코드(1:일반, 2:공통)*/
+		            AND A.CO_CD = #{coCd}
+		            AND A.BZPLC_ID = #{bzplcId}
+		            AND A.ACCT_ID = #{acctId}
+		        ) A, (SELECT
+		                LPAD(NO,2,'0') AS NO
+		            FROM (
+		                SELECT LEVEL AS NO
+		                FROM DUAL
+		                CONNECT BY LEVEL <= 31
+		            ) WHERE NO BETWEEN #{bgtAplyPerdCd1} AND #{bgtAplyPerdCd2}) B
+		    ) A, TB_CC_BGT_DTLS B
+		    WHERE A.CO_CD = B.CO_CD(+)
+		    AND A.BZPLC_ID = B.BZPLC_ID(+)
+		    AND A.ACCT_ID = B.ACCT_ID(+)
+		    AND A.DEPT_ID = B.DEPT_ID(+)
+		    AND B.BGT_YY(+) = #{bgtYy}
+		    AND B.BGT_PERD_SPR_CD(+) = #{bgtPerdSprCd} /*예산기간구분코드(1:월, 2:분기)*/
+		    AND B.BGT_REG_SPR_CD(+) = #{bgtRegSprCd} /*예산등록구분코드(10:계정별, 20:부서별) */
+		    AND A.NO = B.BGT_APLY_PERD_CD(+) /*예산적용기간코드(1:1월~12:12월, 21:1분기, 22:2분기, 23:3분기, 24:4분기, 31:년(시작월)) */ 
+		) A, ORG_LIST B
+		WHERE A.CO_CD = B.CO_CD(+)
+		AND A.BZPLC_ID = B.BZPLC_ID(+)
+		AND A.DEPT_ID = B.AFCHG_DEPT_ID(+)
+		AND A.ACCT_ID = B.AFCHG_ACCT_ID(+)
+		AND A.BGT_YY = B.AFCHG_BGT_YY(+)
+		AND A.BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD(+)
+		ORDER BY A.DEPT_ID, A.NO       
+
+		]]>
+	</select>      
+      
+	<select id="selectBgtDeptDtlMappListByCommonAcct" parameterType="java.util.Map" resultType="java.util.Map">
+		<![CDATA[		
+		WITH HST_LIST AS (
+		    SELECT
+		        CO_CD
+		        ,BZPLC_ID
+		        ,AFCHG_ACCT_ID
+		        ,AFCHG_BGT_YY    
+		        ,AFCHG_BGT_APLY_PERD_CD
+                ,CHG_BGT_AMT
+                ,GEN_BGT_CHG_NO
+                ,CHG_RSN
+                ,ROW_NUMBER() OVER(PARTITION BY CO_CD, BZPLC_ID, AFCHG_ACCT_ID, AFCHG_BGT_YY, AFCHG_BGT_APLY_PERD_CD ORDER BY GEN_BGT_CHG_NO ASC) AS RNUM
+		    FROM TB_CC_BGT_CHG_HST
+		    WHERE CO_CD = #{coCd}
+		    AND BZPLC_ID = #{bzplcId}
+		    AND AFCHG_ACCT_ID = #{acctId} 
+		    AND AFCHG_BGT_YY = #{bgtYy}
+		    AND (BGT_CHG_SPR_CD = '1' OR BGT_CHG_SPR_CD = '2') /*최초등록건과 변경건만 조회*/                 
+		) 		
+		SELECT
+		    A.*
+		    ,(CASE WHEN TO_NUMBER(B.CNT_AFCHG_BGT_APLY_PERD_CD) <= 1 THEN '0' ELSE DECODE(B.ORG_BGT_AMT,NULL,'-',B.ORG_BGT_AMT) END) AS ORG_BGT_AMT
+		    ,B.CHG_RSN_HST
+		FROM (
+		    SELECT
+		        A.*		        
+		        ,B.BGT_NO
+		        ,#{bgtYy} AS BGT_YY
+		        ,#{bgtPerdSprCd} AS BGT_PERD_SPR_CD		    
+		        ,A.NO AS BGT_APLY_PERD_CD		    
+		        ,(CASE
+		            WHEN #{bgtPerdSprCd} = '1' THEN #{bgtYy} || '.' || A.NO
+		            WHEN #{bgtPerdSprCd} = '2' THEN #{bgtYy} || '.' || SUBSTR(A.NO,2,1) || '분기'
+		        END) AS BGT_APLY_PERD_NM
+		        ,NVL(B.BGT_AMT,0)-NVL(B.TOT_ODR_AMT,0)  AS BGT_AMT
+		        ,DECODE(B.BGT_AMT,NULL,'-',B.BGT_AMT) AS CUR_BGT_AMT
+		        ,#{bgtRegSprCd} AS BGT_REG_SPR_CD	/*예산등록구분코드(10:계정별, 20:부서별) */	        		        
+		    FROM (
+		        SELECT
+		            A.*
+		            ,B.NO
+		        FROM (
+		            SELECT 
+		                A.CO_CD
+		                ,A.BZPLC_ID
+		                ,A.ACCT_ID
+		                ,A.ACCT_NM
+		                ,A.ACCT_LVL
+		                ,A.HRNK_ACCT_ID
+		                ,(SELECT B.ACCT_NM FROM TB_CC_BGT_ACCT_BASIS B WHERE B.CO_CD=A.CO_CD AND B.BZPLC_ID=A.BZPLC_ID AND B.ACCT_ID=A.HRNK_ACCT_ID) AS HRNK_ACCT_NM	                	                		                		                         
+		            FROM TB_CC_BGT_ACCT_BASIS A
+		            WHERE A.USE_YN = 'Y'		                        
+		            AND A.ACCT_TP_CD = #{acctTpCd} /*계정유형코드(1:일반, 2:공통)*/
+		            AND A.CO_CD = #{coCd}
+		            AND A.BZPLC_ID = #{bzplcId}
+		            AND A.ACCT_ID = #{acctId}		            	            
+		        ) A, (SELECT
+		                LPAD(NO,2,'0') AS NO
+		            FROM (
+		                SELECT LEVEL AS NO
+		                FROM DUAL
+		                CONNECT BY LEVEL <= 31
+		            ) WHERE NO BETWEEN #{bgtAplyPerdCd1} AND #{bgtAplyPerdCd2}) B
+		    ) A, TB_CC_BGT_DTLS B
+		    WHERE A.CO_CD = B.CO_CD(+)
+		    AND A.BZPLC_ID = B.BZPLC_ID(+)
+		    AND A.ACCT_ID = B.ACCT_ID(+)
+		    AND B.BGT_YY(+) = #{bgtYy}
+		    AND B.BGT_PERD_SPR_CD(+) = #{bgtPerdSprCd} /*예산기간구분코드(1:월, 2:분기)*/
+		    AND B.BGT_REG_SPR_CD(+) = #{bgtRegSprCd} /*예산등록구분코드(10:계정별, 20:부서별) */
+		    AND A.NO = B.BGT_APLY_PERD_CD(+) /*예산적용기간코드(1:1월~12:12월, 21:1분기, 22:2분기, 23:3분기, 24:4분기, 31:년(시작월)) */ 
+		) A, (
+                SELECT
+                    A.*
+                    ,B.CHG_BGT_AMT AS ORG_BGT_AMT /*원예산*/
+                    ,B.RNUM
+                FROM (
+                    SELECT
+                        CO_CD
+                        ,BZPLC_ID
+                        ,AFCHG_ACCT_ID
+                        ,AFCHG_BGT_YY    
+                        ,AFCHG_BGT_APLY_PERD_CD
+                        ,COUNT(*) AS CNT
+                        ,LISTAGG((CHG_RSN), ',') WITHIN GROUP(ORDER BY GEN_BGT_CHG_NO) AS CHG_RSN_HST
+                        ,COUNT(AFCHG_BGT_APLY_PERD_CD) AS CNT_AFCHG_BGT_APLY_PERD_CD
+                    FROM HST_LIST 
+                    GROUP BY CO_CD, BZPLC_ID, AFCHG_ACCT_ID, AFCHG_BGT_YY, AFCHG_BGT_APLY_PERD_CD        
+               ) A, HST_LIST B
+               WHERE B.CO_CD = A.CO_CD
+               AND B.BZPLC_ID = A.BZPLC_ID               
+               AND B.AFCHG_ACCT_ID = A.AFCHG_ACCT_ID
+               AND B.AFCHG_BGT_YY = A.AFCHG_BGT_YY
+               AND B.AFCHG_BGT_APLY_PERD_CD = A.AFCHG_BGT_APLY_PERD_CD
+               AND B.RNUM = (CASE WHEN A.CNT = 1 THEN A.CNT ELSE (A.CNT - 1) END)        
+		) B
+		WHERE A.CO_CD = B.CO_CD(+)
+		AND A.BZPLC_ID = B.BZPLC_ID(+)
+		AND A.ACCT_ID = B.AFCHG_ACCT_ID(+)
+		AND A.BGT_YY = B.AFCHG_BGT_YY(+)
+		AND A.BGT_APLY_PERD_CD = B.AFCHG_BGT_APLY_PERD_CD(+)
+		ORDER BY A.ACCT_ID, A.HRNK_ACCT_ID, A.NO       
+
+		]]>
+	</select>          
+      
+    <insert id="saveBgtDeptDtl" parameterType="HashMap">		
+	<![CDATA[
+		MERGE INTO TB_CC_BGT_DTLS
+		USING DUAL ON (CO_CD = #{coCd} AND BZPLC_ID = #{bzplcId} AND DEPT_ID = #{deptId} AND ACCT_ID = #{acctId} AND BGT_PERD_SPR_CD = #{bgtPerdSprCd} AND BGT_YY = #{bgtYy} AND BGT_APLY_PERD_CD = #{bgtAplyPerdCd} AND BGT_REG_SPR_CD = #{bgtRegSprCd})
+		WHEN MATCHED THEN
+		    UPDATE SET
+		        BGT_AMT = #{bgtAmt} + NVL((SELECT TOT_ODR_AMT FROM TB_CC_BGT_DTLS WHERE BZPLC_ID = #{bzplcId} AND DEPT_ID = #{deptId} AND ACCT_ID = #{acctId} AND BGT_PERD_SPR_CD = #{bgtPerdSprCd} AND BGT_YY = #{bgtYy} AND BGT_APLY_PERD_CD = #{bgtAplyPerdCd} AND BGT_REG_SPR_CD = #{bgtRegSprCd}),0)
+		        ,BGT_ADD_AMT = #{bgtAmt}		        
+		        ,UPDPSN_ID = '_UPDATE_ID'		        		        
+		        ,UPD_DTM = SYSDATE
+		WHEN NOT MATCHED THEN                    
+		    INSERT (
+		        CO_CD
+		        ,BZPLC_ID
+		        ,DEPT_ID
+		        ,ACCT_ID
+		        ,BGT_NO
+		        ,BGT_PERD_SPR_CD
+		        ,BGT_YY
+		        ,BGT_APLY_PERD_CD
+		        ,BGT_YM		        
+		        ,BGT_REG_SPR_CD
+		        ,BGT_AMT
+		        ,BGT_ADD_AMT
+		        ,CURR_UNIT_CD		        		        		        
+		        ,REGPSN_ID
+		        ,REG_DTM
+		        ,UPDPSN_ID
+		        ,UPD_DTM        
+		    )
+		    VALUES (
+		        #{coCd}
+		        ,#{bzplcId}
+		        ,#{deptId}
+		        ,#{acctId}
+		        ,FN_CC_BGT_NO_CRT()
+		        ,#{bgtPerdSprCd}
+		        ,#{bgtYy}
+		        ,#{bgtAplyPerdCd}
+		        ,(CASE 
+		        	WHEN #{bgtAplyPerdCd} BETWEEN '01' AND '12' THEN #{bgtYy} || #{bgtAplyPerdCd}
+		        	WHEN #{bgtAplyPerdCd} = '21' THEN #{bgtYy} || '01'
+		        	WHEN #{bgtAplyPerdCd} = '22' THEN #{bgtYy} || '04'
+		        	WHEN #{bgtAplyPerdCd} = '23' THEN #{bgtYy} || '07'
+		        	WHEN #{bgtAplyPerdCd} = '24' THEN #{bgtYy} || '10'
+		         END)		        
+		        ,#{bgtRegSprCd}  
+		        ,#{bgtAmt}
+		        ,#{bgtAmt}	
+		        ,'KRW'			        	        		        
+		        ,#{userId}
+		        ,SYSDATE
+		        ,#{userId}
+		        ,SYSDATE         
+		    )		
+	]]>	    		  
+	</insert>
+          
+          
+	<insert id="saveBgtDeptDtlHst" parameterType="HashMap">		
+	<![CDATA[	
+		INSERT INTO TB_CC_BGT_CHG_HST (
+		    CO_CD
+		    ,BZPLC_ID
+		    ,GEN_BGT_CHG_NO
+		    ,BGT_CHG_SPR_CD
+		    ,AFCHG_ACCT_ID
+		    ,AFCHG_DEPT_ID
+		    ,AFCHG_BGT_YY
+		    ,AFCHG_BGT_APLY_PERD_CD
+		    ,AFCHG_BGT_YM
+		    ,CHG_BGT_AMT
+		    ,CHG_RSN
+		    ,CURR_UNIT_CD			    
+		    ,REG_DTM
+		    ,REGPSN_ID
+		    ,UPD_DTM
+		    ,UPDPSN_ID
+		)
+		VALUES (
+		    #{coCd}
+		    ,#{bzplcId}
+		    ,FN_CC_GEN_BGT_CHG_NO_CRT()
+		    ,(CASE
+                WHEN (SELECT COUNT(*) FROM TB_CC_BGT_CHG_HST WHERE CO_CD = #{coCd} AND BZPLC_ID = #{bzplcId} AND AFCHG_DEPT_ID = #{deptId} AND AFCHG_ACCT_ID = #{acctId} AND AFCHG_BGT_YY = #{bgtYy} AND AFCHG_BGT_APLY_PERD_CD = #{bgtAplyPerdCd}) < 1 THEN '1'
+                ELSE '2'
+              END)  /*예산변경구분코드(1:최초생성,2:변경,3:이체변경,4:이월변경,5:자동이월변경,6:주문)*/  
+		    ,#{acctId}
+		    ,#{deptId}
+		    ,#{bgtYy}
+		    ,#{bgtAplyPerdCd}
+	        ,(CASE 
+	        	WHEN #{bgtAplyPerdCd} BETWEEN '01' AND '12' THEN #{bgtYy} || #{bgtAplyPerdCd}
+	        	WHEN #{bgtAplyPerdCd} = '21' THEN #{bgtYy} || '01'
+	        	WHEN #{bgtAplyPerdCd} = '22' THEN #{bgtYy} || '04'
+	        	WHEN #{bgtAplyPerdCd} = '23' THEN #{bgtYy} || '07'
+	        	WHEN #{bgtAplyPerdCd} = '24' THEN #{bgtYy} || '10'
+	         END)	
+		    ,#{bgtAmt}
+		    ,#{chgRsn}
+		    ,'KRW'				    
+		    ,SYSDATE
+		    ,#{userId}
+		    ,SYSDATE
+		    ,#{userId}
+		)
+	]]>	
+	</insert>      
+	    
+	    
+    <insert id="saveBgtCommonAcctDtl" parameterType="HashMap">		
+	<![CDATA[
+		MERGE INTO TB_CC_BGT_DTLS
+		USING DUAL ON (CO_CD = #{coCd} AND BZPLC_ID = #{bzplcId} AND ACCT_ID = #{acctId} AND BGT_PERD_SPR_CD = #{bgtPerdSprCd} AND BGT_YY = #{bgtYy} AND BGT_APLY_PERD_CD = #{bgtAplyPerdCd} AND BGT_REG_SPR_CD = #{bgtRegSprCd})
+		WHEN MATCHED THEN
+		    UPDATE SET
+		        BGT_AMT = #{bgtAmt} + NVL((SELECT TOT_ODR_AMT FROM TB_CC_BGT_DTLS WHERE BZPLC_ID = #{bzplcId} AND ACCT_ID = #{acctId} AND BGT_PERD_SPR_CD = #{bgtPerdSprCd} AND BGT_YY = #{bgtYy} AND BGT_APLY_PERD_CD = #{bgtAplyPerdCd} AND BGT_REG_SPR_CD = #{bgtRegSprCd}),0)
+		        ,BGT_ADD_AMT = #{bgtAmt}		        
+		        ,UPDPSN_ID = '_UPDATE_ID'		        		        
+		        ,UPD_DTM = SYSDATE
+		WHEN NOT MATCHED THEN                    
+		    INSERT (
+		        CO_CD
+		        ,BZPLC_ID
+		        ,ACCT_ID
+		        ,BGT_NO
+		        ,BGT_PERD_SPR_CD
+		        ,BGT_YY
+		        ,BGT_APLY_PERD_CD
+		        ,BGT_YM		        
+		        ,BGT_REG_SPR_CD
+		        ,BGT_AMT
+		        ,BGT_ADD_AMT	
+		        ,CURR_UNIT_CD			        	        		        
+		        ,REGPSN_ID
+		        ,REG_DTM
+		        ,UPDPSN_ID
+		        ,UPD_DTM        
+		    )
+		    VALUES (
+		        #{coCd}
+		        ,#{bzplcId}		        
+		        ,#{acctId}
+		        ,FN_CC_BGT_NO_CRT()
+		        ,#{bgtPerdSprCd}
+		        ,#{bgtYy}
+		        ,#{bgtAplyPerdCd}
+		        ,(CASE 
+		        	WHEN #{bgtAplyPerdCd} BETWEEN '01' AND '12' THEN #{bgtYy} || #{bgtAplyPerdCd}
+		        	WHEN #{bgtAplyPerdCd} = '21' THEN #{bgtYy} || '01'
+		        	WHEN #{bgtAplyPerdCd} = '22' THEN #{bgtYy} || '04'
+		        	WHEN #{bgtAplyPerdCd} = '23' THEN #{bgtYy} || '07'
+		        	WHEN #{bgtAplyPerdCd} = '24' THEN #{bgtYy} || '10'
+		         END)	        
+		        ,#{bgtRegSprCd}  
+		        ,#{bgtAmt}
+		        ,#{bgtAmt}	
+		        ,'KRW'				        	        		        
+		        ,#{userId}
+		        ,SYSDATE
+		        ,#{userId}
+		        ,SYSDATE         
+		    )		
+	]]>	    		  
+	</insert>
+		
+	<insert id="saveBgtCommonAcctDtlHst" parameterType="HashMap">		
+	<![CDATA[	
+		INSERT INTO TB_CC_BGT_CHG_HST (
+		    CO_CD
+		    ,BZPLC_ID
+		    ,GEN_BGT_CHG_NO
+		    ,BGT_CHG_SPR_CD
+		    ,AFCHG_ACCT_ID		    
+		    ,AFCHG_BGT_YY
+		    ,AFCHG_BGT_APLY_PERD_CD
+		    ,AFCHG_BGT_YM
+		    ,CHG_BGT_AMT
+		    ,CHG_RSN
+		    ,CURR_UNIT_CD			    
+		    ,REG_DTM
+		    ,REGPSN_ID
+		    ,UPD_DTM
+		    ,UPDPSN_ID
+		)
+		VALUES (
+		    #{coCd}
+		    ,#{bzplcId}
+		    ,FN_CC_GEN_BGT_CHG_NO_CRT()
+		    ,(CASE
+                WHEN (SELECT COUNT(*) FROM TB_CC_BGT_CHG_HST WHERE CO_CD = #{coCd} AND BZPLC_ID = #{bzplcId} AND AFCHG_ACCT_ID = #{acctId} AND AFCHG_DEPT_ID IS NULL AND AFCHG_BGT_YY = #{bgtYy} AND AFCHG_BGT_APLY_PERD_CD = #{bgtAplyPerdCd}) < 1 THEN '1'
+                ELSE '2'
+              END)  /*예산변경구분코드(1:최초생성,2:변경,3:이체변경,4:이월변경,5:자동이월변경,6:주문)*/  
+		    ,#{acctId}		    
+		    ,#{bgtYy}
+		    ,#{bgtAplyPerdCd}
+	        ,(CASE 
+	        	WHEN #{bgtAplyPerdCd} BETWEEN '01' AND '12' THEN #{bgtYy} || #{bgtAplyPerdCd}
+	        	WHEN #{bgtAplyPerdCd} = '21' THEN #{bgtYy} || '01'
+	        	WHEN #{bgtAplyPerdCd} = '22' THEN #{bgtYy} || '04'
+	        	WHEN #{bgtAplyPerdCd} = '23' THEN #{bgtYy} || '07'
+	        	WHEN #{bgtAplyPerdCd} = '24' THEN #{bgtYy} || '10'
+	         END)	
+		    ,#{bgtAmt}
+		    ,#{chgRsn}
+		    ,'KRW'			    
+		    ,SYSDATE
+		    ,#{userId}
+		    ,SYSDATE
+		    ,#{userId}
+		)
+	]]>	
+	</insert>      
+		
+	<!-- 일반예산이체  계정잔액 조회, 박재광 2022.03.28 -->
+    <select id="selectBalanceAmt" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			NVL(SUM(BGT_AMT),0) AS ACCT_BAL
+		FROM TB_CC_BGT_DTLS
+		WHERE BGT_REG_SPR_CD = '20'	/*일반예산이니깐 부서별*/
+		AND CO_CD = #{coCd}				/* 회사코드  */
+		AND BZPLC_ID = #{bzplcId}		/* 사업장ID */
+		AND ACCT_ID = #{acctId}	/* 계정ID */
+		AND DEPT_ID = #{deptId}	/* 부서ID */
+		AND BGT_YY = #{bgtYy}
+		AND BGT_APLY_PERD_CD = #{bgtAplyPerdCd}
+		<if test="bgtAplyPerdCd=='01' or bgtAplyPerdCd=='02' or bgtAplyPerdCd=='03' or bgtAplyPerdCd=='04' or bgtAplyPerdCd=='05' or bgtAplyPerdCd=='06' or bgtAplyPerdCd=='07' or bgtAplyPerdCd=='08' or bgtAplyPerdCd=='09' or bgtAplyPerdCd=='10' or bgtAplyPerdCd=='11' or bgtAplyPerdCd=='12'">
+		AND BGT_PERD_SPR_CD = '1' /*예산기간구분코드 월*/
+		</if>
+		<if test="bgtAplyPerdCd=='21' or bgtAplyPerdCd=='22' or bgtAplyPerdCd=='23' or bgtAplyPerdCd=='24'">
+		AND BGT_PERD_SPR_CD = '2' /*예산기간구분코드 분기*/
+		</if>
+	</select>
+
+	<!-- 일반예산이체 예산변경이력 등록, 박재광 2022.03.28 -->
+    <insert id="insertBgtChgHst" parameterType="HashMap">
+		INSERT INTO TB_CC_BGT_CHG_HST (
+			 CO_CD					/* 회사코드 */
+			,BZPLC_ID				/* 사업장ID */
+			,GEN_BGT_CHG_NO			/* 일반예산변경번호 */
+			,BGT_CHG_SPR_CD			/* 예산변경구분코드 */
+			,BFCHG_ACCT_ID			/* 변경전계정ID */
+			,BFCHG_DEPT_ID			/* 변경전부서ID */
+			,BFCHG_BGT_YY			/* 변경전예산년도 */
+			,BFCHG_BGT_APLY_PERD_CD	/* 변경전예산적용기간코드 */
+			,BFCHG_BGT_YM			/* 변경전예산년월 */
+			,AFCHG_ACCT_ID			/* 변경후계정ID */
+			,AFCHG_DEPT_ID			/* 변경후부서ID */
+			,AFCHG_BGT_YY			/* 변경후예산년도 */
+			,AFCHG_BGT_APLY_PERD_CD	/* 변경후예산적용기간코드 */
+			,AFCHG_BGT_YM			/* 변경후예산년월 */
+			,CHG_BGT_AMT			/* 변경예산금액 */
+			,CURR_UNIT_CD			/* 통화단위코드 */
+			,CHG_RSN				/* 변경사유 */
+			,ODR_STATS_CD			/* 주문상태코드 */
+			,REG_DTM				/* 등록일시 */
+			,REGPSN_ID				/* 등록자ID */
+		    ,UPD_DTM
+		    ,UPDPSN_ID			
+		) VALUES (
+			 #{coCd}				/* 회사코드 */
+			,#{dspBzplcId}			/* 사업장ID */
+			,FN_CC_GEN_BGT_CHG_NO_CRT()	/* 일반예산변경번호 */
+			,'3'					/* 예산변경구분코드 : 이체변경*/
+			,#{dspAcctId}			/* 변경전계정ID */
+			,#{dspDeptId}			/* 변경전부서ID */
+			,#{dspBgtYy}			/* 변경전예산년도 */
+			,#{dspBgtAplyPerdCd}	/* 변경전예산적용기간코드 */
+			<if test="dspBgtAplyPerdCd=='01' or dspBgtAplyPerdCd=='02' or dspBgtAplyPerdCd=='03' or dspBgtAplyPerdCd=='04' or dspBgtAplyPerdCd=='05' or dspBgtAplyPerdCd=='06' or dspBgtAplyPerdCd=='07' or dspBgtAplyPerdCd=='08' or dspBgtAplyPerdCd=='09' or dspBgtAplyPerdCd=='10' or dspBgtAplyPerdCd=='11' or dspBgtAplyPerdCd=='12'">
+			,#{dspBgtYy} || #{dspBgtAplyPerdCd}	/* 변경전예산년월 */
+			</if>
+			<if test='"21".equals(dspBgtAplyPerdCd)'>,#{dspBgtYy} || '01'	/* 변경전예산년월 */</if>
+			<if test='"22".equals(dspBgtAplyPerdCd)'>,#{dspBgtYy} || '04'	/* 변경전예산년월 */</if>
+			<if test='"23".equals(dspBgtAplyPerdCd)'>,#{dspBgtYy} || '07'	/* 변경전예산년월 */</if>
+			<if test='"24".equals(dspBgtAplyPerdCd)'>,#{dspBgtYy} || '10'	/* 변경전예산년월 */</if>
+			,#{rcvAcctId}			/* 변경후계정ID */
+			,#{rcvDeptId}			/* 변경후부서ID */
+			,#{rcvBgtYy}			/* 변경후예산년도 */
+			,#{rcvBgtAplyPerdCd}	/* 변경후예산적용기간코드 */
+			<if test="rcvBgtAplyPerdCd=='01' or rcvBgtAplyPerdCd=='02' or rcvBgtAplyPerdCd=='03' or rcvBgtAplyPerdCd=='04' or rcvBgtAplyPerdCd=='05' or rcvBgtAplyPerdCd=='06' or rcvBgtAplyPerdCd=='07' or rcvBgtAplyPerdCd=='08' or rcvBgtAplyPerdCd=='09' or rcvBgtAplyPerdCd=='10' or rcvBgtAplyPerdCd=='11' or rcvBgtAplyPerdCd=='12'">
+			,#{rcvBgtYy} || #{rcvBgtAplyPerdCd}			/* 변경후예산년월 */
+			</if>
+			<if test='"21".equals(rcvBgtAplyPerdCd)'>,#{rcvBgtYy} || '01'</if>
+			<if test='"22".equals(rcvBgtAplyPerdCd)'>,#{rcvBgtYy} || '04'</if>
+			<if test='"23".equals(rcvBgtAplyPerdCd)'>,#{rcvBgtYy} || '07'</if>
+			<if test='"24".equals(rcvBgtAplyPerdCd)'>,#{rcvBgtYy} || '10'</if>
+			,#{dspTrnsfAmt}			/* 변경예산금액 */
+			,'KRW'					/* 통화단위코드 */
+			,trim(#{dspTrnsfRsn})	/* 변경사유 */
+			,null					/* 주문상태코드 */
+			,SYSDATE				/* 등록일시 */
+            ,#{regpsnId}    /* 등록자ID */
+            ,SYSDATE                /* 수정일시 */
+            ,#{updpsnId}    /* 수정자ID */
+		)
+	</insert>
+	
+	<!-- 예산내역에 있나 확인, 박재광 2022.03.28  -->
+	<select id="selectLastBgtNo" parameterType="java.util.Map" resultType="int">
+		SELECT NVL(MAX(BGT_NO),0) AS BGT_NO
+		FROM TB_CC_BGT_DTLS
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND BGT_YY = #{bgtYy}
+		AND BGT_APLY_PERD_CD = #{bgtAplyPerdCd}
+		AND BGT_REG_SPR_CD = '20'	/*예산등록구분코드 부서별*/	
+		AND ACCT_ID = #{acctId}
+		AND DEPT_ID = #{deptId}
+	</select>
+	
+	<!-- 일반예산이체 예산내역 수정 변경전, 박재광 2022.03.28 -->
+	<update id="updateBgtDtlsDsp" parameterType="HashMap">
+		UPDATE TB_CC_BGT_DTLS SET   
+			 BGT_AMT = NVL(BGT_AMT,0) - #{dspTrnsfAmt}	/*예산금액*/
+			,BGT_DEC_AMT = NVL(BGT_DEC_AMT,0) + #{dspTrnsfAmt}	/* 예산감소금액 */
+            ,UPDPSN_ID = #{updpsnId}    /* 수정자ID */
+			,UPD_DTM = SYSDATE
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{dspBzplcId}
+		AND BGT_NO = #{bgtNo} 
+	</update>
+
+	<!-- 일반예산이체 예산내역 수정 변경후, 박재광 2022.03.28 -->
+	<update id="updateBgtDtlsRcv" parameterType="HashMap">
+		UPDATE TB_CC_BGT_DTLS SET 
+		     BGT_AMT = NVL(BGT_AMT,0) + #{dspTrnsfAmt}	/*예산금액*/
+		    ,BGT_ADD_AMT = NVL(BGT_ADD_AMT,0) + #{dspTrnsfAmt}	/*예산추가금액*/
+            ,UPDPSN_ID = #{updpsnId}    /* 수정자ID */
+    	    ,UPD_DTM = SYSDATE 
+    	WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{dspBzplcId}
+		AND BGT_NO = #{bgtNo} 
+	</update>
+
+	<!-- 일반예산이체 예산내역 등록 변경후, 박재광 2022.03.28 -->
+    <insert id="insertBgtDtlsRcv" parameterType="HashMap">
+		INSERT INTO TB_CC_BGT_DTLS (
+			 CO_CD				/* 회사코드 */
+			,BZPLC_ID			/* 사업장ID */
+			,BGT_NO				/* 예산번호 */
+			,BGT_PERD_SPR_CD	/* 예산기간구분코드 */
+			,BGT_YY				/* 예산년도 */
+			,BGT_APLY_PERD_CD	/* 예산적용기간코드 */
+			,BGT_YM				/* 예산년월 */
+			,BGT_REG_SPR_CD		/* 예산등록구분코드 */
+			,ACCT_ID			/* 계정ID */
+			,DEPT_ID			/* 부서ID */
+			,BGT_AMT			/* 예산금액 */
+			,BGT_ADD_AMT		/* 예산추가금액 */
+			,BGT_DEC_AMT		/* 예산감소금액 */
+			,TOT_ODR_AMT		/* 총주문금액 */
+			,CURR_UNIT_CD		/* 통화단위코드 */
+			,REG_DTM			/* 등록일시 */
+			,REGPSN_ID			/* 등록자ID */
+			,UPD_DTM
+		    ,UPDPSN_ID
+		) VALUES (
+			 #{coCd}			/* 회사코드 */
+			,#{dspBzplcId}		/* 사업장ID */
+			,FN_CC_BGT_NO_CRT()	/* 예산번호 */
+			<if test="rcvBgtAplyPerdCd=='01' or rcvBgtAplyPerdCd=='02' or rcvBgtAplyPerdCd=='03' or rcvBgtAplyPerdCd=='04' or rcvBgtAplyPerdCd=='05' or rcvBgtAplyPerdCd=='06' or rcvBgtAplyPerdCd=='07' or rcvBgtAplyPerdCd=='08' or rcvBgtAplyPerdCd=='09' or rcvBgtAplyPerdCd=='10' or rcvBgtAplyPerdCd=='11' or rcvBgtAplyPerdCd=='12'">
+			,'1'	/* 예산기간구분코드 */
+			</if>
+			<if test="rcvBgtAplyPerdCd=='21' or rcvBgtAplyPerdCd=='22' or rcvBgtAplyPerdCd=='23' or rcvBgtAplyPerdCd=='24'">
+			,'2'	/* 예산기간구분코드 */
+			</if>
+			,#{rcvBgtYy}			/* 예산년도 */
+			,#{rcvBgtAplyPerdCd}	/* 예산적용기간코드 */
+			<if test="rcvBgtAplyPerdCd=='01' or rcvBgtAplyPerdCd=='02' or rcvBgtAplyPerdCd=='03' or rcvBgtAplyPerdCd=='04' or rcvBgtAplyPerdCd=='05' or rcvBgtAplyPerdCd=='06' or rcvBgtAplyPerdCd=='07' or rcvBgtAplyPerdCd=='08' or rcvBgtAplyPerdCd=='09' or rcvBgtAplyPerdCd=='10' or rcvBgtAplyPerdCd=='11' or rcvBgtAplyPerdCd=='12'">
+			,#{rcvBgtYy} || #{rcvBgtAplyPerdCd}	/* 예산년월 */
+			</if>
+			<if test='"21".equals(rcvBgtAplyPerdCd)'>,#{rcvBgtYy} || '01'</if>
+			<if test='"22".equals(rcvBgtAplyPerdCd)'>,#{rcvBgtYy} || '04'</if>
+			<if test='"23".equals(rcvBgtAplyPerdCd)'>,#{rcvBgtYy} || '07'</if>
+			<if test='"24".equals(rcvBgtAplyPerdCd)'>,#{rcvBgtYy} || '10'</if>
+			,'20'		/* 예산등록구분코드 부서별 */
+			,#{rcvAcctId}		/* 계정ID */
+			,#{rcvDeptId}		/* 부서ID */
+			,#{dspTrnsfAmt}		/* 예산금액 */
+			,#{dspTrnsfAmt}		/* 예산추가금액 */
+			,null				/* 예산감소금액 */
+			,null				/* 총주문금액 */
+			,'KRW'				/* 통화단위코드 */
+			,SYSDATE			/* 등록일시 */
+            ,#{regpsnId}    /* 등록자ID */
+            ,SYSDATE            /* 수정일시 */
+            ,#{updpsnId}    /* 수정자ID */
+		)
+	</insert>
+	
+	<!-- 공통예산이월 목록 조회, 박재광 2022.04.06 -->	
+	<select id="selectComBgtFwList" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT LIST.*
+		FROM(
+			SELECT
+				 BS.CO_CD			/* 회사코드 */
+				,BS.BZPLC_ID		/* 사업장ID */
+				,BS.ACCT_ID			/* 계정ID */
+				,BS.ACCT_NM			/* 계정명 */
+				,BS.ACCT_CD			/* 계정코드 */
+				,BS.ACCT_LVL		/* 계정레벨 */
+				,BS.HRNK_ACCT_ID	/* 상위계정ID */
+				,( SELECT HR.ACCT_NM FROM TB_CC_BGT_ACCT_BASIS HR WHERE HR.CO_CD = BS.CO_CD AND HR.BZPLC_ID = BS.BZPLC_ID AND HR.ACCT_ID = BS.HRNK_ACCT_ID ) AS HRNK_ACCT_NM	/* 상위계정명 */
+				,( SELECT HR.ACCT_CD FROM TB_CC_BGT_ACCT_BASIS HR WHERE HR.CO_CD = BS.CO_CD AND HR.BZPLC_ID = BS.BZPLC_ID AND HR.ACCT_ID = BS.HRNK_ACCT_ID ) AS HRNK_ACCT_CD	/* 상위계정코드 */
+				,DT.BGT_PERD_SPR_CD
+				,DT.FROM_BGT_YY
+				,DT.FROM_BGT_APLY_PERD_CD
+				,DT.FROM_BGT_AMT
+				,0 AS FW_AMT
+				,#{toBgtYy} AS TO_BGT_YY
+				,#{toBgtAplyPerdCd} AS TO_BGT_APLY_PERD_CD
+				,NVL((
+					SELECT SUM(NVL(TT.BGT_AMT,0))
+					FROM TB_CC_BGT_DTLS TT
+					WHERE TT.CO_CD = BS.CO_CD		/* 회사코드 */
+					AND TT.BZPLC_ID = BS.BZPLC_ID		/* 사업장ID */
+					AND TT.BGT_PERD_SPR_CD = DT.BGT_PERD_SPR_CD	/*예산기간구분코드 1:월 2:분기*/
+					AND TT.BGT_YY = #{toBgtYy}
+					AND TT.BGT_APLY_PERD_CD = #{toBgtAplyPerdCd}
+					AND TT.BGT_REG_SPR_CD = '10'	/*예산등록구분코드:계정별*/
+					AND TT.ACCT_ID = BS.ACCT_ID		/* 계정ID */
+					AND TT.DEPT_ID IS NULL
+				  ),0) AS TO_BGT_AMT
+				,NVL((
+					SELECT SUM(NVL(TT.BGT_AMT,0))
+					FROM TB_CC_BGT_DTLS TT
+					WHERE TT.CO_CD = BS.CO_CD		/* 회사코드 */
+					AND TT.BZPLC_ID = BS.BZPLC_ID		/* 사업장ID */
+					AND TT.BGT_PERD_SPR_CD = DT.BGT_PERD_SPR_CD	/*예산기간구분코드 1:월 2:분기*/
+					AND TT.BGT_YY = #{toBgtYy}
+					AND TT.BGT_APLY_PERD_CD = #{toBgtAplyPerdCd}
+					AND TT.BGT_REG_SPR_CD = '10'	/*예산등록구분코드:계정별*/
+					AND TT.ACCT_ID = BS.ACCT_ID		/* 계정ID */
+					AND TT.DEPT_ID IS NULL
+				  ),0) AS TO_BGT_AMT_ORG
+				,NULL AS CHG_RSN /* 사유 */
+			FROM 
+			(
+				SELECT
+					 CO_CD		/* 회사코드 */
+					,BZPLC_ID	/* 사업장ID */
+					,ACCT_ID	/* 계정ID */
+					,ACCT_NM	/* 계정명 */
+					,ACCT_CD	/* 계정코드 */
+					,ACCT_LVL	/* 계정레벨 */
+					,HRNK_ACCT_ID	/* 상위계정ID */
+				FROM TB_CC_BGT_ACCT_BASIS /*예산계정기본*/
+				WHERE USE_YN = 'Y'	/* 사용여부 */
+				AND	ACCT_TP_CD ='2'	/* 계정유형코드:공통 */
+				AND CO_CD = #{coCd}	/* 회사코드 */
+				AND BZPLC_ID = #{bzplcId}	/* 사업장ID */
+				<if test="acctId != null and acctId.length > 0">	        	
+				AND ACCT_ID IN <foreach collection="acctId" item="item" open="(" close=")" separator=",">#{item}</foreach>
+				</if>	
+			) BS,
+			(
+				SELECT
+					 CO_CD
+					,BZPLC_ID
+					,ACCT_ID
+					,MAX(BGT_PERD_SPR_CD) AS BGT_PERD_SPR_CD
+					,MAX(BGT_YY) AS FROM_BGT_YY
+					,MAX(BGT_APLY_PERD_CD) AS FROM_BGT_APLY_PERD_CD
+					,SUM(NVL(BGT_AMT,0)) AS FROM_BGT_AMT
+				FROM TB_CC_BGT_DTLS			/*예산내역*/
+				WHERE CO_CD = #{coCd}		/* 회사코드 */
+				AND BZPLC_ID = #{bzplcId}	/* 사업장ID */
+				AND BGT_PERD_SPR_CD = #{bgtPerdSprCd}	/*예산기간구분코드 1:월 2:분기*/
+				AND BGT_YY = #{fromBgtYy}
+				AND BGT_APLY_PERD_CD = #{fromBgtAplyPerdCd}
+				AND DEPT_ID IS NULL
+				AND BGT_REG_SPR_CD = '10'	/* 예산등록구분코드:계정별 */
+				AND BGT_AMT <![CDATA[>=]]> 0
+				<if test="acctId != null and acctId.length > 0">
+				AND ACCT_ID IN <foreach collection="acctId" item="item" open="(" close=")" separator=",">#{item}</foreach>
+				</if>
+				GROUP BY CO_CD, BZPLC_ID, ACCT_ID
+			) DT
+			WHERE BS.CO_CD = DT.CO_CD
+			AND BS.BZPLC_ID = DT.BZPLC_ID
+			AND BS.ACCT_ID = DT.ACCT_ID
+			<if test="sortColumn == null or sortColumn == ''"> 
+			ORDER BY BS.ACCT_ID ASC
+	        </if> 
+		)LIST
+		<if test="sortColumn != null and sortColumn != ''"> 
+        ORDER BY ${sortColumn} ${sortType} 
+        </if> 
+	</select>	
+	
+	<!-- 공통예산이월 이력 등록, 박재광 2022.04.06 -->
+    <insert id="insertComBgtFwHst" parameterType="HashMap">
+		INSERT INTO TB_CC_BGT_CHG_HST (
+			 CO_CD					/* 회사코드 */
+			,BZPLC_ID				/* 사업장ID */
+			,GEN_BGT_CHG_NO			/* 일반예산변경번호 */
+			,BGT_CHG_SPR_CD			/* 예산변경구분코드 */
+			,BFCHG_ACCT_ID			/* 변경전계정ID */
+			,BFCHG_DEPT_ID			/* 변경전부서ID */
+			,BFCHG_BGT_YY			/* 변경전예산년도 */
+			,BFCHG_BGT_APLY_PERD_CD	/* 변경전예산적용기간코드 */
+			,BFCHG_BGT_YM			/* 변경전예산년월 */
+			,AFCHG_ACCT_ID			/* 변경후계정ID */
+			,AFCHG_DEPT_ID			/* 변경후부서ID */
+			,AFCHG_BGT_YY			/* 변경후예산년도 */
+			,AFCHG_BGT_APLY_PERD_CD	/* 변경후예산적용기간코드 */
+			,AFCHG_BGT_YM			/* 변경후예산년월 */
+			,CHG_BGT_AMT			/* 변경예산금액 */
+			,CURR_UNIT_CD			/* 통화단위코드 */
+			,CHG_RSN				/* 변경사유 */
+			,ODR_STATS_CD			/* 주문상태코드 */
+			,REG_DTM				/* 등록일시 */
+			,REGPSN_ID				/* 등록자ID */
+		    ,UPD_DTM
+		    ,UPDPSN_ID			
+		) VALUES (
+			 #{coCd}				/* 회사코드 */
+			,#{bzplcId}			/* 사업장ID */
+			,FN_CC_GEN_BGT_CHG_NO_CRT()	/* 일반예산변경번호 */
+			,'4'					/* 예산변경구분코드 : 이월변경*/
+			,#{acctId}			/* 변경전계정ID */
+			,NULL			/* 변경전부서ID */
+			,#{fromBgtYy}			/* 변경전예산년도 */
+			,#{fromBgtAplyPerdCd}	/* 변경전예산적용기간코드 */
+			<if test="fromBgtAplyPerdCd=='01' or fromBgtAplyPerdCd=='02' or fromBgtAplyPerdCd=='03' or fromBgtAplyPerdCd=='04' or fromBgtAplyPerdCd=='05' or fromBgtAplyPerdCd=='06' or fromBgtAplyPerdCd=='07' or fromBgtAplyPerdCd=='08' or fromBgtAplyPerdCd=='09' or fromBgtAplyPerdCd=='10' or fromBgtAplyPerdCd=='11' or fromBgtAplyPerdCd=='12'">
+			,#{fromBgtYy} || #{fromBgtAplyPerdCd}	/* 변경전예산년월 */
+			</if>
+			<if test='"21".equals(fromBgtAplyPerdCd)'>,#{fromBgtYy} || '01'</if>
+			<if test='"22".equals(fromBgtAplyPerdCd)'>,#{fromBgtYy} || '04'</if>
+			<if test='"23".equals(fromBgtAplyPerdCd)'>,#{fromBgtYy} || '07'</if>
+			<if test='"24".equals(fromBgtAplyPerdCd)'>,#{fromBgtYy} || '10'</if>
+			,#{acctId}			/* 변경후계정ID */
+			,NULL			/* 변경후부서ID */
+			,#{toBgtYy}			/* 변경후예산년도 */
+			,#{toBgtAplyPerdCd}	/* 변경후예산적용기간코드 */
+			<if test="toBgtAplyPerdCd=='01' or toBgtAplyPerdCd=='02' or toBgtAplyPerdCd=='03' or toBgtAplyPerdCd=='04' or toBgtAplyPerdCd=='05' or toBgtAplyPerdCd=='06' or toBgtAplyPerdCd=='07' or toBgtAplyPerdCd=='08' or toBgtAplyPerdCd=='09' or toBgtAplyPerdCd=='10' or toBgtAplyPerdCd=='11' or toBgtAplyPerdCd=='12'">
+			,#{toBgtYy} || #{toBgtAplyPerdCd}			/* 변경후예산년월 */
+			</if>
+			<if test='"21".equals(toBgtAplyPerdCd)'>,#{toBgtYy} || '01'</if>
+			<if test='"22".equals(toBgtAplyPerdCd)'>,#{toBgtYy} || '04'</if>
+			<if test='"23".equals(toBgtAplyPerdCd)'>,#{toBgtYy} || '07'</if>
+			<if test='"24".equals(toBgtAplyPerdCd)'>,#{toBgtYy} || '10'</if>
+			,#{fwAmt}			/* 변경예산금액 */
+			,'KRW'					/* 통화단위코드 */
+			,trim(#{chgRsn})	/* 변경사유 */
+			,NULL					/* 주문상태코드 */
+			,SYSDATE				/* 등록일시 */
+            ,#{regpsnId}    /* 등록자ID */
+            ,SYSDATE            /* 수정일시 */
+            ,#{updpsnId}    /* 수정자ID */
+		)
+	</insert>
+
+	<!-- 공통예산이월  예산내역에 있나 확인, 박재광 2022.03.28  -->
+	<select id="selectLastBgtNoComBgtFw" parameterType="java.util.Map" resultType="int">
+		SELECT NVL(MAX(BGT_NO),0) AS BGT_NO
+		FROM TB_CC_BGT_DTLS
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND BGT_PERD_SPR_CD = #{bgtPerdSprCd}	/*예산기간구분코드 1:월 2:분기*/
+		AND BGT_YY = #{bgtYy}
+		AND BGT_APLY_PERD_CD = #{bgtAplyPerdCd}
+		AND BGT_REG_SPR_CD = '10'	/* 예산등록구분코드:계정별 */
+		AND ACCT_ID = #{acctId}
+		AND DEPT_ID IS NULL
+		AND BGT_AMT <![CDATA[>=]]> 0
+	</select>
+	
+	<!-- 공통예산이월 이체할 상세 , 박재광 2022.04.06 -->
+    <update id="updateComBgtFwDtlFrom" parameterType="HashMap">
+		UPDATE TB_CC_BGT_DTLS SET   
+			 BGT_AMT = NVL(BGT_AMT,0) - #{fwAmt}	/*예산금액*/
+			,BGT_DEC_AMT = NVL(BGT_DEC_AMT,0) + #{fwAmt}	/* 예산감소금액 */
+            ,UPDPSN_ID = #{updpsnId}    /* 수정자ID */
+			,UPD_DTM = SYSDATE
+		WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND BGT_NO = #{bgtNo} 
+	</update>
+	
+	<!-- 공통예산이월 이체받을 상세 , 박재광 2022.04.06 -->
+    <update id="updateComBgtFwDtlTo" parameterType="HashMap">
+		UPDATE TB_CC_BGT_DTLS SET 
+		     BGT_AMT = NVL(BGT_AMT,0) + #{fwAmt}	/*예산금액*/
+		    ,BGT_ADD_AMT = NVL(BGT_ADD_AMT,0) + #{fwAmt}	/*예산추가금액*/
+            ,UPDPSN_ID = #{updpsnId}    /* 수정자ID */
+    	    ,UPD_DTM = SYSDATE 
+    	WHERE CO_CD = #{coCd}
+		AND BZPLC_ID = #{bzplcId}
+		AND BGT_NO = #{bgtNo} 
+	</update>
+	
+	<!-- 공통예산이월 이체받을 상세 , 박재광 2022.04.06 -->
+    <insert id="insertComBgtFwDtlTo" parameterType="HashMap">
+		INSERT INTO TB_CC_BGT_DTLS (
+			 CO_CD				/* 회사코드 */
+			,BZPLC_ID			/* 사업장ID */
+			,BGT_NO				/* 예산번호 */
+			,BGT_PERD_SPR_CD	/* 예산기간구분코드 */
+			,BGT_YY				/* 예산년도 */
+			,BGT_APLY_PERD_CD	/* 예산적용기간코드 */
+			,BGT_YM				/* 예산년월 */
+			,BGT_REG_SPR_CD		/* 예산등록구분코드 */
+			,ACCT_ID			/* 계정ID */
+			,DEPT_ID			/* 부서ID */
+			,BGT_AMT			/* 예산금액 */
+			,BGT_ADD_AMT		/* 예산추가금액 */
+			,BGT_DEC_AMT		/* 예산감소금액 */
+			,TOT_ODR_AMT		/* 총주문금액 */
+			,CURR_UNIT_CD		/* 통화단위코드 */
+			,REG_DTM			/* 등록일시 */
+			,REGPSN_ID			/* 등록자ID */
+		    ,UPD_DTM
+		    ,UPDPSN_ID
+		) VALUES (
+			 #{coCd}			/* 회사코드 */
+			,#{bzplcId}			/* 사업장ID */
+			,FN_CC_BGT_NO_CRT()	/* 예산번호 */ 
+			<if test="toBgtAplyPerdCd=='01' or toBgtAplyPerdCd=='02' or toBgtAplyPerdCd=='03' or toBgtAplyPerdCd=='04' or toBgtAplyPerdCd=='05' or toBgtAplyPerdCd=='06' or toBgtAplyPerdCd=='07' or toBgtAplyPerdCd=='08' or toBgtAplyPerdCd=='09' or toBgtAplyPerdCd=='10' or toBgtAplyPerdCd=='11' or toBgtAplyPerdCd=='12'">
+			,'1'	/* 예산기간구분코드 */
+			</if>
+			<if test="toBgtAplyPerdCd=='21' or toBgtAplyPerdCd=='22' or toBgtAplyPerdCd=='23' or toBgtAplyPerdCd=='24'">
+			,'2'	/* 예산기간구분코드 */
+			</if>
+			,#{toBgtYy}			/* 예산년도 */
+			,#{toBgtAplyPerdCd}	/* 예산적용기간코드 */
+			<if test="toBgtAplyPerdCd=='01' or toBgtAplyPerdCd=='02' or toBgtAplyPerdCd=='03' or toBgtAplyPerdCd=='04' or toBgtAplyPerdCd=='05' or toBgtAplyPerdCd=='06' or toBgtAplyPerdCd=='07' or toBgtAplyPerdCd=='08' or toBgtAplyPerdCd=='09' or toBgtAplyPerdCd=='10' or toBgtAplyPerdCd=='11' or toBgtAplyPerdCd=='12'">
+			,#{toBgtYy} || #{toBgtAplyPerdCd}	/* 예산년월 */
+			</if>
+			<if test='"21".equals(toBgtAplyPerdCd)'>,#{toBgtYy} || '01'</if>
+			<if test='"22".equals(toBgtAplyPerdCd)'>,#{toBgtYy} || '04'</if>
+			<if test='"23".equals(toBgtAplyPerdCd)'>,#{toBgtYy} || '07'</if>
+			<if test='"24".equals(toBgtAplyPerdCd)'>,#{toBgtYy} || '10'</if>
+			,'10'				/* 예산등록구분코드 계정별 */
+			,#{acctId}			/* 계정ID */
+			,null				/* 부서ID */
+			,#{fwAmt}			/* 예산금액 */
+			,#{fwAmt}			/* 예산추가금액 */
+			,null				/* 예산감소금액 */
+			,null				/* 총주문금액 */
+			,'KRW'				/* 통화단위코드 */
+			,SYSDATE			/* 등록일시 */
+            ,#{regpsnId}    /* 등록자ID */
+            ,SYSDATE            /* 수정일시 */
+            ,#{updpsnId}    /* 수정자ID */
+		)    
+	</insert>
+
+</mapper>

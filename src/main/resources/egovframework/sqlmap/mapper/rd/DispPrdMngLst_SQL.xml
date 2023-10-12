@@ -1,0 +1,834 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DispPrdMngLst">
+
+    <select id="selectDispPrdMngLst" parameterType="HashMap" resultType="HashMap">
+        /* DispPrdMngLstDao.selectDispPrdMngLst 전시상품관리 조회 */
+        SELECT  MST.CO_CD
+				, MST.DISP_GRP_ID
+				, LTRIM(MST.REPR_PRD_ID, '0') PRD_ID
+				, MST.REPR_PRD_ID
+				, MST.PRD_CLCD
+				, CLSF.PRD_CLSF_NM
+				, CLSF.FULL_PRD_CLSF_NM
+				, PRD.PRD_NM
+				, MST.PRFRT
+				, FN_PR_ATTR_VAL_LIST(MST.CO_CD, MST.REPR_PRD_ID) ATTR_VAL
+				, PRC.MNFR_NO
+				, PRC.MNFR_NM
+				, PRC.ORGPLC_CTRY_CD
+				, CTRY.CTRY_NM
+				, PRC.SELL_UNIT_CD
+				, MST.DISP_PRD_SPR_CD
+				, MST.DISP_PRD_NM
+				, MST.ADD_INFO_SET_YN
+				, CHRPSN.ORG_CD
+				, CHRPSN.ORG_NM
+				, CHRPSN.OPRTR_ID
+				, CHRPSN.OPRTR_NM
+				, TO_CHAR(MST.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') REG_DTM
+				, TO_CHAR(MST.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') UPD_DTM
+				, MST.USE_YN
+				, MRO.PRD_USE_YN
+				, MST.SRT_SO
+		FROM    TB_RD_RND_DISP_BASIS MST
+				, (
+					SELECT  A.CO_CD
+							, A.OPRTR_ID
+							, A.OPRTR_NM
+							, A.ORG_CD
+							, A.ORG_NM
+							, B.PRD_CLCD
+					FROM    TB_CO_MBR_OPRTR_INFO A
+							, TB_PR_PRD_CLSF_CHRPSN_INFO B
+					WHERE   A.CO_CD = B.CO_CD(+)
+					AND     A.OPRTR_ID = B.PRD_CLSF_CHRPSN_ID(+)
+					AND     B.PRD_CLSF_CHRPSN_TP_CD = '30'
+					AND     B.PRD_CLSF_CHRPSN_SPR_CD = '10'
+					AND     B.PRD_CLSF_CHRPSN_USEYN = 'Y'
+				) CHRPSN
+				, (
+					SELECT  A.CO_CD
+							, A.PRD_ID
+							, A.ORGPLC_CTRY_CD
+							, A.SELL_UNIT_CD
+							, A.MNFR_NO
+							, B.MNFR_NM
+					FROM    TB_PR_MRO_PRD_INFO A
+							, TB_PR_MNFR_INFO B
+					WHERE   A.CO_CD = B.CO_CD(+)
+					AND     A.MNFR_NO = B.MNFR_NO(+)
+				) PRC
+				, TB_PR_PRD_INFO PRD
+				, (
+					SELECT  CO_CD
+							, PRD_CLCD
+							, MALL_SPR_CD
+							, PRD_CLSF_NM
+							, FN_PR_FULL_CLSF_NM(CO_CD, PRD_CLCD) AS FULL_PRD_CLSF_NM
+					FROM    TB_PR_PRD_CLSF_INFO
+					WHERE   MALL_SPR_CD = '20'
+				) CLSF
+				, (
+					SELECT  A.CO_CD
+							, A.PRD_ID
+							, A.ORGPLC_CTRY_CD
+							, B.CTRY_NM
+					FROM    TB_PR_MRO_PRD_INFO A
+							, TB_CO_CTRY_INFO B
+					WHERE   A.CO_CD = B.CO_CD(+)
+					AND     A.ORGPLC_CTRY_CD = B.CTRY_SPR_CD(+)
+				) CTRY
+				, (
+					SELECT  A.CO_CD
+							, A.PRD_ID
+							, B.PRD_USE_YN
+					FROM    TB_PR_MRO_PRD_INFO A
+							, TB_PR_PRD_INFO B
+					WHERE   A.CO_CD = B.CO_CD(+)
+					AND     A.PRD_ID = B.PRD_ID(+)
+				) MRO
+		WHERE   1 = 1
+		AND     MST.CO_CD = CHRPSN.CO_CD(+)
+		AND     MST.PRD_CLCD = CHRPSN.PRD_CLCD(+)
+		AND     MST.CO_CD = PRC.CO_CD(+)
+		AND     MST.REPR_PRD_ID = PRC.PRD_ID(+)
+		AND     MST.CO_CD = PRD.CO_CD
+		AND     MST.REPR_PRD_ID = PRD.PRD_ID
+		AND     MST.CO_CD = CLSF.CO_CD
+		AND     MST.PRD_CLCD = CLSF.PRD_CLCD
+		AND     MST.CO_CD = CTRY.CO_CD(+)
+		AND     MST.REPR_PRD_ID = CTRY.PRD_ID(+)
+		AND     MST.CO_CD = MRO.CO_CD(+)
+		AND     MST.REPR_PRD_ID = MRO.PRD_ID(+)
+		AND 	MST.CO_CD = #{CO_CD}
+		<!-- 대표 상품 ID -->
+		<if test="PRD_ID != null and PRD_ID != '' ">
+			AND REGEXP_LIKE(LTRIM(MST.REPR_PRD_ID, '0'), #{PRD_ID})
+		</if>
+        <!-- 사용여부 -->
+        <if test="USE_YN != null and USE_YN != ''">
+           AND MST.USE_YN = #{USE_YN}
+        </if>
+        <!-- 기간 -->
+        <if test="DATE_TERM != null and DATE_TERM != ''">
+			<choose>
+				<when test="CAL_GUBUN == '10'">
+					AND TO_CHAR(MST.REG_DTM,'YYYYMMDD') BETWEEN #{FROM_DATE} AND #{TO_DATE}
+				</when>
+				<otherwise>
+					AND TO_CHAR(MST.UPD_DTM,'YYYYMMDD') BETWEEN #{FROM_DATE} AND #{TO_DATE}
+				</otherwise>
+			</choose>
+		</if>
+		<!-- 제조원 -->
+		<if test="MNFR_NO != null and MNFR_NO != '' ">
+           AND PRC.MNFR_NO = #{MNFR_NO}
+        </if>
+		<!-- 제조원명 -->
+		<if test="MNFR_NM != null and MNFR_NM != '' ">
+           AND PRC.MNFR_NM = #{MNFR_NM}
+        </if>
+		<!-- 담당자 -->
+		<if test="REGPSN_ID != null and REGPSN_ID != '' ">
+           AND CHRPSN.OPRTR_ID = #{REGPSN_ID}
+        </if>
+		<!-- 담당자명 -->
+		<if test="REGPSN_NM != null and REGPSN_NM != '' ">
+           AND CHRPSN.OPRTR_NM = #{REGPSN_NM}
+        </if>
+		<!-- 담당팀 -->
+		<if test="TEAM_CD != null and TEAM_CD != '' ">
+           AND CHRPSN.ORG_CD = #{TEAM_CD}
+        </if>
+		<!-- 담당팀명 -->
+		<if test="TEAM_NM != null and TEAM_NM != '' ">
+           AND CHRPSN.ORG_NM = #{TEAM_NM}
+        </if>
+		<!-- 상품군 -->
+		<if test="PRD_CLCD != null and PRD_CLCD != '' ">
+           AND MST.PRD_CLCD = #{PRD_CLCD}
+        </if>
+		<!-- 상품군명 -->
+		<if test="PRD_CLSF_NM != null and PRD_CLSF_NM != '' ">
+           AND CLSF.PRD_CLSF_NM = #{PRD_CLSF_NM}
+        </if>
+		ORDER BY MST.SRT_SO ASC
+    </select>
+
+    <select id="selectDispPrdMngLstCount" parameterType="HashMap" resultType="Integer">
+        /* DispPrdMngLstDao.selectDispPrdMngLstCount 전시상품관리 카운트 조회 */
+        SELECT	COUNT(1)
+		FROM    TB_RD_RND_DISP_BASIS MST
+				, (
+					SELECT  A.CO_CD
+							, A.OPRTR_ID
+							, A.OPRTR_NM
+							, A.ORG_CD
+							, A.ORG_NM
+							, B.PRD_CLCD
+					FROM    TB_CO_MBR_OPRTR_INFO A
+							, TB_PR_PRD_CLSF_CHRPSN_INFO B
+					WHERE   A.CO_CD = B.CO_CD(+)
+					AND     A.OPRTR_ID = B.PRD_CLSF_CHRPSN_ID(+)
+					AND     B.PRD_CLSF_CHRPSN_TP_CD = '30'
+					AND     B.PRD_CLSF_CHRPSN_SPR_CD = '10'
+					AND     B.PRD_CLSF_CHRPSN_USEYN = 'Y'
+				) CHRPSN
+				, (
+					SELECT  A.CO_CD
+							, A.PRD_ID
+							, A.ORGPLC_CTRY_CD
+							, A.SELL_UNIT_CD
+							, A.MNFR_NO
+							, B.MNFR_NM
+					FROM    TB_PR_MRO_PRD_INFO A
+							, TB_PR_MNFR_INFO B
+					WHERE   A.CO_CD = B.CO_CD(+)
+					AND     A.MNFR_NO = B.MNFR_NO(+)
+				) PRC
+				, TB_PR_PRD_INFO PRD
+				, (
+					SELECT  CO_CD
+							, PRD_CLCD
+							, MALL_SPR_CD
+							, PRD_CLSF_NM
+							, FN_PR_FULL_CLSF_NM(CO_CD, PRD_CLCD) AS FULL_PRD_CLSF_NM
+					FROM    TB_PR_PRD_CLSF_INFO
+					WHERE   MALL_SPR_CD = '20'
+				) CLSF
+				, (
+					SELECT  A.CO_CD
+							, A.PRD_ID
+							, A.ORGPLC_CTRY_CD
+							, B.CTRY_NM
+					FROM    TB_PR_MRO_PRD_INFO A
+							, TB_CO_CTRY_INFO B
+					WHERE   A.CO_CD = B.CO_CD(+)
+					AND     A.ORGPLC_CTRY_CD = B.CTRY_SPR_CD(+)
+				) CTRY
+				, (
+					SELECT  A.CO_CD
+							, A.PRD_ID
+							, B.PRD_USE_YN
+					FROM    TB_PR_MRO_PRD_INFO A
+							, TB_PR_PRD_INFO B
+					WHERE   A.CO_CD = B.CO_CD(+)
+					AND     A.PRD_ID = B.PRD_ID(+)
+				) MRO
+		WHERE   1 = 1
+		AND     MST.CO_CD = CHRPSN.CO_CD(+)
+		AND     MST.PRD_CLCD = CHRPSN.PRD_CLCD(+)
+		AND     MST.CO_CD = PRC.CO_CD(+)
+		AND     MST.REPR_PRD_ID = PRC.PRD_ID(+)
+		AND     MST.CO_CD = PRD.CO_CD
+		AND     MST.REPR_PRD_ID = PRD.PRD_ID
+		AND     MST.CO_CD = CLSF.CO_CD
+		AND     MST.PRD_CLCD = CLSF.PRD_CLCD
+		AND     MST.CO_CD = CTRY.CO_CD(+)
+		AND     MST.REPR_PRD_ID = CTRY.PRD_ID(+)
+		AND     MST.CO_CD = MRO.CO_CD(+)
+		AND     MST.REPR_PRD_ID = MRO.PRD_ID(+)
+		AND		MST.CO_CD = #{CO_CD}
+		<!-- 대표 상품 ID -->
+		<if test="PRD_ID != null and PRD_ID != '' ">
+			AND REGEXP_LIKE(LTRIM(MST.REPR_PRD_ID, '0'), #{PRD_ID})
+		</if>
+        <!-- 사용여부 -->
+        <if test="USE_YN != null and USE_YN != ''">
+           AND MST.USE_YN = #{USE_YN}
+        </if>
+        <!-- 기간 -->
+        <if test="DATE_TERM != null and DATE_TERM != ''">
+			<choose>
+				<when test="CAL_GUBUN == '10'">
+					AND TO_CHAR(MST.REG_DTM,'YYYYMMDD') BETWEEN #{FROM_DATE} AND #{TO_DATE}
+				</when>
+				<otherwise>
+					AND TO_CHAR(MST.UPD_DTM,'YYYYMMDD') BETWEEN #{FROM_DATE} AND #{TO_DATE}
+				</otherwise>
+			</choose>
+		</if>
+		<!-- 제조원 -->
+		<if test="MNFR_NO != null and MNFR_NO != '' ">
+           AND PRC.MNFR_NO = #{MNFR_NO}
+        </if>
+		<!-- 제조원명 -->
+		<if test="MNFR_NM != null and MNFR_NM != '' ">
+           AND PRC.MNFR_NM = #{MNFR_NM}
+        </if>
+		<!-- 담당자 -->
+		<if test="REGPSN_ID != null and REGPSN_ID != '' ">
+           AND CHRPSN.OPRTR_ID = #{REGPSN_ID}
+        </if>
+		<!-- 담당자명 -->
+		<if test="REGPSN_NM != null and REGPSN_NM != '' ">
+           AND CHRPSN.OPRTR_NM = #{REGPSN_NM}
+        </if>
+		<!-- 담당팀 -->
+		<if test="TEAM_CD != null and TEAM_CD != '' ">
+           AND CHRPSN.ORG_CD = #{TEAM_CD}
+        </if>
+		<!-- 담당팀명 -->
+		<if test="TEAM_NM != null and TEAM_NM != '' ">
+           AND CHRPSN.ORG_NM = #{TEAM_NM}
+        </if>
+		<!-- 상품군 -->
+		<if test="PRD_CLCD != null and PRD_CLCD != '' ">
+           AND MST.PRD_CLCD = #{PRD_CLCD}
+        </if>
+		<!-- 상품군명 -->
+		<if test="PRD_CLSF_NM != null and PRD_CLSF_NM != '' ">
+           AND CLSF.PRD_CLSF_NM = #{PRD_CLSF_NM}
+        </if>
+    </select>
+
+    <!-- 진열 순서 변경 -->
+    <update id="updateSrtSo" parameterType="HashMap">
+        /* DispPrdMngLstDao.updateSrtSo RnD 전시상품 진열순서 변경 */
+		UPDATE  TB_RD_RND_DISP_BASIS
+		SET     SRT_SO = #{SRT_SO}
+		WHERE   CO_CD = #{CO_CD}
+		AND     DISP_GRP_ID = #{DISP_GRP_ID}
+    </update>
+
+    <select id="selectDispBasis" parameterType="HashMap" resultType="HashMap">
+        /* DispPrdMngLstDao.selectDispBasis 전시상품 기본정보 조회 */
+        SELECT  DISP.CO_CD
+                , DISP.DISP_GRP_ID
+                , DISP.PRD_CLCD
+                , SSP_APP.FN_PR_FULL_CLSF_NM(DISP.CO_CD, DISP.PRD_CLCD) PRD_CLSF_NM
+                , TO_NUMBER(DISP.REPR_PRD_ID) REPR_PRD_ID
+                , DISP.DISP_PRD_NM
+                , DISP.USE_YN
+                , DISP.DISP_PRD_SPR_CD
+                , DISP.ADD_INFO_SET_YN
+                , DISP.PRFRT
+                , DISP.UPD_RSN
+                , DISP.SRT_SO
+                , DISP.REGPSN_ID
+                , DISP.REG_DTM
+                , DISP.UPDPSN_ID
+                , DISP.UPD_DTM
+        FROM    SSP_APP.TB_RD_RND_DISP_BASIS DISP
+                , SSP_APP.TB_PR_PRD_CLSF_INFO CLSF
+        WHERE   DISP.CO_CD = CLSF.CO_CD
+        AND     DISP.PRD_CLCD = CLSF.PRD_CLCD
+        AND     DISP.CO_CD = #{CO_CD}
+        AND     DISP.DISP_GRP_ID = #{DISP_GRP_ID}
+    </select>
+
+    <select id="selectDispOptnBasis" parameterType="HashMap" resultType="HashMap">
+        /* DispPrdMngLstDao.selectDispOptnBasis 전시상품 옵션정보 조회 */
+        SELECT  CO_CD
+                , DISP_GRP_ID
+                , PRD_CLCD
+                , OPTN_ITM_NO
+                , OPTN_NM
+                , MAND_YN
+                , IPT_TYPE_CD
+                , SRT_SO
+                , REGPSN_ID
+                , REG_DTM
+                , UPDPSN_ID
+                , UPD_DTM
+        FROM    SSP_APP.TB_RD_RND_DISP_OPTN_BASIS
+        WHERE   CO_CD = #{CO_CD}
+        AND     DISP_GRP_ID = #{DISP_GRP_ID}
+        ORDER BY
+                SRT_SO, OPTN_ITM_NO
+    </select>
+
+    <select id="selectDispOptnDtl" parameterType="HashMap" resultType="HashMap">
+        /* DispPrdMngLstDao.selectDispOptnDtl 전시상품 옵션상세정보 조회 */
+        SELECT  D.CO_CD
+                , D.DISP_GRP_ID
+                , D.PRD_CLCD
+                , (
+                    SELECT  OPTN_NM
+                    FROM    SSP_APP.TB_RD_RND_DISP_OPTN_BASIS S
+                    WHERE   S.CO_CD = D.CO_CD
+                    AND     S.PRD_CLCD = D.PRD_CLCD
+                    AND     S.OPTN_ITM_NO = D.OPTN_ITM_NO
+                    AND     ROWNUM = 1
+                ) AS OPTN_NM
+                , COUNT(D.OPTN_ITM_NO) OVER(PARTITION BY D.OPTN_ITM_NO) OPTN_CNT
+                , D.OPTN_ITM_NO
+                , D.OPTN_DTL_ITM_NO
+                , D.OPTN_DTL_NM
+                , D.SRT_SO
+                , D.OPTN_DTL_CTS
+                , D.DOC_REG_ID
+                , D.DOC_REG_ID ASIS_DOC_REG_ID
+                , (
+                    SELECT  ATFL_NM
+                    FROM    SSP_APP.TB_CO_ATFL_DTLS S
+                    WHERE   S.DOC_REG_ID = D.DOC_REG_ID
+                    AND     S.DOC_REG_SEQ = 1
+                ) AS ATFL_NM
+                , D.REGPSN_ID
+                , D.REG_DTM
+                , D.UPDPSN_ID
+                , D.UPD_DTM
+                , B.IPT_TYPE_CD
+        FROM    SSP_APP.TB_RD_RND_DISP_OPTN_BASIS B
+                , SSP_APP.TB_RD_RND_DISP_OPTN_DTL D
+        WHERE   B.CO_CD = D.CO_CD
+        AND     B.DISP_GRP_ID = D.DISP_GRP_ID
+        AND     B.OPTN_ITM_NO = D.OPTN_ITM_NO
+        AND     B.CO_CD = #{CO_CD}
+        AND     B.DISP_GRP_ID = #{DISP_GRP_ID}
+        ORDER BY
+                B.SRT_SO, B.OPTN_ITM_NO, D.SRT_SO, D.OPTN_DTL_ITM_NO
+    </select>
+
+    <select id="selectDispOptnDtlMapp" parameterType="HashMap" resultType="HashMap">
+        /* DispPrdMngLstDao.selectDispOptnDtlMapp 전시상품 상품연결정보 조회 */
+        SELECT  D.CO_CD
+                , D.DISP_GRP_ID
+                , D.PRD_CLCD
+                , D.OPTN_DTL_MAPP_ITM_NO
+                , D.OPTN_DTL_ITM_MAPP_CTS
+                , TO_NUMBER(MAPP_PRD_ID) MAPP_PRD_ID
+                , S.PRD_NM
+                , S.PRD_USE_YN
+                , SSP_APP.FN_PR_ATTR_VAL_LIST(D.CO_CD, LPAD(D.MAPP_PRD_ID, 18, '0')) ATTR_VAL
+                , D.REGPSN_ID
+                , D.REG_DTM
+                , D.UPDPSN_ID
+                , D.UPD_DTM
+        FROM    SSP_APP.TB_RD_RND_DISP_OPTN_DTL_MAPP D
+                , SSP_APP.TB_PR_PRD_INFO S
+        WHERE   D.CO_CD = S.CO_CD(+)
+        AND     LPAD(D.MAPP_PRD_ID, 18, '0') = S.PRD_ID(+)
+        AND     D.CO_CD = #{CO_CD}
+        AND     D.PRD_CLCD = #{PRD_CLCD}
+        ORDER BY
+                OPTN_DTL_MAPP_ITM_NO
+    </select>
+
+    <select id="selectOptnNmByDtlItmno" parameterType="HashMap" resultType="HashMap">
+        SELECT  B.OPTN_ITM_NO
+                , B.OPTN_NM
+                , D.OPTN_DTL_ITM_NO
+                , D.OPTN_DTL_NM
+        FROM    TB_RD_RND_DISP_OPTN_BASIS B
+                , TB_RD_RND_DISP_OPTN_DTL D
+        WHERE   B.CO_CD = D.CO_CD
+        AND     B.DISP_GRP_ID = D.DISP_GRP_ID
+        AND     B.OPTN_ITM_NO = D.OPTN_ITM_NO
+        AND     B.CO_CD = #{CO_CD}
+        AND     B.PRD_CLCD = #{PRD_CLCD}
+        AND     D.OPTN_DTL_ITM_NO = #{OPTN_DTL_ITM_NO}
+        AND     ROWNUM = 1
+    </select>
+
+    <select id="selectDispAddOptnBasis" parameterType="HashMap" resultType="HashMap">
+        /* DispPrdMngLstDao.selectDispAddOptnBasis 전시상품 추가정보 조회 */
+        SELECT  CO_CD
+                , DISP_GRP_ID
+                , PRD_CLCD
+                , ADD_OPTN_ITM_NO
+                , ADD_OPTN_NM
+                , IPT_TYPE_CD
+                , MAND_YN
+                , ATFL_YN
+                , SRT_SO
+                , REGPSN_ID
+                , REG_DTM
+                , UPDPSN_ID
+                , UPD_DTM
+        FROM    SSP_APP.TB_RD_RND_DISP_ADD_OPTN_BASIS
+        WHERE   CO_CD = #{CO_CD}
+        AND     DISP_GRP_ID = #{DISP_GRP_ID}
+        ORDER BY
+                SRT_SO, ADD_OPTN_ITM_NO
+    </select>
+
+    <select id="selectDispAddOptnDtl" parameterType="HashMap" resultType="HashMap">
+        /* DispPrdMngLstDao.selectDispAddOptnDtl 전시상품 추가정보상세 조회 */
+        SELECT  D.CO_CD
+                , D.DISP_GRP_ID
+                , D.PRD_CLCD
+                , (
+                    SELECT  ADD_OPTN_NM
+                    FROM    SSP_APP.TB_RD_RND_DISP_ADD_OPTN_BASIS S
+                    WHERE   S.CO_CD = D.CO_CD
+                    AND     S.DISP_GRP_ID = D.DISP_GRP_ID
+                    AND     S.ADD_OPTN_ITM_NO = D.ADD_OPTN_ITM_NO
+                    AND     ROWNUM = 1
+                ) AS ADD_OPTN_NM
+                , COUNT(D.ADD_OPTN_ITM_NO) OVER(PARTITION BY D.ADD_OPTN_ITM_NO) ADD_OPTN_CNT
+                , D.ADD_OPTN_ITM_NO
+                , D.ADD_OPTN_DTL_ITM_NO
+                , D.ADD_OPTN_DTL_NM
+                , D.SRT_SO
+                , D.OPTN_DTL_CTS
+                , D.DOC_REG_ID
+                , D.REGPSN_ID
+                , D.REG_DTM
+                , D.UPDPSN_ID
+                , D.UPD_DTM
+                , B.IPT_TYPE_CD
+                , B.ATFL_YN
+        FROM    SSP_APP.TB_RD_RND_DISP_ADD_OPTN_BASIS B
+                , SSP_APP.TB_RD_RND_DISP_ADD_OPTN_DTL D
+        WHERE   B.CO_CD = D.CO_CD
+        AND     B.DISP_GRP_ID = D.DISP_GRP_ID
+        AND     B.ADD_OPTN_ITM_NO = D.ADD_OPTN_ITM_NO
+        AND     D.CO_CD = #{CO_CD}
+        AND     D.DISP_GRP_ID = #{DISP_GRP_ID}
+        ORDER BY B.SRT_SO, B.ADD_OPTN_ITM_NO, D.SRT_SO, D.ADD_OPTN_DTL_ITM_NO
+    </select>
+
+    <select id="selectProductDispOprtr" parameterType="HashMap" resultType="HashMap">
+        /* DispPrdMngLstDao.selectProductDispOprtr 전시상품 담당자 정보 조회 */
+        SELECT  OP.CO_CD
+                , OP.OPRTR_ID
+                , OP.OPRTR_NM
+                , CLSF.PRD_CLCD
+                , CLSF.PRD_CLSF_NM
+        FROM    SSP_APP.TB_CO_MBR_OPRTR_INFO OP
+                , SSP_APP.TB_PR_PRD_CLSF_CHRPSN_INFO PS
+                , TB_PR_PRD_CLSF_INFO CLSF
+        WHERE   OP.CO_CD = PS.CO_CD
+        AND     OP.OPRTR_ID = PS.PRD_CLSF_CHRPSN_ID
+        AND     PS.PRD_CLSF_CHRPSN_SPR_CD = '10'
+        AND     PS.PRD_CLSF_CHRPSN_TP_CD = '20'
+        AND     PS.PRD_CLSF_CHRPSN_USEYN = 'Y'
+        AND     PS.MNFR_NO = '*'
+        AND     PS.CO_CD = CLSF.CO_CD
+        AND     PS.PRD_CLCD = CLSF.PRD_CLCD
+        AND     PS.CO_CD = #{CO_CD}
+        AND     PS.PRD_CLCD = #{PRD_CLCD}
+    </select>
+
+    <select id="selectRndDispGrpId" resultType="String">
+        /* DispPrdMngLstDao.selectRndDispGrpId RND 전시그룹 ID 채번 */
+        SELECT  'D' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(DISP_GRP_ID, 3))), 0) + 1, 9, '0')
+        FROM    SSP_APP.TB_RD_RND_DISP_BASIS
+    </select>
+
+    <insert id="insertRndDispBasis" parameterType="HashMap">
+        /* DispPrdMngLstDao.insertRndDispBasis RND 전시상품 기본정보 등록 */
+        MERGE INTO SSP_APP.TB_RD_RND_DISP_BASIS USING DUAL
+        ON (CO_CD = #{CO_CD} AND DISP_GRP_ID = #{DISP_GRP_ID})
+        WHEN MATCHED THEN
+            UPDATE SET
+                REPR_PRD_ID = LPAD(#{REPR_PRD_ID}, 18, '0'),
+                DISP_PRD_NM = #{DISP_PRD_NM},
+                USE_YN = #{USE_YN},
+                DISP_PRD_SPR_CD = #{DISP_PRD_SPR_CD},
+                ADD_INFO_SET_YN = #{ADD_INFO_SET_YN},
+                PRFRT = #{PRFRT},
+                UPD_RSN = #{UPD_RSN},
+                SRT_SO = #{SRT_SO},
+                UPDPSN_ID = #{SESSION_OPRTR_ID},
+                UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                CO_CD,
+                DISP_GRP_ID,
+                PRD_CLCD,
+                REPR_PRD_ID,
+                DISP_PRD_NM,
+                USE_YN,
+                DISP_PRD_SPR_CD,
+                ADD_INFO_SET_YN,
+                PRFRT,
+                UPD_RSN,
+                SRT_SO,
+                REGPSN_ID,
+                REG_DTM
+            ) VALUES (
+                #{CO_CD},
+                #{DISP_GRP_ID},
+                #{PRD_CLCD},
+                LPAD(#{REPR_PRD_ID}, 18, '0'),
+                #{DISP_PRD_NM},
+                #{USE_YN},
+                #{DISP_PRD_SPR_CD},
+                #{ADD_INFO_SET_YN},
+                #{PRFRT},
+                #{UPD_RSN},
+                (SELECT COUNT(0) FROM TB_RD_RND_DISP_BASIS) + 1,
+                #{SESSION_OPRTR_ID},
+                SYSDATE
+            )
+    </insert>
+
+    <insert id="insertRndDispOptnBasis" parameterType="HashMap">
+        /* DispPrdMngLstDao.insertRndDispOptnBasis RND 전시상품 옵션정보 등록 */
+        MERGE INTO SSP_APP.TB_RD_RND_DISP_OPTN_BASIS USING DUAL
+        ON (CO_CD = #{CO_CD} AND DISP_GRP_ID = #{DISP_GRP_ID} AND OPTN_ITM_NO = #{OPTN_ITM_NO})
+        WHEN MATCHED THEN
+            UPDATE SET
+                OPTN_NM = #{OPTN_NM},
+                MAND_YN = #{MAND_YN},
+                IPT_TYPE_CD =  #{IPT_TYPE_CD},
+                SRT_SO =  #{SRT_SO},
+                UPDPSN_ID =  #{SESSION_OPRTR_ID},
+                UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                CO_CD,
+                DISP_GRP_ID,
+                PRD_CLCD,
+                OPTN_ITM_NO,
+                OPTN_NM,
+                MAND_YN,
+                IPT_TYPE_CD,
+                SRT_SO,
+                REGPSN_ID,
+                REG_DTM
+            ) VALUES (
+                #{CO_CD},
+                #{DISP_GRP_ID},
+                #{PRD_CLCD},
+                #{OPTN_ITM_NO},
+                #{OPTN_NM},
+                #{MAND_YN},
+                #{IPT_TYPE_CD},
+                #{SRT_SO},
+                #{SESSION_OPRTR_ID},
+                SYSDATE
+            )
+    </insert>
+
+    <insert id="insertRndDispOptnDtl" parameterType="HashMap">
+        /* DispPrdMngLstDao.insertRndDispOptnDtl RND 전시상품 옵션상세정보 등록 */
+        MERGE INTO SSP_APP.TB_RD_RND_DISP_OPTN_DTL USING DUAL
+        ON (CO_CD = #{CO_CD} AND DISP_GRP_ID = #{DISP_GRP_ID} AND OPTN_ITM_NO = #{OPTN_ITM_NO} AND OPTN_DTL_ITM_NO = #{OPTN_DTL_ITM_NO})
+        WHEN MATCHED THEN
+            UPDATE SET
+                OPTN_DTL_NM = #{OPTN_DTL_NM},
+                SRT_SO = #{SRT_SO},
+                OPTN_DTL_CTS = #{OPTN_DTL_CTS},
+                DOC_REG_ID = #{DOC_REG_ID},
+                UPDPSN_ID = #{SESSION_OPRTR_ID},
+                UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                CO_CD,
+                DISP_GRP_ID,
+                PRD_CLCD,
+                OPTN_ITM_NO,
+                OPTN_DTL_ITM_NO,
+                OPTN_DTL_NM,
+                SRT_SO,
+                OPTN_DTL_CTS,
+                DOC_REG_ID,
+                REGPSN_ID,
+                REG_DTM
+            ) VALUES (
+                #{CO_CD},
+                #{DISP_GRP_ID},
+                #{PRD_CLCD},
+                #{OPTN_ITM_NO},
+                #{OPTN_DTL_ITM_NO},
+                #{OPTN_DTL_NM},
+                #{SRT_SO},
+                #{OPTN_DTL_CTS},
+                #{DOC_REG_ID},
+                #{SESSION_OPRTR_ID},
+                SYSDATE
+            )
+    </insert>
+
+    <insert id="insertRndDispOptnDtlMapp" parameterType="HashMap">
+        /* DispPrdMngLstDao.insertRndDispOptnDtlMapp RND 전시상품 상품연결정보 등록 */
+        INSERT INTO SSP_APP.TB_RD_RND_DISP_OPTN_DTL_MAPP
+        (
+            CO_CD,
+            DISP_GRP_ID,
+            PRD_CLCD,
+            OPTN_DTL_MAPP_ITM_NO,
+            OPTN_DTL_ITM_MAPP_CTS,
+            MAPP_PRD_ID,
+            REGPSN_ID,
+            REG_DTM,
+            UPDPSN_ID,
+            UPD_DTM
+        ) VALUES (
+            #{CO_CD},
+            #{DISP_GRP_ID},
+            #{PRD_CLCD},
+            #{OPTN_DTL_MAPP_ITM_NO},
+            #{OPTN_DTL_ITM_MAPP_CTS},
+            LPAD(#{MAPP_PRD_ID}, 18, '0'),
+            #{SESSION_OPRTR_ID},
+            SYSDATE,
+            #{SESSION_OPRTR_ID},
+            SYSDATE
+        )
+    </insert>
+
+    <insert id="insertRndDispAddOptnBasis" parameterType="HashMap">
+        /* DispPrdMngLstDao.insertRndDispAddOptnBasis RND 전시상품 추가정보 등록 */
+        MERGE INTO SSP_APP.TB_RD_RND_DISP_ADD_OPTN_BASIS USING DUAL
+        ON (CO_CD = #{CO_CD} AND DISP_GRP_ID = #{DISP_GRP_ID} AND ADD_OPTN_ITM_NO = #{ADD_OPTN_ITM_NO})
+        WHEN MATCHED THEN
+            UPDATE SET
+                ADD_OPTN_NM = #{ADD_OPTN_NM},
+                IPT_TYPE_CD = #{IPT_TYPE_CD},
+                MAND_YN = #{MAND_YN},
+                ATFL_YN = #{ATFL_YN},
+                SRT_SO = #{SRT_SO},
+                UPDPSN_ID = #{SESSION_OPRTR_ID},
+                UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                CO_CD,
+                DISP_GRP_ID,
+                PRD_CLCD,
+                ADD_OPTN_ITM_NO,
+                ADD_OPTN_NM,
+                IPT_TYPE_CD,
+                MAND_YN,
+                ATFL_YN,
+                SRT_SO,
+                REGPSN_ID,
+                REG_DTM
+            ) VALUES (
+                #{CO_CD},
+                #{DISP_GRP_ID},
+                #{PRD_CLCD},
+                #{ADD_OPTN_ITM_NO},
+                #{ADD_OPTN_NM},
+                #{IPT_TYPE_CD},
+                #{MAND_YN},
+                #{ATFL_YN},
+                #{SRT_SO},
+                #{SESSION_OPRTR_ID},
+                SYSDATE
+            )
+    </insert>
+
+    <insert id="insertRndDispAddOptnDtl" parameterType="HashMap">
+        /* DispPrdMngLstDao.insertRndDispAddOptnDtl RND 전시상품 추가정보상세 등록 */
+        MERGE INTO SSP_APP.TB_RD_RND_DISP_ADD_OPTN_DTL USING DUAL
+        ON (CO_CD = #{CO_CD} AND DISP_GRP_ID = #{DISP_GRP_ID} AND ADD_OPTN_ITM_NO = #{ADD_OPTN_ITM_NO} AND ADD_OPTN_DTL_ITM_NO = #{ADD_OPTN_DTL_ITM_NO})
+        WHEN MATCHED THEN
+            UPDATE SET
+                ADD_OPTN_DTL_NM = #{ADD_OPTN_DTL_NM},
+                SRT_SO = #{SRT_SO},
+                OPTN_DTL_CTS = #{OPTN_DTL_CTS},
+                UPDPSN_ID = #{SESSION_OPRTR_ID},
+                UPD_DTM = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                CO_CD,
+                DISP_GRP_ID,
+                PRD_CLCD,
+                ADD_OPTN_ITM_NO,
+                ADD_OPTN_DTL_ITM_NO,
+                ADD_OPTN_DTL_NM,
+                SRT_SO,
+                OPTN_DTL_CTS,
+                REGPSN_ID,
+                REG_DTM
+            ) VALUES (
+                #{CO_CD},
+                #{DISP_GRP_ID},
+                #{PRD_CLCD},
+                #{ADD_OPTN_ITM_NO},
+                #{ADD_OPTN_DTL_ITM_NO},
+                #{ADD_OPTN_DTL_NM},
+                #{SRT_SO},
+                #{OPTN_DTL_CTS},
+                #{SESSION_OPRTR_ID},
+                SYSDATE
+            )
+    </insert>
+
+    <delete id="deleteRndDispOptnBasis" parameterType="HashMap">
+        /* DispPrdMngLstDao.deleteRndDispOptnBasis RND 전시상품 옵션정보 삭제 */
+        DELETE
+        FROM    SSP_APP.TB_RD_RND_DISP_OPTN_BASIS
+        WHERE   CO_CD = #{CO_CD}
+        AND     PRD_CLCD = #{PRD_CLCD}
+        AND     OPTN_ITM_NO = #{OPTN_ITM_NO}
+    </delete>
+
+    <delete id="deleteRndDispOptnDtl" parameterType="HashMap">
+        /* DispPrdMngLstDao.deleteRndDispOptnDtl RND 전시상품 옵션상세정보 삭제 */
+        DELETE
+        FROM    SSP_APP.TB_RD_RND_DISP_OPTN_DTL
+        WHERE   CO_CD = #{CO_CD}
+        AND     PRD_CLCD = #{PRD_CLCD}
+        AND     OPTN_ITM_NO = #{OPTN_ITM_NO}
+        AND     OPTN_DTL_ITM_NO = #{OPTN_DTL_ITM_NO}
+    </delete>
+
+    <delete id="deleteRndDispAddOptnBasis" parameterType="HashMap">
+        /* DispPrdMngLstDao.deleteRndDispAddOptnBasis RND 전시상품 추가정보 삭제 */
+        DELETE
+        FROM    SSP_APP.TB_RD_RND_DISP_ADD_OPTN_BASIS
+        WHERE   CO_CD = #{CO_CD}
+        AND     PRD_CLCD = #{PRD_CLCD}
+        AND     ADD_OPTN_ITM_NO = #{OPTN_ITM_NO}
+    </delete>
+
+    <delete id="deleteRndDispAddOptnDtl" parameterType="HashMap">
+        /* DispPrdMngLstDao.deleteRndDispAddOptnDtl RND 전시상품 추가정보상세 삭제 */
+        DELETE
+        FROM    SSP_APP.TB_RD_RND_DISP_ADD_OPTN_DTL
+        WHERE   CO_CD = #{CO_CD}
+        AND     PRD_CLCD = #{PRD_CLCD}
+        AND     ADD_OPTN_ITM_NO = #{OPTN_ITM_NO}
+        AND     ADD_OPTN_DTL_ITM_NO = #{OPTN_DTL_ITM_NO}
+    </delete>
+
+    <delete id="deleteRndDispOptnDtlMappAll" parameterType="HashMap">
+        /* DispPrdMngLstDao.deleteRndDispOptnDtlMappAll RND 전시상품 상품연결정보 삭제 */
+        DELETE
+        FROM    SSP_APP.TB_RD_RND_DISP_OPTN_DTL_MAPP
+        WHERE   CO_CD = #{CO_CD}
+        AND     PRD_CLCD = #{PRD_CLCD}
+    </delete>
+
+    <select id="selectRndDispPrdCount" parameterType="HashMap" resultType="Integer">
+        /* DispPrdMngLstDao.selectRndDispPrdCount 전시중인 대표상품 ID 카운트 조회 */
+        SELECT  COUNT(1)
+        FROM    SSP_APP.TB_RD_RND_DISP_BASIS
+        WHERE   PRD_CLCD = #{prdClcd}
+        AND     REPR_PRD_ID = LPAD(#{reprPrdId}, 18, '0')
+        <if test='dispGrpId != "" and dispGrpId != null'>
+            AND DISP_GRP_ID != #{dispGrpId}
+        </if>
+    </select>
+
+    <select id="selectCategoryOptionValues" parameterType="HashMap" resultType="HashMap">
+        /* DispPrdMngLstDao.selectCategoryOptionValues 상품군 옵션값 조회 */
+        SELECT  *
+        FROM    (
+                    SELECT  MAPP.CO_CD
+                            , MAPP.SRT_SO AS OPTN_ITM_NO
+                            , MAPP.PRD_CLCD
+                            , MAPP.PRD_ATTR_CD
+                            , ATTR.PRNM AS OPTN_NM
+                            , NVL(SRT.SRT_SO, MAPP.SRT_SO) AS SRT_SO
+                            , NVL(SRT.EXPS_YN, 'Y') AS EXPS_YN
+                    FROM    TB_PR_PRD_CLSF_ATTR_MAPP MAPP
+                            , TB_PR_PRD_ATTR_INFO ATTR
+                            , TB_PR_PRD_CLSF_ATTR_SRT_INFO SRT
+                    WHERE   MAPP.PRD_CLCD = MAPP.PRD_CLCD
+                    AND     MAPP.PRD_ATTR_CD = ATTR.PRD_ATTR_CD
+                    AND     MAPP.CO_CD = SRT.CO_CD(+)
+                    AND     MAPP.PRD_CLCD = SRT.PRD_CLCD(+)
+                    AND     MAPP.PRD_ATTR_CD = SRT.INTG_ATTR_CD(+)
+                    AND     ATTR.USE_YN = 'Y'
+                    AND     MAPP.CO_CD = #{CO_CD}
+                    AND     MAPP.PRD_CLCD = #{PRD_CLCD}
+                    ORDER BY NVL(SRT.SRT_SO, MAPP.SRT_SO)
+                )
+        WHERE   EXPS_YN = 'Y'
+    </select>
+   
+</mapper>

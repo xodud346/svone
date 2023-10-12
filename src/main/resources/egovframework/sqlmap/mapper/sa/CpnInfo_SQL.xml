@@ -1,0 +1,1925 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CpnInfo">
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 목록 조회
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.17.
+	******************************************************************************
+	-->
+	<select id="selectCpnInfoList" parameterType="HashMap" resultType="HashMap">
+
+/* 쿠폰 목록 조회 - CpnInfo_SQL.selectCpnInfoList */
+
+SELECT CO_CD
+	, CPN_EVT_NO
+	, CPN_KND_CD
+	, CPN_NM
+	, CPN_DESC
+	, CPN_DC_SPR_CD
+	, DC_AMT_DCRT
+	, MIN_PURG_AMT
+	, MAX_DC_AMT
+	, PUBC_STR_DT
+	, PUBC_END_DT
+	, PUBC_QTY
+	, UNLMT_PUBC_YN
+	, CPN_PUBC_MTHD_CD
+	, CPNBOX_EXPS_YN
+	, CPN_USE_PERD_CD
+	, CPN_USE_STR_DT
+	, CPN_USE_END_DT
+	, USE_PSB_DCNT
+	, CPN_GUDC
+	, CPN_APLY_TGT_SPR_CD
+	, CPN_EXCPT_TGT_SPR_CD
+	, USE_YN
+	, REGPSN_ID
+	, TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+	, UPDPSN_ID
+	, TO_CHAR(UPD_DTM, 'YYYY-MM-DD') AS UPD_DTM
+
+	, REGPSN_ID_NM
+	, UPDPSN_ID_NM
+
+	, CPN_KND_CD_NM
+	, CPN_DC_SPR_CD_NM
+
+	, UNLMT_PUBC_YN_NM
+
+	, CPN_PUBC_MTHD_CD_NM
+
+	, CPNBOX_EXPS_YN_NM
+
+	, CPN_USE_PERD_CD_NM
+	, CPN_APLY_TGT_SPR_CD_NM
+	, CPN_EXCPT_TGT_SPR_CD_NM
+
+	, USE_YN_NM
+
+	, USE_QTY
+
+	, '' AS READ_COL
+
+	, CPN_STATS
+
+FROM (
+		SELECT A.CO_CD
+			, A.CPN_EVT_NO
+			, A.CPN_KND_CD
+			, A.CPN_NM
+			, A.CPN_DESC
+			, A.CPN_DC_SPR_CD
+			, A.DC_AMT_DCRT
+			, A.MIN_PURG_AMT
+			, A.MAX_DC_AMT
+			, TO_CHAR(TO_DATE(A.PUBC_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PUBC_STR_DT
+			, TO_CHAR(TO_DATE(A.PUBC_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PUBC_END_DT
+			, (
+				SELECT COUNT(1)
+				FROM TB_SA_CPN_PUBC_USE_DTLS X
+				WHERE X.CO_CD = A.CO_CD
+				AND X.CPN_EVT_NO = A.CPN_EVT_NO
+			) AS PUBC_QTY
+			, A.UNLMT_PUBC_YN
+			, A.CPN_PUBC_MTHD_CD
+			, A.CPNBOX_EXPS_YN
+			, A.CPN_USE_PERD_CD
+			, CASE WHEN CPN_USE_PERD_CD = 10 THEN TO_CHAR(TO_DATE(A.CPN_USE_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD')
+						WHEN CPN_USE_PERD_CD = 20 THEN TO_CHAR(TO_DATE(A.PUBC_STR_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+						WHEN CPN_USE_PERD_CD = 30 THEN TO_CHAR(TO_DATE(A.PUBC_STR_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+			END CPN_USE_STR_DT
+			, CASE WHEN CPN_USE_PERD_CD = 10 THEN TO_CHAR(TO_DATE(A.CPN_USE_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD')
+						WHEN CPN_USE_PERD_CD = 20 THEN
+																			CASE WHEN A.PUBC_END_DT = '99991231' THEN '9999-12-31'
+																					ELSE TO_CHAR(TO_DATE(A.PUBC_END_DT, 'YYYYMMDD') + A.USE_PSB_DCNT - 1, 'YYYY-MM-DD')
+																			END
+						WHEN CPN_USE_PERD_CD = 30 THEN TO_CHAR(LAST_DAY(TO_DATE(A.PUBC_END_DT, 'YYYYMMDD')), 'YYYY-MM-DD')
+				END CPN_USE_END_DT
+			, A.USE_PSB_DCNT
+			, A.CPN_GUDC
+			, A.CPN_APLY_TGT_SPR_CD
+			, A.CPN_EXCPT_TGT_SPR_CD
+			, A.USE_YN
+			, A.REGPSN_ID
+			, A.REG_DTM
+			, A.UPDPSN_ID
+			, A.UPD_DTM
+
+			, B.OPRTR_NM AS REGPSN_ID_NM
+			, C.OPRTR_NM AS UPDPSN_ID_NM
+
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_KND_CD', A.CPN_KND_CD, '-') AS CPN_KND_CD_NM
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_DC_SPR_CD', A.CPN_DC_SPR_CD, '-') AS CPN_DC_SPR_CD_NM
+
+			, CASE WHEN A.UNLMT_PUBC_YN = 'Y' THEN '무제한 발행'
+					WHEN A.UNLMT_PUBC_YN = 'N' THEN '무제한 미발행'
+					ELSE ''
+					END AS UNLMT_PUBC_YN_NM
+
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_PUBC_MTHD_CD', A.CPN_PUBC_MTHD_CD, '-') AS CPN_PUBC_MTHD_CD_NM
+
+			, CASE WHEN A.CPNBOX_EXPS_YN = 'Y' THEN '노출'
+					WHEN A.CPNBOX_EXPS_YN = 'N' THEN '미노출'
+					ELSE ''
+					END AS CPNBOX_EXPS_YN_NM
+
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_USE_PERD_CD', A.CPN_USE_PERD_CD, '-') AS CPN_USE_PERD_CD_NM
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_APLY_TGT_SPR_CD', A.CPN_APLY_TGT_SPR_CD, '-') AS CPN_APLY_TGT_SPR_CD_NM
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_EXCPT_TGT_SPR_CD', A.CPN_EXCPT_TGT_SPR_CD, '-') AS CPN_EXCPT_TGT_SPR_CD_NM
+
+			, CASE WHEN A.USE_YN = 'Y' THEN '사용'
+					WHEN A.USE_YN = 'N' THEN '미사용'
+					ELSE ''
+					END AS USE_YN_NM
+
+			, (
+				SELECT COUNT(1)
+				FROM TB_SA_CPN_PUBC_USE_DTLS X
+				WHERE X.CO_CD = A.CO_CD
+				AND X.CPN_EVT_NO = A.CPN_EVT_NO
+				AND X.CPN_ODR_DTM IS NOT NULL
+				AND X.CPN_ODR_CNC_DTM IS NULL
+			) AS USE_QTY
+			, CASE WHEN CPN_USE_PERD_CD = 10 THEN
+										CASE WHEN (TO_CHAR(SYSDATE, 'YYYYMMDD') >= A.PUBC_STR_DT AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.PUBC_END_DT
+															OR TO_CHAR(SYSDATE, 'YYYYMMDD') >= A.CPN_USE_STR_DT AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.CPN_USE_END_DT)
+												THEN 'ING'
+												WHEN (TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.PUBC_STR_DT
+															OR TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.CPN_USE_STR_DT)
+												THEN 'READY'
+												ELSE 'END'
+										END
+					WHEN CPN_USE_PERD_CD = 20 THEN
+										CASE WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') >= A.PUBC_STR_DT
+															AND (TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.PUBC_END_DT OR TO_CHAR(SYSDATE - A.USE_PSB_DCNT, 'YYYYMMDD') <![CDATA[ < ]]> A.PUBC_END_DT)
+												THEN 'ING'
+												WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.PUBC_STR_DT
+												THEN 'READY'
+												ELSE 'END'
+										END
+					WHEN CPN_USE_PERD_CD = 30 THEN
+										CASE WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') >= A.PUBC_STR_DT
+															AND (TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.PUBC_END_DT OR SYSDATE-1 <![CDATA[ < ]]> LAST_DAY(TO_DATE(A.PUBC_END_DT, 'YYYYMMDD')))
+												THEN 'ING'
+												WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.PUBC_STR_DT
+												THEN 'READY'
+												ELSE 'END'
+										END
+				END CPN_STATS
+
+		FROM TB_SA_CPN_INFO A
+			, TB_CO_MBR_OPRTR_INFO B
+			, TB_CO_MBR_OPRTR_INFO C
+
+		WHERE A.CO_CD = B.CO_CD(+)
+		AND A.REGPSN_ID = B.OPRTR_ID(+)
+
+		AND A.CO_CD = C.CO_CD(+)
+		AND A.UPDPSN_ID = C.OPRTR_ID(+)
+
+		AND A.CO_CD = #{coCd}
+
+		<if test="cpnKndCd != null and cpnKndCd != '' ">
+
+		AND A.CPN_KND_CD = #{cpnKndCd}
+
+		</if>
+
+		<if test="cpnPubcMthdCd != null and cpnPubcMthdCd != '' ">
+
+		AND A.CPN_PUBC_MTHD_CD = #{cpnPubcMthdCd}
+
+		</if>
+
+		<if test="cpnEvtNo != null and cpnEvtNo != '' ">
+
+		AND A.CPN_EVT_NO LIKE '%' || #{cpnEvtNo} || '%'
+
+		</if>
+
+		<if test="cpnNm != null and cpnNm != '' ">
+
+		AND A.CPN_NM LIKE '%' || #{cpnNm} || '%'
+
+		</if>
+
+		<if test="startDate != null and startDate != '' and endDate != null and endDate != '' ">
+
+			<choose>
+
+				<when test='termSpr == "REG_DTM"'>
+
+		AND A.REG_DTM BETWEEN TO_DATE(#{startDate} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{endDate} || '235959', 'YYYYMMDDHH24MISS')
+
+				</when>
+
+				<when test='termSpr == "PUBC_DT"'>
+
+		AND A.PUBC_STR_DT <![CDATA[ <= ]]> #{endDate} AND PUBC_END_DT <![CDATA[ >= ]]> #{startDate}
+
+				</when>
+
+				<otherwise>
+				</otherwise>
+
+			</choose>
+
+		</if>
+
+	) A
+
+		<where>
+		<if test="useYn != null and useYn != '' ">
+
+AND A.USE_YN = #{useYn}
+
+		</if>
+
+		<if test="cpnStats != null and cpnStats != '' ">
+
+AND A.CPN_STATS = #{cpnStats}
+
+		</if>
+
+		</where>
+
+		<if test="sortColumn != null and sortColumn != ''">
+
+ORDER BY A.${sortColumn} ${sortType}
+
+		</if>
+
+		<if test="sortColumn == null or sortColumn == ''">
+
+ORDER BY A.USE_YN DESC, A.CPN_STATS DESC, REG_DTM DESC
+
+		</if>
+
+		<if test="excelDownloadYn != null and excelDownloadYn != ''">
+
+			<if test='excelDownloadYn == "N"'>
+
+OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+
+			</if>
+
+		</if>
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 목록 건수 조회
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.17.
+	******************************************************************************
+	-->
+	<select id="selectCpnInfoListCount" parameterType="HashMap" resultType="Integer">
+
+/* 쿠폰 목록 건수 조회 - CpnInfo_SQL.selectCpnInfoListCount */
+
+SELECT COUNT(1)
+
+FROM (
+
+	SELECT CASE WHEN CPN_USE_PERD_CD = 10 THEN
+										CASE WHEN (TO_CHAR(SYSDATE, 'YYYYMMDD') >= A.PUBC_STR_DT AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.PUBC_END_DT
+															OR TO_CHAR(SYSDATE, 'YYYYMMDD') >= A.CPN_USE_STR_DT AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.CPN_USE_END_DT)
+												THEN 'ING'
+												WHEN (TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.PUBC_STR_DT
+															OR TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.CPN_USE_STR_DT)
+												THEN 'READY'
+												ELSE 'END'
+										END
+					WHEN CPN_USE_PERD_CD = 20 THEN
+										CASE WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') >= A.PUBC_STR_DT
+															AND (TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.PUBC_END_DT OR TO_CHAR(SYSDATE - A.USE_PSB_DCNT, 'YYYYMMDD') <![CDATA[ < ]]> A.PUBC_END_DT)
+												THEN 'ING'
+												WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.PUBC_STR_DT
+												THEN 'READY'
+												ELSE 'END'
+										END
+					WHEN CPN_USE_PERD_CD = 30 THEN
+										CASE WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') >= A.PUBC_STR_DT
+															AND (TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.PUBC_END_DT OR SYSDATE-1 <![CDATA[ < ]]> LAST_DAY(TO_DATE(A.PUBC_END_DT, 'YYYYMMDD')))
+												THEN 'ING'
+												WHEN TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ < ]]> A.PUBC_STR_DT
+												THEN 'READY'
+												ELSE 'END'
+										END
+				END CPN_STATS
+				, A.USE_YN
+
+	FROM TB_SA_CPN_INFO A
+		, TB_CO_MBR_OPRTR_INFO B
+		, TB_CO_MBR_OPRTR_INFO C
+
+	WHERE A.CO_CD = B.CO_CD(+)
+	AND A.REGPSN_ID = B.OPRTR_ID(+)
+
+	AND A.CO_CD = C.CO_CD(+)
+	AND A.UPDPSN_ID = C.OPRTR_ID(+)
+
+	AND A.CO_CD = #{coCd}
+
+			<if test="cpnKndCd != null and cpnKndCd != '' ">
+
+	AND A.CPN_KND_CD = #{cpnKndCd}
+
+			</if>
+
+			<if test="cpnPubcMthdCd != null and cpnPubcMthdCd != '' ">
+
+	AND A.CPN_PUBC_MTHD_CD = #{cpnPubcMthdCd}
+
+			</if>
+
+			<if test="cpnEvtNo != null and cpnEvtNo != '' ">
+
+	AND A.CPN_EVT_NO LIKE '%' || #{cpnEvtNo} || '%'
+
+			</if>
+
+			<if test="cpnNm != null and cpnNm != '' ">
+
+	AND A.CPN_NM LIKE '%' || #{cpnNm} || '%'
+
+			</if>
+
+			<if test="startDate != null and startDate != '' and endDate != null and endDate != '' ">
+
+				<choose>
+
+					<when test='termSpr == "REG_DTM"'>
+
+	AND A.REG_DTM BETWEEN TO_DATE(#{startDate} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{endDate} || '235959', 'YYYYMMDDHH24MISS')
+
+					</when>
+
+					<when test='termSpr == "PUBC_DT"'>
+
+	AND A.PUBC_STR_DT <![CDATA[ <= ]]> #{endDate} AND PUBC_END_DT <![CDATA[ >= ]]> #{startDate}
+
+					</when>
+
+					<otherwise>
+					</otherwise>
+
+				</choose>
+
+			</if>
+) S
+	<where>
+	<if test="useYn != null and useYn != '' ">
+
+AND S.USE_YN = #{useYn}
+
+	</if>
+	<if test="cpnStats != null and cpnStats != '' ">
+
+AND S.CPN_STATS = #{cpnStats}
+
+		</if>
+	</where>
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 발행 내역 목록 조회
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.17.
+	******************************************************************************
+	-->
+	<select id="selectCpnPubcUseDtlsList" parameterType="HashMap" resultType="HashMap">
+
+/* 쿠폰 발행 내역 목록 조회 - CpnInfo_SQL.selectCpnPubcUseDtlsList */
+
+WITH TEMP_TB_CC_MBR_BASIS AS
+(
+	SELECT A.CO_CD
+		, A.MBR_ID
+		, A.MBR_NM
+		, G.LOGN_ID
+		, A.BZPLC_ID
+		, B.BZPLC_NM
+		, D.OPR_UNIT_ID
+		, D.OPR_UNIT_NM
+		, D.CUST_SPR_CD
+		, C.DEPT_ID
+		, C.DEPT_NM
+		, A.DRMC_YN
+
+	FROM TB_CC_MBR_BASIS A JOIN TB_CC_BZPLC_BASIS B
+		ON A.BZPLC_ID = B.BZPLC_ID
+	AND A.CO_CD = B.CO_CD
+
+	JOIN TB_CC_DEPT_BASIS C
+		ON A.DEPT_ID = C.DEPT_ID
+	AND A.CO_CD = C.CO_CD
+
+	JOIN TB_CC_OPR_UNIT_BASIS D
+		ON C.OPR_UNIT_ID = D.OPR_UNIT_ID
+	AND C.CO_CD = D.CO_CD
+
+	LEFT JOIN TB_CC_MBR_CTL_AUTH_INFO E
+		ON A.MBR_ID = E.MBR_ID
+	AND A.CO_CD = E.CO_CD
+
+	LEFT JOIN TB_CC_MBR_UCESSDI_LOGN_INFO F
+		ON A.MBR_ID = F.MBR_ID
+	AND A.CO_CD = F.CO_CD
+
+	LEFT JOIN TB_CO_MBR_LOGN_INFO G
+		ON A.MBR_ID = G.MBR_ID
+	AND A.CO_CD = G.CO_CD
+)
+
+SELECT RN
+	, CO_CD
+	, CPN_NO
+	, CPN_EVT_NO
+	, CPN_PUBC_MBR_ID
+	, TO_CHAR(CPN_PUBC_DTM, 'YYYY-MM-DD') AS CPN_PUBC_DTM
+	, BZPLC_ID
+	, CPN_APLY_CART_NO
+	, CPN_APLY_CART_ITM_SEQ
+	, TO_CHAR(CPN_CART_APLY_DTM, 'YYYY-MM-DD') AS CPN_CART_APLY_DTM
+	, TO_CHAR(CPN_CART_EXCPT_DTM, 'YYYY-MM-DD') AS CPN_CART_EXCPT_DTM
+	, CPN_USE_PRD_ID
+	, CPN_USE_ODR_NO
+	, CPN_USE_ODR_ITM_NO
+	, TO_CHAR(CPN_ODR_DTM, 'YYYY-MM-DD') AS CPN_ODR_DTM
+	, TO_CHAR(CPN_ODR_CNC_DTM, 'YYYY-MM-DD') AS CPN_ODR_CNC_DTM
+	, REGPSN_ID
+	, TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+	, UPDPSN_ID
+	, TO_CHAR(UPD_DTM, 'YYYY-MM-DD') AS UPD_DTM
+
+	, MBR_NM
+	, LOGN_ID
+	, OPR_UNIT_ID
+	, OPR_UNIT_NM
+	, CUST_SPR_CD
+	, DRMC_YN
+
+	, CUST_SPR_CD_NM
+
+	, USE_YN_NM
+	, USE_DTM
+
+FROM (
+		SELECT
+			RANK() OVER (ORDER BY A.CPN_PUBC_DTM DESC, A.CPN_PUBC_MBR_ID DESC) AS RN 
+			, A.CO_CD
+			, A.CPN_NO
+			, A.CPN_EVT_NO
+			, A.CPN_PUBC_MBR_ID
+			, A.CPN_PUBC_DTM
+			, A.BZPLC_ID
+			, A.CPN_APLY_CART_NO
+			, A.CPN_APLY_CART_ITM_SEQ
+			, A.CPN_CART_APLY_DTM
+			, A.CPN_CART_EXCPT_DTM
+			, CASE WHEN A.CPN_ODR_CNC_DTM IS NULL AND A.CPN_ODR_DTM IS NOT NULL THEN A.CPN_USE_PRD_ID
+						WHEN A.CPN_ODR_CNC_DTM IS NOT NULL THEN ''
+						ELSE ''
+				END CPN_USE_PRD_ID
+			, CASE WHEN A.CPN_ODR_CNC_DTM IS NULL AND A.CPN_ODR_DTM IS NOT NULL THEN A.CPN_USE_ODR_NO
+						WHEN A.CPN_ODR_CNC_DTM IS NOT NULL THEN ''
+						ELSE ''
+				END CPN_USE_ODR_NO
+			, CASE WHEN A.CPN_ODR_CNC_DTM IS NULL AND A.CPN_ODR_DTM IS NOT NULL THEN TO_CHAR(A.CPN_USE_ODR_ITM_NO)
+						WHEN A.CPN_ODR_CNC_DTM IS NOT NULL THEN ''
+						ELSE ''
+				END CPN_USE_ODR_ITM_NO
+			, A.CPN_ODR_DTM
+			, A.CPN_ODR_CNC_DTM
+			, A.REGPSN_ID
+			, A.REG_DTM
+			, A.UPDPSN_ID
+			, A.UPD_DTM
+
+			, CASE WHEN LENGTH(B.MBR_NM) = 2 THEN SUBSTR(B.MBR_NM,1,1) || LPAD('*',(LENGTH(B.MBR_NM)-1),'*')
+						WHEN LENGTH(B.MBR_NM) = 3 THEN SUBSTR(B.MBR_NM,1,1) || LPAD('*',(LENGTH(B.MBR_NM)-2),'*') || SUBSTR(B.MBR_NM,3,1)
+						ELSE SUBSTR(B.MBR_NM,1,2) || LPAD('*',(LENGTH(B.MBR_NM)-2),'*')
+				END AS MBR_NM
+			, SUBSTR(B.LOGN_ID,1,3) || LPAD('*',(LENGTH(B.LOGN_ID)-3),'*') AS LOGN_ID
+			, B.OPR_UNIT_ID
+			, B.OPR_UNIT_NM
+			, B.CUST_SPR_CD
+			, B.DRMC_YN
+
+			, C.COM_DTL_CD_NM AS CUST_SPR_CD_NM
+
+			, CASE WHEN CPN_ODR_CNC_DTM IS NULL AND CPN_ODR_DTM IS NOT NULL THEN '사용'
+					WHEN CPN_ODR_CNC_DTM IS NOT NULL THEN '-'
+					ELSE '-'
+					END USE_YN_NM
+			, CASE WHEN CPN_ODR_CNC_DTM IS NULL THEN TO_CHAR(CPN_ODR_DTM, 'YYYY-MM-DD HH24:MI:SS')
+					WHEN CPN_ODR_CNC_DTM IS NOT NULL THEN '-'
+					ELSE '-'
+					END USE_DTM
+
+		FROM TB_SA_CPN_PUBC_USE_DTLS A
+			, TEMP_TB_CC_MBR_BASIS B
+			, TB_CO_COM_CD_DTL C
+
+		WHERE A.CO_CD = B.CO_CD
+		AND A.CPN_PUBC_MBR_ID = B.MBR_ID
+
+		AND B.CUST_SPR_CD = C.COM_DTL_CD
+
+		AND C.LANG_CD = 'KO'
+		AND C.COM_CLSF_CD =  'CUST_SPR_CD'
+		AND C.USE_YN = 'Y'
+
+		AND A.CO_CD = #{coCd}
+		AND A.CPN_EVT_NO = #{cpnEvtNo}
+
+	) A
+
+	<if test="sortColumn != null and sortColumn != ''">
+
+ORDER BY ${sortColumn} ${sortType}
+
+	</if>
+
+	<if test="sortColumn == null or sortColumn == ''">
+
+ORDER BY RN ASC
+
+	</if>
+
+		<if test="excelDownloadYn != null and excelDownloadYn != ''">
+
+			<if test='excelDownloadYn == "N"'>
+
+OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+
+			</if>
+
+		</if>
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 발행 내역 목록 건수 조회
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.17.
+	******************************************************************************
+	-->
+	<select id="selectCpnPubcUseDtlsListCount" parameterType="HashMap" resultType="Integer">
+
+/* 쿠폰 발행 내역 목록 건수 조회 - CpnInfo_SQL.selectCpnPubcUseDtlsListCount */
+
+WITH TEMP_TB_CC_MBR_BASIS AS
+(
+	SELECT A.CO_CD
+		, A.MBR_ID
+		, A.MBR_NM
+		, G.LOGN_ID
+		, A.BZPLC_ID
+		, B.BZPLC_NM
+		, D.OPR_UNIT_ID
+		, D.OPR_UNIT_NM
+		, D.CUST_SPR_CD
+		, C.DEPT_ID
+		, C.DEPT_NM
+
+	FROM TB_CC_MBR_BASIS A JOIN TB_CC_BZPLC_BASIS B
+		ON A.BZPLC_ID = B.BZPLC_ID
+	AND A.CO_CD = B.CO_CD
+
+	JOIN TB_CC_DEPT_BASIS C
+		ON A.DEPT_ID = C.DEPT_ID
+	AND A.CO_CD = C.CO_CD
+
+	JOIN TB_CC_OPR_UNIT_BASIS D
+		ON C.OPR_UNIT_ID = D.OPR_UNIT_ID
+	AND C.CO_CD = D.CO_CD
+
+	LEFT JOIN TB_CC_MBR_CTL_AUTH_INFO E
+		ON A.MBR_ID = E.MBR_ID
+	AND A.CO_CD = E.CO_CD
+
+	LEFT JOIN TB_CC_MBR_UCESSDI_LOGN_INFO F
+		ON A.MBR_ID = F.MBR_ID
+	AND A.CO_CD = F.CO_CD
+
+	LEFT JOIN TB_CO_MBR_LOGN_INFO G
+		ON A.MBR_ID = G.MBR_ID
+	AND A.CO_CD = G.CO_CD
+)
+
+SELECT COUNT(1)
+
+FROM TB_SA_CPN_PUBC_USE_DTLS A
+	, TEMP_TB_CC_MBR_BASIS B
+	, TB_CO_COM_CD_DTL C
+
+WHERE A.CO_CD = B.CO_CD
+AND A.CPN_PUBC_MBR_ID = B.MBR_ID
+
+AND B.CUST_SPR_CD = C.COM_DTL_CD
+
+AND C.LANG_CD = 'KO'
+AND C.COM_CLSF_CD =  'CUST_SPR_CD'
+AND C.USE_YN = 'Y'
+
+AND A.CO_CD = #{coCd}
+AND A.CPN_EVT_NO = #{cpnEvtNo}
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 발급 대상 목록
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.17.
+	******************************************************************************
+	-->
+	<select id="selectCpnPubcMbrList" parameterType="HashMap" resultType="HashMap">
+
+/* 쿠폰 발급 대상 목록 - CpnInfo_SQL.selectCpnPubcMbrList */
+
+SELECT '0' AS CHK
+	, A.CO_CD
+	, A.MBR_ID
+	, A.MBR_NM
+	, CASE WHEN LENGTH(A.MBR_NM) = 2 THEN SUBSTR(A.MBR_NM,1,1) || LPAD('*',(LENGTH(A.MBR_NM)-1),'*')
+			WHEN LENGTH(A.MBR_NM) = 3 THEN SUBSTR(A.MBR_NM,1,1) || LPAD('*',(LENGTH(A.MBR_NM)-2),'*') || SUBSTR(A.MBR_NM,3,1)
+			ELSE SUBSTR(A.MBR_NM,1,2) || LPAD('*',(LENGTH(A.MBR_NM)-2),'*')
+	END AS MASK_MBR_NM
+	, G.LOGN_ID
+	, SUBSTR(G.LOGN_ID,1,3) || LPAD('*',(LENGTH(G.LOGN_ID)-3),'*') AS MASK_LOGN_ID
+	, D.CUST_SPR_CD
+	, FN_COM_DTL_CDNM_NVL('KO', 'CUST_SPR_CD', D.CUST_SPR_CD, '') AS CUST_SPR_CD_NM
+	, A.BZPLC_ID
+	, B.BZPLC_NM
+	, D.OPR_UNIT_ID
+	, D.OPR_UNIT_NM
+	, C.DEPT_ID
+	, C.DEPT_NM
+	, A.DRMC_YN
+
+FROM TB_CC_MBR_BASIS A JOIN TB_CC_BZPLC_BASIS B
+	ON A.BZPLC_ID = B.BZPLC_ID
+AND A.CO_CD = B.CO_CD
+AND A.CO_CD = #{coCd}
+AND A.MBR_USE_CD = 'Y'
+AND (A.DRMC_YN = 'N' OR A.DRMC_YN IS NULL)
+
+JOIN TB_CC_DEPT_BASIS C
+	ON A.DEPT_ID = C.DEPT_ID
+AND A.CO_CD = C.CO_CD
+
+JOIN TB_CC_OPR_UNIT_BASIS D
+	ON C.OPR_UNIT_ID = D.OPR_UNIT_ID
+AND C.CO_CD = D.CO_CD
+
+LEFT JOIN TB_CC_MBR_CTL_AUTH_INFO E
+	ON A.MBR_ID = E.MBR_ID
+AND A.CO_CD = E.CO_CD
+
+LEFT JOIN TB_CC_MBR_UCESSDI_LOGN_INFO F
+	ON A.MBR_ID = F.MBR_ID
+AND A.CO_CD = F.CO_CD
+
+LEFT JOIN TB_CO_MBR_LOGN_INFO G
+	ON A.MBR_ID = G.MBR_ID
+AND A.CO_CD = G.CO_CD
+
+WHERE 1 = 1
+
+		<if test="bzplcId != null and bzplcId != '' ">
+
+AND A.BZPLC_ID LIKE '%' || #{bzplcId} || '%'
+
+		</if>
+
+		<if test="bzplcNm != null and bzplcNm != '' ">
+
+AND B.BZPLC_NM LIKE '%' || #{bzplcNm} || '%'
+
+		</if>
+
+		<if test="oprUnitId != null and oprUnitId != '' ">
+
+AND D.OPR_UNIT_ID LIKE '%' || #{oprUnitId} || '%'
+
+		</if>
+
+		<if test="oprUnitNm != null and oprUnitNm != '' ">
+
+AND D.OPR_UNIT_NM LIKE '%' || #{oprUnitNm} || '%'
+
+		</if>
+
+		<if test="deptId != null and deptId != '' ">
+
+AND C.DEPT_ID LIKE '%' || #{deptId} || '%'
+
+		</if>
+
+		<if test="deptNm != null and deptNm != '' ">
+
+AND C.DEPT_NM LIKE '%' || #{deptNm} || '%'
+
+		</if>
+
+		<if test="mbrId != null and mbrId != '' ">
+
+AND A.MBR_ID LIKE '%' || #{mbrId} || '%'
+
+		</if>
+
+		<if test="mbrNm != null and mbrNm != '' ">
+
+AND A.MBR_NM LIKE '%' || #{mbrNm} || '%'
+
+		</if>
+
+		<if test="drmcYn != null and drmcYn != '' ">
+
+AND A.DRMC_YN = #{drmcYn}
+
+		</if>
+
+ORDER BY A.CO_CD ASC
+	, A.BZPLC_ID ASC
+	, B.BZPLC_NM ASC
+	, D.OPR_UNIT_ID ASC
+	, D.OPR_UNIT_NM ASC
+	, C.DEPT_ID ASC
+	, C.DEPT_NM ASC
+	, A.MBR_ID ASC
+	, A.MBR_NM ASC
+
+OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* INSERT : 쿠폰 시퀀스 값 조회
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.22.
+	******************************************************************************
+	-->
+	<select id="selectCpnInfoSeq" parameterType="HashMap" resultType="HashMap">
+		/* 쿠폰 시퀀스 값 조회 - CpnInfo_SQL.selectCpnInfoSeq */
+		SELECT 'C' || LPAD(SQ_SA_CPN_INFO_01.NEXTVAL, 4, '0') AS CPN_EVT_NO
+		FROM DUAL
+	</select>
+
+	<!--
+	******************************************************************************
+	* INSERT : 쿠폰 기본 정보 등록
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.22.
+	******************************************************************************
+	-->
+	<insert id="insertCpnInfo" parameterType="HashMap">
+		/* 쿠폰 기본 정보 등록 - CpnInfo.insertCpnInfo */
+
+		INSERT 
+		INTO TB_SA_CPN_INFO
+			( CO_CD
+			, CPN_EVT_NO
+			, CPN_KND_CD
+			, CPN_NM
+			, CPN_DESC
+			, CPN_DC_SPR_CD
+			, DC_AMT_DCRT
+			, MIN_PURG_AMT
+			, MAX_DC_AMT
+			, PUBC_STR_DT
+			, PUBC_END_DT
+			, PUBC_QTY
+			, UNLMT_PUBC_YN
+			, CPN_PUBC_MTHD_CD
+			, CPNBOX_EXPS_YN
+			, CPN_USE_PERD_CD
+			, CPN_USE_STR_DT
+			, CPN_USE_END_DT
+			, USE_PSB_DCNT
+			, CPN_GUDC
+			, CPN_APLY_TGT_SPR_CD
+			, CPN_EXCPT_TGT_SPR_CD
+			, USE_YN
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+			, UNLMT_CPN_YN
+			)
+		VALUES
+			( #{coCd}
+			, #{cpnEvtNo}
+			, #{cpnKndCd}
+			, #{cpnNm}
+			, #{cpnDesc}
+			, #{cpnDcSprCd}
+			, #{dcAmtDcrt}
+			, #{minPurgAmt}
+			, #{maxDcAmt}
+			, #{pubcStrDt}
+			, #{pubcEndDt}
+			, #{pubcQty}
+			, #{unlmtPubcYn}
+			, #{cpnPubcMthdCd}
+			, #{cpnboxExpsYn}
+			, #{cpnUsePerdCd}
+			, #{cpnUseStrDt}
+			, #{cpnUseEndDt}
+			, #{usePsbDcnt}
+			, #{cpnGudc}
+			, #{cpnAplyTgtSprCd}
+			, #{cpnExcptTgtSprCd}
+			, #{useYn}
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE
+			, #{unlmtCpnYn}
+			)
+
+	</insert>
+
+	<!--
+	******************************************************************************
+	* INSERT : 쿠폰 기본 정보 수정
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.22.
+	******************************************************************************
+	-->
+	<update id="updateCpnInfo" parameterType="hashMap">
+
+		/* 쿠폰 기본 정보 수정 - CpnInfo.updateCpnInfo */
+
+		UPDATE TB_SA_CPN_INFO
+		SET CPN_KND_CD = #{cpnKndCd}
+			, CPN_NM = #{cpnNm}
+			, CPN_DESC = #{cpnDesc}
+			, CPN_DC_SPR_CD = #{cpnDcSprCd}
+			, DC_AMT_DCRT = #{dcAmtDcrt}
+			, MIN_PURG_AMT = #{minPurgAmt}
+			, MAX_DC_AMT = #{maxDcAmt}
+			, PUBC_STR_DT = #{pubcStrDt}
+			, PUBC_END_DT = #{pubcEndDt}
+			, PUBC_QTY = #{pubcQty}
+			, UNLMT_PUBC_YN = #{unlmtPubcYn}
+			, CPN_PUBC_MTHD_CD = #{cpnPubcMthdCd}
+			, CPNBOX_EXPS_YN = #{cpnboxExpsYn}
+			, CPN_USE_PERD_CD = #{cpnUsePerdCd}
+			, CPN_USE_STR_DT = #{cpnUseStrDt}
+			, CPN_USE_END_DT = #{cpnUseEndDt}
+			, USE_PSB_DCNT = #{usePsbDcnt}
+			, CPN_GUDC = #{cpnGudc}
+			, CPN_APLY_TGT_SPR_CD = #{cpnAplyTgtSprCd}
+			, CPN_EXCPT_TGT_SPR_CD = #{cpnExcptTgtSprCd}
+			, USE_YN = #{useYn}
+			, UPDPSN_ID = #{updpsnId}
+			, UPD_DTM = SYSDATE
+			, UNLMT_CPN_YN = #{unlmtCpnYn}
+		WHERE CO_CD = #{coCd}
+		AND CPN_EVT_NO = #{cpnEvtNo}
+
+	</update>
+
+	<!--
+	******************************************************************************
+	* INSERT : 쿠폰 개별 발행 대상 삭제
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.22.
+	******************************************************************************
+	-->
+	<delete id="deleteCpnPubcUseDtls" parameterType="hashMap">
+
+/* 쿠폰 개별 발행 대상 삭제 - CpnInfo.deleteCpnPubcUseDtls */
+
+DELETE
+
+FROM TB_SA_CPN_PUBC_USE_DTLS
+
+WHERE CO_CD = #{coCd}
+AND CPN_NO = #{cpnNo}
+AND CPN_EVT_NO = #{cpnEvtNo}
+
+	</delete>
+
+<!--
+	******************************************************************************
+	* SELECT : 쿠폰 발급 수량 조회
+	* 작성자 : 87minho
+	* 작성 일자 : 2022.05.27.
+	******************************************************************************
+	-->
+	<select id="selectCpnPubcCount" parameterType="HashMap" resultType="Integer">
+
+/* 쿠폰 발급 수량 조회 - CpnInfo_SQL.selectCpnPubcCount */
+SELECT COUNT(1)
+FROM TB_SA_CPN_PUBC_USE_DTLS B
+WHERE CO_CD = #{coCd}
+AND CPN_EVT_NO = #{cpnEvtNo}
+	</select>
+
+<!--
+	******************************************************************************
+	* SELECT : 쿠폰 중복 발급 확인 건수 조회
+	* 작성자 : 87minho
+	* 작성 일자 : 2022.05.27.
+	******************************************************************************
+	-->
+	<select id="selectCpnDuplPubcCount" parameterType="HashMap" resultType="Integer">
+
+/* 쿠폰 중복 발급 확인 건수 조회 - CpnInfo_SQL.selectCpnDuplPubcCount */
+SELECT COUNT(1)
+
+FROM TB_SA_CPN_PUBC_USE_DTLS
+
+WHERE CO_CD = #{coCd}
+AND CPN_EVT_NO = #{cpnEvtNo}
+AND CPN_PUBC_MBR_ID = #{cpnPubcMbrId}
+	</select>
+
+	<!--
+	******************************************************************************
+	* INSERT : 쿠폰 개별 발행 대상 등록
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.22.
+	******************************************************************************
+	-->
+	<insert id="insertCpnPubcUseDtls" parameterType="HashMap">
+		/* 쿠폰 개별 발행 대상 등록 - CpnInfo.insertCpnPubcUseDtls */
+
+		INSERT INTO TB_SA_CPN_PUBC_USE_DTLS
+			( CO_CD
+			, CPN_NO
+			, CPN_EVT_NO
+			, CPN_PUBC_MBR_ID
+			, CPN_PUBC_DTM
+			, BZPLC_ID
+			, CPN_APLY_CART_NO
+			, CPN_APLY_CART_ITM_SEQ
+			, CPN_CART_APLY_DTM
+			, CPN_CART_EXCPT_DTM
+			, CPN_USE_PRD_ID
+			, CPN_USE_ODR_NO
+			, CPN_USE_ODR_ITM_NO
+			, CPN_ODR_DTM
+			, CPN_ODR_CNC_DTM
+			, REGPSN_ID
+			, REG_DTM
+			, UPDPSN_ID
+			, UPD_DTM
+			)
+		VALUES
+			( #{coCd}
+			, #{cpnEvtNo} || LPAD(SQ_SA_CPN_PUBC_USE_DTLS_01.NEXTVAL, 7, '0')
+			, #{cpnEvtNo}
+			, #{cpnPubcMbrId}
+			, SYSDATE
+			, #{bzplcId}
+			, #{cpnAplyCartNo}
+			, #{cpnAplyCartItmSeq}
+			, #{cpnCartAplyDtm}
+			, #{cpnCartExcptDtm}
+			, #{cpnUsePrdId}
+			, #{cpnUseOdrNo}
+			, #{cpnUseOdrItmNo}
+			, #{cpnOdrDtm}
+			, #{cpnOdrCncDtm}
+			, #{regpsnId}
+			, SYSDATE
+			, #{updpsnId}
+			, SYSDATE
+			)
+
+	</insert>
+
+	<!--
+	******************************************************************************
+	* INSERT : 쿠폰 적용 대상 상품/상품군, 제외 대상 상품/상품군 삭제
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.22.
+	******************************************************************************
+	-->
+	<delete id="deleteCpnPrdDtl" parameterType="hashMap">
+
+/* 쿠폰 적용 대상 상품/상품군, 제외 대상 상품/상품군 삭제 - CpnInfo.deleteCpnPrdDtl */
+
+DELETE
+
+FROM TB_SA_CPN_PRD_DTL
+
+WHERE CO_CD = #{coCd}
+AND CPN_EVT_NO = #{cpnEvtNo}
+AND CPN_PRD_SEQ = #{cpnPrdSeq}
+
+	</delete>
+
+	<!--
+	******************************************************************************
+	* INSERT : 쿠폰 적용 대상 상품/상품군, 제외 대상 상품/상품 등록
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.22.
+	******************************************************************************
+	-->
+	<insert id="insertCpnPrdDtl" parameterType="HashMap">
+
+/* 쿠폰 적용 대상 상품/상품군, 제외 대상 상품/상품 등록 - CpnInfo.insertCpnPrdDtl */
+
+INSERT INTO TB_SA_CPN_PRD_DTL
+	( CO_CD
+	, CPN_EVT_NO
+	, CPN_PRD_SEQ
+	, CPN_APLY_EXCPT_SPR_CD
+	, PRD_CLCD
+	, PRD_ID
+	, REGPSN_ID
+	, REG_DTM
+	, UPDPSN_ID
+	, UPD_DTM
+	)
+VALUES
+	( #{coCd}
+	, #{cpnEvtNo}
+	, SQ_SA_CPN_PRD_DTL_01.NEXTVAL
+	, #{cpnAplyExcptSprCd}
+	, #{prdClcd}
+	, #{prdId}
+	, #{regpsnId}
+	, SYSDATE
+	, #{updpsnId}
+	, SYSDATE
+	)
+
+	</insert>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 상세
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.22.
+	******************************************************************************
+	-->
+	<select id="selectCpnInfo" parameterType="HashMap" resultType="HashMap">
+
+		/* 쿠폰 상세 - CpnInfo_SQL.selectCpnInfo */
+
+		SELECT A.CO_CD
+				, A.CPN_EVT_NO
+				, A.CPN_KND_CD
+				, A.CPN_NM
+				, A.CPN_DESC
+				, A.CPN_DC_SPR_CD
+				, A.DC_AMT_DCRT
+				, A.MIN_PURG_AMT
+				, A.MAX_DC_AMT
+				, A.PUBC_STR_DT
+				, A.PUBC_END_DT
+				, A.PUBC_QTY
+				, A.UNLMT_PUBC_YN
+				, A.CPN_PUBC_MTHD_CD
+				, A.CPNBOX_EXPS_YN
+				, A.CPN_USE_PERD_CD
+				, A.CPN_USE_STR_DT
+				, A.CPN_USE_END_DT
+				, A.USE_PSB_DCNT
+				, A.CPN_GUDC
+				, A.CPN_APLY_TGT_SPR_CD
+				, A.CPN_EXCPT_TGT_SPR_CD
+				, A.USE_YN
+				, A.REGPSN_ID
+				, TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+				, A.UPDPSN_ID
+				, TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM
+			
+				, B.OPRTR_NM AS REGPSN_ID_NM
+				, C.OPRTR_NM AS UPDPSN_ID_NM
+			
+				, CASE WHEN A.PUBC_END_DT = '99991231' THEN 'Y'
+					   ELSE 'N'
+				  END AS PUBC_END_DT_NO
+				, A.UNLMT_CPN_YN
+		FROM TB_SA_CPN_INFO A
+			, TB_CO_MBR_OPRTR_INFO B
+			, TB_CO_MBR_OPRTR_INFO C
+		
+		WHERE A.CO_CD = B.CO_CD(+)
+		AND A.REGPSN_ID = B.OPRTR_ID(+)
+		
+		AND A.CO_CD = C.CO_CD(+)
+		AND A.UPDPSN_ID = C.OPRTR_ID(+)
+		
+		AND A.CO_CD = #{coCd}
+		AND A.CPN_EVT_NO = #{cpnEvtNo}
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 발급 대상 목록
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.22.
+	******************************************************************************
+	-->
+	<select id="selectCpnPubcUseDtlsInfoList" parameterType="HashMap" resultType="HashMap">
+
+/* 쿠폰 발급 대상 목록 - CpnInfo_SQL.selectCpnPubcUseDtlsInfoList */
+
+WITH TEMP_TB_CC_MBR_BASIS AS
+(
+	SELECT A.CO_CD
+		, A.MBR_ID
+		, A.MBR_NM
+		, G.LOGN_ID
+		, D.CUST_SPR_CD
+		, FN_COM_DTL_CDNM_NVL('KO', 'CUST_SPR_CD', D.CUST_SPR_CD, '') AS CUST_SPR_CD_NM
+		, A.BZPLC_ID
+		, B.BZPLC_NM
+		, D.OPR_UNIT_ID
+		, D.OPR_UNIT_NM
+		, C.DEPT_ID
+		, C.DEPT_NM
+
+	FROM TB_CC_MBR_BASIS A JOIN TB_CC_BZPLC_BASIS B
+		ON A.BZPLC_ID = B.BZPLC_ID
+	AND A.CO_CD = B.CO_CD
+
+	JOIN TB_CC_DEPT_BASIS C
+		ON A.DEPT_ID = C.DEPT_ID
+	AND A.CO_CD = C.CO_CD
+
+	JOIN TB_CC_OPR_UNIT_BASIS D
+		ON C.OPR_UNIT_ID = D.OPR_UNIT_ID
+	AND C.CO_CD = D.CO_CD
+
+	LEFT JOIN TB_CC_MBR_CTL_AUTH_INFO E
+		ON A.MBR_ID = E.MBR_ID
+	AND A.CO_CD = E.CO_CD
+
+	LEFT JOIN TB_CC_MBR_UCESSDI_LOGN_INFO F
+		ON A.MBR_ID = F.MBR_ID
+	AND A.CO_CD = F.CO_CD
+
+	LEFT JOIN TB_CO_MBR_LOGN_INFO G
+		ON A.MBR_ID = G.MBR_ID
+	AND A.CO_CD = G.CO_CD
+)
+
+SELECT '0' AS CHK
+	, A.CO_CD
+	, A.CPN_NO
+	, A.CPN_EVT_NO
+	, A.CPN_PUBC_MBR_ID
+	, A.CPN_PUBC_DTM
+	, A.BZPLC_ID
+	, A.CPN_APLY_CART_NO
+	, A.CPN_APLY_CART_ITM_SEQ
+	, A.CPN_CART_APLY_DTM
+	, A.CPN_CART_EXCPT_DTM
+	, A.CPN_USE_PRD_ID
+	, A.CPN_USE_ODR_NO
+	, A.CPN_USE_ODR_ITM_NO
+	, A.CPN_ODR_DTM
+	, A.CPN_ODR_CNC_DTM
+
+	, B.MBR_NM
+	, CASE WHEN LENGTH(B.MBR_NM) = 2 THEN SUBSTR(B.MBR_NM,1,1) || LPAD('*',(LENGTH(B.MBR_NM)-1),'*')
+				WHEN LENGTH(B.MBR_NM) = 3 THEN SUBSTR(B.MBR_NM,1,1) || LPAD('*',(LENGTH(B.MBR_NM)-2),'*') || SUBSTR(B.MBR_NM,3,1)
+				ELSE SUBSTR(B.MBR_NM,1,2) || LPAD('*',(LENGTH(B.MBR_NM)-2),'*')
+		END AS MASK_MBR_NM
+	, B.LOGN_ID
+	, SUBSTR(B.LOGN_ID,1,3) || LPAD('*',(LENGTH(B.LOGN_ID)-3),'*') AS MASK_LOGN_ID
+	, B.CUST_SPR_CD
+	, B.CUST_SPR_CD_NM
+	, B.BZPLC_NM
+	, B.OPR_UNIT_ID
+	, B.OPR_UNIT_NM
+	, B.DEPT_ID
+	, B.DEPT_NM
+
+FROM TB_SA_CPN_PUBC_USE_DTLS A
+	, TEMP_TB_CC_MBR_BASIS B
+
+WHERE A.CO_CD = B.CO_CD
+AND A.CPN_PUBC_MBR_ID = B.MBR_ID
+
+AND A.CO_CD = #{coCd}
+AND A.CPN_EVT_NO = #{cpnEvtNo}
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 적용 대상 상품/상품군, 제외 대상 상품/상품 목록
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.22.
+	******************************************************************************
+	-->
+	<select id="selectCpnPrdDtlList" parameterType="HashMap" resultType="HashMap">
+
+/* 쿠폰 적용 대상 상품/상품군, 제외 대상 상품/상품 목록 - CpnInfo_SQL.selectCpnPrdDtlList */
+
+SELECT '0' AS CHK
+	, A.CO_CD
+	, A.CPN_EVT_NO
+	, A.CPN_PRD_SEQ
+	, A.CPN_APLY_EXCPT_SPR_CD
+	, A.PRD_CLCD
+	, A.PRD_ID
+	, TO_NUMBER(A.PRD_ID) AS PRD_ID_VIEW
+
+	, B.PRD_NM
+
+	, FN_PR_FULL_CLSF_NM(A.CO_CD, A.PRD_CLCD) AS PRD_CLCD_NM
+
+	, B.MALL_SPR_CD
+	, D.COM_DTL_CD_NM AS MALL_SPR_CD_NM
+
+FROM TB_SA_CPN_PRD_DTL A
+	, TB_PR_MRO_PRD_INFO B
+	, TB_CO_COM_CD_DTL D
+
+WHERE A.CO_CD = B.CO_CD(+)
+AND A.PRD_ID = B.PRD_ID(+)
+
+AND B.MALL_SPR_CD = D.COM_DTL_CD(+)
+
+AND D.LANG_CD(+) = 'KO'
+AND D.COM_CLSF_CD(+) =  'MALL_SPR_CD'
+AND D.USE_YN(+) = 'Y'
+
+AND A.CO_CD = #{coCd}
+AND A.CPN_EVT_NO = #{cpnEvtNo}
+AND A.CPN_APLY_EXCPT_SPR_CD = #{cpnAplyExcptSprCd}
+
+		<if test="prdClcd != null and prdClcd != ''">
+
+			<choose>
+
+				<when test='prdClcd == "Y"'>
+
+AND A.PRD_CLCD IS NOT NULL
+
+				</when>
+
+				<when test='prdClcd == "N"'>
+
+AND A.PRD_CLCD IS NULL
+
+				</when>
+
+				<otherwise>
+				</otherwise>
+
+			</choose>
+
+		</if>
+
+		<if test="prdId != null and prdId != ''">
+
+			<choose>
+
+				<when test='prdId == "Y"'>
+
+AND A.PRD_ID IS NOT NULL
+
+				</when>
+
+				<when test='prdId == "N"'>
+
+AND A.PRD_ID IS NULL
+
+				</when>
+
+				<otherwise>
+				</otherwise>
+
+			</choose>
+
+		</if>
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 - 목록 - 쿠폰설정 팝업
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.23.
+	******************************************************************************
+	-->
+	<select id="selectCpnInfoPopupList" parameterType="HashMap" resultType="HashMap">
+
+/* 쿠폰 - 목록 - 쿠폰설정 팝업 - CpnInfo_SQL.selectCpnInfoPopupList */
+
+SELECT A.CO_CD
+	, A.CPN_EVT_NO
+	, A.CPN_KND_CD
+	, A.CPN_NM
+	, A.CPN_DESC
+	, A.CPN_DC_SPR_CD
+	, A.DC_AMT_DCRT
+	, A.MIN_PURG_AMT
+	, A.MAX_DC_AMT
+	, TO_CHAR(TO_DATE(A.PUBC_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PUBC_STR_DT
+	, TO_CHAR(TO_DATE(A.PUBC_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PUBC_END_DT
+	, A.PUBC_QTY
+	, A.UNLMT_PUBC_YN
+	, A.CPN_PUBC_MTHD_CD
+	, A.CPNBOX_EXPS_YN
+	, A.CPN_USE_PERD_CD
+	, TO_CHAR(TO_DATE(A.CPN_USE_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS CPN_USE_STR_DT
+	, TO_CHAR(TO_DATE(A.CPN_USE_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS CPN_USE_END_DT
+	, A.USE_PSB_DCNT
+	, A.CPN_GUDC
+	, A.CPN_APLY_TGT_SPR_CD
+	, A.CPN_EXCPT_TGT_SPR_CD
+	, A.USE_YN
+	, A.REGPSN_ID
+	, A.REG_DTM
+	, A.UPDPSN_ID
+	, A.UPD_DTM
+
+	, B.OPRTR_NM AS REGPSN_ID_NM
+	, C.OPRTR_NM AS UPDPSN_ID_NM
+
+	, FN_COM_DTL_CDNM_NVL('KO', 'CPN_KND_CD', A.CPN_KND_CD, '-') AS CPN_KND_CD_NM
+	, FN_COM_DTL_CDNM_NVL('KO', 'CPN_DC_SPR_CD', A.CPN_DC_SPR_CD, '-') AS CPN_DC_SPR_CD_NM
+
+	, CASE WHEN A.UNLMT_PUBC_YN = 'Y' THEN '무제한 발행'
+			WHEN A.UNLMT_PUBC_YN = 'N' THEN '무제한 미발행'
+			ELSE ''
+			END AS UNLMT_PUBC_YN_NM
+
+	, FN_COM_DTL_CDNM_NVL('KO', 'CPN_PUBC_MTHD_CD', A.CPN_PUBC_MTHD_CD, '-') AS CPN_PUBC_MTHD_CD_NM
+
+	, CASE WHEN A.CPNBOX_EXPS_YN = 'Y' THEN '노출'
+			WHEN A.CPNBOX_EXPS_YN = 'N' THEN '미노출'
+			ELSE ''
+			END AS CPNBOX_EXPS_YN_NM
+
+	, FN_COM_DTL_CDNM_NVL('KO', 'CPN_USE_PERD_CD', A.CPN_USE_PERD_CD, '-') AS CPN_USE_PERD_CD_NM
+	, FN_COM_DTL_CDNM_NVL('KO', 'CPN_APLY_TGT_SPR_CD', A.CPN_APLY_TGT_SPR_CD, '-') AS CPN_APLY_TGT_SPR_CD_NM
+	, FN_COM_DTL_CDNM_NVL('KO', 'CPN_EXCPT_TGT_SPR_CD', A.CPN_EXCPT_TGT_SPR_CD, '-') AS CPN_EXCPT_TGT_SPR_CD_NM
+
+	, CASE WHEN A.USE_YN = 'Y' THEN '사용'
+			WHEN A.USE_YN = 'N' THEN '미사용'
+			ELSE ''
+			END AS USE_YN_NM
+
+	, (
+		SELECT COUNT(1)
+		FROM TB_SA_CPN_PUBC_USE_DTLS X
+		WHERE X.CO_CD = A.CO_CD
+		AND X.CPN_EVT_NO = A.CPN_EVT_NO
+		AND X.CPN_ODR_DTM IS NOT NULL
+		AND X.CPN_ODR_CNC_DTM IS NULL
+	) AS USE_QTY
+
+FROM TB_SA_CPN_INFO A
+	, TB_CO_MBR_OPRTR_INFO B
+	, TB_CO_MBR_OPRTR_INFO C
+
+WHERE A.CO_CD = B.CO_CD(+)
+AND A.REGPSN_ID = B.OPRTR_ID(+)
+
+AND A.CO_CD = C.CO_CD(+)
+AND A.UPDPSN_ID = C.OPRTR_ID(+)
+
+AND A.USE_YN = 'Y'
+AND A.CO_CD = #{coCd}
+AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> PUBC_END_DT
+
+	<if test="cpnPubcMthdCd != null and cpnPubcMthdCd != '' ">
+
+AND A.CPN_PUBC_MTHD_CD = #{cpnPubcMthdCd}
+
+		</if>
+
+		<if test="cpnEvtNo != null and cpnEvtNo != '' ">
+
+AND A.CPN_EVT_NO LIKE '%' || #{cpnEvtNo} || '%'
+
+		</if>
+
+		<if test="cpnKndCd != null and cpnKndCd != '' ">
+
+AND A.CPN_KND_CD = #{cpnKndCd}
+
+		</if>
+
+		<if test="cpnNm != null and cpnNm != '' ">
+
+AND A.CPN_NM LIKE '%' || #{cpnNm} || '%'
+
+		</if>
+
+OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 목록 (회원) 조회
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.23.
+	******************************************************************************
+	-->
+	<select id="selectCpnInfoMbrList" parameterType="HashMap" resultType="HashMap">
+
+/* 쿠폰 목록 (회원) 조회 - CpnInfo_SQL.selectCpnInfoMbrList */
+
+SELECT CO_CD
+	, CPN_EVT_NO
+	, CPN_KND_CD
+	, CPN_NM
+	, CPN_DESC
+	, CPN_DC_SPR_CD
+	, DC_AMT_DCRT
+	, MIN_PURG_AMT
+	, MAX_DC_AMT
+	, PUBC_STR_DT
+	, PUBC_END_DT
+	, PUBC_QTY
+	, UNLMT_PUBC_YN
+	, CPN_PUBC_MTHD_CD
+	, CPNBOX_EXPS_YN
+	, CPN_USE_PERD_CD
+	, CPN_USE_STR_DT
+	, CPN_USE_END_DT
+	, USE_PSB_DCNT
+	, CPN_GUDC
+	, CPN_APLY_TGT_SPR_CD
+	, CPN_EXCPT_TGT_SPR_CD
+	, USE_YN
+	, REGPSN_ID
+	, TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+	, UPDPSN_ID
+	, TO_CHAR(UPD_DTM, 'YYYY-MM-DD') AS UPD_DTM
+
+	, BZPLC_ID
+	, TO_CHAR(CPN_PUBC_DTM, 'YYYY-MM-DD') AS CPN_PUBC_DTM
+	, CPN_PUBC_MBR_ID
+	, CPN_USE_ODR_NO
+	, CPN_USE_ODR_ITM_NO
+	, CPN_ODR_DTM
+
+	, REGPSN_ID_NM
+	, UPDPSN_ID_NM
+
+	, CPN_KND_CD_NM
+	, CPN_DC_SPR_CD_NM
+
+	, UNLMT_PUBC_YN_NM
+
+	, CPN_PUBC_MTHD_CD_NM
+
+	, CPNBOX_EXPS_YN_NM
+
+	, CPN_USE_PERD_CD_NM
+	, CPN_APLY_TGT_SPR_CD_NM
+	, CPN_EXCPT_TGT_SPR_CD_NM
+
+	, USE_YN_NM
+
+	, CPN_STATE_CD
+	, CPN_STATE_CD_NM
+
+FROM (
+		SELECT A.CO_CD
+			, A.CPN_EVT_NO
+			, A.CPN_KND_CD
+			, A.CPN_NM
+			, A.CPN_DESC
+			, A.CPN_DC_SPR_CD
+			, A.DC_AMT_DCRT
+			, A.MIN_PURG_AMT
+			, A.MAX_DC_AMT
+			, TO_CHAR(TO_DATE(A.PUBC_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PUBC_STR_DT
+			, TO_CHAR(TO_DATE(A.PUBC_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PUBC_END_DT
+			, A.PUBC_QTY
+			, A.UNLMT_PUBC_YN
+			, A.CPN_PUBC_MTHD_CD
+			, A.CPNBOX_EXPS_YN
+			, A.CPN_USE_PERD_CD
+			, CASE WHEN A.CPN_USE_PERD_CD = '10' THEN TO_CHAR(TO_DATE(A.CPN_USE_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD')
+						WHEN A.CPN_USE_PERD_CD = '20' THEN TO_CHAR(B.CPN_PUBC_DTM, 'YYYY-MM-DD')
+						WHEN A.CPN_USE_PERD_CD = '30' THEN TO_CHAR(B.CPN_PUBC_DTM, 'YYYY-MM-DD')
+				END AS CPN_USE_STR_DT
+			, CASE WHEN A.CPN_USE_PERD_CD = '10' THEN TO_CHAR(TO_DATE(A.CPN_USE_END_DT,'YYYYMMDD'), 'YYYY-MM-DD')
+						WHEN A.CPN_USE_PERD_CD = '20' THEN TO_CHAR(B.CPN_PUBC_DTM + A.USE_PSB_DCNT, 'YYYY-MM-DD')
+						WHEN A.CPN_USE_PERD_CD = '30' THEN TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYY-MM-DD')
+				END AS CPN_USE_END_DT
+			, A.USE_PSB_DCNT
+			, A.CPN_GUDC
+			, A.CPN_APLY_TGT_SPR_CD
+			, A.CPN_EXCPT_TGT_SPR_CD
+			, A.USE_YN
+			, A.REGPSN_ID
+			, A.REG_DTM
+			, A.UPDPSN_ID
+			, A.UPD_DTM
+
+			, B.BZPLC_ID
+			, B.CPN_PUBC_DTM
+			, B.CPN_PUBC_MBR_ID
+			, CASE WHEN B.CPN_ODR_CNC_DTM IS NULL THEN B.CPN_USE_ODR_NO
+					WHEN B.CPN_ODR_CNC_DTM IS NOT NULL THEN '-'
+					ELSE '-'
+					END AS CPN_USE_ODR_NO
+			, CASE WHEN B.CPN_ODR_CNC_DTM IS NULL THEN TO_CHAR(B.CPN_USE_ODR_ITM_NO)
+					WHEN B.CPN_ODR_CNC_DTM IS NOT NULL THEN ''
+					ELSE ''
+					END AS CPN_USE_ODR_ITM_NO
+			, CASE WHEN B.CPN_ODR_CNC_DTM IS NULL THEN TO_CHAR(B.CPN_ODR_DTM, 'YYYY-MM-DD HH24:MI:SS')
+					WHEN B.CPN_ODR_CNC_DTM IS NOT NULL THEN '-'
+					ELSE '-'
+					END AS CPN_ODR_DTM
+
+			, C.OPRTR_NM AS REGPSN_ID_NM
+			, D.OPRTR_NM AS UPDPSN_ID_NM
+
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_KND_CD', A.CPN_KND_CD, '-') AS CPN_KND_CD_NM
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_DC_SPR_CD', A.CPN_DC_SPR_CD, '-') AS CPN_DC_SPR_CD_NM
+
+			, CASE WHEN A.UNLMT_PUBC_YN = 'Y' THEN '무제한 발행'
+					WHEN A.UNLMT_PUBC_YN = 'N' THEN '무제한 미발행'
+					ELSE ''
+					END AS UNLMT_PUBC_YN_NM
+
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_PUBC_MTHD_CD', A.CPN_PUBC_MTHD_CD, '-') AS CPN_PUBC_MTHD_CD_NM
+
+			, CASE WHEN A.CPNBOX_EXPS_YN = 'Y' THEN '노출'
+					WHEN A.CPNBOX_EXPS_YN = 'N' THEN '미노출'
+					ELSE ''
+					END AS CPNBOX_EXPS_YN_NM
+
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_USE_PERD_CD', A.CPN_USE_PERD_CD, '-') AS CPN_USE_PERD_CD_NM
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_APLY_TGT_SPR_CD', A.CPN_APLY_TGT_SPR_CD, '-') AS CPN_APLY_TGT_SPR_CD_NM
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_EXCPT_TGT_SPR_CD', A.CPN_EXCPT_TGT_SPR_CD, '-') AS CPN_EXCPT_TGT_SPR_CD_NM
+
+			, CASE WHEN A.USE_YN = 'Y' THEN '사용'
+					WHEN A.USE_YN = 'N' THEN '미사용'
+					ELSE ''
+					END AS USE_YN_NM
+
+			, CASE WHEN A.CPN_USE_PERD_CD = '10' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN 'Y'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.CPN_USE_END_DT THEN 'N'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> A.CPN_USE_END_DT THEN 'END'
+															ELSE ''
+															END
+					WHEN A.CPN_USE_PERD_CD = '20' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN 'Y'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR((B.CPN_PUBC_DTM + A.USE_PSB_DCNT), 'YYYYMMDD') THEN 'N'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> TO_CHAR((B.CPN_PUBC_DTM + A.USE_PSB_DCNT), 'YYYYMMDD') THEN 'END'
+															ELSE ''
+															END
+					WHEN A.CPN_USE_PERD_CD = '30' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN 'Y'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYYMMDD') THEN 'N'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYYMMDD') THEN 'END'
+															ELSE ''
+															END
+					ELSE ''
+					END AS CPN_STATE_CD
+			, CASE WHEN A.CPN_USE_PERD_CD = '10' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN '사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.CPN_USE_END_DT THEN '미사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> A.CPN_USE_END_DT THEN '만료'
+															ELSE ''
+															END
+					WHEN A.CPN_USE_PERD_CD = '20' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN '사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR((B.CPN_PUBC_DTM + A.USE_PSB_DCNT), 'YYYYMMDD') THEN '미사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> TO_CHAR((B.CPN_PUBC_DTM + A.USE_PSB_DCNT), 'YYYYMMDD') THEN '만료'
+															ELSE ''
+															END
+					WHEN A.CPN_USE_PERD_CD = '30' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN '사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYYMMDD') THEN '미사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYYMMDD') THEN '만료'
+															ELSE ''
+															END
+					ELSE ''
+					END AS CPN_STATE_CD_NM
+
+		FROM TB_SA_CPN_INFO A
+			, TB_SA_CPN_PUBC_USE_DTLS B
+			, TB_CO_MBR_OPRTR_INFO C
+			, TB_CO_MBR_OPRTR_INFO D
+
+		WHERE A.CO_CD = B.CO_CD
+		AND A.CPN_EVT_NO = B.CPN_EVT_NO
+
+		AND A.CO_CD = C.CO_CD(+)
+		AND A.REGPSN_ID = C.OPRTR_ID(+)
+
+		AND A.CO_CD = D.CO_CD(+)
+		AND A.UPDPSN_ID = D.OPRTR_ID(+)
+
+		AND A.CO_CD = #{coCd}
+		AND B.CPN_PUBC_MBR_ID = #{mbrId}
+
+		<if test="cpnKndCd != null and cpnKndCd != '' ">
+
+		AND A.CPN_KND_CD = #{cpnKndCd}
+
+		</if>
+
+		<if test="cpnEvtNo != null and cpnEvtNo != '' ">
+
+		AND A.CPN_EVT_NO LIKE '%' || #{cpnEvtNo} || '%'
+
+		</if>
+
+		<if test="startDate != null and startDate != '' and endDate != null and endDate != '' ">
+
+		AND B.CPN_PUBC_DTM BETWEEN TO_DATE(#{startDate} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{endDate} || '235959', 'YYYYMMDDHH24MISS')
+
+		</if>
+
+		<if test="cpnNm != null and cpnNm != '' ">
+
+		AND A.CPN_NM LIKE '%' || #{cpnNm} || '%'
+
+		</if>
+
+	) A
+
+WHERE 1 = 1
+
+		<if test="cpnStateCd != null and cpnStateCd != '' ">
+
+AND A.CPN_STATE_CD = #{cpnStateCd}
+
+		</if>
+
+		<if test="sortColumn != null and sortColumn != ''">
+
+ORDER BY A.${sortColumn} ${sortType}
+
+		</if>
+
+		<if test="sortColumn == null or sortColumn == ''">
+
+ORDER BY A.CPN_EVT_NO DESC
+
+		</if>
+
+OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 목록 (회원) 건수 조회
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.23.
+	******************************************************************************
+	-->
+	<select id="selectCpnInfoMbrListCount" parameterType="HashMap" resultType="Integer">
+
+/* 쿠폰 목록 (회원) 건수 조회 - CpnInfo_SQL.selectCpnInfoMbrListCount */
+
+SELECT COUNT(1)
+
+FROM (
+		SELECT A.CO_CD
+			, A.CPN_EVT_NO
+			, A.CPN_KND_CD
+			, A.CPN_NM
+			, A.CPN_DESC
+			, A.CPN_DC_SPR_CD
+			, A.DC_AMT_DCRT
+			, A.MIN_PURG_AMT
+			, A.MAX_DC_AMT
+			, TO_CHAR(TO_DATE(A.PUBC_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PUBC_STR_DT
+			, TO_CHAR(TO_DATE(A.PUBC_END_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PUBC_END_DT
+			, A.PUBC_QTY
+			, A.UNLMT_PUBC_YN
+			, A.CPN_PUBC_MTHD_CD
+			, A.CPNBOX_EXPS_YN
+			, A.CPN_USE_PERD_CD
+			, CASE WHEN A.CPN_USE_PERD_CD = '10' THEN TO_CHAR(TO_DATE(A.CPN_USE_STR_DT, 'YYYYMMDD'), 'YYYY-MM-DD')
+						WHEN A.CPN_USE_PERD_CD = '20' THEN TO_CHAR(B.CPN_PUBC_DTM, 'YYYY-MM-DD')
+						WHEN A.CPN_USE_PERD_CD = '30' THEN TO_CHAR(B.CPN_PUBC_DTM, 'YYYY-MM-DD')
+				END AS CPN_USE_STR_DT
+			, CASE WHEN A.CPN_USE_PERD_CD = '10' THEN TO_CHAR(TO_DATE(A.CPN_USE_END_DT,'YYYYMMDD'), 'YYYY-MM-DD')
+						WHEN A.CPN_USE_PERD_CD = '20' THEN TO_CHAR(B.CPN_PUBC_DTM + A.USE_PSB_DCNT, 'YYYY-MM-DD')
+						WHEN A.CPN_USE_PERD_CD = '30' THEN TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYY-MM-DD')
+				END AS CPN_USE_END_DT
+			, A.USE_PSB_DCNT
+			, A.CPN_GUDC
+			, A.CPN_APLY_TGT_SPR_CD
+			, A.CPN_EXCPT_TGT_SPR_CD
+			, A.USE_YN
+			, A.REGPSN_ID
+			, A.REG_DTM
+			, A.UPDPSN_ID
+			, A.UPD_DTM
+
+			, B.BZPLC_ID
+			, B.CPN_PUBC_DTM
+			, CASE WHEN B.CPN_ODR_CNC_DTM IS NULL THEN B.CPN_USE_ODR_NO
+					WHEN B.CPN_ODR_CNC_DTM IS NOT NULL THEN '-'
+					ELSE '-'
+					END AS CPN_USE_ODR_NO
+			, CASE WHEN B.CPN_ODR_CNC_DTM IS NULL THEN TO_CHAR(B.CPN_USE_ODR_ITM_NO)
+					WHEN B.CPN_ODR_CNC_DTM IS NOT NULL THEN ''
+					ELSE ''
+					END AS CPN_USE_ODR_ITM_NO
+			, CASE WHEN B.CPN_ODR_CNC_DTM IS NULL THEN TO_CHAR(B.CPN_ODR_DTM, 'YYYY-MM-DD HH24:MI:SS')
+					WHEN B.CPN_ODR_CNC_DTM IS NOT NULL THEN '-'
+					ELSE '-'
+					END AS CPN_ODR_DTM
+
+			, C.OPRTR_NM AS REGPSN_ID_NM
+			, D.OPRTR_NM AS UPDPSN_ID_NM
+
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_KND_CD', A.CPN_KND_CD, '-') AS CPN_KND_CD_NM
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_DC_SPR_CD', A.CPN_DC_SPR_CD, '-') AS CPN_DC_SPR_CD_NM
+
+			, CASE WHEN A.UNLMT_PUBC_YN = 'Y' THEN '무제한 발행'
+					WHEN A.UNLMT_PUBC_YN = 'N' THEN '무제한 미발행'
+					ELSE ''
+					END AS UNLMT_PUBC_YN_NM
+
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_PUBC_MTHD_CD', A.CPN_PUBC_MTHD_CD, '-') AS CPN_PUBC_MTHD_CD_NM
+
+			, CASE WHEN A.CPNBOX_EXPS_YN = 'Y' THEN '노출'
+					WHEN A.CPNBOX_EXPS_YN = 'N' THEN '미노출'
+					ELSE ''
+					END AS CPNBOX_EXPS_YN_NM
+
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_USE_PERD_CD', A.CPN_USE_PERD_CD, '-') AS CPN_USE_PERD_CD_NM
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_APLY_TGT_SPR_CD', A.CPN_APLY_TGT_SPR_CD, '-') AS CPN_APLY_TGT_SPR_CD_NM
+			, FN_COM_DTL_CDNM_NVL('KO', 'CPN_EXCPT_TGT_SPR_CD', A.CPN_EXCPT_TGT_SPR_CD, '-') AS CPN_EXCPT_TGT_SPR_CD_NM
+
+			, CASE WHEN A.USE_YN = 'Y' THEN '사용'
+					WHEN A.USE_YN = 'N' THEN '미사용'
+					ELSE ''
+					END AS USE_YN_NM
+
+			, CASE WHEN A.CPN_USE_PERD_CD = '10' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN 'Y'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.CPN_USE_END_DT THEN 'N'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> A.CPN_USE_END_DT THEN 'END'
+															ELSE ''
+															END
+					WHEN A.CPN_USE_PERD_CD = '20' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN 'Y'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR((B.CPN_PUBC_DTM + A.USE_PSB_DCNT), 'YYYYMMDD') THEN 'N'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> TO_CHAR((B.CPN_PUBC_DTM + A.USE_PSB_DCNT), 'YYYYMMDD') THEN 'END'
+															ELSE ''
+															END
+					WHEN A.CPN_USE_PERD_CD = '30' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN 'Y'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYYMMDD') THEN 'N'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYYMMDD') THEN 'END'
+															ELSE ''
+															END
+					ELSE ''
+					END AS CPN_STATE_CD
+			, CASE WHEN A.CPN_USE_PERD_CD = '10' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN '사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.CPN_USE_END_DT THEN '미사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> A.CPN_USE_END_DT THEN '만료'
+															ELSE ''
+															END
+					WHEN A.CPN_USE_PERD_CD = '20' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN '사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR((B.CPN_PUBC_DTM + A.USE_PSB_DCNT), 'YYYYMMDD') THEN '미사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> TO_CHAR((B.CPN_PUBC_DTM + A.USE_PSB_DCNT), 'YYYYMMDD') THEN '만료'
+															ELSE ''
+															END
+					WHEN A.CPN_USE_PERD_CD = '30' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN '사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYYMMDD') THEN '미사용'
+															WHEN (B.CPN_ODR_DTM IS NULL OR B.CPN_ODR_CNC_DTM IS NOT NULL) AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYYMMDD') THEN '만료'
+															ELSE ''
+															END
+					ELSE ''
+					END AS CPN_STATE_CD_NM
+
+		FROM TB_SA_CPN_INFO A
+			, TB_SA_CPN_PUBC_USE_DTLS B
+			, TB_CO_MBR_OPRTR_INFO C
+			, TB_CO_MBR_OPRTR_INFO D
+
+		WHERE A.CO_CD = B.CO_CD
+		AND A.CPN_EVT_NO = B.CPN_EVT_NO
+
+		AND A.CO_CD = C.CO_CD(+)
+		AND A.REGPSN_ID = C.OPRTR_ID(+)
+
+		AND A.CO_CD = D.CO_CD(+)
+		AND A.UPDPSN_ID = D.OPRTR_ID(+)
+
+		AND A.CO_CD = #{coCd}
+		AND B.CPN_PUBC_MBR_ID = #{mbrId}
+
+		<if test="cpnKndCd != null and cpnKndCd != '' ">
+
+		AND A.CPN_KND_CD = #{cpnKndCd}
+
+		</if>
+
+		<if test="cpnEvtNo != null and cpnEvtNo != '' ">
+
+		AND A.CPN_EVT_NO LIKE '%' || #{cpnEvtNo} || '%'
+
+		</if>
+
+		<if test="startDate != null and startDate != '' and endDate != null and endDate != '' ">
+
+		AND B.CPN_PUBC_DTM BETWEEN TO_DATE(#{startDate} || '000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{endDate} || '235959', 'YYYYMMDDHH24MISS')
+
+		</if>
+
+		<if test="cpnNm != null and cpnNm != '' ">
+
+		AND A.CPN_NM LIKE '%' || #{cpnNm} || '%'
+
+		</if>
+
+	) A
+
+WHERE 1 = 1
+
+		<if test="cpnStateCd != null and cpnStateCd != '' ">
+
+AND A.CPN_STATE_CD = #{cpnStateCd}
+
+		</if>
+
+	</select>
+
+	<!--
+	******************************************************************************
+	* SELECT : 쿠폰 목록 (회원) 사용가능/사용한/만료된 건수 조회
+	* 작성자 : 박진원
+	* 작성 일자 : 2022.03.23.
+	******************************************************************************
+	-->
+	<select id="selectCpnInfoMbrCount" parameterType="HashMap" resultType="HashMap">
+
+/* 쿠폰 목록 (회원) 사용가능/사용한/만료된 건수 조회 - CpnInfo_SQL.selectCpnInfoMbrCount */
+
+WITH TEMP_CPN_COUNT AS
+(
+	SELECT CASE WHEN A.CPN_USE_PERD_CD = '10' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN 'Y'
+														WHEN B.CPN_ODR_DTM IS NULL AND B.CPN_ODR_CNC_DTM IS NULL AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> A.CPN_USE_END_DT THEN 'N'
+														WHEN B.CPN_ODR_DTM IS NULL AND B.CPN_ODR_CNC_DTM IS NULL AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> A.CPN_USE_END_DT THEN 'END'
+														ELSE ''
+														END
+				WHEN A.CPN_USE_PERD_CD = '20' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN 'Y'
+														WHEN B.CPN_ODR_DTM IS NULL AND B.CPN_ODR_CNC_DTM IS NULL AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR((B.CPN_PUBC_DTM + A.USE_PSB_DCNT), 'YYYYMMDD') THEN 'N'
+														WHEN B.CPN_ODR_DTM IS NULL AND B.CPN_ODR_CNC_DTM IS NULL AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> TO_CHAR((B.CPN_PUBC_DTM + A.USE_PSB_DCNT), 'YYYYMMDD') THEN 'END'
+														ELSE ''
+														END
+				WHEN A.CPN_USE_PERD_CD = '30' THEN CASE WHEN B.CPN_ODR_DTM IS NOT NULL AND B.CPN_ODR_CNC_DTM IS NULL THEN 'Y'
+														WHEN B.CPN_ODR_DTM IS NULL AND B.CPN_ODR_CNC_DTM IS NULL AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYYMMDD') THEN 'N'
+														WHEN B.CPN_ODR_DTM IS NULL AND B.CPN_ODR_CNC_DTM IS NULL AND TO_CHAR(SYSDATE, 'YYYYMMDD') <![CDATA[ > ]]> TO_CHAR(LAST_DAY(B.CPN_PUBC_DTM), 'YYYYMMDD') THEN 'END'
+														ELSE ''
+														END
+				ELSE ''
+				END AS CPN_STATE_CD
+
+	FROM TB_SA_CPN_INFO A
+		, TB_SA_CPN_PUBC_USE_DTLS B
+
+	WHERE A.CO_CD = B.CO_CD
+	AND A.CPN_EVT_NO = B.CPN_EVT_NO
+
+	AND A.CO_CD = #{coCd}
+	AND B.CPN_PUBC_MBR_ID = #{mbrId}
+)
+
+SELECT SUM(CPN_CNT01) AS CPN_CNT01
+	, SUM(CPN_CNT02) AS CPN_CNT02
+	, SUM(CPN_CNT03) AS CPN_CNT03
+
+FROM (
+		SELECT CASE WHEN CPN_STATE_CD = 'Y' THEN COUNT(1)
+					WHEN CPN_STATE_CD = 'N' THEN 0
+					WHEN CPN_STATE_CD = 'END' THEN 0
+					ELSE 0
+					END AS CPN_CNT01
+			, CASE WHEN CPN_STATE_CD = 'Y' THEN 0
+					WHEN CPN_STATE_CD = 'N' THEN COUNT(1)
+					WHEN CPN_STATE_CD = 'END' THEN 0
+					ELSE 0
+					END AS CPN_CNT02
+			, CASE WHEN CPN_STATE_CD = 'Y' THEN 0
+					WHEN CPN_STATE_CD = 'N' THEN 0
+					WHEN CPN_STATE_CD = 'END' THEN COUNT(1)
+					ELSE 0
+					END AS CPN_CNT03
+
+		FROM TEMP_CPN_COUNT A
+
+		GROUP BY CPN_STATE_CD
+
+	) A
+
+	</select>
+
+</mapper>

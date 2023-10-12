@@ -1,0 +1,204 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="form" width="1336" height="846" titletext="메타테이블정보조회" onclose="form_onclose" onload="form_onload">
+    <Layouts>
+      <Layout description="메타테이블정보조회" height="846" mobileorientation="landscape" width="1336">
+        <Div id="divSearch" taborder="0" left="0" top="25" right="20" height="44" text="">
+          <Layouts>
+            <Layout>
+              <Edit id="Edit00" taborder="0" left="106" top="7" width="27" height="23"/>
+              <Static id="Static03" taborder="6" left="129" top="0" height="32" cssclass="sta_cm_box02L_tdt" text="" maxwidth="" right="0"/>
+              <Static id="staSubTitle01" taborder="4" text="용어조회" left="20" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Static id="staSubTitle02" taborder="5" text="결과정보" left="427" top="0" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Edit id="edtClassId" taborder="1" left="155" top="5" width="267" height="22" imemode="none" displaynulltext="메타 데이터 조회" autoselect="true" onkeyup="divSearch_edtClassId_onkeyup"/>
+              <Edit id="edtEnglNm" taborder="2" left="562" top="5" width="267" height="22" imemode="none" inputmode="normal" autoselect="true" readonly="true"/>
+              <Edit id="edtHangelNm" taborder="3" left="834" top="5" width="267" height="22" imemode="none" inputmode="normal" autoselect="true" readonly="true"/>
+            </Layout>
+          </Layouts>
+          <InitValue/>
+        </Div>
+        <Button id="btn_search" taborder="1" text="조회" top="29" height="24" onclick="btn_search_onclick" cssclass="btn_WF_require" width="60" right="21"/>
+        <Static id="Static01_00_01" taborder="2" left="0" top="0" width="100.00%" height="20" color="#000000" background="aqua" visible="false" text="20" textAlign="center"/>
+        <Static id="Static01_00" taborder="3" left="0" top="58" width="100.00%" height="10" color="#000000" background="aqua" visible="false" text="10" textAlign="center"/>
+        <Static id="Static01_00_01_01" taborder="4" left="0" top="0" width="20" height="100.24%" color="#000000" background="aqua" visible="false" text="20" textAlign="center"/>
+        <Static id="Static01_00_01_00_00_00" taborder="5" left="0" top="93" width="100.00%" height="30" color="#000000" background="aqua" visible="false" text="30" textAlign="center"/>
+        <Static id="Static01_00_01_01_00" taborder="6" left="1316" top="0" width="20" height="100.24%" color="#000000" background="aqua" visible="false" text="20" textAlign="center"/>
+        <Static id="Static01_00_00" taborder="7" left="0" top="154" width="100.00%" height="10" color="#000000" background="aqua" visible="false" text="10" textAlign="center"/>
+        <Static id="Static01_00_01_00_00" taborder="8" left="0" top="733" width="100.00%" height="30" color="#000000" background="aqua" visible="false" text="30" textAlign="center"/>
+        <Static id="Static01_00_01_00" taborder="9" left="0" top="798" width="100.00%" height="50" color="#000000" background="aqua" visible="false" text="50" textAlign="center"/>
+        <Static id="sta_totcnt" taborder="10" text="* 사용법 : 메타 테이블 조회 (단어 한칸씩 뛰어쓰기)" left="25" top="68" width="370" height="25" usedecorate="true" color="red" font="normal 10pt/normal &quot;Arial&quot;,&quot;굴림체&quot;"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset enableevent="true" id="ds_master" preload="true" updatecontrol="true" useclientlayout="false" canrowposchange="dsMaster_canrowposchange">
+        <ColumnInfo>
+          <Column id="결과영단어조합구조" type="STRING" size="32"/>
+          <Column id="용어존재여부" type="STRING" size="32"/>
+          <Column id="단어ID조합구조" type="STRING" size="32"/>
+          <Column id="단어생성우선순위" type="BIGDECIMAL" size="16"/>
+          <Column id="영문컬럼명" type="STRING" size="32"/>
+          <Column id="결과단어조합구조" type="STRING" size="32"/>
+          <Column id="비고" type="STRING" size="256"/>
+          <Column id="기존데이타타입" type="STRING" size="256"/>
+          <Column id="우선순위_STRUCT" type="BIGDECIMAL" size="16"/>
+          <Column id="용어" type="STRING" size="32"/>
+          <Column id="단어검색성공여부" type="STRING" size="32"/>
+          <Column id="용어번호" type="STRING" size="256"/>
+          <Column id="영문컬럼명길이" type="BIGDECIMAL" size="16"/>
+          <Column id="불일치단어목록" type="STRING" size="256"/>
+          <Column id="단어조합구조" type="STRING" size="32"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="CODE" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CODE"></Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/**********************************************************************
+* FormID(화면   ID명): SSP_BO_CO_10.xfdl(메타테이블정보조회)
+* 작 성         일 명: 오왕표
+* 작 성         일 자: 2022/04/21
+* 변 경         일 자:
+* 변 경         자 명:
+* 변경 및 수정 로그 : 일자별로 변경자 및 변경사항을 간략히 기술
+*/
+/**********************************************************************
+        01. 전처리 공통 함수 선언
+***********************************************************************/
+include "RD::rdMain.xjs"
+/**********************************************************************
+        02. 폼 변수 정의
+***********************************************************************/
+/**********************************************************************
+        03. 폼 로드 및 닫을때(폼이 포커스 갈때)
+***********************************************************************/
+/**
+ * 기능 : 폼 로드 완료후 초기값 Setting
+ */
+this.form_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+    //폼에 공통으로 로드시 사용하는 함수.
+    this.gfn_formOnLoad(this);
+};
+
+/**
+ * 기능 : 폼언 로드(닫기전 셋팅)  Setting
+ */
+this.form_onclose = function(obj:nexacro.Form,e:nexacro.CloseEventInfo)
+{
+
+};
+
+/**
+ * 기능 : 콜백함수(후처리)
+ */
+this.fn_callBack = function(sSvcId,nErrorCode, sErrorMsg)
+{
+    if(nErrorCode != 0)
+    {
+        this.fn_alert(sErrorMsg,"에러정보","","error");
+        return false;
+    }else
+    {
+        /*sSvcId (Transaction Id)*/
+        switch(sSvcId)
+        {
+            case "Ret":
+                    this.fn_PostRet();
+                break;
+            default:
+                break;
+        }
+    }
+};
+
+/**********************************************************************
+        05. 조회 함수 선언(마스터 함수)
+***********************************************************************/
+/**
+ * 기능 : 조회 버튼 클릭시
+ */
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+    this.fn_Ret();
+};
+
+/**
+ * 기능 : 조회 전 실행
+ */
+this.fn_PreRet = function()
+{
+	this.ds_search.setColumn(0,"CODE",this.divSearch.form.edtClassId.value);
+    // 조회조건 셋팅
+    return true;
+};
+
+/**
+ * 기능 : 마스터 조회 실행
+ */
+this.fn_Ret = function()
+{
+    if(!this.fn_PreRet())
+    {
+        return false;
+    }
+    var strSvc      = "Ret";
+    var strUrl      = "/rd/metaTblInfoInq/selectMetaTblInfoInq.do";
+    var strInDs     = "ds_search=ds_search";
+    var strOutDs    = "ds_master=ds_master";
+    var strArg      = "";
+    var strCallBack = "fn_callBack";    //공백일시 기본 fn_callBack
+    var strASync    = true;             //생략이나 공백일시에는 ASync=true,싱크시는 false로
+    this.gfn_transaction(strSvc
+                       , strUrl
+                       , strInDs
+                       , strOutDs
+                       , strArg
+                       , strCallBack
+                       , strASync);
+};
+
+/**
+ * 기능 : 조회 후 실행
+ */
+this.fn_PostRet = function()
+{
+	if(this.ds_master.getRowCount() > 0)
+	{
+		var hangel = this.ds_master.getColumn(0,"영문컬럼명").split("_");
+		var text   = "";
+
+		for(var idx=0; idx<hangel.length; idx++)
+		{
+			text += hangel[idx].substr(0,1) + hangel[idx].substr(1).toLowerCase();
+		}
+
+		this.divSearch.form.edtEnglNm.set_value(text);
+		this.divSearch.form.edtHangelNm.set_value(this.ds_master.getColumn(0,"용어"));
+	}
+	else
+	{
+		this.divSearch.form.edtEnglNm.set_value("");
+		this.divSearch.form.edtHangelNm.set_value("");
+	}
+};
+
+/**
+ * 용어조회 Edit 엔터 클릭시 이벤트 발생 처리
+ */
+this.divSearch_edtClassId_onkeyup = function(obj:nexacro.Edit,e:nexacro.KeyEventInfo)
+{
+	if(e.keycode == 13)
+	{
+		this.fn_Ret();
+	}
+};
+]]></Script>
+  </Form>
+</FDL>

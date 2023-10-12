@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Category">
+	
+	<!-- 상품 카테고리 하위 리스트 조회 -->
+    <select id="selectSubCategoryList" parameterType="hashMap" resultType="SspMap">
+    	/* Category.selectLargeCategoryList*/
+        SELECT 
+        	PRD_CLS_CD,
+			PRD_CLS_NM,
+		    HRNK_PRD_CLS_CD,
+		    PRD_CLS_LVL,
+		    LWST_YN,
+		    SEQ
+		FROM 
+		    TB_SG_PRD_CLS
+		WHERE 
+			<choose>
+				<when test='null != prdClsCd and "" != prdClsCd'>
+					HRNK_PRD_CLS_CD = #{prdClsCd}
+				</when>
+				<otherwise>
+					HRNK_PRD_CLS_CD IS NULL
+				</otherwise>
+			</choose>
+		AND
+			DEL_YN = 'N'
+		ORDER BY SEQ
+    </select>
+
+	<!-- 상품 카테고리 계층형 리스트 조회 -->
+    <select id="selectCategoryList" parameterType="hashMap" resultType="hashMap">
+        /* Category.selectCategoryList */
+        SELECT 
+		    PRD_CLS_CD,
+		    PRD_CLS_NM,
+		    HRNK_PRD_CLS_CD,
+		    PRD_CLS_LVL,
+		    LWST_YN
+		FROM 
+		    TB_SG_PRD_CLS
+		WHERE
+			DEL_YN = 'N'
+		<if test='null != prdClsNm and "" != prdClsNm'>
+			AND PRD_CLS_NM LIKE '%' || #{prdClsNm} || '%'
+		</if>
+		START WITH PRD_CLS_LVL = 1
+		CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+		ORDER SIBLINGS BY SEQ ASC
+    </select>
+    
+    <!-- 상품 카테고리 상세 정보 조회 -->
+    <select id="selectCategoryInfo" parameterType="hashMap" resultType="SspMap">
+        /* CategoryProduct.selectCategoryProductInfo */
+        SELECT 
+		    TSPC.PRD_CLS_CD
+		    ,SUBSTR(SYS_CONNECT_BY_PATH(TSPC.PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM                        
+		    ,TSPC.PRD_CLS_NM
+		    ,TSPC.USE_YN
+		    ,TSPC.FRT_YN
+		    ,TSPC.SMRO_MAPP_ID
+            ,TFPC.SMRO_MAPP_NM
+		    ,TSPC.NFI_ITM_MPP
+		    ,(SELECT NOTI_NM FROM TB_SG_NOTI WHERE NOTI_ID = TSPC.NFI_ITM_MPP) NFI_ITM_MPP_NM
+		    ,TSPC.MRKT_PRD_YN
+		    ,(SELECT COUNT(PRD_ID) FROM TB_SG_PRD WHERE PRD_CLS_CD = TSPC.PRD_CLS_CD AND CO_CD = '1000') PRD_CLS_CNT
+		    ,TO_CHAR(TSPC.REG_DTM,'yyyy-mm-dd hh24:mi:ss') AS REG_DTM
+		    ,DECODE(TSPC.REGPSN_ID,NULL,'','('||TSPC.REGPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TSPC.REGPSN_ID)) AS REGPSN
+		    ,TO_CHAR(TSPC.UPD_DTM,'yyyy-mm-dd hh24:mi:ss') AS UPD_DTM
+		    ,DECODE(TSPC.UPDPSN_ID,NULL,'','('||TSPC.UPDPSN_ID||')'||(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TSPC.UPDPSN_ID)) AS UPDPSN
+		    ,TSPC.SEQ
+		    ,TSPC.LWST_YN
+		    ,TSPC.INTG_MTHD_CD
+		    ,TSPC.ATFL_ID
+		FROM 
+			TB_SG_PRD_CLS TSPC,
+            ( SELECT 
+                    PRD_CLS_CD,
+                    PRD_CLS_NM,
+                    SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS SMRO_MAPP_NM
+                FROM (
+                    SELECT
+                        CO_CD,
+                        PRD_CLS_CD,
+                        PRD_CLS_NM,
+                        PRD_CLS_LVL,
+                        HRNK_PRD_CLS_CD
+                    FROM 
+                        TB_FV_PRD_CLS
+                    WHERE 
+                        CO_CD = '1000'
+                    )
+                WHERE 
+                    PRD_CLS_LVL = 4
+                START WITH PRD_CLS_LVL = 1
+                CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+            ) TFPC
+		WHERE 
+            TSPC.SMRO_MAPP_ID = TFPC.PRD_CLS_CD(+)
+        AND
+			TSPC.PRD_CLS_CD = #{prdClsCd}
+		AND 
+			TSPC.DEL_YN = 'N'
+		START WITH TSPC.HRNK_PRD_CLS_CD IS NULL
+		CONNECT BY PRIOR TSPC.PRD_CLS_CD = TSPC.HRNK_PRD_CLS_CD
+    </select>
+    
+    <!-- 카운트 -->
+    <select id="selectCategoryCount" parameterType="hashMap" resultType="integer">
+    	/* CategoryProduct.selectCategoryCount */
+    	SELECT
+    		COUNT(0)
+    	FROM
+    		TB_SG_PRD_CLS
+    	WHERE 
+    		DEL_YN = 'N'
+    	<if test='null != prdClsNm and "" != prdClsNm'>
+    		AND PRD_CLS_NM = #{prdClsNm}
+    	</if>
+    </select>
+    
+    <!-- 카테고리 등록 -->
+    <insert id="insertCategory" parameterType="hashMap">
+    	<selectKey keyProperty="PRD_CLS_CD" resultType="String" order="BEFORE">
+    		<choose>
+		   		<when test='null != hrnkPrdClsCd and "" != hrnkPrdClsCd'>
+		   			SELECT NVL2(MAX(PRD_CLS_CD), 'C' || LPAD(REPLACE(MAX(PRD_CLS_CD),'C')+1,LENGTH(#{hrnkPrdClsCd})+4,'0'),#{hrnkPrdClsCd}||'00001') FROM TB_SG_PRD_CLS WHERE HRNK_PRD_CLS_CD = #{hrnkPrdClsCd}
+		   		</when>
+		   		<otherwise>
+		   			SELECT NVL2(MAX(PRD_CLS_CD), 'C' || LPAD(REPLACE(MAX(PRD_CLS_CD),'C')+1,2,'0'),'C01') FROM TB_SG_PRD_CLS WHERE HRNK_PRD_CLS_CD IS NULL
+		   		</otherwise>
+		   	</choose> 
+	    </selectKey>
+    	/* CategoryProduct.insertCategory */
+    	INSERT INTO TB_SG_PRD_CLS (
+    		PRD_CLS_CD
+    		, CO_CD
+    		, HRNK_PRD_CLS_CD
+    		, PRD_CLS_LVL
+    		, PRD_CLS_NM
+    		, LWST_YN
+    		, USE_YN
+    		, FRT_YN
+    		, SMRO_MAPP_ID
+    		, REG_DTM
+    		, REGPSN_ID
+    		, SEQ
+    		, DEL_YN
+            , INTG_MTHD_CD
+            , ATFL_ID
+    	) VALUES (
+    		#{PRD_CLS_CD}
+    		, #{coCd}
+    		, #{hrnkPrdClsCd}
+    		<choose>
+    			<when test='null != hrnkPrdClsCd and "" != hrnkPrdClsCd'>
+    				, (SELECT NVL(MAX(PRD_CLS_LVL), 0)+1 FROM TB_SG_PRD_CLS WHERE PRD_CLS_CD = #{hrnkPrdClsCd})
+    			</when>
+    			<otherwise>
+    				, 1
+    			</otherwise>
+    		</choose>
+    		, #{prdClsNm}
+    		, #{lwstYn}
+    		, NVL(#{useYn}, 'Y')
+    		, NVL(#{frtYn}, 'Y')
+    		, #{smroMappId}
+    		, SYSDATE
+    		, #{regpsnId}
+            <choose>
+    			<when test='null != hrnkPrdClsCd and "" != hrnkPrdClsCd'>
+    				, (SELECT NVL(MAX(SEQ), 0)+1 FROM TB_SG_PRD_CLS WHERE HRNK_PRD_CLS_CD = #{hrnkPrdClsCd})
+    			</when>
+    			<otherwise>
+    				, (SELECT NVL(MAX(SEQ), 0)+1 FROM TB_SG_PRD_CLS WHERE HRNK_PRD_CLS_CD IS NULL)
+    			</otherwise>
+    		</choose>
+    		, NVL(#{delYn}, 'N')
+            , #{intgMthdCd}
+            , #{attachFileId}
+    	)
+    </insert>
+    
+    <!-- 카테고리 정보 수정 -->
+	<update id="updateCategoryInfo" parameterType="hashmap" >
+		/* Category.updateCategoryInfo */
+		UPDATE 
+		    TB_SG_PRD_CLS
+		SET 
+		    PRD_CLS_NM = #{prdClsNm},
+		    USE_YN = #{useYn},
+		    FRT_YN = NVL(#{frtYn},'Y'),
+		    SMRO_MAPP_ID = #{smroMappId},
+		    NFI_ITM_MPP = #{nfiItmMpp},
+		    MRKT_PRD_YN = #{mrktPrdYn},
+		    INTG_MTHD_CD = #{intgMthdCd},
+		    ATFL_ID = #{attachFileId},
+		    UPD_DTM =  SYSDATE,
+		    UPDPSN_ID =  #{updpsnId}
+		WHERE 
+		    PRD_CLS_CD = #{prdClsCd}
+	</update>
+    
+    <!-- 상품 카테고리 하위 사용여부 N  -->
+	<update id="updateCategoryChildUseYN" parameterType="hashmap" >
+		/* Category.updateCategoryChildUseYN */
+		UPDATE 
+			TB_SG_PRD_CLS
+		SET
+			USE_YN = #{useYn},
+			UPD_DTM =  SYSDATE,
+		    UPDPSN_ID =  #{updpsnId}
+		WHERE 
+			DEL_YN = 'N'
+		AND
+			PRD_CLS_CD IN (
+					        SELECT 
+							    PRD_CLS_CD
+							FROM 
+							    TB_SG_PRD_CLS
+							START WITH HRNK_PRD_CLS_CD = #{prdClsCd}
+							CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+				        	)
+	</update>
+	
+	<!-- 카테고리 순서 정렬  -->
+	<update id="updateCategorySort" parameterType="hashmap" >
+		/* Category.updateCategorySort */
+		UPDATE 
+			TB_SG_PRD_CLS
+		SET 
+			SEQ = #{sortNum},
+    		UPD_DTM =  SYSDATE,
+    		UPDPSN_ID =  #{updpsnId}
+		WHERE 
+			PRD_CLS_CD = #{prdClsCd}
+	</update>
+	
+	<!-- 카테고리 삭제 -->
+	<update id="categoryDelete" parameterType="hashmap" >
+		/* Category.updateCategorySort */
+		UPDATE 
+			TB_SG_PRD_CLS
+		SET 
+			DEL_YN = 'Y',
+    		UPD_DTM =  SYSDATE,
+    		UPDPSN_ID =  #{updpsnId}
+		WHERE 
+			PRD_CLS_CD = #{prdClsCd}
+	</update>
+	
+	
+	<!-- 속성 리스트 검색 -->
+	<select id="selectAttrList" parameterType="hashMap" resultType="SspMap">
+        /* Category.selectAttrList */
+		SELECT 
+			TSA.ATTR_CD,
+			TSA.ATTR_NM,
+			TSCAM.MAND_YN
+		FROM 
+			TB_SG_ATTR TSA,
+			( SELECT 
+					ATTR_CD,
+					MAND_YN 
+				FROM 
+					TB_SG_CLS_ATTR_MAPP 
+				WHERE 
+					PRD_CLS_CD = #{prdClsCd}
+			) TSCAM
+		WHERE 
+			TSA.USE_YN = 'Y'
+		<choose>
+			<when test="null != prdClsCd and '' != prdClsCd">
+				AND 
+					TSA.ATTR_CD = TSCAM.ATTR_CD
+			</when>
+			<otherwise>
+				AND 
+					TSA.ATTR_CD = TSCAM.ATTR_CD(+)
+			</otherwise>
+		</choose>
+		<if test='null != searchTxt and "" != searchTxt'>
+			AND 
+				(TSA.ATTR_CD LIKE '%'||#{searchTxt}||'%' OR TSA.ATTR_NM LIKE '%'||#{searchTxt}||'%')
+		</if>
+    </select>
+    
+    <!-- 카테고리속성맵핑 등록 -->
+    <insert id="insertClsAttrMapping" parameterType="hashMap">
+    	/* Category.insertClsAttrMapping */
+    	INSERT INTO
+    		TB_SG_CLS_ATTR_MAPP
+	    	(
+	    		PRD_CLS_CD,
+				ATTR_CD,
+				MAND_YN,
+				ATTR_SEQ
+	    	) VALUES (
+	    		#{prdClsCd},
+	    		#{attrCd},
+	    		#{mandYn},
+	    		#{attrSeq}
+	    	)
+    </insert>
+    
+    <!-- 카테고리속성맵핑 삭제 -->
+    <delete id="deleteClsAttrMapping" parameterType="hashMap">
+    	/* Category.deleteClsAttrMapping */
+    	DELETE FROM
+    		TB_SG_CLS_ATTR_MAPP
+    	WHERE 
+    		PRD_CLS_CD = #{prdClsCd}
+    </delete>
+    
+	<!-- S-MRO카테고리 카운트 -->
+    <select id="selectSMroCategoryCount" parameterType="hashMap" resultType="integer">
+    	/* Category.selectSMroCategoryCount */
+    	SELECT
+    		COUNT(0)
+    	FROM
+    		TB_FV_PRD_CLS
+    	WHERE 
+			CO_CD = '1000'
+		AND 
+			USE_YN = 'Y'
+		AND 
+			PRD_CLS_LVL = 4
+    	<if test="searchPrdClsCd != null and searchPrdClsCd !=''">
+		AND 
+			PRD_CLS_CD = #{searchPrdClsCd}
+		</if>
+		<if test="searchPrdClsNm != null and searchPrdClsNm !=''">
+		AND 
+			PRD_CLS_NM = #{searchPrdClsNm}
+		</if>
+    </select>
+    
+    <!-- S-MRO카테고리 목록 -->
+    <select id="selectSMroCategoryList" parameterType="HashMap" resultType="sspMap">
+        /* Category.selectSMroCategoryList */
+        SELECT
+            S2.*            
+        FROM
+            (   
+            	SELECT
+                    ROWNUM AS RNUM,
+                    S1.* 
+                FROM
+                    ( 
+				        SELECT 
+						    PRD_CLS_CD,
+						    PRD_CLS_NM,
+						    SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM,
+						    USE_YN,
+						    REG_DTM, 
+							'('||REGPSN_ID||')'||REGPSN_NM AS REGPSN
+						FROM (
+							SELECT
+							    TFPC.CO_CD,
+							    TFPC.PRD_CLS_CD,
+							    TFPC.PRD_CLS_NM,
+							    TFPC.USE_YN,
+							    TFPC.PRD_CLS_LVL,
+							    TFPC.HRNK_PRD_CLS_CD, 
+							    TO_CHAR(TFPC.REG_DTM, 'yyyy-mm-dd hh24:mi:ss') REG_DTM,
+							    TFPC.REGPSN_ID,
+							    (SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TFPC.REGPSN_ID) AS REGPSN_NM
+							FROM 
+								TB_FV_PRD_CLS TFPC
+							WHERE 
+								TFPC.CO_CD = '1000'
+							AND 
+								TFPC.USE_YN = 'Y'
+							)
+						WHERE 
+							PRD_CLS_LVL = 4
+						<if test="searchPrdClsCd != null and searchPrdClsCd !=''">
+						AND 
+							PRD_CLS_CD = #{searchPrdClsCd}
+						</if>
+						<if test="searchPrdClsNm != null and searchPrdClsNm !=''">
+						AND 
+							PRD_CLS_NM = #{searchPrdClsNm}
+						</if>
+						START WITH PRD_CLS_LVL = 1
+						CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+					)
+                    S1 
+            )
+            S2 
+		WHERE
+            S2.RNUM BETWEEN #{startNum} AND #{endNum}
+    </select>
+    
+    <!-- SSP카테고리 카운트 -->
+    <select id="selectSspCategoryCount" parameterType="hashMap" resultType="integer">
+    	/* Category.selectSspCategoryCount */
+    	SELECT 
+		    COUNT(0)
+		FROM TB_SG_PRD_CLS
+		WHERE
+			1=1
+		<if test="searchPrdClsCd != null and searchPrdClsCd !=''">
+		AND
+		    PRD_CLS_CD = #{searchPrdClsCd}
+		</if>
+		<if test="searchPrdClsNm != null and searchPrdClsNm !=''">
+		AND
+		    PRD_CLS_NM = #{searchPrdClsNm}
+		</if>
+		<if test="searchLwstYn != null and searchLwstYn !=''">
+		AND
+		    LWST_YN = #{searchLwstYn}
+		</if>
+    </select>
+    
+    <!-- SSP카테고리 목록 -->
+    <select id="selectSspCategoryList" parameterType="HashMap" resultType="sspMap">
+    	/* Category.selectSspCategoryList */
+    	SELECT
+            S2.*            
+        FROM
+            (   
+			SELECT
+				ROWNUM AS RNUM,
+				S1.* 
+			FROM
+				(
+				SELECT 
+					PRD_CLS_CD,
+					PRD_CLS_NM,
+					USE_YN,
+					'('||REGPSN_ID||')'||REGPSN_NM AS REGPSN,
+					REG_DTM,
+					PRD_CLS_LVL_NM
+				FROM
+					(
+			    	SELECT 
+					    TSPC.PRD_CLS_CD,
+					    TSPC.PRD_CLS_NM,
+					    TSPC.USE_YN,
+						TSPC.REGPSN_ID,
+						(SELECT ADM_MST_NM FROM T_ADM_MST WHERE ADM_MST_ID = TSPC.REGPSN_ID) AS REGPSN_NM,
+						TO_CHAR(TSPC.REG_DTM, 'yyyy-mm-dd hh24:mi:ss') REG_DTM,
+						SPC.PRD_CLS_LVL_NM
+					FROM TB_SG_PRD_CLS TSPC
+					LEFT JOIN (SELECT 
+								    PRD_CLS_CD,
+								    SUBSTR(SYS_CONNECT_BY_PATH(PRD_CLS_NM, '>'),2) AS PRD_CLS_LVL_NM         
+								FROM 
+								    TB_SG_PRD_CLS
+								WHERE
+									USE_YN = 'Y'
+								START WITH PRD_CLS_LVL = 1
+								CONNECT BY PRIOR PRD_CLS_CD = HRNK_PRD_CLS_CD
+								ORDER SIBLINGS BY SEQ ASC) SPC
+					ON SPC.PRD_CLS_CD = TSPC.PRD_CLS_CD
+					WHERE
+						1=1
+					<if test="searchPrdClsCd != null and searchPrdClsCd !=''">
+					AND
+					    TSPC.PRD_CLS_CD = #{searchPrdClsCd}
+					</if>
+					<if test="searchPrdClsNm != null and searchPrdClsNm !=''">
+					AND
+					    TSPC.PRD_CLS_NM = #{searchPrdClsNm}
+					</if>
+					<if test="searchLwstYn != null and searchLwstYn !=''">
+					AND
+					    TSPC.LWST_YN = #{searchLwstYn}
+					</if>
+					)
+	    		)
+				S1 
+            )
+            S2 
+		WHERE
+            S2.RNUM BETWEEN #{startNum} AND #{endNum}
+    </select>
+</mapper>

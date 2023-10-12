@@ -1,0 +1,1772 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssp.bo.Cust">
+
+	<select id="selectCodeList" parameterType="java.util.Map" resultType="java.util.Map">
+		/*Cust.selectCodeList*/
+		SELECT 
+			 COM_CLSF_CD
+			, COM_DTL_CD
+			, COM_DTL_CD_NM
+			, COM_USR_DEFN_NM_1
+			, COM_USR_DEFN_NM_2
+			, COM_USR_DEFN_NM_3
+			, COM_USR_DEFN_NM_4
+			, COM_USR_DEFN_NM_5
+			, SRT_SO
+			, USE_YN
+		FROM SSP_APP.TB_CO_COM_CD_DTL
+		WHERE
+			COM_CLSF_CD IN (
+				'MBR_USE_CD'
+				, 'CUST_SPR_CD'
+			)
+			AND LANG_CD='KO'
+			AND USE_YN='Y'
+		ORDER BY COM_CLSF_CD, SRT_SO
+	</select>
+	
+	<sql id="selectMbrListSql">
+			FROM 
+			TB_CC_MBR_BASIS A
+			JOIN TB_CC_BZPLC_BASIS B ON A.BZPLC_ID = B.BZPLC_ID AND A.CO_CD=B.CO_CD
+			JOIN TB_CC_DEPT_BASIS C ON A.DEPT_ID = C.DEPT_ID AND A.BZPLC_ID=C.BZPLC_ID AND A.CO_CD=C.CO_CD
+			JOIN TB_CC_OPR_UNIT_BASIS D ON C.OPR_UNIT_ID=D.OPR_UNIT_ID AND C.BZPLC_ID=D.BZPLC_ID AND C.CO_CD=D.CO_CD
+			LEFT JOIN TB_CC_MBR_CTL_AUTH_INFO E ON A.MBR_ID=E.MBR_ID AND A.CO_CD=E.CO_CD
+			LEFT JOIN TB_CC_MBR_UCESSDI_LOGN_INFO F ON A.MBR_ID=F.MBR_ID AND A.CO_CD=F.CO_CD
+			LEFT JOIN TB_CO_MBR_LOGN_INFO G ON A.MBR_ID=G.MBR_ID AND A.CO_CD=G.CO_CD
+		<where>
+				AND A.CO_CD = #{coCd}		
+				AND A.MBR_USE_CD != 'Q' /*탈퇴회원은 제외*/
+										
+			<if test="mbrUseCd != null and mbrUseCd != ''">
+				AND A.MBR_USE_CD = #{mbrUseCd}
+			</if>
+			<if test="custSprCd != null and custSprCd != ''">
+				AND D.CUST_SPR_CD = #{custSprCd}
+			</if>
+			
+			<if test="bzplcIds != null and bzplcIds.length > 0">
+				AND (0, B.BZPLC_ID) IN
+				<foreach collection="bzplcIds" item="item" open="(" close=")" separator=",">
+					(0, #{item})
+				</foreach>
+			</if>
+			<if test="oprUnitIds != null and oprUnitIds.length > 0">
+				AND (0, D.OPR_UNIT_ID) IN
+				<foreach collection="oprUnitIds" item="item" open="(" close=")" separator=",">
+					(0, #{item})
+				</foreach>
+			</if>
+			<if test="deptIds != null and deptIds.length > 0">
+				AND (0, C.DEPT_ID) IN
+				<foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+					(0, #{item})
+				</foreach>
+			</if>
+			<if test="mbrIds != null and mbrIds.length > 0">
+				AND (0, A.MBR_ID) IN
+				<foreach collection="mbrIds" item="item" open="(" close=")" separator=",">
+					(0, #{item})
+				</foreach>
+			</if>
+			<if test="(agreeType != null and !agreeType.equals('')) and (agreeYn != null and !agreeYn.equals(''))">
+				<choose>
+					<when test="agreeType.equals('1'.toString())">AND A.UT_AGRE_YN = #{agreeYn}</when>
+					<when test="agreeType.equals('2'.toString())">AND A.CLT_AGRE_YN = #{agreeYn}</when>
+					<when test="agreeType.equals('3'.toString())">AND A.MKTG_CHAR_RCV_AGRE_YN = #{agreeYn}</when>
+					<when test="agreeType.equals('4'.toString())">AND A.MKTG_MAIL_RCV_AGRE_YN = #{agreeYn}</when>
+					<when test="agreeType.equals('5'.toString())">AND A.CHAR_RCV_AGRE_YN = #{agreeYn}</when>
+					<when test="agreeType.equals('6'.toString())">AND A.MAIL_RCV_AGRE_YN = #{agreeYn}</when>
+				</choose>							
+			</if>
+			<if test="periodType != null and !periodType.equals('')">
+				<choose>
+					<when test="periodType.equals('1'.toString())">AND (TO_CHAR(A.REG_DTM, 'YYYYMMDD') BETWEEN #{periodStart} AND #{periodEnd})</when>
+					<when test="periodType.equals('2'.toString())">AND (TO_CHAR(A.UPD_DTM, 'YYYYMMDD') BETWEEN #{periodStart} AND #{periodEnd})</when>
+					<when test="periodType.equals('3'.toString())">AND (TO_CHAR(G.FNL_LOGN_DTM, 'YYYYMMDD') BETWEEN #{periodStart} AND #{periodEnd})</when>
+				</choose>							
+			</if>
+		</where>
+		
+	</sql>
+	<select id="selectMbrinfo" parameterType="java.util.Map" resultType="java.util.Map">
+		/* Cust.selectMbrinfo */
+		SELECT *
+		FROM TB_CC_MBR_BASIS
+		WHERE MBR_ID = #{mbrId}
+	</select>
+	<select id="selectMbrList" parameterType="java.util.Map" resultType="java.util.Map">
+		/* Cust.selectMbrList */
+		WITH MAIN_LIST AS (			
+			SELECT 
+				  D.CUST_SPR_CD
+				, FN_COM_DTL_CDNM_NVL('KO','CUST_SPR_CD',D.CUST_SPR_CD,'') CUST_SPR_CD_NM
+				, A.MBR_USE_CD
+				, FN_COM_DTL_CDNM_NVL('KO','MBR_USE_CD',A.MBR_USE_CD,'') MBR_USE_CD_NM
+				, A.MBR_ID
+				, A.MBR_NM
+				, CASE 
+				    WHEN LENGTH(A.MBR_NM) = 2 THEN SUBSTR(A.MBR_NM,1,1) || LPAD('*',(LENGTH(A.MBR_NM)-1),'*')
+				    WHEN LENGTH(A.MBR_NM) = 3 THEN SUBSTR(A.MBR_NM,1,1) || LPAD('*',(LENGTH(A.MBR_NM)-2),'*') || SUBSTR(A.MBR_NM,3,1)
+				    ELSE SUBSTR(A.MBR_NM,1,2) || LPAD('*',(LENGTH(A.MBR_NM)-2),'*')
+				  END AS MSKD_MBR_NM				
+				, G.LOGN_ID
+				, SUBSTR(G.LOGN_ID,1,3) || LPAD('*',(LENGTH(G.LOGN_ID)-3),'*') AS MSKD_LOGN_ID				
+				, A.BZPLC_ID
+				, B.BZPLC_NM
+				, D.OPR_UNIT_ID
+				, D.OPR_UNIT_NM
+				, C.DEPT_ID
+				, C.DEPT_NM
+				, E.APRV_AUTH_USE_YN
+				, E.ORD_AUTH_USE_YN
+				, FN_CC_MBR_GI_AUTH_INFO(A.CO_CD, A.MBR_ID) AS GI_AUTH_USE_YN
+				, E.TAXINV_AUTH_USE_YN
+				, NVL(E.CHM_MTL_AUTH_USE_YN, 'N') AS  CHM_MTL_AUTH_USE_YN <!-- 화학물질여부 추가 -->
+				, F.TAXINV_LOGN_ID
+				, SUBSTR(F.TAXINV_LOGN_ID,1,3) || LPAD('*',(LENGTH(F.TAXINV_LOGN_ID)-3),'*') AS MSKD_TAXINV_LOGN_ID
+				, E.MNG_AUTH_USE_CD
+				, FN_COM_DTL_CDNM_NVL('KO','MNG_AUTH_USE_CD',E.MNG_AUTH_USE_CD,'') MNG_AUTH_USE_CD_NM
+				, E.BGT_AUTH_USE_CD
+				, FN_COM_DTL_CDNM_NVL('KO','BGT_AUTH_USE_CD',E.BGT_AUTH_USE_CD,'') BGT_AUTH_USE_CD_NM
+				, E.ADJ_AUTH_USE_CD
+				, FN_COM_DTL_CDNM_NVL('KO','ADJ_AUTH_USE_CD',E.ADJ_AUTH_USE_CD,'') ADJ_AUTH_USE_CD_NM
+				, E.CRD_STL_AUTH_USE_YN
+				, A.CO_CD
+				, A.UT_AGRE_YN
+				, A.CLT_AGRE_YN 
+				, A.MKTG_CHAR_RCV_AGRE_YN
+				, A.MKTG_MAIL_RCV_AGRE_YN
+				, A.CHAR_RCV_AGRE_YN
+				, A.MAIL_RCV_AGRE_YN
+				, A.OSF_CERT_YN
+				, A.CORP_HP_YN
+				, A.FRNR_NM_HP_YN
+				, TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+				, TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM
+				, TO_CHAR(G.FNL_LOGN_DTM, 'YYYY-MM-DD HH24:MI:SS') AS FNL_LOGN_DTM	
+			<include refid="selectMbrListSql"/>
+			<if test="sortColumn == null or sortColumn == ''">
+				ORDER BY A.MBR_ID
+			</if>
+			<if test="sortColumn != null and sortColumn != ''">
+				ORDER BY  
+				<choose>
+					<when test='sortColumn.equals("MNG_AUTH_USE_CD_NM_CNT")'> MNG_AUTH_USE_CD_NM </when>
+					<when test='sortColumn.equals("BGT_AUTH_USE_CD_NM_CNT")'> BGT_AUTH_USE_CD_NM </when>
+					<when test='sortColumn.equals("ADJ_AUTH_USE_CD_NM_CNT")'> ADJ_AUTH_USE_CD_NM </when>
+					<otherwise> ${sortColumn} </otherwise>
+				</choose>				
+			</if>
+			<if test="sortType != null and sortType != ''">
+				${sortType}
+			</if>
+			OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+		)
+        SELECT 
+            A.*
+            ,(CASE 
+                WHEN A.MNG_AUTH_USE_CD IN ('CLN', 'COR', 'GRP') THEN /* 제어권한코드(CLN:사업장, COR:법인, GRP:그룹)*/
+                    A.MNG_AUTH_USE_CD_NM || '(' ||
+                    (
+                        SELECT 
+                            COUNT(*) AS CNT 
+                        FROM TB_CC_BYOPRUNIT_CTL_AUTH_MBR_MAPP B
+                        WHERE B.CTL_SPR_CD = '40' /* 제어구분코드(20:예산, 30:정산, 40:관리) */
+                        AND B.CO_CD = A.CO_CD
+                        AND B.BZPLC_ID = A.BZPLC_ID
+                        AND B.MBR_ID = A.MBR_ID 
+                    )  || ')'  
+                ELSE
+                    A.MNG_AUTH_USE_CD_NM                                  
+            END ) AS MNG_AUTH_USE_CD_NM_CNT
+            ,(CASE 
+                WHEN A.BGT_AUTH_USE_CD IN ('CLN', 'COR', 'GRP') THEN /* 제어권한코드(CLN:사업장, COR:법인, GRP:그룹)*/
+                    A.BGT_AUTH_USE_CD_NM || '(' ||
+                    (
+                        SELECT 
+                            COUNT(*) AS CNT 
+                        FROM TB_CC_BYOPRUNIT_CTL_AUTH_MBR_MAPP B
+                        WHERE B.CTL_SPR_CD = '20' /* 제어구분코드(20:예산, 30:정산, 40:관리) */
+                        AND B.CO_CD = A.CO_CD
+                        AND B.BZPLC_ID = A.BZPLC_ID
+                        AND B.MBR_ID = A.MBR_ID 
+                    ) || ')'   
+                ELSE
+                    A.BGT_AUTH_USE_CD_NM                                   
+            END ) AS BGT_AUTH_USE_CD_NM_CNT   
+            ,(CASE 
+                WHEN A.ADJ_AUTH_USE_CD IN ('CLN', 'COR', 'GRP') THEN /* 제어권한코드(CLN:사업장, COR:법인, GRP:그룹)*/
+                    A.ADJ_AUTH_USE_CD_NM || '(' ||
+                    (
+                        SELECT 
+                            COUNT(*) AS CNT 
+                        FROM TB_CC_BYOPRUNIT_CTL_AUTH_MBR_MAPP B
+                        WHERE B.CTL_SPR_CD = '30' /* 제어구분코드(20:예산, 30:정산, 40:관리) */
+                        AND B.CO_CD = A.CO_CD
+                        AND B.BZPLC_ID = A.BZPLC_ID
+                        AND B.MBR_ID = A.MBR_ID 
+                    )  || ')'  
+                ELSE
+                    A.ADJ_AUTH_USE_CD_NM                                   
+            END ) AS ADJ_AUTH_USE_CD_NM_CNT                            
+        FROM MAIN_LIST A				
+	</select>
+		
+	<select id="selectMbrOne" parameterType="java.util.Map" resultType="java.lang.String">
+		/* Cust.selectMbrOne */
+		SELECT
+			  MBR_USE_CD
+		FROM
+			TB_CC_MBR_BASIS
+		WHERE
+			CO_CD = #{coCd}
+			AND MBR_ID = #{mbrId}
+	</select>
+	
+	<select id="selectMbrDeptUseYn" parameterType="java.util.Map" resultType="java.util.Map">
+		/* Cust.selectMbrDeptUseYn */
+		SELECT 
+		    A.DEPT_ID
+		    ,A.DEPT_NM
+		    ,A.USE_YN
+		    ,B.USE_YN AS BZPLC_USE_YN 
+		FROM TB_CC_DEPT_BASIS A
+		JOIN TB_CC_BZPLC_BASIS B ON A.CO_CD =B.CO_CD AND A.BZPLC_ID = B.BZPLC_ID 
+		WHERE (A.CO_CD, A.BZPLC_ID, A.DEPT_ID) = (
+		    SELECT
+		        CO_CD
+		        ,BZPLC_ID
+		        ,DEPT_ID
+		    FROM TB_CC_MBR_BASIS
+		    WHERE CO_CD = #{CO_CD}
+		    AND MBR_ID = #{MBR_ID} )
+	</select>
+		
+	<update id="updateMbrUseCd" parameterType="java.util.Map">
+		/* Cust.updateMbrUseCd */
+		UPDATE TB_CC_MBR_BASIS
+		SET
+			  MBR_USE_CD = #{MBR_USE_CD}
+			, UPDPSN_ID = #{USER_ID}
+			, UPD_DTM = SYSDATE
+		WHERE
+			CO_CD = #{CO_CD}
+			AND MBR_ID = #{MBR_ID}
+	</update>
+	
+	<select id="selectMbrListCnt" parameterType="java.util.Map" resultType="java.lang.Integer">
+		/* Cust.selectMbrListCnt */
+		SELECT 
+			COUNT(*) TOTAL_COUNT
+		<include refid="selectMbrListSql"/>
+	</select>
+	
+	<select id="selectDrmcMbrList" parameterType="HashMap" resultType="HashMap">
+        /* Cust.selectDrmcMbrList 휴면회원관리 목록 조회 */
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+        SELECT LIST.CO_CD				/* 회사코드 */
+        	 , LIST.CUST_SPR_CD			/* 고객유형코드 */
+        	 , LIST.MBR_ID				/* 회원ID */
+        	 , CASE 
+			       WHEN LENGTH(LIST.MBR_NM) = 2 THEN SUBSTR(LIST.MBR_NM,1,1) || LPAD('*',(LENGTH(LIST.MBR_NM)-1),'*')
+			       WHEN LENGTH(LIST.MBR_NM) = 3 THEN SUBSTR(LIST.MBR_NM,1,1) || LPAD('*',(LENGTH(LIST.MBR_NM)-2),'*') || SUBSTR(LIST.MBR_NM,3,1)
+			       ELSE SUBSTR(LIST.MBR_NM,1,2) || LPAD('*',(LENGTH(LIST.MBR_NM)-2),'*')
+			   END AS MBR_NM			/* 회원명 */
+			 , SUBSTR(LIST.LOGN_ID,1,3) || LPAD('*',(LENGTH(LIST.LOGN_ID)-3),'*') AS LOGN_ID	/* 로그인ID */
+        	 , LIST.BZPLC_ID			/* 사업장ID */
+        	 , LIST.BZPLC_NM			/* 사업장명 */
+        	 , LIST.OPR_UNIT_ID			/* 운영단위ID */
+        	 , LIST.OPR_UNIT_NM			/* 운영단위명 */
+        	 , LIST.DEPT_ID				/* 부서ID */
+        	 , LIST.DEPT_NM				/* 부서명 */
+        	 , LIST.DRMC_DTM			/* 휴면전환일 */
+		FROM(
+			SELECT MBR.CO_CD
+				 , OPR.CUST_SPR_CD
+			  	 , MBR.MBR_ID
+			  	 , MBR.MBR_NM
+			  	 , LOGN.LOGN_ID
+			  	 , MBR.BZPLC_ID
+			  	 , BZPLC.BZPLC_NM
+			  	 , DEPT.OPR_UNIT_ID
+			  	 , OPR.OPR_UNIT_NM
+			  	 , MBR.DEPT_ID
+			  	 , DEPT.DEPT_NM
+			  	 , ( SELECT UPD_DTM
+					   FROM TB_CC_MBR_BASIS_HST
+					  WHERE MBR_ID = MBR.MBR_ID
+					    AND HST_SEQ = ( SELECT MAX(HST_SEQ)+1
+										  FROM TB_CC_MBR_BASIS_HST
+										 WHERE MBR_ID = MBR.MBR_ID
+										   AND MBR_USE_CD != 'L' ) ) AS DRMC_DTM
+			FROM TB_CC_MBR_BASIS MBR
+			<if test=" bzplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'BZPLC_ID'
+	            AND T1.COND_DATA_VAL = MBR.BZPLC_ID
+            </if>
+			<if test=" deptId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T3
+	            ON  T3.SES_ID = #{sesId}
+	            AND T3.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T3.COL_ITM = 'DEPT_ID'
+	            AND T3.COND_DATA_VAL = MBR.DEPT_ID
+            </if>
+			<if test=" mbrId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T4
+	            ON  T4.SES_ID = #{sesId}
+	            AND T4.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T4.COL_ITM = 'MBR_ID'
+	            AND T4.COND_DATA_VAL = MBR.MBR_ID
+            </if>
+			JOIN TB_CO_MBR_LOGN_INFO LOGN
+					ON LOGN.CO_CD = MBR.CO_CD 
+					AND LOGN.MBR_ID = MBR.MBR_ID
+			LEFT OUTER JOIN TB_CC_BZPLC_BASIS BZPLC
+					ON BZPLC.CO_CD = MBR.CO_CD 
+					AND BZPLC.BZPLC_ID = MBR.BZPLC_ID
+			LEFT OUTER JOIN TB_CC_DEPT_BASIS DEPT
+					ON DEPT.CO_CD = MBR.CO_CD 
+					AND DEPT.DEPT_ID = MBR.DEPT_ID
+			LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS OPR 
+					ON OPR.CO_CD = DEPT.CO_CD 
+					AND OPR.BZPLC_ID = DEPT.BZPLC_ID 
+					AND OPR.OPR_UNIT_ID = DEPT.OPR_UNIT_ID 
+			WHERE MBR.MBR_USE_CD = 'L'
+		)LIST
+		<if test=" oprUnitId > 0 ">
+            JOIN
+            TB_OD_ODR_INQ_TGT_DTLS   T2
+            ON  T2.SES_ID = #{sesId}
+            AND T2.INQ_COND_DTLS = #{inqCondDtls}
+            AND T2.COL_ITM = 'OPR_UNIT_ID'
+            AND T2.COND_DATA_VAL = LIST.OPR_UNIT_ID
+        </if>
+        <where>
+	        <if test="fromDate != null and fromDate != '' and toDate != null and toDate != ''">
+				<![CDATA[ TO_DATE(TO_CHAR(DRMC_DTM, 'YYYY-MM-DD'), 'YYYY-MM-DD') >= TO_DATE(#{fromDate}, 'YYYY-MM-DD') AND TO_DATE(TO_CHAR(DRMC_DTM, 'YYYY-MM-DD') , 'YYYY-MM-DD') <= TO_DATE(#{toDate}, 'YYYY-MM-DD') ]]>
+			</if>
+          	<if test='custSprCd != null and custSprCd != "" and !"0".equals(custSprCd)'> 
+        		AND CUST_SPR_CD = #{custSprCd}
+            </if>
+        </where>
+		<if test="sortColumn != null and sortColumn != ''"> 
+        ORDER BY ${sortColumn} ${sortType} 
+        </if> 
+        <if test="sortColumn == null or sortColumn == ''"> 
+        ORDER BY ${orderBy} <if test="orderBy == 'DRMC_DTM'">desc</if>
+        </if>
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+    </select>
+	
+	<select id="selectDrmcMbrDeatil" parameterType="HashMap" resultType="HashMap">
+        /* Cust.selectDrmcMbrDeatil 휴면회원관리 상세조회 */
+        SELECT NVL2(M1.OPRTR_NM, M1.OPRTR_NM, M3.MBR_NM) AS REGPSN
+        	 , NVL2(M2.OPRTR_NM, M2.OPRTR_NM, M4.MBR_NM) AS UPDPSN
+		  	 , LIST.*
+        FROM(
+        	SELECT MBR.CO_CD																								/* 회사코드 */
+				 , MBR.DRMC_YN 																								/* 상태 */
+				 , MBR.MBR_USE_CD																							/* 회원사용코드 - 휴면화인지 등 */
+			  	 , MBR.MBR_ID																								/* 회원ID */
+			  	 , TO_CHAR(( SELECT UPD_DTM
+							   FROM TB_CC_MBR_BASIS_HST
+							  WHERE MBR_ID = MBR.MBR_ID
+							    AND HST_SEQ = ( SELECT MAX(HST_SEQ)+1
+												  FROM TB_CC_MBR_BASIS_HST
+												 WHERE MBR_ID = MBR.MBR_ID
+												   AND MBR_USE_CD != 'L' ) ), 'YYYY-MM-DD') AS DRMC_DTM						/* 휴면 전환일 */
+			  	 , MBR.DEPT_ID																								/* 부서ID */
+			  	 , DEPT.DEPT_NM AS DEPT																						/* 부서 */
+			  	 , DEPT.OPR_UNIT_ID																							/* 운영단위ID */
+			  	 , OPR.OPR_UNIT_NM AS OPR_UNIT																				/* 운영단위 */
+			  	 , MBR.BZPLC_ID																								/* 사업장ID */
+			  	 , BZPLC.BZPLC_NM AS BZPLC																					/* 사업장 */
+			 	 , LOGN.LOGN_ID																								/* 로그인ID */
+			 	 , MBR.MBR_NM																								/* 회원명 */
+			 	 , MBR.JBPOS_NM 																							/* 직급 */
+				 , BZPLC.CUST_SPR_CD																						/* 고객유형 */
+				 , DECODE(MBR.UT_AGRE_YN, 'Y', '동의', '미 동의') AS UT_AGRE_YN													/* 약관동의 */
+				 , DECODE(MBR.CLT_AGRE_YN, 'Y', '동의', '미 동의') AS CLT_AGRE_YN												/* 개인정보 사용 동의 */
+				 , DECODE(MBR.MKTG_CHAR_RCV_AGRE_YN
+				 		, 'Y'
+				 		, DECODE(MBR.MKTG_MAIL_RCV_AGRE_YN
+				 				, 'Y'
+				 				, '이메일 수신 동의, SMS 수신 동의'
+				 				, '이메일 수신 동의, SMS 수신 미 동의')
+				 		, DECODE(MBR.MKTG_MAIL_RCV_AGRE_YN
+				 				, 'Y'
+				 				, '이메일 수신 미 동의, SMS 수신 동의'
+				 				, '미 동의')) AS MKTG_CHAR_RCV_AGRE_YN															/* 마케팅 문자/메일 수신 */
+				 , DECODE(MBR.MAIL_RCV_AGRE_YN
+				 		, 'Y'
+				 		, DECODE(MBR.CHAR_RCV_AGRE_YN
+				 				, 'Y'
+				 				, '문자 허용, 메일 허용'
+				 				, '문자 허용, 메일 미 허용')
+				 		, DECODE(MBR.CHAR_RCV_AGRE_YN
+				 				, 'Y'
+				 				, '문자 미 허용, 메일 허용'
+				 				, '문자 미 허용, 메일 미 허용')) AS CHAR_RCV_AGRE_YN												/* 업무 문자/메일 수신 */
+			  	 , COMC.COM_DTL_CD_NM AS JOIN_PATH_CD																		/* 가입경로 */
+				 --, MBR.MRO_MBR_ID																							/* S-MRO회원정보 */
+				 , ( SELECT LISTAGG(MRO_MBR_NM, ',')
+					   FROM TB_CC_MRO_MBR_BASIS
+					  WHERE MBR_ID = #{mbrId} )  AS  MRO_MBR_NM																/* S-MRO회원정보 */
+			  	 , MBR.ZPCD 																								/* 우편번호 */
+			  	 , MBR.REPR_ADDR 																							/* 주소 */
+			  	 , MBR.DTL_ADDR 																							/* 상세주소 */
+			  	 , MBR.HP_NO 																								/* 연락처1 */
+			  	 , MBR.TEL_NO																								/* 연락처2 */
+			  	 , MBR.EMAIL_ADDR																							/* E-mail */
+			  	 , DLVPLC.ZPCD AS DLPLC_ZPCD																				/* 배송지 우편번호 */
+			  	 , DLVPLC.REPR_ADDR AS DLPLC_REPR_ADDR 																		/* 배송지 주소 */
+			  	 , DLVPLC.DTL_ADDR AS DLPLC_DTL_ADDR 																		/* 배송지 상세주소 */
+			  	 , DLVPLC.HP_NO AS DLPLC_HP_NO																				/* 배송지 연락처1 */
+			  	 , DLVPLC.TEL_NO AS DLPLC_TEL_NO																			/* 배송지 연락처2 */
+				 , DECODE(AUTH.APRV_AUTH_USE_YN, 'Y', '예', '아니오') AS APRV_AUTH_USE_YN										/* 결제 권한 */
+				 , DECODE(AUTH.ORD_AUTH_USE_YN, 'Y', '예', '아니오') AS ORD_AUTH_USE_YN										/* 발주 권한 */
+				 , DECODE(AUTH.TAXINV_AUTH_USE_YN, 'Y', '예', '아니오') AS TAXINV_AUTH_USE_YN									/* 세금계산서 담당 */
+			  	 --, OPR.TAXINV_PUBC_SYS_CD																					/* UCESSDI ID */
+			  	 , (SELECT E.TAXINV_LOGN_ID 
+			  	 	  FROM TB_CC_MBR_UCESSDI_LOGN_INFO E
+			  	 	 WHERE E.CO_CD = MBR.CO_CD
+					   AND E.MBR_ID = MBR.MBR_ID
+					   AND ROWNUM = 1) AS TAXINV_PUBC_SYS_CD																/* UCESSDI ID */
+				 , DECODE(AUTH.GI_AUTH_USE_YN, 'Y', '예', '아니오') AS GI_AUTH_USE_YN											/* 입고권한 */
+			  	 , (SELECT COM_DTL_CD_NM 																					
+			  	 	  FROM TB_CO_COM_CD_DTL 
+			  	 	 WHERE COM_CLSF_CD = 'MNG_AUTH_USE_CD' 
+			  	 	   AND COM_DTL_CD=AUTH.MNG_AUTH_USE_CD) AS MNG_AUTH_USE_CD												/* 관리 권한 */
+			  	 , (SELECT COM_DTL_CD_NM 
+			  	 	  FROM TB_CO_COM_CD_DTL 
+			  	 	 WHERE COM_CLSF_CD = 'BGT_AUTH_USE_CD' 
+			  	 	   AND COM_DTL_CD=AUTH.BGT_AUTH_USE_CD) AS BGT_AUTH_USE_CD												/* 예산 권한 */
+			  	 , (SELECT COM_DTL_CD_NM 
+			  	 	  FROM TB_CO_COM_CD_DTL 
+			  	 	 WHERE COM_CLSF_CD = 'ADJ_AUTH_USE_CD' 
+			  	 	   AND COM_DTL_CD=AUTH.ADJ_AUTH_USE_CD) AS ADJ_AUTH_USE_CD												/* 정산 권한 */
+			  	 , (SELECT HST.REGPSN_ID 
+			  	 	  FROM TB_CC_MBR_BASIS_HST HST 
+			  	 	 WHERE HST.CO_CD = MBR.CO_CD 
+					   AND HST.MBR_ID = MBR.MBR_ID AND HST.HST_SEQ = 1) REGPSN_ID											/* 최초 등록자 */
+				 , (SELECT B.UPDPSN_ID
+					FROM ( (SELECT HST.UPDPSN_ID FROM TB_CC_MBR_BASIS_HST HST 
+							WHERE HST.CO_CD = MBR.CO_CD AND HST.MBR_ID = MBR.MBR_ID AND HST.MBR_USE_CD = 'L'
+							ORDER BY HST.HST_SEQ desc ))B
+					WHERE rownum = 1 ) UPDPSN_ID																			/* 최종 수정자 */
+	 			 ,  TO_CHAR((SELECT HST.REG_DTM FROM TB_CC_MBR_BASIS_HST HST WHERE HST.CO_CD = MBR.CO_CD 
+					AND HST.MBR_ID = MBR.MBR_ID
+					AND HST.HST_SEQ = 1), 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM 												/* 최초 등록일 */
+				 , TO_CHAR(( SELECT B.UPD_DTM
+							FROM (
+								(SELECT HST.UPD_DTM FROM TB_CC_MBR_BASIS_HST HST WHERE HST.CO_CD = MBR.CO_CD 
+									AND HST.MBR_ID = MBR.MBR_ID
+								ORDER BY HST.HST_SEQ desc ))B
+							WHERE rownum = 1 ), 'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM											/* 최종 수정일 */
+			FROM TB_CC_MBR_BASIS MBR
+			LEFT OUTER JOIN TB_CC_MBR_DLVPLC_BASIS DLVPLC
+					ON DLVPLC.CO_CD = MBR.CO_CD
+					AND DLVPLC.MBR_ID = MBR.MBR_ID
+					AND DLVPLC.BASIS_DLVPLC_YN = 'Y'
+					AND DLVPLC.USE_YN = 'Y'
+			LEFT OUTER JOIN TB_CO_MBR_LOGN_INFO LOGN
+					ON LOGN.CO_CD = MBR.CO_CD 
+					AND LOGN.MBR_ID = MBR.MBR_ID
+			LEFT OUTER JOIN TB_CC_BZPLC_BASIS BZPLC
+					ON BZPLC.CO_CD = MBR.CO_CD 
+					AND BZPLC.BZPLC_ID = MBR.BZPLC_ID
+			LEFT OUTER JOIN TB_CC_DEPT_BASIS DEPT
+					ON DEPT.CO_CD = MBR.CO_CD 
+					AND DEPT.DEPT_ID = MBR.DEPT_ID
+			LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS OPR 
+					ON OPR.CO_CD = DEPT.CO_CD 
+					AND OPR.BZPLC_ID = DEPT.BZPLC_ID 
+					AND OPR.OPR_UNIT_ID = DEPT.OPR_UNIT_ID
+			LEFT OUTER JOIN TB_CC_MBR_CTL_AUTH_INFO AUTH
+					ON AUTH.CO_CD = MBR.CO_CD 
+					AND AUTH.MBR_ID = MBR.MBR_ID
+			LEFT OUTER JOIN TB_CO_COM_CD_DTL COMC
+					ON COMC.LANG_CD = 'KO'
+					AND COMC.COM_CLSF_CD = 'JOIN_PATH_CD'
+					AND COMC.COM_DTL_CD = MBR.JOIN_PATH_CD
+			WHERE MBR.MBR_USE_CD = 'L'
+			AND MBR.MBR_ID = #{mbrId}
+        )LIST
+		LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO M1
+				ON M1.CO_CD = LIST.CO_CD 
+				AND M1.OPRTR_ID = LIST.REGPSN_ID
+		LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO M2
+				ON M2.CO_CD = LIST.CO_CD 
+				AND M2.OPRTR_ID = LIST.UPDPSN_ID
+		LEFT OUTER JOIN TB_CC_MBR_BASIS M3
+				ON M3.CO_CD = LIST.CO_CD 
+				AND M3.MBR_ID = LIST.REGPSN_ID
+		LEFT OUTER JOIN TB_CC_MBR_BASIS M4
+				ON M4.CO_CD = LIST.CO_CD 
+				AND M4.MBR_ID = LIST.UPDPSN_ID
+    </select>
+    
+    <select id="selectChkDrmcMbr" parameterType="HashMap" resultType="int">	
+        /* Cust.selectChkDrmcMbr 해당 회원이 휴면상태인지 확인 */
+	    SELECT COUNT(*) 
+		  FROM TB_CC_MBR_BASIS
+		 WHERE CO_CD = #{coCd}
+		   AND MBR_ID = #{mbrId}
+		   AND MBR_USE_CD = 'L'
+    </select>	   	
+    
+    <update id="saveDrmcMbrDeatil" parameterType="HashMap">
+        /* Cust.saveDrmcMbrDeatil 휴면회원관리 상세 수정 */
+		UPDATE TB_CC_MBR_BASIS
+		   SET DEPT_ID = #{deptId}
+		   	 , HP_NO = #{hpNo}
+		   	 , EMAIL_ADDR = #{emailAddr}
+		   	 , UPDPSN_ID = #{oprtrId}
+		   	 , UPD_DTM = SYSDATE
+		 WHERE CO_CD = #{coCd}
+		   AND MBR_ID = #{mbrId}
+	</update>
+	
+	<insert id="insertMbrHumHst" parameterType="HashMap">			
+		INSERT INTO TB_CC_MBR_BASIS_HST (
+		    CO_CD
+		    ,MBR_ID
+		    ,HST_SEQ
+		    ,HST_SPR_CD
+		    ,BZPLC_ID
+		    ,DEPT_ID
+		    ,MBR_NM
+		    ,JBPOS_NM
+		    ,EMAIL_ADDR
+		    ,TEL_NO
+		    ,HP_NO
+		    ,ZPCD
+		    ,REPR_ADDR
+		    ,DTL_ADDR
+		    ,MBR_USE_CD
+		    ,DRMC_YN
+		    ,DRMC_GUDC_DTM
+		    ,DRMC_PROC_DTM
+		    ,DLV_ZPCD
+		    ,DLV_REPR_ADDR
+		    ,DLV_DTL_ADDR
+		    ,UT_AGRE_YN
+		    ,CLT_AGRE_YN
+		    ,CHAR_RCV_AGRE_YN
+		    ,MAIL_RCV_AGRE_YN
+		    ,MKTG_CHAR_RCV_AGRE_YN
+		    ,MKTG_MAIL_RCV_AGRE_YN
+		    ,REF_CD_SEQ_1
+		    ,REF_CD_SEQ_2
+		    ,REF_CD_SEQ_3
+		    ,REF_CD_SEQ_4
+		    ,REF_CD_SEQ_5
+		    ,COST_TRNSF_DEPT_ID
+		    ,ACCT_ID
+		    ,JOIN_PATH_CD
+		    --,MRO_MBR_ID
+		    ,REGPSN_ID
+		    ,REG_DTM
+		    ,UPDPSN_ID
+		    ,UPD_DTM
+		)
+		SELECT CO_CD
+		     , MBR_ID
+		     , (SELECT NVL(MAX(HST_SEQ),0) + 1 FROM TB_CC_MBR_BASIS_HST WHERE CO_CD=#{coCd} AND MBR_ID=#{mbrId})
+		     , 'U'
+		     , BZPLC_ID
+		     , DEPT_ID
+		     , MBR_NM
+		     , JBPOS_NM
+		     , EMAIL_ADDR
+		     , TEL_NO
+		     , HP_NO
+		     , ZPCD
+		     , REPR_ADDR
+		     , DTL_ADDR
+		     , MBR_USE_CD
+		     , DRMC_YN
+		     , DRMC_GUDC_DTM
+		     , DRMC_PROC_DTM
+		     , DLV_ZPCD
+		     , DLV_REPR_ADDR
+		     , DLV_DTL_ADDR
+		     , UT_AGRE_YN
+		     , CLT_AGRE_YN
+		     , CHAR_RCV_AGRE_YN
+		     , MAIL_RCV_AGRE_YN
+		     , MKTG_CHAR_RCV_AGRE_YN
+		     , MKTG_MAIL_RCV_AGRE_YN
+		     , REF_CD_SEQ_1
+		     , REF_CD_SEQ_2
+		     , REF_CD_SEQ_3
+		     , REF_CD_SEQ_4
+		     , REF_CD_SEQ_5
+		     , COST_TRNSF_DEPT_ID
+		     , ACCT_ID
+		     , JOIN_PATH_CD
+		     --, MRO_MBR_ID
+		     , REGPSN_ID
+		     , REG_DTM
+		     , UPDPSN_ID
+		     , UPD_DTM
+		FROM TB_CC_MBR_BASIS
+		WHERE CO_CD = #{coCd}
+		  AND MBR_ID = #{mbrId}
+	</insert>
+	
+	<select id="selectDrmcMbrAprvl" parameterType="HashMap" resultType="HashMap">
+        /* Cust.selectDrmcMbrAprvl 휴면회원관리 결재자관리 조회 */
+        SELECT
+		    A.*
+		    ,B.DEPT_NM
+            ,C.BZPLC_NM
+		FROM (
+		    SELECT
+		        A.CO_CD        
+		        ,A.MBR_APRVL_SPR_CD
+		        ,A.APRV_ITM_NO
+			 	,NVL2(A.APRV_SEQ, A.APRV_SEQ||'차', '') AS APRV_SEQ       
+		        ,A.APRVR_ID AS MBR_ID
+		        ,B.MBR_NM
+		        ,B.BZPLC_ID
+		        ,B.DEPT_ID
+		    FROM TB_CC_MBR_APRVL_INFO A, TB_CC_MBR_BASIS B
+		    WHERE A.CO_CD = #{coCd}
+		    AND A.MBR_ID = #{mbrId}
+		    AND A.MBR_APRVL_SPR_CD = #{mbrAprvlSprCd}
+		    AND A.CO_CD = B.CO_CD
+		    AND A.APRVR_ID = B.MBR_ID
+		) A, TB_CC_DEPT_BASIS B, TB_CC_BZPLC_BASIS C
+		WHERE A.CO_CD = B.CO_CD
+		AND A.BZPLC_ID = B.BZPLC_ID
+		AND A.DEPT_ID = B.DEPT_ID
+        AND A.CO_CD = C.CO_CD
+        AND A.BZPLC_ID = C.BZPLC_ID
+    </select>
+        
+	<select id="selectLevMbrList" parameterType="HashMap" resultType="HashMap">
+        /* Cust.selectLevMbrList 탈퇴회원관리 목록 조회 */
+        <include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+        SELECT LIST.CO_CD				/* 회사코드 */
+        	 , LIST.CUST_SPR_CD			/* 고객유형코드 */
+        	 , LIST.MBR_ID				/* 회원ID */
+        	 , LIST.BZPLC_ID			/* 사업장ID */
+        	 , LIST.BZPLC_NM			/* 사업장명 */
+        	 , LIST.OPR_UNIT_ID			/* 운영단위ID */
+        	 , LIST.OPR_UNIT_NM			/* 운영단위명 */
+        	 , LIST.DEPT_ID				/* 부서ID */
+        	 , LIST.DEPT_NM				/* 부서명 */
+        	 , LIST.LEV_DTM				/* 탈퇴일 */
+        	 , CASE WHEN LIST.LEV_ID  LIKE 'PM%'  THEN LIST.LEV_ID
+                    WHEN LIST.LEV_ID IS NULL       THEN 'SYSTEM'
+                    ELSE LIST.LEV_ID || '('||(SELECT OPRTR_NM FROM 	TB_CO_MBR_OPRTR_INFO WHERE OPRTR_ID=LIST.LEV_ID)|| ')' END AS LEV_ID /* 탈퇴처리자ID */
+              , (SELECT COM_DTL_CD_NM FROM  TB_CO_COM_CD_DTL
+                WHERE COM_CLSF_CD='CMPN_TP_CD'
+                AND COM_DTL_CD = LIST.LEV_REA1)|| ' ' ||LIST.LEV_REA2	LEV_REA		/* 탈퇴사유*/
+        	 
+		FROM(
+			SELECT MBR.CO_CD
+				 , OPR.CUST_SPR_CD
+			  	 , MBR.MBR_ID
+			  	 , MBR.BZPLC_ID
+			  	 , BZPLC.BZPLC_NM
+			  	 , DEPT.OPR_UNIT_ID
+			  	 , OPR.OPR_UNIT_NM
+			  	 , MBR.DEPT_ID
+			  	 , DEPT.DEPT_NM
+		  	 	 , TO_CHAR( (SELECT MAX(LEV_DTM) 
+				  	 	 	   FROM TB_CC_MBR_LEV_REQ_INFO LEV 
+ 				  	 	 	  WHERE LEV.CO_CD = MBR.CO_CD 
+				  	 	 	    AND LEV.MBR_ID = MBR.MBR_ID), 'YYYY-MM-DD') AS LEV_DTM
+				 , (select max(UPDPSN_ID)  KEEP(DENSE_RANK FIRST ORDER BY LEV_DTM DESC)
+                  FROM TB_CC_MBR_LEV_REQ_INFO LEV 
+                  WHERE LEV.CO_CD = MBR.CO_CD 
+				  	 	 	    AND LEV.MBR_ID = MBR.MBR_ID) AS LEV_ID
+                 , (select max(CMPN_TP_CD)  KEEP(DENSE_RANK FIRST ORDER BY LEV_DTM DESC)
+                 FROM TB_CC_MBR_LEV_REQ_INFO LEV 
+                 WHERE LEV.CO_CD = MBR.CO_CD 
+				  	 	 	    AND LEV.MBR_ID = MBR.MBR_ID) AS LEV_REA1
+				 , (select max(SVY_CTS)  KEEP(DENSE_RANK FIRST ORDER BY LEV_DTM DESC)
+                 FROM TB_CC_MBR_LEV_REQ_INFO LEV 
+                 WHERE LEV.CO_CD = MBR.CO_CD 
+				  	 	 	    AND LEV.MBR_ID = MBR.MBR_ID) AS LEV_REA2
+				 
+			FROM TB_CC_MBR_BASIS MBR
+			<if test=" bzplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'BZPLC_ID'
+	            AND T1.COND_DATA_VAL = MBR.BZPLC_ID
+            </if>
+			<if test=" deptId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T3
+	            ON  T3.SES_ID = #{sesId}
+	            AND T3.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T3.COL_ITM = 'DEPT_ID'
+	            AND T3.COND_DATA_VAL = MBR.DEPT_ID
+            </if>
+			<if test=" mbrId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T4
+	            ON  T4.SES_ID = #{sesId}
+	            AND T4.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T4.COL_ITM = 'MBR_ID'
+	            AND T4.COND_DATA_VAL = MBR.MBR_ID
+            </if>
+			LEFT OUTER JOIN TB_CO_MBR_LOGN_INFO LOGN
+					ON LOGN.CO_CD = MBR.CO_CD 
+					AND LOGN.MBR_ID = MBR.MBR_ID
+			LEFT OUTER JOIN TB_CC_BZPLC_BASIS BZPLC
+					ON BZPLC.CO_CD = MBR.CO_CD 
+					AND BZPLC.BZPLC_ID = MBR.BZPLC_ID
+			LEFT OUTER JOIN TB_CC_DEPT_BASIS DEPT
+					ON DEPT.CO_CD = MBR.CO_CD 
+					AND DEPT.DEPT_ID = MBR.DEPT_ID
+			LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS OPR 
+					ON OPR.CO_CD = DEPT.CO_CD 
+					AND OPR.BZPLC_ID = DEPT.BZPLC_ID 
+					AND OPR.OPR_UNIT_ID = DEPT.OPR_UNIT_ID 
+			WHERE MBR.MBR_USE_CD = 'Q'
+		)LIST
+		<if test=" oprUnitId > 0 ">
+            JOIN
+            TB_OD_ODR_INQ_TGT_DTLS   T2
+            ON  T2.SES_ID = #{sesId}
+            AND T2.INQ_COND_DTLS = #{inqCondDtls}
+            AND T2.COL_ITM = 'OPR_UNIT_ID'
+            AND T2.COND_DATA_VAL = LIST.OPR_UNIT_ID
+        </if>
+        <where>
+	        <if test="fromDate != null and fromDate != '' and toDate != null and toDate != ''">
+				<![CDATA[ TO_DATE(LEV_DTM , 'YYYY-MM-DD') >= TO_DATE(#{fromDate}, 'YYYY-MM-DD') AND TO_DATE(LEV_DTM , 'YYYY-MM-DD') <= TO_DATE(#{toDate}, 'YYYY-MM-DD') ]]>
+			</if>
+          	<if test='custSprCd != null and custSprCd != "" and !"0".equals(custSprCd)'> 
+        		AND CUST_SPR_CD = #{custSprCd}
+            </if>
+        </where>
+		<if test="sortColumn != null and sortColumn != ''"> 
+	    ORDER BY ${sortColumn} ${sortType} 
+	    </if> 
+	    <if test="sortColumn == null or sortColumn == ''"> 
+		ORDER BY LIST.LEV_DTM DESC
+	    </if>
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+    </select>
+    
+    <select id="selectLevMbrDeatail" parameterType="HashMap" resultType="HashMap">
+        /* Cust.selectLevMbrDeatail 탈퇴회원관리 상세 조회 */
+        SELECT MBR.CO_CD																			/* 회사코드 */
+			 , ( SELECT CC.COM_DTL_CD_NM 
+		  	 	   FROM TB_CO_COM_CD_DTL CC
+		  	 	  WHERE CC.COM_CLSF_CD = 'MBR_USE_CD'
+		  	 	    AND CC.COM_DTL_CD  = MBR.MBR_USE_CD	
+		  	 	    AND CC.LANG_CD = 'KO' ) DRMC_YN 												/* 회원사용코드 */
+		  	 , MBR.MBR_ID																			/* 회원ID */
+		  	 , MBR.DEPT_ID																			/* 부서ID */
+		  	 , DEPT.DEPT_NM																			/* 부서명 */
+		  	 , DEPT.OPR_UNIT_ID																		/* 운영단위ID */
+		  	 , OPR.OPR_UNIT_NM																		/* 운영단위명 */	
+		  	 , MBR.BZPLC_ID																			/* 사업장ID */
+		  	 , BZPLC.BZPLC_NM																		/* 사업장명 */
+		  	 , LEV.LOGN_ID 																			/* 로그인ID */
+			 , ( SELECT CC.COM_DTL_CD_NM 
+		  	 	   FROM TB_CO_COM_CD_DTL CC
+		  	 	  WHERE CC.COM_CLSF_CD = 'CUST_SPR_CD'
+		  	 	    AND CC.COM_DTL_CD  = BZPLC.CUST_SPR_CD	
+		  	 	    AND CC.LANG_CD = 'KO' ) CUST_SPR_CD 											/* 고객유형 */
+		  	 , TO_CHAR(LEV.LEV_DTM, 'YYYY-MM-DD HH24:MI:SS') AS LEV_DTM								/* 탈퇴 일시 */
+		  	 , NVL(( SELECT CC.COM_DTL_CD_NM 
+		  	 	   FROM TB_CO_COM_CD_DTL CC
+		  	 	  WHERE CC.COM_CLSF_CD = 'CMPN_TP_CD'
+		  	 	    AND CC.COM_DTL_CD  = LEV.CMPN_TP_CD
+		  	 	    AND CC.LANG_CD = 'KO' ), '-') LEV_RSN 											/* 탈퇴 사유 */
+		  	 , LEV.SVY_CTS																			/* 설문내용(FO탈퇴 시 기타의견) */
+		FROM TB_CC_MBR_BASIS MBR
+		LEFT OUTER JOIN TB_CC_MBR_LEV_REQ_INFO LEV
+				ON LEV.CO_CD = MBR.CO_CD 
+				AND LEV.MBR_ID = MBR.MBR_ID
+		LEFT OUTER JOIN TB_CC_BZPLC_BASIS BZPLC
+				ON BZPLC.CO_CD = MBR.CO_CD 
+				AND BZPLC.BZPLC_ID = MBR.BZPLC_ID
+		LEFT OUTER JOIN TB_CC_DEPT_BASIS DEPT
+				ON DEPT.CO_CD = MBR.CO_CD 
+				AND DEPT.DEPT_ID = MBR.DEPT_ID
+		LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS OPR 
+				ON OPR.CO_CD = DEPT.CO_CD 
+				AND OPR.BZPLC_ID = DEPT.BZPLC_ID 
+				AND OPR.OPR_UNIT_ID = DEPT.OPR_UNIT_ID
+		WHERE MBR.MBR_USE_CD = 'Q'
+		  AND MBR.CO_CD = #{coCd}
+		  AND MBR.MBR_ID = #{mbrId}
+    </select>
+	
+	<select id="selectMbrRegCodeList" parameterType="HashMap" resultType="HashMap">
+		SELECT 
+			 COM_CLSF_CD
+			, COM_DTL_CD
+			, COM_DTL_CD_NM
+			, COM_USR_DEFN_NM_1
+			, COM_USR_DEFN_NM_2
+			, COM_USR_DEFN_NM_3
+			, COM_USR_DEFN_NM_4
+			, COM_USR_DEFN_NM_5
+			, SRT_SO
+			, USE_YN
+		FROM TB_CO_COM_CD_DTL
+		WHERE
+			COM_CLSF_CD IN (
+				'CRD_STL_AUTH_USE_CD' /* 카드결제권한사용코드*/
+				, 'CUST_SPR_CD' /* 고객유형 */
+                , 'BGT_AUTH_USE_CD' /*예산권한사용코드*/
+                , 'ADJ_AUTH_USE_CD' /*정산권한사용코드*/
+                , 'MNG_AUTH_USE_CD' /*관리권한사용코드*/
+                , 'MBR_USE_CD' /*회원사용코드*/                                
+			)
+			AND LANG_CD='KO'
+			AND USE_YN='Y'
+		ORDER BY COM_CLSF_CD, SRT_SO
+    </select>
+
+
+	<select id="selectMbrRegCustSprCd" parameterType="HashMap" resultType="HashMap">
+		SELECT 
+			A.CUST_SPR_CD /*고객구분코드*/
+			,A.TRSF_YN /*운영단위 이관여부*/	
+            ,B.APRV_AUTH_USE_YN	AS OPR_UNIT_APRV_AUTH_USE_YN /*운영단위 결재권한사용여부*/
+            ,B.ORD_AUTH_USE_YN AS OPR_UNIT_ORD_AUTH_USE_YN /*운영단위 발주권한사용여부*/
+		FROM TB_CC_OPR_UNIT_BASIS A, TB_CC_OPR_UNIT_CTL_AUTH_INFO B
+		WHERE A.CO_CD = B.CO_CD
+        AND A.BZPLC_ID = B.BZPLC_ID
+        AND A.OPR_UNIT_ID = B.OPR_UNIT_ID        
+        AND A.CO_CD = #{coCd}
+		AND A.BZPLC_ID = #{bzplcId}
+		AND A.OPR_UNIT_ID = #{oprUnitId}			
+    </select>
+    
+    <select id="selectDeptInfo" parameterType="HashMap" resultType="HashMap">
+    	/* com.ssp.bo.Cust.selectDeptInfo */
+	   
+	    SELECT
+			A.DEPT_ID
+			,A.DEPT_NM
+			,A.USE_YN
+			,B.USE_YN AS BZPLC_USE_YN
+		FROM TB_CC_DEPT_BASIS A
+		JOIN TB_CC_BZPLC_BASIS B ON A.CO_CD = B.CO_CD AND A.BZPLC_ID = B.BZPLC_ID 
+		WHERE DEPT_ID = #{deptId}
+    </select>
+    
+    <insert id="insertMbrRegLognId" parameterType="HashMap">
+	    <selectKey keyProperty="mbrId" resultType="String" order="BEFORE">
+	        SELECT FN_CC_MBR_ID_CRT() AS MBR_ID FROM DUAL
+	    </selectKey>
+    
+		INSERT INTO TB_CO_MBR_LOGN_INFO (
+		    CO_CD
+		    ,MBR_ID
+		    ,BZPLC_ID
+		    ,LOGN_ID
+		    ,USR_TP_CD
+		    ,MBR_APPR_STATS_CD
+		    ,PWD
+		    ,REG_DTM
+		    ,REGPSN_ID
+		    ,UPD_DTM
+		    ,UPDPSN_ID
+		)
+		VALUES (
+		    #{coCd}
+		    ,#{mbrId}
+		    ,#{bzplcId}
+		    ,#{lognId}
+		    ,'20'
+		    ,'Y'
+		    ,#{pwd}
+		    ,SYSDATE
+		    ,#{userId}
+		    ,SYSDATE
+		    ,#{userId}
+		)    
+    </insert>	
+    
+    <insert id="insertMbrRegDtl" parameterType="HashMap">	
+		INSERT INTO TB_CC_MBR_BASIS (
+            CO_CD
+           , MBR_ID
+           , BZPLC_ID
+           , DEPT_ID
+           , MBR_NM
+           , JBPOS_NM
+           , MBR_USE_CD
+           , JOIN_PATH_CD
+           , JOIN_DEVI_CD
+           , DRMC_YN
+           , UT_AGRE_YN
+           , CLT_AGRE_YN
+           , CHAR_RCV_AGRE_YN
+           , MAIL_RCV_AGRE_YN
+           , MKTG_CHAR_RCV_AGRE_YN
+           , MKTG_MAIL_RCV_AGRE_YN
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+       )
+       VALUES (
+            #{coCd}
+            , #{mbrId}
+            , #{bzplcId}
+            , #{deptId}
+            , #{mbrNm}
+            , #{jbposNm}
+            , 'Y'  
+            , #{joinPathCd}
+            , #{joinDeviCd}
+            , 'N'
+            , 'N'
+            , 'N'
+            , 'N'
+            , 'N'
+            , 'N'
+            , 'N'
+            , #{userId}
+            , SYSDATE
+            , #{userId}
+            , SYSDATE
+       )
+           
+	</insert>
+	
+	<insert id="insertMbrRegDtlHst" parameterType="HashMap">			
+		INSERT INTO TB_CC_MBR_BASIS_HST (
+		    CO_CD
+		    ,MBR_ID
+		    ,HST_SEQ
+		    ,HST_SPR_CD
+		    ,BZPLC_ID
+		    ,DEPT_ID
+		    ,MBR_NM
+		    ,JBPOS_NM
+		    ,EMAIL_ADDR
+		    ,TEL_NO
+		    ,HP_NO
+		    ,ZPCD
+		    ,REPR_ADDR
+		    ,DTL_ADDR
+		    ,MBR_USE_CD
+		    ,DRMC_YN
+		    ,DRMC_GUDC_DTM
+		    ,DRMC_PROC_DTM
+		    ,DLV_ZPCD
+		    ,DLV_REPR_ADDR
+		    ,DLV_DTL_ADDR
+		    ,UT_AGRE_YN
+		    ,CLT_AGRE_YN
+		    ,CHAR_RCV_AGRE_YN
+		    ,MAIL_RCV_AGRE_YN
+		    ,MKTG_CHAR_RCV_AGRE_YN
+		    ,MKTG_MAIL_RCV_AGRE_YN
+		    ,REF_CD_SEQ_1
+		    ,REF_CD_SEQ_2
+		    ,REF_CD_SEQ_3
+		    ,REF_CD_SEQ_4
+		    ,REF_CD_SEQ_5
+		    ,COST_TRNSF_DEPT_ID
+		    ,ACCT_ID
+		    ,JOIN_PATH_CD
+           	<if test="osfCertYn != null and !osfCertYn.equals(''.toString())">
+           , OSF_CERT_YN              
+           </if>
+           <if test="corpHpYn != null and !corpHpYn.equals(''.toString())">
+           , CORP_HP_YN          
+           </if>	  
+           <if test="frnrNmHpYn != null and !frnrNmHpYn.equals(''.toString())">
+           , FRNR_NM_HP_YN            
+           </if>
+		    ,REGPSN_ID
+		    ,REG_DTM
+		    ,UPDPSN_ID
+		    ,UPD_DTM
+		)
+		VALUES (
+		    #{coCd}
+		    ,#{mbrId}
+		    ,(SELECT NVL(MAX(HST_SEQ),0) + 1 FROM TB_CC_MBR_BASIS_HST WHERE CO_CD=#{coCd} AND MBR_ID=#{mbrId})
+		    ,#{hstSprCd}
+		    ,#{bzplcId}
+		    ,#{deptId}
+		    ,#{mbrNm}
+		    ,#{jbposNm}
+		    ,CASE 
+		    	WHEN #{emailAddr1} IS NOT NULL OR #{emailAddr2} IS NOT NULL THEN #{emailAddr1} || '@' || #{emailAddr2}
+		    	ELSE NULL
+		    END	
+		    ,#{telNo}
+		    ,#{hpNo}
+		    ,#{zpCd}
+		    ,(SELECT FN_CC_ADDR_REPR(#{reprAddr}, #{dtlAddr}) FROM DUAL)
+		    ,(SELECT FN_CC_ADDR_DTL (#{reprAddr}, #{dtlAddr}) FROM DUAL)
+		    ,#{mbrUseCd}
+		    ,#{drmcYn}
+        ,NULL
+        ,NULL
+		    ,#{dlvZpcd}
+		    ,(SELECT FN_CC_ADDR_REPR(#{dlvReprAddr}, #{dlvDtlAddr}) FROM DUAL)
+		    ,(SELECT FN_CC_ADDR_DTL (#{dlvReprAddr}, #{dlvDtlAddr}) FROM DUAL)
+		    ,#{utAgreYn}
+		    ,#{cltAgreYn}
+		    ,DECODE(#{charRcvAgreYn},'true','Y','1','Y','N')
+		    ,DECODE(#{mailRcvAgreYn},'true','Y','1','Y','N')
+		    ,DECODE(#{mktgCharRcvAgreYn},'true','Y','1','Y','N')
+		    ,DECODE(#{mktgMailRcvAgreYn},'true','Y','1','Y','N')
+		    ,#{refCdSeq1}
+		    ,#{refCdSeq2}
+		    ,#{refCdSeq3}
+		    ,#{refCdSeq4}
+		    ,#{refCdSeq5}
+		    ,#{costTrnsfDeptId}
+		    ,#{acctId}
+		    ,#{joinPathCd}
+            <if test="osfCertYn != null and !osfCertYn.equals(''.toString())">
+            ,#{osfCertYn}              
+            </if>
+            <if test="corpHpYn != null and !corpHpYn.equals(''.toString())">
+            ,#{corpHpYn}              
+            </if>	  
+            <if test="frnrNmHpYn != null and !frnrNmHpYn.equals(''.toString())">
+            , #{frnrNmHpYn}              
+            </if>
+		    ,#{userId}
+		    ,SYSDATE
+		    ,#{userId}
+		    ,SYSDATE
+		)
+		    	
+	</insert>
+	
+	<update id="updateMbrRegLognId" parameterType="HashMap">
+        UPDATE TB_CO_MBR_LOGN_INFO 
+        SET 
+            LOGN_ID = #{lognId}
+           , UPDPSN_ID = #{userId}
+           , UPD_DTM  = SYSDATE
+           <if test="pwd != null and !pwd.equals(''.toString())">
+            ,PWD = #{pwd}              
+            </if>
+           
+       WHERE CO_CD = #{coCd}
+       AND MBR_ID = #{mbrId}								
+	</update>
+	    
+    <update id="updateMbrRegDtl" parameterType="HashMap">	
+
+		UPDATE TB_CC_MBR_BASIS 
+        SET                                     
+            MBR_NM = #{mbrNm}
+           , DEPT_ID = #{deptId}            
+           , JBPOS_NM = #{jbposNm}                       
+           , EMAIL_ADDR = #{emailAddr1} || '@' || #{emailAddr2}
+           , TEL_NO = #{telNo} 
+           , HP_NO = #{hpNo}
+           , ZPCD = #{zpCd}
+           , REPR_ADDR = (SELECT FN_CC_ADDR_REPR(#{reprAddr}, #{dtlAddr}) FROM DUAL)
+           , DTL_ADDR  = (SELECT FN_CC_ADDR_DTL (#{reprAddr}, #{dtlAddr}) FROM DUAL)
+           , MBR_USE_CD = #{mbrUseCd}
+           , DLV_ZPCD = #{dlvZpcd}
+           , DLV_REPR_ADDR = (SELECT FN_CC_ADDR_REPR(#{dlvReprAddr}, #{dlvDtlAddr}) FROM DUAL)
+           , DLV_DTL_ADDR = (SELECT FN_CC_ADDR_DTL (#{dlvReprAddr}, #{dlvDtlAddr}) FROM DUAL)
+           , UT_AGRE_YN  = #{utAgreYn}
+           , CLT_AGRE_YN  = #{cltAgreYn}
+           , CHAR_RCV_AGRE_YN = DECODE(#{charRcvAgreYn},'true','Y','1','Y','N')
+           , MAIL_RCV_AGRE_YN = DECODE(#{mailRcvAgreYn},'true','Y','1','Y','N')
+           , MKTG_CHAR_RCV_AGRE_YN = DECODE(#{mktgCharRcvAgreYn},'true','Y','1','Y','N')
+           , MKTG_MAIL_RCV_AGRE_YN = DECODE(#{mktgMailRcvAgreYn},'true','Y','1','Y','N')
+           , REF_CD_SEQ_1 = #{refCdSeq1}
+           , REF_CD_SEQ_2 = #{refCdSeq2}
+           , REF_CD_SEQ_3 = #{refCdSeq3}
+           , REF_CD_SEQ_4 = #{refCdSeq4}
+           , REF_CD_SEQ_5 = #{refCdSeq5}
+           , COST_TRNSF_DEPT_ID = #{costTrnsfDeptId}
+           , ACCT_ID = #{acctId}
+           , JOIN_PATH_CD = #{joinPathCd}                       
+           	<if test="osfCertYn != null and !osfCertYn.equals(''.toString())">
+           , OSF_CERT_YN = #{osfCertYn}              
+           </if>
+           <if test="corpHpYn != null and !corpHpYn.equals(''.toString())">
+           , CORP_HP_YN = #{corpHpYn}              
+           </if>	  
+           <if test="frnrNmHpYn != null and !frnrNmHpYn.equals(''.toString())">
+           , FRNR_NM_HP_YN = #{frnrNmHpYn}              
+           </if>	  
+           , UPDPSN_ID = #{userId}
+           , UPD_DTM  = SYSDATE
+       WHERE CO_CD = #{coCd}
+       AND MBR_ID = #{mbrId}
+           
+	</update>
+    	
+    <insert id="insertMbrRegCtlAuth" parameterType="HashMap">
+		
+		MERGE INTO TB_CC_MBR_CTL_AUTH_INFO
+		USING DUAL ON (CO_CD = #{coCd} AND MBR_ID = #{mbrId})
+		WHEN MATCHED THEN
+		    UPDATE SET
+				     APRV_AUTH_USE_YN  = NVL(#{aprvAuthUseYn},'N')
+				    , ORD_AUTH_USE_YN	= NVL(#{ordAuthUseYn},'N')
+				    , CHM_MTL_AUTH_USE_YN	= NVL(#{chmMtlAuthUseYn},'N') <!-- 화학물질여부 -->
+				    , CRD_STL_AUTH_USE_YN	= NVL(#{crdStlAuthUseYn},'N')
+				    , CRD_STL_AUTH_USE_CD	= #{crdStlAuthUseCd}
+				    , BGT_AUTH_USE_CD	= #{bgtAuthUseCd}
+				    , ADJ_AUTH_USE_CD	= #{adjAuthUseCd}
+				    , MNG_AUTH_USE_CD	= #{mngAuthUseCd}
+				    , TAXINV_AUTH_USE_YN	= NVL(#{taxinvAuthUseYn},'N')
+				    , UPDPSN_ID = #{userId}
+				    , UPD_DTM = SYSDATE
+		WHEN NOT MATCHED THEN
+		    INSERT (
+				    CO_CD
+				    , MBR_ID
+				    , APRV_AUTH_USE_YN
+				    , ORD_AUTH_USE_YN
+				    , CHM_MTL_AUTH_USE_YN <!-- 화학물질여부 -->
+				    , CRD_STL_AUTH_USE_YN
+				    , CRD_STL_AUTH_USE_CD
+				    , BGT_AUTH_USE_CD
+				    , ADJ_AUTH_USE_CD
+				    , MNG_AUTH_USE_CD
+				    , TAXINV_AUTH_USE_YN
+				    , REGPSN_ID
+				    , REG_DTM
+				    , UPDPSN_ID
+				    , UPD_DTM
+		        )
+		    VALUES (
+				    #{coCd}
+				    , #{mbrId}
+				    , NVL(#{aprvAuthUseYn},'N')
+				    , NVL(#{ordAuthUseYn},'N')
+				    , NVL(#{chmMtlAuthUseYn},'N') <!-- 화학물질여부 -->
+				    , NVL(#{crdStlAuthUseYn},'N')
+				    , #{crdStlAuthUseCd}
+				    , #{bgtAuthUseCd}
+				    , #{adjAuthUseCd}
+				    , #{mngAuthUseCd}
+				    , NVL(#{taxinvAuthUseYn},'N')
+				    , #{userId}
+				    , SYSDATE
+				    , #{userId}
+				    , SYSDATE    
+		    )
+		    		  
+    </insert>
+    
+    <delete id="deleteMbrRegCtlAuthMapp" parameterType="HashMap">
+    	DELETE FROM TB_CC_BYOPRUNIT_CTL_AUTH_MBR_MAPP WHERE CO_CD = #{coCd} AND MBR_ID = #{mbrId} AND CTL_SPR_CD = #{ctlSprCd}
+    </delete>
+    	
+	<insert id="insertMbrRegCtlAuthMapp" parameterType="HashMap">		
+		INSERT INTO TB_CC_BYOPRUNIT_CTL_AUTH_MBR_MAPP (
+		    CO_CD
+		    ,CTL_SPR_CD
+		    ,MBR_ID
+		    ,BZPLC_ID
+		    ,OPR_UNIT_ID
+		    ,USE_YN
+		    ,REGPSN_ID
+		    ,REG_DTM
+		    ,UPDPSN_ID
+		    ,UPD_DTM
+		)
+		VALUES (
+		    #{coCd}
+		    ,#{ctlSprCd}
+		    ,#{mbrId}
+		    ,#{bzplcId}
+		    ,#{oprUnitId}
+		    ,'Y'
+		    ,#{userId}
+		    ,SYSDATE
+		    ,#{userId}
+		    ,SYSDATE
+		)			
+	</insert>
+    
+    <delete id="deleteMbrRegAprvl" parameterType="HashMap">
+    	DELETE FROM TB_CC_MBR_APRVL_INFO WHERE CO_CD = #{coCd} AND MBR_ID = #{mbrId} AND MBR_APRVL_SPR_CD = #{mbrAprvlSprCd}
+    </delete>
+    
+    <insert id="insertMbrRegAprvl" parameterType="HashMap">
+		INSERT INTO TB_CC_MBR_APRVL_INFO (
+		    CO_CD
+		    ,MBR_ID
+		    ,MBR_APRVL_SPR_CD
+		    ,APRV_ITM_NO
+		    ,APRV_SEQ
+		    ,APRVR_ID
+		    ,REGPSN_ID
+		    ,REG_DTM
+		    ,UPDPSN_ID
+		    ,UPD_DTM
+		)
+		VALUES (
+		    #{coCd}
+		    ,#{mbrId}
+		    ,#{mbrAprvlSprCd}
+		    ,(SELECT NVL(MAX(APRV_ITM_NO),0)+1 AS APRV_ITM_NO FROM TB_CC_MBR_APRVL_INFO WHERE CO_CD=#{coCd} AND MBR_ID=#{mbrId} AND MBR_APRVL_SPR_CD=#{mbrAprvlSprCd})
+		    ,#{aprvSeq}
+		    ,#{aprvrId}
+		    ,#{userId}
+		    ,SYSDATE
+		    ,#{userId}
+		    ,SYSDATE		
+		)		    
+    </insert>
+    	
+    <insert id="insertMbrRegDlvplc" parameterType="HashMap">	
+         INSERT INTO TB_CC_MBR_DLVPLC_BASIS(
+                 CO_CD
+                 ,DLVPLC_ID
+                 ,MBR_ID
+                 ,RCVR_NM
+                 ,ZPCD
+                 ,REPR_ADDR
+                 ,DTL_ADDR
+                 ,HP_NO
+                 ,TEL_NO
+                 ,BASIS_DLVPLC_YN
+                 ,USE_YN
+                 ,REGPSN_ID
+                 ,REG_DTM
+                 ,UPDPSN_ID
+                 ,UPD_DTM
+             )
+         VALUES (
+                #{coCd}
+                 ,FN_CC_MBR_DLVPLC_ID_CRT()
+                 ,#{mbrId}
+                 ,#{mbrNm}
+                 ,#{dlvZpcd}
+                 ,(SELECT FN_CC_ADDR_REPR(#{dlvReprAddr}, #{dlvDtlAddr}) FROM DUAL)
+                 ,(SELECT FN_CC_ADDR_DTL (#{dlvReprAddr}, #{dlvDtlAddr}) FROM DUAL)
+                 ,#{dlvHpNo}
+                 ,#{dlvTelNo}
+                 ,'Y'
+                 ,'Y'
+                 ,#{userId}
+                 ,SYSDATE
+                 ,#{userId}
+                 ,SYSDATE    
+         )    		    	   
+    </insert>
+
+	<delete id="deleteMroMbr" parameterType="HashMap">					
+		DELETE TB_CC_MRO_MBR_MAPP_INFO
+		WHERE CO_CD = #{coCd}
+		AND MBR_ID = #{mbrId}		
+	</delete>    	
+    	
+	<insert id="insertMroMbr" parameterType="HashMap">					
+		INSERT INTO TB_CC_MRO_MBR_MAPP_INFO (
+			CO_CD
+			,MBR_ID
+			,MRO_MBR_ID
+			,REGPSN_ID
+			,REG_DTM
+			,UPDPSN_ID
+			,UPD_DTM
+		)
+		VALUES (
+			#{coCd}
+			,#{mbrId}
+			,#{mroMbrId}
+			,#{userId}
+			,SYSDATE
+			,#{userId}
+			,SYSDATE		
+		)		
+	</insert> 
+	
+	<select id="selectExistMbrDlvplcBasis" parameterType="HashMap" resultType="String">	
+	    SELECT 
+	        DECODE(MAX(DLVPLC_ID), NULL, 'N', 'Y') AS YN
+	    FROM TB_CC_MBR_DLVPLC_BASIS 
+	    WHERE CO_CD=#{coCd} 
+	    AND MBR_ID=#{mbrId}
+	    AND BASIS_DLVPLC_YN = 'Y' /*기본배송지 여부*/
+    </select>	   	
+    	
+	<select id="selectMbrRegDupCheck" parameterType="HashMap" resultType="HashMap">
+      	SELECT 	      	
+           (CASE
+               WHEN FN_CC_EXISTS_LOGN_ID(#{coCd}, #{lognId}) IS NULL THEN 0
+               ELSE 1
+           END) AS CNT
+      	FROM DUAL
+    </select>
+    
+    <select id="selectMbrRegDtl" parameterType="HashMap" resultType="HashMap">		
+        SELECT
+	        A.*
+	        ,B.DLVPLC_ID
+	        ,B.ZPCD AS DLV_ZPCD
+	        ,B.REPR_ADDR AS DLV_REPR_ADDR
+	        ,B.DTL_ADDR AS DLV_DTL_ADDR	 	        
+	        ,C.APRV_AUTH_USE_YN /*회원 결재권한사용여부*/
+	        ,C.ORD_AUTH_USE_YN /*회원 발주권한사용여부*/
+	        ,C.CHM_MTL_AUTH_USE_YN AS CHM_MTL_AUTH_USE_YN /*회원 화학물질사용여부*/
+	        ,D.APRV_AUTH_USE_YN AS OPR_UNIT_APRV_AUTH_USE_YN /*운영단위 결재권한사용여부*/
+	        ,D.ORD_AUTH_USE_YN AS OPR_UNIT_ORD_AUTH_USE_YN	/*운영단위 발주권한사용여부*/        
+	        ,FN_CC_MBR_GI_AUTH_INFO(A.CO_CD, A.MBR_ID) AS GI_AUTH_USE_YN
+	        ,C.CRD_STL_AUTH_USE_YN
+	        ,C.CRD_STL_AUTH_USE_CD
+	        ,C.BGT_AUTH_USE_CD
+	        ,C.ADJ_AUTH_USE_CD
+	        ,C.MNG_AUTH_USE_CD
+	        ,C.TAXINV_AUTH_USE_YN                   
+	    FROM (
+			SELECT
+	           A.CO_CD
+	           , A.MBR_ID
+	           , A.BZPLC_ID
+	           , (SELECT BZPLC_NM FROM TB_CC_BZPLC_BASIS BZPLC WHERE BZPLC.CO_CD = A.CO_CD AND BZPLC.BZPLC_ID = A.BZPLC_ID) AS BZPLC_NM
+	           , B.OPR_UNIT_ID
+	           , C.OPR_UNIT_NM
+	           , C.CUST_SPR_CD
+	           , A.DEPT_ID
+	           , B.DEPT_NM
+	           , A.MBR_NM
+	           , A.JBPOS_NM
+	           , A.EMAIL_ADDR
+	           , REPLACE(A.TEL_NO,'-','') AS TEL_NO
+	           , REPLACE(A.HP_NO,'-','') AS HP_NO
+	           , A.ZPCD AS ZP_CD
+	           , A.REPR_ADDR
+	           , A.DTL_ADDR         	           	           
+	           , A.MBR_USE_CD
+	           , A.DRMC_YN
+	           , A.UT_AGRE_YN
+	           , A.CLT_AGRE_YN
+	           , DECODE(A.CHAR_RCV_AGRE_YN, 'Y', 'true', 'false') AS CHAR_RCV_AGRE_YN
+	           , DECODE(A.MAIL_RCV_AGRE_YN, 'Y', 'true', 'false') AS MAIL_RCV_AGRE_YN
+	           , DECODE(A.MKTG_CHAR_RCV_AGRE_YN, 'Y', 'true', 'false') AS MKTG_CHAR_RCV_AGRE_YN
+	           , DECODE(A.MKTG_MAIL_RCV_AGRE_YN, 'Y', 'true', 'false') AS MKTG_MAIL_RCV_AGRE_YN
+	           , A.REF_CD_SEQ_1
+	           , A.REF_CD_SEQ_2
+	           , A.REF_CD_SEQ_3
+	           , A.REF_CD_SEQ_4
+	           , A.REF_CD_SEQ_5
+	           , A.COST_TRNSF_DEPT_ID
+	           , A.ACCT_ID
+	           , A.JOIN_PATH_CD
+	           , A.OSF_CERT_YN
+	           , TO_CHAR(A.OSF_CERT_DTM, 'YYYY-MM-DD (DY) HH24:MI:SS','NLS_DATE_LANGUAGE=KOREAN') AS OSF_CERT_DTM
+	           , A.CORP_HP_YN
+	           , A.FRNR_NM_HP_YN
+	           , A.JOIN_DEVI_CD 
+	           , A.REGPSN_ID
+	           , A.REGPSN_ID || ' | ' || NVL((SELECT FN_CC_GET_MBR_NM(A.CO_CD, A.REGPSN_ID) FROM DUAL), A.REGPSN_ID) AS REGPSN_NM	           
+	           , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+	           , A.UPDPSN_ID
+	           , A.UPDPSN_ID || ' | ' || NVL((SELECT FN_CC_GET_MBR_NM(A.CO_CD, A.UPDPSN_ID) FROM DUAL), A.UPDPSN_ID) AS UPDPSN_NM	           		           
+	           , TO_CHAR(A.UPD_DTM, 'YYYY-MM-DD HH24:MI:SS') AS UPD_DTM 
+               , D.LOGN_ID
+               , D.LOGN_ID AS LOGN_ID_ORG               
+               , E.TAXINV_LOGN_ID
+               , C.TRSF_YN /*운영단위 이관여부*/                                                       
+	       FROM TB_CC_MBR_BASIS A, TB_CC_DEPT_BASIS B, TB_CC_OPR_UNIT_BASIS C, TB_CO_MBR_LOGN_INFO D, TB_CC_MBR_UCESSDI_LOGN_INFO E
+	       WHERE A.CO_CD = B.CO_CD
+	       AND A.BZPLC_ID = B.BZPLC_ID
+	       AND A.DEPT_ID = B.DEPT_ID
+	       AND B.CO_CD = C.CO_CD 
+	       AND B.BZPLC_ID = C.BZPLC_ID 
+	       AND B.OPR_UNIT_ID = C.OPR_UNIT_ID
+           AND A.CO_CD = D.CO_CD(+)
+	       AND A.MBR_ID = D.MBR_ID(+)           
+           AND A.CO_CD = E.CO_CD(+)
+	       AND A.MBR_ID = E.MBR_ID(+)           	       
+	       AND A.CO_CD = #{coCd}
+	       AND A.MBR_ID =  #{mbrId} 
+	    ) A,  TB_CC_MBR_DLVPLC_BASIS B, TB_CC_MBR_CTL_AUTH_INFO C, TB_CC_OPR_UNIT_CTL_AUTH_INFO D
+	    WHERE A.CO_CD = B.CO_CD(+)
+	    AND A.MBR_ID = B.MBR_ID(+)
+	    AND A.CO_CD = C.CO_CD(+)
+	    AND A.MBR_ID = C.MBR_ID(+)
+	    AND B.BASIS_DLVPLC_YN(+) = 'Y'
+	    AND B.USE_YN(+) = 'Y'
+		AND A.CO_CD = D.CO_CD(+)
+		AND A.BZPLC_ID = D.BZPLC_ID(+)
+		AND A.OPR_UNIT_ID = D.OPR_UNIT_ID(+)	    	    	            	         
+	</select>    
+	
+	<!-- [2022.07.18] 박성근 Core로 구현이동 - selectMroMbrDtl
+	<select id="selectMroMbrDtl" parameterType="HashMap" resultType="HashMap">
+		SELECT 
+		    LISTAGG(A.MRO_MBR_ID, ',') AS MRO_MBR_ID
+		    ,LISTAGG(A.MRO_MBR_NM, ',') AS MRO_MBR_NM
+		FROM TB_CC_MRO_MBR_BASIS A, TB_CC_MRO_MBR_MAPP_INFO B
+		WHERE A.CO_CD = B.CO_CD
+		AND A.MRO_MBR_ID = B.MRO_MBR_ID
+		AND B.CO_CD = #{coCd} 
+		AND B.MBR_ID = #{mbrId}		
+	</select>
+	 -->
+	
+	<select id="selectMbrRegCtlAuthMapp" parameterType="HashMap" resultType="HashMap">
+	/* com.ssp.bo.Cust.selectMbrRegCtlAuthMapp */
+		SELECT
+		    A.CTL_SPR_CD
+		    ,A.CO_CD
+		    ,A.BZPLC_ID
+		    ,A.OPR_UNIT_ID
+		    ,B.OPR_UNIT_NM
+		FROM TB_CC_BYOPRUNIT_CTL_AUTH_MBR_MAPP A, TB_CC_OPR_UNIT_BASIS B
+		WHERE A.CO_CD = B.CO_CD
+		AND A.BZPLC_ID = B.BZPLC_ID
+		AND A.OPR_UNIT_ID = B.OPR_UNIT_ID
+        AND B.USE_YN ='Y'
+        AND A.MBR_ID = #{mbrId}
+        
+           
+	</select>
+	
+	<select id="selectMbrRegAprvl" parameterType="HashMap" resultType="HashMap">		
+		SELECT
+		    A.*
+		    ,B.DEPT_NM
+            ,C.BZPLC_NM
+		FROM (
+		    SELECT
+		        A.CO_CD        
+		        ,A.MBR_APRVL_SPR_CD
+		        ,A.APRV_ITM_NO
+		        ,A.APRV_SEQ
+		        ,A.APRV_SEQ || '차'	AS APRV_SEQ_NM	        
+		        ,A.APRVR_ID
+		        ,B.MBR_NM AS APRVR_NM
+		        ,B.BZPLC_ID
+		        ,B.DEPT_ID
+		    FROM TB_CC_MBR_APRVL_INFO A, TB_CC_MBR_BASIS B
+		    WHERE A.CO_CD = #{coCd}
+		    AND A.MBR_ID = #{mbrId}
+		    AND A.MBR_APRVL_SPR_CD = #{mbrAprvlSprCd} 
+		    AND A.CO_CD = B.CO_CD
+		    AND A.APRVR_ID = B.MBR_ID
+		) A, TB_CC_DEPT_BASIS B, TB_CC_BZPLC_BASIS C
+		WHERE A.CO_CD = B.CO_CD
+		AND A.BZPLC_ID = B.BZPLC_ID
+		AND A.DEPT_ID = B.DEPT_ID
+        AND A.CO_CD = C.CO_CD
+        AND A.BZPLC_ID = C.BZPLC_ID
+        ORDER BY A.APRV_SEQ ASC			
+	</select>
+	
+	<update id="updateStopMbrStatus" parameterType="HashMap">
+		UPDATE TB_CC_MBR_BASIS
+		SET MBR_USE_CD = 'Q'
+		    ,UPDPSN_ID = #{userId}
+		    ,UPD_DTM = SYSDATE
+		WHERE CO_CD = #{coCd}
+		AND MBR_ID = #{mbrId} 	
+	</update>	
+	
+	<insert id="insertMbrRegDtlFull" parameterType="HashMap">
+		INSERT INTO TB_CC_MBR_BASIS (
+            CO_CD
+           , MBR_ID
+           , BZPLC_ID
+           , DEPT_ID
+           , MBR_NM
+           , CLT_AGRE_YN
+           , MBR_USE_CD 
+           , JBPOS_NM                      
+           , EMAIL_ADDR
+           , TEL_NO
+           , HP_NO 
+           , ZPCD
+           , REPR_ADDR
+           , DTL_ADDR
+           , DRMC_YN
+           , DLV_ZPCD
+           , DLV_REPR_ADDR
+           , DLV_DTL_ADDR
+           , UT_AGRE_YN 
+           , CHAR_RCV_AGRE_YN 
+           , MAIL_RCV_AGRE_YN 
+           , MKTG_CHAR_RCV_AGRE_YN 
+           , MKTG_MAIL_RCV_AGRE_YN 
+           , COST_TRNSF_DEPT_ID 
+           , ACCT_ID 
+           , JOIN_PATH_CD
+           , JOIN_DEVI_CD
+           , REGPSN_ID
+           , REG_DTM
+           , UPDPSN_ID
+           , UPD_DTM
+       )
+       VALUES (
+            #{coCd}
+            , #{mbrId}
+            , #{bzplcId}
+            , #{deptId}
+            , #{mbrNm}
+            , 'N'
+            , 'Y'   
+            , #{jbposNm}                       
+            , #{emailAddr1} || '@' || #{emailAddr2}
+            , #{telNo} 
+            , #{hpNo}
+            , #{zpCd}
+            , (SELECT FN_CC_ADDR_REPR(#{reprAddr}, #{dtlAddr}) FROM DUAL)
+            , (SELECT FN_CC_ADDR_DTL (#{reprAddr}, #{dtlAddr}) FROM DUAL)
+            , 'N'
+            , #{dlvZpcd}
+            , (SELECT FN_CC_ADDR_REPR(#{dlvReprAddr}, #{dlvDtlAddr}) FROM DUAL)
+            , (SELECT FN_CC_ADDR_DTL (#{dlvReprAddr}, #{dlvDtlAddr}) FROM DUAL)
+            , 'N'
+            , 'N'
+            , 'N'
+            , 'N'
+            , 'N'
+            , #{costTrnsfDeptId}
+            , #{acctId}
+            , #{joinPathCd}
+            , #{joinDeviCd}
+            , #{userId}
+            , SYSDATE
+            , #{userId}
+            , SYSDATE
+       )	
+	</insert>
+	
+	<select id="selectMroMbrList" parameterType="HashMap" resultType="HashMap">	
+	<![CDATA[
+	    SELECT
+	        0 AS CHK	    
+	        ,A.CO_CD
+	        ,A.MRO_MBR_ID
+	        ,A.MRO_DEPT_ID
+	        ,A.MRO_OPR_UNIT_ID
+	        ,A.MRO_MBR_NM
+	        ,A.MRO_DEPT_NM
+	        ,A.MRO_OPR_UNIT_NM
+	        ,B.MBR_ID
+	    FROM TB_CC_MRO_MBR_BASIS A, TB_CC_MRO_MBR_MAPP_INFO B
+	    WHERE A.CO_CD = B.CO_CD(+)
+	    AND A.MRO_MBR_ID = B.MRO_MBR_ID(+)
+	    AND A.CO_CD = #{coCd}	    	    	    	    		 
+	]]>
+	<if test="arrMroMbrId != null and arrMroMbrId.length > 0">
+		AND 
+		<foreach collection="arrMroMbrId" item="item" open="(" close=")" separator="or">
+			UPPER(A.MRO_MBR_ID) LIKE '%' || UPPER(TRIM(#{item})) || '%'
+		</foreach>
+	</if>
+	<if test="mroMbrNm != null and !mroMbrNm.equals(''.toString())">
+	    AND A.MRO_MBR_NM LIKE '%' || #{mroMbrNm} || '%'
+	</if>
+	<if test="mbrId != null and !mbrId.equals(''.toString())">
+	    AND B.MBR_ID LIKE '%' || TRIM(#{mbrId}) || '%'
+	</if>	   		   
+	<if test="mroOprUnitNm != null and !mroOprUnitNm.equals(''.toString())">
+	    AND A.MRO_OPR_UNIT_NM LIKE '%' || #{mroOprUnitNm} || '%'	
+	</if>
+	<if test="mroDeptNm != null and !mroDeptNm.equals(''.toString())">
+	    AND A.MRO_DEPT_NM LIKE '%' || #{mroDeptNm} || '%'
+	</if>	
+	 <![CDATA[
+	    AND ROWNUM <= REPLACE(#{rowCount},',','')
+	 ]]>	
+	</select>
+	
+	<insert id="insertMbrChangePwdHst" parameterType="Map">
+    <selectKey order="BEFORE" keyProperty="hstSeq" resultType="sspMap">
+      SELECT 
+        NVL(MAX(HST_SEQ),0) + 1 HST_SEQ
+      FROM
+        TB_CC_MBR_BASIS_HST
+      WHERE
+        CO_CD = #{coCd}
+        AND MBR_ID = #{mbrId}
+    </selectKey>
+    /* 회원정보 수정 이력추가 - CustMbr_SQL.insertMbrChangePwdHst */
+    INSERT INTO TB_CC_MBR_BASIS_HST(
+        CO_CD
+      , MBR_ID
+      , HST_SEQ
+      , HST_SPR_CD
+      , BZPLC_ID
+      , DEPT_ID
+      , MBR_NM
+      , JBPOS_NM
+      , EMAIL_ADDR
+      , TEL_NO
+      , HP_NO
+      , ZPCD
+      , REPR_ADDR
+      , DTL_ADDR
+      , MBR_USE_CD
+      , DRMC_YN
+      , DRMC_GUDC_DTM
+      , DRMC_PROC_DTM
+      , DLV_ZPCD
+      , DLV_REPR_ADDR
+      , DLV_DTL_ADDR
+      , UT_AGRE_YN
+      , CLT_AGRE_YN
+      , CHAR_RCV_AGRE_YN
+      , MAIL_RCV_AGRE_YN
+      , MKTG_CHAR_RCV_AGRE_YN
+      , MKTG_MAIL_RCV_AGRE_YN
+      , REF_CD_SEQ_1
+      , REF_CD_SEQ_2
+      , REF_CD_SEQ_3
+      , REF_CD_SEQ_4
+      , REF_CD_SEQ_5
+      , COST_TRNSF_DEPT_ID
+      , ACCT_ID
+      , JOIN_PATH_CD
+      , OSF_CERT_YN
+      , OSF_CERT_DTM
+      , CORP_HP_YN
+      , FRNR_NM_HP_YN
+      , REGPSN_ID
+      , REG_DTM
+      , UPDPSN_ID
+      , UPD_DTM
+    )
+    SELECT
+        CO_CD
+      , MBR_ID
+      , #{hstSeq}
+      , 'U'
+      , BZPLC_ID
+      , DEPT_ID
+      , MBR_NM
+      , JBPOS_NM
+      , EMAIL_ADDR
+      , TEL_NO
+      , HP_NO
+      , ZPCD
+      , REPR_ADDR
+      , DTL_ADDR
+      , MBR_USE_CD
+      , DRMC_YN
+      , DRMC_GUDC_DTM
+      , DRMC_PROC_DTM
+      , DLV_ZPCD
+      , DLV_REPR_ADDR
+      , DLV_DTL_ADDR
+      , UT_AGRE_YN
+      , CLT_AGRE_YN
+      , CHAR_RCV_AGRE_YN
+      , MAIL_RCV_AGRE_YN
+      , MKTG_CHAR_RCV_AGRE_YN
+      , MKTG_MAIL_RCV_AGRE_YN
+      , REF_CD_SEQ_1
+      , REF_CD_SEQ_2
+      , REF_CD_SEQ_3
+      , REF_CD_SEQ_4
+      , REF_CD_SEQ_5
+      , COST_TRNSF_DEPT_ID
+      , ACCT_ID
+      , JOIN_PATH_CD
+      , OSF_CERT_YN
+      , OSF_CERT_DTM
+      , CORP_HP_YN
+      , FRNR_NM_HP_YN
+      , REGPSN_ID
+      , REG_DTM
+      , UPDPSN_ID 
+      , UPD_DTM
+    FROM
+      TB_CC_MBR_BASIS
+    WHERE
+      CO_CD = #{coCd}
+      AND MBR_ID=#{mbrId}
+  </insert>
+  
+  <select id="selectMbrOtherInfo" parameterType="HashMap" resultType="HashMap">
+    /* 회원 기타정보 조회 - com.ssp.bo.Cust.selectMbrOtherInfo */
+    SELECT CO_CD
+	     , TYPE
+         , CODE_NM
+         , CODE_VAL
+         , ACCT_NM
+      FROM(
+		SELECT A.CO_CD
+			 , A.COST_TRNSF_DEPT_ID AS DEPT_NM                            /* 부서명 */
+			 , A.ACCT_ID                            /* 계정ID */
+			 , E.ACCT_NM
+			 , '기본계정' AS ACCT_GRP_NM
+			 , CASE WHEN E.ACCT_NM IS NULL THEN NULL
+				    ELSE I.DEPT_NM || ', ' || E.ACCT_NM  || '('||FN_COM_DTL_CDNM('KO','ACCT_TP_CD',E.ACCT_TP_CD)||')'
+				END AS REF_CD_NM_0                           /* 계정명 */
+			 
+			 , A.REF_CD_SEQ_1                       /* 참조코드순번1 */
+			 , NVL(G1.REF_CD_GRP_NM, ' ') REF_CD_GRP_NM_1     /* 참조코드그룹명1 */
+			 , GD1.REF_CD_NM REF_CD_NM_1            /* 참조코드명1 */
+			 
+			 , A.REF_CD_SEQ_2                       /* 참조코드순번2 */
+			 , NVL(G2.REF_CD_GRP_NM, ' ') REF_CD_GRP_NM_2     /* 참조코드그룹명2 */
+			 , GD2.REF_CD_NM REF_CD_NM_2            /* 참조코드명2 */
+			 
+			 , A.REF_CD_SEQ_3                       /* 참조코드순번3 */
+			 , NVL(G3.REF_CD_GRP_NM, ' ') REF_CD_GRP_NM_3     /* 참조코드그룹명3 */
+			 , GD3.REF_CD_NM REF_CD_NM_3            /* 참조코드명3 */
+			 
+			 , A.REF_CD_SEQ_4                       /* 참조코드순번4 */
+			 , NVL(G4.REF_CD_GRP_NM, ' ') REF_CD_GRP_NM_4     /* 참조코드그룹명4 */
+			 , GD4.REF_CD_NM REF_CD_NM_4            /* 참조코드명4 */
+			 
+			 , A.REF_CD_SEQ_5                       /* 참조코드순번5 */
+			 , NVL(G5.REF_CD_GRP_NM, ' ') REF_CD_GRP_NM_5     /* 참조코드그룹명5 */
+			 , GD5.REF_CD_NM REF_CD_NM_5            /* 참조코드명5 */
+		  FROM TB_CC_MBR_BASIS A
+          JOIN TB_CC_BZPLC_BASIS B ON B.CO_CD = A.CO_CD AND B.BZPLC_ID = A.BZPLC_ID
+          JOIN TB_CO_MBR_LOGN_INFO C ON C.CO_CD = A.CO_CD AND C.MBR_ID = A.MBR_ID
+     LEFT JOIN TB_CO_ATFL_DTLS AT ON AT.DOC_REG_ID = B.BIZDOC_ATFL_ID AND  AT.DOC_REG_SEQ = 1
+     LEFT JOIN TB_CC_DEPT_BASIS D ON D.CO_CD = A.CO_CD AND D.DEPT_ID = A.DEPT_ID
+     LEFT JOIN TB_CC_BGT_ACCT_BASIS E ON E.CO_CD = A.CO_CD AND E.BZPLC_ID = A.BZPLC_ID AND E.ACCT_ID = A.ACCT_ID
+     LEFT JOIN TB_CC_OPR_UNIT_CTL_AUTH_INFO F ON F.CO_CD = A.CO_CD AND F.BZPLC_ID = D.BZPLC_ID AND F.OPR_UNIT_ID = D.OPR_UNIT_ID
+     LEFT JOIN TB_CC_OPR_UNIT_BASIS H ON H.CO_CD = D.CO_CD AND H.BZPLC_ID = D.BZPLC_ID AND H.OPR_UNIT_ID = D.OPR_UNIT_ID
+     LEFT JOIN TB_CC_DEPT_BASIS I ON I.CO_CD = A.CO_CD AND I.DEPT_ID = A.COST_TRNSF_DEPT_ID
+     LEFT JOIN TB_CC_CCO_REF_CD_INFO G1 ON G1.CO_CD = A.CO_CD AND G1.BZPLC_ID = A.BZPLC_ID AND G1.OPR_UNIT_ID = D.OPR_UNIT_ID AND G1.REF_CD_GRP_SEQ = 1 AND G1.USE_YN = 'Y'
+     LEFT JOIN TB_CC_CCO_REF_CD_DTL GD1 ON GD1.CO_CD = G1.CO_CD AND GD1.BZPLC_ID = G1.BZPLC_ID AND GD1.OPR_UNIT_ID = G1.OPR_UNIT_ID AND GD1.REF_CD_GRP_SEQ = G1.REF_CD_GRP_SEQ AND GD1.REF_CD_SEQ = A.REF_CD_SEQ_1
+     LEFT JOIN TB_CC_CCO_REF_CD_INFO G2 ON G2.CO_CD = A.CO_CD AND G2.BZPLC_ID = A.BZPLC_ID AND G2.OPR_UNIT_ID = D.OPR_UNIT_ID AND G2.REF_CD_GRP_SEQ = 2 AND G2.USE_YN = 'Y'
+     LEFT JOIN TB_CC_CCO_REF_CD_DTL GD2 ON GD2.CO_CD = G2.CO_CD AND GD2.BZPLC_ID = G2.BZPLC_ID AND GD2.OPR_UNIT_ID = G2.OPR_UNIT_ID AND GD2.REF_CD_GRP_SEQ = G2.REF_CD_GRP_SEQ AND GD2.REF_CD_SEQ = A.REF_CD_SEQ_2
+     LEFT JOIN TB_CC_CCO_REF_CD_INFO G3 ON G3.CO_CD = A.CO_CD AND G3.BZPLC_ID = A.BZPLC_ID AND G3.OPR_UNIT_ID = D.OPR_UNIT_ID AND G3.REF_CD_GRP_SEQ = 3 AND G3.USE_YN = 'Y'
+     LEFT JOIN TB_CC_CCO_REF_CD_DTL GD3 ON GD3.CO_CD = G3.CO_CD AND GD3.BZPLC_ID = G3.BZPLC_ID AND GD3.OPR_UNIT_ID = G3.OPR_UNIT_ID AND GD3.REF_CD_GRP_SEQ = G3.REF_CD_GRP_SEQ AND GD3.REF_CD_SEQ = A.REF_CD_SEQ_3
+     LEFT JOIN TB_CC_CCO_REF_CD_INFO G4 ON G4.CO_CD = A.CO_CD AND G4.BZPLC_ID = A.BZPLC_ID AND G4.OPR_UNIT_ID = D.OPR_UNIT_ID AND G4.REF_CD_GRP_SEQ = 4 AND G4.USE_YN = 'Y'
+     LEFT JOIN TB_CC_CCO_REF_CD_DTL GD4 ON GD4.CO_CD = G4.CO_CD AND GD4.BZPLC_ID = G4.BZPLC_ID AND GD4.OPR_UNIT_ID = G4.OPR_UNIT_ID AND GD4.REF_CD_GRP_SEQ = G4.REF_CD_GRP_SEQ AND GD4.REF_CD_SEQ = A.REF_CD_SEQ_4
+     LEFT JOIN TB_CC_CCO_REF_CD_INFO G5 ON G5.CO_CD = A.CO_CD AND G5.BZPLC_ID = A.BZPLC_ID AND G5.OPR_UNIT_ID = D.OPR_UNIT_ID AND G5.REF_CD_GRP_SEQ = 5 AND G5.USE_YN = 'Y'
+     LEFT JOIN TB_CC_CCO_REF_CD_DTL GD5 ON GD4.CO_CD = G4.CO_CD AND GD4.BZPLC_ID = G4.BZPLC_ID AND GD4.OPR_UNIT_ID = G4.OPR_UNIT_ID AND GD4.REF_CD_GRP_SEQ = G5.REF_CD_GRP_SEQ AND GD5.REF_CD_SEQ = A.REF_CD_SEQ_5
+         WHERE A.CO_CD = #{coCd}
+           AND A.MBR_ID=#{mbrId}
+    )
+    UNPIVOT (
+                (CODE_NM, CODE_VAL) 
+             FOR TYPE IN(
+                (ACCT_GRP_NM,REF_CD_NM_0) AS '기본계정'
+               ,(REF_CD_GRP_NM_1,REF_CD_NM_1) AS '참조코드1'
+               ,(REF_CD_GRP_NM_2,REF_CD_NM_2) AS '참조코드2'
+               ,(REF_CD_GRP_NM_3,REF_CD_NM_3) AS '참조코드3'
+               ,(REF_CD_GRP_NM_4,REF_CD_NM_4) AS '참조코드4'
+               ,(REF_CD_GRP_NM_5,REF_CD_NM_5) AS '참조코드5'
+             )
+    )
+  </select>
+  
+</mapper>

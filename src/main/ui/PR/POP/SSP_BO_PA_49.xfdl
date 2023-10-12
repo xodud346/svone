@@ -1,0 +1,382 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PA_49" width="900" height="611" titletext="카테고리 추천&amp;조회" onload="fn_onLoad" onkeyup="SSP_BO_PA_49_onkeyup">
+    <Layouts>
+      <Layout height="611" mobileorientation="landscape" width="900" stepindex="">
+        <Div id="div" taborder="0" text="Div00" left="20" top="20" right="20" bottom="20">
+          <Layouts>
+            <Layout>
+              <Button id="btn_cancel" taborder="4" text="닫기" left="332" width="100" height="32" bottom="0" onclick="btn_cancel_onclick"/>
+              <Button id="btn_apply" taborder="5" text="적용" left="435" width="100" height="32" cssclass="btn_WF_select" bottom="0" onclick="div_btn_apply_onclick"/>
+              <Static id="Static1" taborder="6" text="| 카테고리 추천&amp;조회" left="0" top="0" height="30" cssclass="sta_WF_title02" width="300"/>
+              <Static id="Static29_00_00" taborder="7" left="110" top="46" height="32" cssclass="sta_cm_box02L_tdt" onclick="Div_top_info_Static29_00_00_onclick" right="0" text=""/>
+              <Edit id="PRNM" taborder="0" top="50" width="310" height="24" enableevent="true" left="150" onkeydown="div_PRNM_onkeydown"/>
+              <Static id="staPrdNm" taborder="8" text="상품명(분류명)" left="0" top="46" width="140" height="32" cssclass="sta_cm_box01L_tdt"/>
+              <Grid id="grd_list" taborder="9" left="0" top="88" binddataset="ds_list" bottom="140" right="0" autofittype="col" oncellclick="div_grd_list_oncellclick" cellsizingtype="col">
+                <Formats>
+                  <Format id="default">
+                    <Columns>
+                      <Column size="40"/>
+                      <Column size="100"/>
+                      <Column size="350"/>
+                      <Column size="100"/>
+                      <Column size="100"/>
+                    </Columns>
+                    <Rows>
+                      <Row size="31" band="head"/>
+                      <Row size="31"/>
+                    </Rows>
+                    <Band id="head">
+                      <Cell text="선택"/>
+                      <Cell col="1" text="카테고리ID"/>
+                      <Cell col="2" text="카테고리명"/>
+                      <Cell col="3" text="카테고리구분"/>
+                      <Cell col="4" text="상품담당자"/>
+                    </Band>
+                    <Band id="body">
+                      <Cell text="bind:CHK" displaytype="checkboxcontrol"/>
+                      <Cell col="1" text="bind:PRD_CLCD"/>
+                      <Cell col="2" text="expr:PRD_CLSF_LVL_NM==null?PRD_CLSF_NM:PRD_CLSF_LVL_NM" textAlign="left"/>
+                      <Cell col="3" text="bind:MALL_SPR_CD" combodataset="ds_mallSpr" combocodecol="CD" combodatacol="NM" displaytype="combotext"/>
+                      <Cell col="4" text="bind:OPRTR_NM"/>
+                    </Band>
+                  </Format>
+                </Formats>
+              </Grid>
+              <Static id="Static29_00_00_00" taborder="10" left="110" top="441" height="86" cssclass="sta_cm_box02L_tdt" onclick="Div_top_info_Static29_00_00_onclick" right="0"/>
+              <Static id="staTrsfRsn" taborder="11" text="이관사유" left="0" top="441" width="140" height="86" cssclass="sta_cm_box01L_tdt"/>
+              <TextArea id="TRSF_RSN" taborder="3" left="150" top="446" height="76" right="10" wordWrap="char"/>
+              <Button id="btn_rcm" taborder="1" text="카테고리추천" top="50" height="24" left="470" width="92" onclick="div_btn_rcm_onclick"/>
+              <Button id="btn_search" taborder="2" text="등록상품명조회" top="50" height="24" left="566" width="102" onclick="div_btn_search_onclick"/>
+              <Button id="btn_prdClsfNm" taborder="12" text="카테고리명조회" top="50" height="24" left="672" width="102" onclick="div_btn_prdClsfNm_onclick"/>
+            </Layout>
+          </Layouts>
+        </Div>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP속성 상세 팝업
+CREATION DATES : 2021.01.19
+*******************************************************/
+//  공통형 스크립트 인클루드
+include "CO::coUtils.xjs";
+include "OD::odUtils.xjs";
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+//부모창에서 넘긴 파라미터
+this.newPrdReqNo = this.parent.newPrdReqNo;
+this.prdNm = this.parent.prdNm;
+this.mallSprCd = this.parent.mallSprCd;
+this.coCd = this.parent.coCd;
+
+this.valiFormIds = [{"name":"상품명(분류명)","id":"PRNM"}];
+this.valiFormIds1 = [{"name":"이관사유","id":"TRSF_RSN"}];
+
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	this.ds_detail.addRow();
+	
+	if(!this.gfn_isNull(this.prdNm)){
+		this.div.form.PRNM.set_value(this.prdNm);
+	}
+	
+	if(this.mallSprCd == "20"){ // R&D만 MALL구분값 받아서 예외처리
+		this.ds_search.setColumn(0, "MALL_SPR_CD", this.mallSprCd);
+		this.ds_search.setColumn(0, "COLLECTION", "RND");
+		this.ds_search.setColumn(0, "QUERYSIZE", 1);
+		this.ds_search.setColumn(0, "RESULTSIZE", "10");
+	}else{
+		this.ds_search.setColumn(0, "COLLECTION", "SSP,RND");
+		this.ds_search.setColumn(0, "QUERYSIZE", 2);
+		this.ds_search.setColumn(0, "RESULTSIZE", "5");
+	}
+	this.ds_search.setColumn(0,"CO_CD",this.coCd);
+};
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//조회
+this.fn_search = function()
+{	
+	var	validation = this.fn_validationForm(this.div, this.valiFormIds, this.ds_search);
+
+	if( validation ) {
+		var sSvcId = "selectPrdClsfList";    
+		var sUrl   = "/pr/prd-popup/select-prd-clsf-list.do";  
+		var inDs   = "ds_search=ds_search";
+		var outDs  = "ds_list=ds_output";
+		var arg    = "";
+	
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+	}
+};
+
+// 등록
+this.fn_apply = function()
+{
+	var	validation = this.fn_validationForm(this.div, this.valiFormIds1, this.ds_detail);
+	
+	if( validation ) {
+		var sSvcId = "saveNewPrdStats";
+		var sUrl   = "/pr/prd-popup/save-new-prd-stats.do";
+		var inDs   = "ds_detail=ds_detail:U";
+		var outDs  = "";
+		var arg    = "";
+		
+		if(this.confirm(this.fn_getMessage("ERRP000265"))){
+			this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+		}
+	}
+};
+
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	if(errorCode != 0)
+	{
+		this.alert(errorCode+"\n"+errorMsg);
+		return;
+	}
+	
+	switch(svcID)
+	{
+	case "selectPrdClsfList":		
+			if(this.ds_search.getColumn(0,"SEARCH_TYPE") == "D"){
+				this.div.form.grd_list.set_enableredraw(false);
+				this.ds_list.set_enableevent(false);
+				
+				// SCORE값으로 정렬
+				this.ds_list.set_keystring("S:-SCORE");	
+				
+				this.ds_list.set_enableevent(true);
+				this.div.form.grd_list.set_enableredraw(true);
+			}
+		break;
+		
+	case "saveNewPrdStats":
+			var resData = {};
+			var resString = "";
+				
+			resData.PRD_CLCD = this.ds_list.getColumn(this.ds_list.rowposition, "PRD_CLCD");
+			resData.PRD_CLSF_NM = this.ds_list.getColumn(this.ds_list.rowposition, "PRD_CLSF_NM");
+			resData.MALL_SPR_CD = this.ds_list.getColumn(this.ds_list.rowposition, "MALL_SPR_CD");
+			resData.PRD_CLSF_LVL_NM = this.ds_list.getColumn(this.ds_list.rowposition, "PRD_CLSF_LVL_NM");
+			resData.PRNM = this.div.form.PRNM.value;
+			resString = JSON.stringify(resData);	
+			this.close(resString);
+		break;
+	default: 
+		break;
+	}
+};
+
+
+this.fn_sortCallback = function(sGridId){
+	var oGrid=null;
+	if(sGridId == "grd_list"){
+		oSortInfo = this.div.form.grd_list.uaSortInfo;
+		this.ds_search.setColumn(0,"SORT_COLUMN",oSortInfo.bindCol);
+		this.ds_search.setColumn(0,"SORT_TYPE",oSortInfo.status);
+		this.ds_search.setColumn(0,"SEARCH_TYPE","S");
+		this.fn_search();
+	}
+};
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+	//static 필수값 표시 초기 설정
+	this.div.form.staPrdNm.uEssentiel = "true";
+	this.div.form.staTrsfRsn.uEssentiel = "true";
+	
+	//grid 초기 설정
+// 	this.div.form.grd_list.uSortFlag = "false";
+// 	this.div.form.grd_list.uServerSortFlag = "true";
+// 	this.div.form.grd_list.uSortCallback = "fn_sortCallback";
+// 	this.div.form.grd_list.uCellSizeType = "true";
+}
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+
+//등록 버튼
+this.div_btn_apply_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_list.getCaseCount("CHK == '1'") < 1){
+		//alert("선택된 데이터가 없습니다.");
+		this.alert(this.fn_getMessage("ERRS000137"));
+		this.div.form.grd_list.setFocus();
+		return;
+	}
+	// R&D인 경우
+	if(this.mallSprCd == "20"){
+		var resData = {};
+		var resString = "";
+			
+		resData.PRD_CLCD = this.ds_list.getColumn(this.ds_list.findRow("CHK","1"), "PRD_CLCD");
+		resData.PRD_CLSF_NM = this.ds_list.getColumn(this.ds_list.findRow("CHK","1"), "PRD_CLSF_NM");
+		resData.MALL_SPR_CD = this.ds_list.getColumn(this.ds_list.findRow("CHK","1"), "MALL_SPR_CD");
+		resData.PRD_CLSF_LVL_NM = this.ds_list.getColumn(this.ds_list.findRow("CHK","1"), "PRD_CLSF_LVL_NM");
+		resString = JSON.stringify(resData);	
+		this.close(resString);	
+	}else{
+	// SSP인 경우
+		// 카테고리구분을 SSP 선택
+		if(this.ds_list.getColumn(this.ds_list.findRow("CHK","1"),"MALL_SPR_CD") == "10"){
+			var resData = {};
+			var resString = "";
+				
+			resData.PRD_CLCD = this.ds_list.getColumn(this.ds_list.findRow("CHK","1"), "PRD_CLCD");
+			resData.PRD_CLSF_NM = this.ds_list.getColumn(this.ds_list.findRow("CHK","1"), "PRD_CLSF_NM");
+			resData.MALL_SPR_CD = this.ds_list.getColumn(this.ds_list.findRow("CHK","1"), "MALL_SPR_CD");
+			resData.PRD_CLSF_LVL_NM = this.ds_list.getColumn(this.ds_list.findRow("CHK","1"), "PRD_CLSF_LVL_NM");
+			resData.PRNM = this.div.form.PRNM.value;
+			resString = JSON.stringify(resData);	
+			this.close(resString);		
+		}else{
+		// 카테고리구분을 R&D 선택
+			this.ds_detail.setColumn(0,"NEW_PRD_REQ_NO", this.newPrdReqNo);
+			this.ds_detail.setColumn(0,"PRD_CLCD", this.ds_list.getColumn(this.ds_list.findRow("CHK","1"),"PRD_CLCD"));
+			this.ds_detail.setColumn(0,"MALL_SPR_CD", this.ds_list.getColumn(this.ds_list.findRow("CHK","1"),"MALL_SPR_CD"));
+			this.fn_apply();
+		}
+	}	
+};
+//취소 버튼
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+// 카테고리 추천
+this.div_btn_rcm_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.setColumn(0,"SEARCH_TYPE","D");
+	this.fn_search();
+};
+
+// 등록상품명조회
+this.div_btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.setColumn(0,"SEARCH_TYPE","S");
+	this.fn_search();
+};
+
+// 카테고리명조회
+this.div_btn_prdClsfNm_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.ds_search.setColumn(0,"SEARCH_TYPE","C");
+	this.fn_search();
+};
+
+
+// 체크박스 1개만 선택처리
+this.ds_list_oncolumnchanged = function(obj:nexacro.NormalDataset,e:nexacro.DSColChangeEventInfo)
+{
+	if(e.columnid = "CHK"){
+		if(e.newvalue == 1){
+			for(var i=0; i < this.ds_list.rowcount; i++){
+				if(i != e.row){
+					this.ds_list.setColumn(i,"CHK","");
+				}
+			}
+		}
+	}
+};
+
+this.div_grd_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(this.ds_list.getColumn(e.row,"CHK") == 1){
+		this.ds_list.setColumn(e.row,"CHK",0);
+	}else{
+		this.ds_list.setColumn(e.row,"CHK",1);
+	}
+};
+
+// 단축키
+this.SSP_BO_PA_49_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	// ESC
+	if (e.keycode == 27) {
+		// 팝업 화면 닫기
+		this.btn_cancel_onclick();
+	}
+
+};
+]]></Script>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="PRNM" type="STRING" size="256"/>
+          <Column id="SEARCH_TYPE" type="STRING" size="256"/>
+          <Column id="COLLECTION" type="STRING" size="256"/>
+          <Column id="QUERYSIZE" type="INT" size="256"/>
+          <Column id="RESULTSIZE" type="INT" size="256"/>
+          <Column id="MALL_SPR_CD" type="STRING" size="256"/>
+          <Column id="SORT_COLUMN" type="STRING" size="256"/>
+          <Column id="SORT_TYPE" type="STRING" size="256"/>
+          <Column id="CO_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="COLLECTION">SSP,RND</Col>
+            <Col id="QUERYSIZE">2</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_list" oncolumnchanged="ds_list_oncolumnchanged" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+          <Column id="PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="SCORE" type="BIGDECIMAL" size="256"/>
+          <Column id="MALL_SPR_CD" type="STRING" size="256"/>
+          <Column id="PRD_CLSF_LVL_NM" type="STRING" size="256"/>
+          <Column id="OPRTR_NM" type="STRING" size="256"/>
+          <Column id="CHK" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_detail">
+        <ColumnInfo>
+          <Column id="NEW_PRD_REQ_NO" type="STRING" size="256"/>
+          <Column id="TRSF_RSN" type="STRING" size="256"/>
+          <Column id="MALL_SPR_CD" type="STRING" size="256"/>
+          <Column id="PRD_CLCD" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_mallSpr">
+        <ColumnInfo>
+          <Column id="CD" type="STRING" size="256"/>
+          <Column id="NM" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row>
+            <Col id="CD">10</Col>
+            <Col id="NM">SSP</Col>
+          </Row>
+          <Row>
+            <Col id="CD">20</Col>
+            <Col id="NM">R&amp;D</Col>
+          </Row>
+        </Rows>
+      </Dataset>
+    </Objects>
+    <Bind>
+      <BindItem id="item0" compid="div.form.PRNM" propid="value" datasetid="ds_search" columnid="PRNM"/>
+      <BindItem id="item1" compid="div.form.TRSF_RSN" propid="value" datasetid="ds_detail" columnid="TRSF_RSN"/>
+    </Bind>
+  </Form>
+</FDL>

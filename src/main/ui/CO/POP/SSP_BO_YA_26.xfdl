@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_YA_26" width="800" height="453" titletext="엑셀메타상세등록" onload="fn_onload">
+    <Layouts>
+      <Layout height="453" mobileorientation="landscape" width="800">
+        <Static id="Static60_00" taborder="0" text="| 엑셀메타 상세 등록" left="20" top="20" height="30" cssclass="sta_WF_title02" width="300"/>
+        <Static id="Static03" taborder="1" left="20" top="60" height="32" cssclass="sta_cm_box02L_tdt" right="20" text=""/>
+        <Static id="Static02" taborder="2" text="프로그램ID" left="20" top="Static60_00:10" width="130" height="32" cssclass="sta_cm_box01L_tdt"/>
+        <Edit id="PGM_ID" taborder="3" left="Static02:10" top="64" width="201" height="24" readonly="true" enable="true"/>
+        <Edit id="PGM_NM" taborder="4" left="364" top="64" height="24" readonly="true" right="30"/>
+        <Static id="Static03_00" taborder="5" left="20" top="Static03:-1" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+        <Static id="Static02_00" taborder="6" text="엑셀메타순번" left="20" top="91" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Edit id="EXCEL_META_SEQ" taborder="7" left="160" top="95" width="201" height="24" readonly="true"/>
+        <Static id="Static03_00_00" taborder="8" left="20" top="122" height="32" cssclass="sta_cm_box02L" right="20" text=""/>
+        <Static id="Static02_00_00" taborder="9" text="언어" left="20" top="122" width="130" height="32" cssclass="sta_cm_box01L"/>
+        <Combo id="LANG_CD" taborder="10" text="Combo00" left="160" top="126" width="200" height="24" innerdataset="ds_lang" codecolumn="COM_DTL_CD" datacolumn="COM_DTL_CD_NM"/>
+        <Static id="Static03_00_00_00" taborder="11" left="20" top="153" height="190" cssclass="sta_cm_box02L" right="20" text=""/>
+        <Static id="Static02_00_00_00" taborder="12" text="컬럼타이틀정보" left="20" top="153" width="130" height="190" cssclass="sta_cm_box01L"/>
+        <TextArea id="COL_TTL_INFO" taborder="13" left="160" top="158" width="610" height="180" onchanged="TextArea00_onchanged"/>
+        <Button id="btn_save" taborder="14" text="저장" left="395" top="Static03_00_00_00:30" width="70" height="30" cssclass="btn_WF_select" onclick="btn_save_onclick"/>
+        <Button id="btn_cancel" taborder="15" text="취소" left="40.13%" top="373" width="70" height="30" onclick="btn_cancel_onclick"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_lang">
+        <ColumnInfo>
+          <Column id="COM_DTL_CD" type="STRING" size="256"/>
+          <Column id="COM_DTL_CD_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CODE_LIST" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_save">
+        <ColumnInfo>
+          <Column id="PGM_ID" type="STRING" size="256"/>
+          <Column id="PGM_NM" type="STRING" size="256"/>
+          <Column id="EXCEL_META_SEQ" type="STRING" size="256"/>
+          <Column id="LANG_CD" type="STRING" size="256"/>
+          <Column id="COL_TTL_INFO" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/***********************************************************/
+/* 프 로 그 램 : SSP_BO_YA_26
+/* 작 성 일 자 : 2022/03/15
+/* 작  성   자 : 이성민
+/* 설       명 : 엑셀메타관리 상세 언어등록 팝업
+/***********************************************************/
+
+
+
+
+
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+	
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 필수
+	this.gfn_formOnLoad(this);
+	
+	//공통코드
+	this.fn_commonCodeSearch();
+	
+	this.ds_save.addRow();
+};
+
+
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+//공통코드조회
+this.fn_commonCodeSearch = function(){	
+	var sSvcId = "commonCodeSearch";    
+	var sUrl = "/co/select-common-code-list.do";  
+	var inDs = "ds_search=ds_search";
+	var outDs = "ds_lang=ds_output1";
+	var arg = "";
+	
+	this.ds_search.setColumn(0, "CODE_LIST", "LANG_CD");
+	this.ds_search.setColumn(0, "LANG_CD", "KO");
+
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+// 저장
+this.fn_save = function() {
+	var sSvcId = "saveExcelMetaDtl";  
+    var sUrl = "/co/save-excel-meta-dtl.do";
+	var inDs = "ds_save=ds_save:U"
+    var outDs = "";
+    var arg;
+    var callback = "fn_callBack";
+	
+	if( this.confirm("저장 하시겠습니까?") ){		
+		this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, callback);
+	}	
+}
+
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+//조회 콜백
+this.fn_callBack = function(svcID, errorCode, errorMsg) {
+	if(errorCode != 0){
+		this.alert(errorMsg);
+		return;
+	}
+	
+	if( svcID == "commonCodeSearch" ) { //공통코드 콜백
+	
+		//콤보박스 초기값
+		this.LANG_CD.set_index(0);
+		
+		//초기값
+		this.ds_save.setColumn( 0, "PGM_ID", this.parent.pgmId );
+		this.ds_save.setColumn( 0, "PGM_NM", this.parent.pgmNm );
+		this.ds_save.setColumn( 0, "EXCEL_META_SEQ", this.parent.excelMetaSeq );
+
+	} else if( svcID == "saveExcelMetaDtl" ) {
+		this.opener.fn_popupClose("save");
+		this.close();
+	}
+	
+}
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+//화면 설정 함수
+this.cfn_formInit = function(){
+	//static 필수값 표시 초기 설정
+	this.Static02.uEssentiel = "true";
+	this.Static02_00.uEssentiel = "true";
+	this.Static02_00_00.uEssentiel = "true";	
+}
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//취소버튼
+this.btn_cancel_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.close();
+};
+
+//저장
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fn_save();
+};
+]]></Script>
+    <Bind>
+      <BindItem id="item0" compid="PGM_ID" propid="value" datasetid="ds_save" columnid="PGM_ID"/>
+      <BindItem id="item1" compid="PGM_NM" propid="value" datasetid="ds_save" columnid="PGM_NM"/>
+      <BindItem id="item2" compid="EXCEL_META_SEQ" propid="value" datasetid="ds_save" columnid="EXCEL_META_SEQ"/>
+      <BindItem id="item3" compid="LANG_CD" propid="value" datasetid="ds_save" columnid="LANG_CD"/>
+      <BindItem id="item4" compid="COL_TTL_INFO" propid="value" datasetid="ds_save" columnid="COL_TTL_INFO"/>
+    </Bind>
+  </Form>
+</FDL>

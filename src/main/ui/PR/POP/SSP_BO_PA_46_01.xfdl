@@ -1,0 +1,351 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_PP_16" width="700" height="750" titletext="S-MRO카테고리 멀티 조회" onload="fn_onLoad" onkeyup="fn_onkeyup">
+    <Layouts>
+      <Layout height="750" width="700">
+        <Grid id="grd_list01" taborder="0" left="20" top="99" height="300" binddataset="ds_mroPrd" autofittype="col" cellsizebandtype="allband" positionstep="0" right="20" oncelldblclick="grd_list01_oncelldblclick" onenterdown="grd_list_onenterdown" autoenter="select" nodatatext="검색 결과가 없습니다." autosizingtype="none" cellmovingtype="none" cellsizingtype="col" scrollbartype="auto fixed">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="20"/>
+                <Column size="105"/>
+                <Column size="167"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell edittype="checkbox" displaytype="checkboxcontrol"/>
+                <Cell col="1" text="S-MRO 카테고리 ID"/>
+                <Cell col="2" text="S-MRO 카테고리명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:CHK" displaytype="expr:currow==0?'none':'checkboxcontrol'" edittype="expr:currow==0?'none':'checkbox'"/>
+                <Cell col="1" text="bind:MRO_PRD_CLCD" wordWrap="none" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" textAlign="left"/>
+                <Cell col="2" text="bind:MRO_PRD_CLSF_NM" wordWrap="none" edittype="expr:currow == 0 ? &quot;text&quot; : &quot;none&quot;" displaytype="expr:currow == 0 ? &quot;editcontrol&quot; : &quot;normal&quot;" textAlign="left"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_add" taborder="1" text="추가" top="409" width="65" height="28" onclick="btn_add_onclick" cssclass="btn_WF_select" positionstep="0" right="20"/>
+        <Grid id="grd_list02" taborder="2" left="20" top="450" height="200" binddataset="ds_result" autofittype="col" cellsizebandtype="allband" positionstep="0" right="20" autosizingtype="none" cellsizingtype="col" scrollbartype="auto fixed" oncelldblclick="grd_list02_oncelldblclick" nodatatext="선택된 건이 없습니다.">
+          <Formats>
+            <Format id="default">
+              <Columns>
+                <Column size="20"/>
+                <Column size="105"/>
+                <Column size="167"/>
+              </Columns>
+              <Rows>
+                <Row size="31" band="head"/>
+                <Row size="31"/>
+              </Rows>
+              <Band id="head">
+                <Cell edittype="checkbox" displaytype="checkboxcontrol"/>
+                <Cell col="1" text="S-MRO 카테고리 ID"/>
+                <Cell col="2" text="S-MRO 카테고리명"/>
+              </Band>
+              <Band id="body">
+                <Cell text="bind:CHK" displaytype="checkboxcontrol" edittype="checkbox"/>
+                <Cell col="1" text="bind:MRO_PRD_CLCD" wordWrap="none"/>
+                <Cell col="2" text="bind:MRO_PRD_CLSF_NM" wordWrap="none"/>
+              </Band>
+            </Format>
+          </Formats>
+        </Grid>
+        <Button id="btn_select" taborder="3" text="선택" top="695" width="65" height="30" onclick="btn_select_onclick" cssclass="btn_WF_select" positionstep="0" left="45%"/>
+        <Button id="btn_del" taborder="4" text="삭제" top="659" width="65" height="28" onclick="btn_del_onclick" positionstep="0" right="20" cssclass="btn_WF_default"/>
+        <Static id="Static01" taborder="5" text="S-MRO 카테고리 멀티 조회" left="20" top="20" width="190" height="22" cssclass="sta_WF_title04"/>
+        <Button id="btn_search" taborder="6" text="조회" top="60" height="28" cssclass="btn_WF_require" width="60" right="20" onclick="btn_search_onclick"/>
+        <Static id="sta_totcnt" taborder="7" text="총 0건" left="20" usedecorate="true" width="250" height="14" top="66"/>
+        <Static id="sta_selcnt" taborder="8" text="선택건수 0건" left="20" usedecorate="true" width="250" height="14" top="427"/>
+        <Static id="sta_totcnt00" taborder="9" text="최대조회수" top="60" height="28" usedecorate="true" cssclass="sta_WF_txtR" right="188" width="60" onclick="Div00_sta_totcnt00_onclick"/>
+        <Edit id="edt_rowCount" taborder="10" top="60" height="28" right="84" width="100" value="1000" text="1000" readonly="true"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_search">
+        <ColumnInfo>
+          <Column id="CO_CD" type="STRING" size="256"/>
+          <Column id="MRO_PRD_CLCD" type="STRING" size="256"/>
+          <Column id="MRO_PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="START_NUM" type="STRING" size="256"/>
+          <Column id="ROW_COUNT" type="STRING" size="256"/>
+        </ColumnInfo>
+        <Rows>
+          <Row/>
+        </Rows>
+      </Dataset>
+      <Dataset id="ds_result" onrowsetchanged="ds_result_onrowsetchanged">
+        <ColumnInfo>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="MRO_PRD_CLCD" type="STRING" size="256"/>
+          <Column id="MRO_PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="TEMP_MRO_PRD_CLSF_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_mroPrd">
+        <ColumnInfo>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="MRO_PRD_CLCD" type="STRING" size="256"/>
+          <Column id="MRO_PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="TEMP_MRO_PRD_CLSF_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+      <Dataset id="ds_mroPrdCopy">
+        <ColumnInfo>
+          <Column id="CHK" type="STRING" size="256"/>
+          <Column id="MRO_PRD_CLCD" type="STRING" size="256"/>
+          <Column id="MRO_PRD_CLSF_NM" type="STRING" size="256"/>
+          <Column id="TEMP_MRO_PRD_CLSF_NM" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[/*******************************************************
+PROJECT NAME : SSP-BO
+CREATION DATES : 2022.03.17 조지훈
+*******************************************************/
+/***********************************************************************************************
+* Form 변수 선언 영역
+************************************************************************************************/
+this.totalCount = 0;
+this.fv_oApp = nexacro.getApplication();	//application object 
+/***********************************************************************************************
+* FORM EVENT 영역(onload)
+************************************************************************************************/
+this.fn_onLoad = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{	
+	this.gfn_formOnLoad(this);
+	var mroPrdClcd = this.parent.mroPrdClcd;
+	var mroPrdClsfNm = this.parent.mroPrdClsfNm;
+	
+	if(this.gfn_isNull(this.parent.coCd) || this.parent.coCd ==  undefined){
+		alert("팝업창의 회사코드가 비어있습니다. 확인해주세요.");
+		return;
+	}else{
+		this.ds_search.setColumn(0, "CO_CD", this.parent.coCd);
+	}
+	
+	if(!this.gfn_isNull(mroPrdClcd)){
+		this.ds_search.setColumn(0, "MRO_PRD_CLCD", mroPrdClcd);
+	}
+	
+	if(!this.gfn_isNull(mroPrdClsfNm)){
+		this.ds_search.setColumn(0, "MRO_PRD_CLSF_NM", mroPrdClsfNm);
+	}
+	
+	if(!this.gfn_isNull(mroPrdClcd) || !this.gfn_isNull(mroPrdClsfNm)){
+		this.ds_search.setColumn(0, "MRO_PRD_CLCD", mroPrdClcd);
+		this.ds_search.setColumn(0, "MRO_PRD_CLSF_NM", mroPrdClsfNm);
+		this.fn_initGrid();
+		
+		this.fn_search();
+	}else{
+		this.fn_initGrid();
+	}
+};
+
+this.fn_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{
+	if(e.keycode == 13 && e.shiftkey){	//Ctrl+Enter : 선택기능
+		this.btn_select_onclick();
+	}else if(e.keycode == 27){	//ESC : 닫기기능
+		this.close();
+	}
+};
+/***********************************************************************************************
+* Transaction 서비스 호출 영역
+************************************************************************************************/
+this.fn_search = function (bInit)
+{
+	if(!this.fn_validation()){
+		alert('검색어를 입력하세요.');
+		return;
+	}
+	
+	var sSvcId = "search";  
+	var sUrl = "/pr/prd-popup/select-mroprd-popup-list.do";
+	var inDs = "ds_search=ds_search"
+	var outDs = "ds_mroPrdCopy=ds_output1";
+	var arg;
+	
+	var mroPrdClcd = this.ds_search.getColumn(0, "MRO_PRD_CLCD");
+	var mroPrdClsfNm = this.ds_search.getColumn(0, "MRO_PRD_CLSF_NM");
+	
+	if(!this.gfn_isNull(mroPrdClcd)){
+		var prdClcd = nexacro.replaceAll(mroPrdClcd, ",", "|");
+		this.ds_search.setColumn(0, "MRO_PRD_CLCD", prdClcd);
+	}
+	
+	if(!this.gfn_isNull(mroPrdClsfNm)){
+		var prdClsfNm = nexacro.replaceAll(mroPrdClsfNm, ",", "|");
+		this.ds_search.setColumn(0, "MRO_PRD_CLSF_NM", prdClsfNm);
+	}
+	
+    this.ds_search.setColumn(0, "ROW_COUNT", this.edt_rowCount.value);
+	
+	this.gfn_transaction(sSvcId, sUrl, inDs, outDs, arg, "fn_callBack");
+};
+
+/***********************************************************************************************
+* Callback 처리 영역
+************************************************************************************************/
+this.fn_callBack = function(svcID, errorCode, errorMsg)	{
+	switch(svcID){
+		case "search": 
+			this.ds_mroPrd.clearData();
+			this.fn_initGrid();
+			this.ds_mroPrd.appendData(this.ds_mroPrdCopy, true);
+            this.sta_totcnt.set_text("총 "+ this.gfn_appendComma(this.totalCount, 0) +"건");
+			break;
+	}
+};
+
+/***********************************************************************************************
+* 외부 호출 FUNCTION 영역
+************************************************************************************************/
+
+/***********************************************************************************************
+*  개발자(사용자) 함수 영역
+************************************************************************************************/
+this.fn_validation = function() {
+	if( this.gfn_isNull(this.ds_mroPrd.getColumn(0, "MRO_PRD_CLCD")) && this.gfn_isNull(this.ds_mroPrd.getColumn(0, "MRO_PRD_CLSF_NM")) ){
+		return false;
+	}else{
+		return true;
+	}
+};
+
+this.fn_initGrid = function(){
+	this.ds_mroPrd.insertRow(0);
+	this.ds_mroPrd.setColumn(0, "MRO_PRD_CLCD", this.ds_search.getColumn(0, "MRO_PRD_CLCD"));	    //S-MRO 카테고리 ID
+	this.ds_mroPrd.setColumn(0, "MRO_PRD_CLSF_NM", this.ds_search.getColumn(0, "MRO_PRD_CLSF_NM"));	//S-MRO 카테고리명
+	this.ds_mroPrd.set_rowposition(-1);
+};
+
+this.fn_searchMapSetting = function(){
+	this.ds_search.setColumn(0, "MRO_PRD_CLCD", this.ds_mroPrd.getColumn(0, "MRO_PRD_CLCD"));	    //S-MRO 카테고리 ID
+	this.ds_search.setColumn(0, "MRO_PRD_CLSF_NM", this.ds_mroPrd.getColumn(0, "MRO_PRD_CLSF_NM"));	//S-MRO 카테고리명
+		
+};
+/***********************************************************************************************
+*  각 Component 별 이벤트 영역
+************************************************************************************************/
+//조회버튼
+this.btn_search_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var coCd = this.ds_search.getColumn(0, "CO_CD");
+	if(this.gfn_isNull(coCd) || coCd ==  undefined){
+		alert("팝업창의 회사코드가 비어있습니다. 확인해주세요.");
+		return;
+	}
+	this.fn_searchMapSetting();
+    this.fn_search();
+};
+
+//검색조건 ROW에서 엔터
+this.grd_list_onenterdown = function(obj:nexacro.Grid,e:nexacro.GridEditEventInfo)
+{
+	this.fn_searchMapSetting();
+	this.fn_search();
+};
+
+//추가
+this.btn_add_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	for(var i=0; i<this.ds_mroPrd.rowcount; i++) {
+        if(this.ds_mroPrd.getColumn(i, "CHK") == "1"){
+			var fRow = this.ds_result.findRowExpr("MRO_PRD_CLCD=="+this.ds_mroPrd.getColumn(i, "MRO_PRD_CLCD"));
+			if(fRow < 0 && i > 0){	//중복아닌것만
+				var nRow = this.ds_result.addRow();
+				this.ds_result.copyRow(nRow, this.ds_mroPrd, i);
+				this.ds_result.setColumn(nRow, "CHK", 0);
+			}
+        }
+    }
+};
+
+//삭제
+this.btn_del_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var checkedRow = new Array();
+	for(var i=0; i<this.ds_result.rowcount; i++) {
+        if(this.ds_result.getColumn(i, "CHK") == "1"){
+			checkedRow.push(i);
+        }
+    }
+	
+	if(checkedRow.length <= 0){
+		alert('선택된 데이터가 없습니다.');
+		return false;
+	}
+	
+	this.ds_result.deleteMultiRows(checkedRow);
+};
+
+//선택
+this.btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	if(this.ds_result.rowcount < 1){
+		alert("선택된 데이터가 없습니다.");
+		return;
+	}
+	var resArray = [];
+	//this.ds_result.filter("CHK==1");
+	for(var i=0; i<this.ds_result.rowcount; i++) {
+		var resData = {};
+		resData.MRO_PRD_CLCD = this.ds_result.getColumn(i, "MRO_PRD_CLCD");
+		resData.MRO_PRD_CLSF_NM = this.ds_result.getColumn(i, "MRO_PRD_CLSF_NM");
+		resData.TEMP_MRO_PRD_CLSF_NM = this.ds_result.getColumn(i, "TEMP_MRO_PRD_CLSF_NM");
+		
+		resArray.push(JSON.stringify(resData)); 
+    }
+    this.close(JSON.stringify(resArray));
+	
+};
+
+//row더블클릭
+this.grd_list01_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row != 0){
+		var mroPrdClcd = this.ds_mroPrd.getColumn(e.row, "MRO_PRD_CLCD");
+		var fRow = this.ds_result.findRowExpr("MRO_PRD_CLCD=="+mroPrdClcd);
+		if(fRow < 0){	//중복아닌것만
+			this.ds_mroPrd.setColumn(e.row, "CHK", 1);
+			var nRow = this.ds_result.addRow();
+			this.ds_result.copyRow(nRow, this.ds_mroPrd, e.row);
+			this.ds_result.setColumn(nRow, "CHK", 0);
+		}
+	}
+};
+
+//검색조건 ROW의 CELL 클릭 시 글자 맨 끝으로 커서 가도록
+this.grd_list_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	if(e.row == 0){
+		var cellText = obj.getCellText(e.row, e.cell);
+		if(cellText != undefined){
+			obj.setEditSelect(cellText.length, cellText.length);
+		}
+	}
+};
+
+
+this.ds_result_onrowsetchanged = function(obj:nexacro.NormalDataset,e:nexacro.DSRowsetChangeEventInfo)
+{
+	this.sta_selcnt.set_text('선택건수 '+this.ds_result.rowcount+'건');
+};
+
+//결과창 더블클릭 액션
+this.grd_list02_oncelldblclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var mroPrdClcd = this.ds_result.getColumn(e.row, "MRO_PRD_CLCD");	
+	var fRow = this.ds_mroPrd.findRowExpr("MRO_PRD_CLCD=="+mroPrdClcd);
+	this.ds_mroPrd.setColumn(fRow, "CHK", 0);
+	this.ds_result.deleteRow(e.row);
+};
+]]></Script>
+    <Bind/>
+  </Form>
+</FDL>

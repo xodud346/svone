@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="StockNo">
+
+    <select id="stockNoList" parameterType="HashMap" resultType="SspMap">
+        /* StockNo 리스트 조회 */
+        <include refid="stockNoQuery" />
+        OFFSET TO_NUMBER(#{startNum}) - 1 ROWS FETCH FIRST TO_NUMBER(#{pageSize}) ROWS ONLY
+    </select>
+
+    <select id="stockNoListCount" parameterType="HashMap" resultType="Integer">
+        /* StockNo 리스트 수량 조회 */
+        SELECT COUNT(*) AS TOTAL_COUNT
+        FROM (<include refid="stockNoQuery" />) SC
+    </select>
+
+    <insert id="insertStockNo" parameterType="HashMap">
+        INSERT INTO
+            TB_SG_PRD_STOCK TSPS ( TSPS.CO_CD
+                                 , TSPS.BZPLC_ID
+                                 , TSPS.PRD_ID
+                                 , TSPS.STK_NO
+                                 , TSPS.USE_YN
+                                 , TSPS.REG_DTM
+                                 , TSPS.REGPSN_ID)
+        VALUES ( #{coCd}
+               , #{bzplcId}
+               , #{prdId}
+               , #{stkNo}
+               , UPPER(#{useYn})
+               , SYSDATE
+               , #{admMstId})
+    </insert>
+
+    <select id="getStockNo" parameterType="HashMap" resultType="SspMap">
+        <include refid="stockNoQuery" />
+    </select>
+
+    <select id="stockNoExcelList" parameterType="HashMap" resultType="HashMap">
+        <include refid="stockNoQuery" />
+    </select>
+
+    <update id="updateStockNo" parameterType="HashMap">
+        UPDATE
+            TB_SG_PRD_STOCK TSPS
+        SET
+            TSPS.STK_NO = #{stkNo},
+            TSPS.USE_YN = #{useYn},
+            TSPS.UPD_DTM = SYSDATE,
+            TSPS.UPDPSN_ID = #{admMstId}
+        WHERE TSPS.CO_CD = #{coCd}
+          AND TSPS.PRD_ID = #{prdId}
+          AND TSPS.BZPLC_ID = #{bzplcId}
+    </update>
+
+    <delete id="deleteStockNo" parameterType="HashMap">
+        DELETE
+        FROM TB_SG_PRD_STOCK TSPS
+        WHERE TSPS.CO_CD = #{coCd}
+          AND TSPS.PRD_ID = #{prdId}
+          AND TSPS.BZPLC_ID = #{bzplcId}
+    </delete>
+
+    <sql id="stockNoQuery">
+        SELECT SR.CO_CD                                                                      AS CO_CD /*회사코드*/
+             , SR.BZPLC_ID                                                                   AS BZPLC_ID /*사업장아이디*/
+             , SR.BZPLC_NM                                                                   AS BZPLC_NM /*사업장명*/
+             , SR.PRD_ID                                                                     AS PRD_ID /*상품ID*/
+             , SR.PRD_NM                                                                     AS PRD_NM /*상품명*/
+             , SR.STK_NO                                                                     AS STK_NO /*STOCK_NO*/
+             , SR.USE_YN                                                                     AS USE_YN /*사용여부*/
+             , COALESCE((SELECT TFMB.MEM_NM
+                 FROM TB_FC_MEM_BASIS TFMB
+                 WHERE TFMB.CO_CD = SR.CO_CD
+                   AND TFMB.MEM_ID = SR.LATEST_ID
+                     FETCH FIRST 1 ROWS ONLY),
+                (SELECT TAM.ADM_MST_NM
+                 FROM T_ADM_MST TAM
+                 WHERE TAM.CO_CD = SR.CO_CD
+                   AND TAM.ADM_MST_ID = SR.LATEST_ID
+                     FETCH FIRST 1 ROWS ONLY))                                               AS LATEST_NM /*변경자명*/
+             , SR.LATEST_ID                                                                  AS LATEST_ID /*변경자ID*/
+             , SR.LATEST_DTM                                                                 AS LATEST_DTM /*변경일*/
+             , SR.MNFR_NM                                                                    AS MNFR_NM /*제조원명*/
+             , SR.REPR_SPEC                                                                  AS REPR_SPEC /*대표규격*/
+             , SR.PRD_CLS_NM                                                                 AS PRD_CLS_NM /*상품 분류명*/
+             , SR.CTRY_NM                                                                    AS CTRY_NM /*국가명*/
+        FROM (
+                SELECT TSPS.CO_CD                                                            AS CO_CD /*회사코드*/
+                     , TSPS.BZPLC_ID                                                         AS BZPLC_ID /*사업장아이디*/
+                     , (SELECT BZPLC_NM
+                        FROM TB_FC_BZPLC_BASIS
+                        WHERE CO_CD = TSPS.CO_CD
+                          AND BZPLC_ID = TSPS.BZPLC_ID
+                        FETCH FIRST 1 ROWS ONLY)                                             AS BZPLC_NM /*사업장명*/
+                     , FN_FC_GET_PRD_INFO(TSPS.CO_CD, TSPS.PRD_ID, 'P')                      AS PRD_ID /*상품ID*/
+                     , FN_FC_GET_PRD_INFO(TSPS.CO_CD, TSPS.PRD_ID, 'N')                      AS PRD_NM /*상품명*/
+                     , TSPS.STK_NO                                                           AS STK_NO /*STOCK_NO*/
+                     , TSPS.USE_YN                                                           AS USE_YN /*사용여부*/
+                     , COALESCE(TSPS.UPDPSN_ID, TSPS.REGPSN_ID)                              AS LATEST_ID /*변경자ID*/
+                     , COALESCE(TSPS.UPD_DTM, TSPS.REG_DTM)                                  AS LATEST_DTM /*변경일*/
+                     , FN_FC_GET_PRD_INFO(TSPS.CO_CD, TFP.MNFR_NO, 'M')                      AS MNFR_NM /*제조원명*/
+                     , TFP.REPR_SPEC                                                         AS REPR_SPEC /*대표규격*/
+                     , TSPC.PRD_CLS_NM                                                       AS PRD_CLS_NM /*상품 분류명*/
+                     , TFCC.CTRY_NM                                                          AS CTRY_NM /*국가명*/
+                FROM TB_SG_PRD_STOCK TSPS
+                         LEFT OUTER JOIN TB_FV_PRD TFP ON
+                            TSPS.CO_CD = TFP.CO_CD
+                        AND TSPS.PRD_ID = TFP.PRD_ID
+                         LEFT OUTER JOIN TB_SG_PRD TSP ON
+                            TSPS.CO_CD = TSP.CO_CD
+                        AND TSPS.PRD_ID = TSP.PRD_ID
+                         LEFT OUTER JOIN TB_SG_PRD_CLS TSPC ON
+                            TSP.CO_CD = TSPC.CO_CD
+                        AND TSP.PRD_CLS_CD = TSPC.PRD_CLS_CD
+                         LEFT OUTER JOIN TB_FC_COM_CTRY TFCC ON
+                            TSPS.CO_CD = TFCC.CO_CD
+                        AND TFCC.LANG_SPR_CD = COALESCE(UPPER(#{langCd}), 'KO')
+                        AND TFP.ORGPLC_CD = TFCC.CTRY_SPR_CD
+                <where>
+                        AND TSPS.CO_CD = #{coCd}
+                    <if test="bzplcIds neq null">
+                        AND TSPS.BZPLC_ID IN
+                            <foreach collection="bzplcIds" item="bzplcId" open="(" separator="," close=")">
+                                #{bzplcId}
+                            </foreach>
+                    </if>
+                    <if test="prdIds neq null">
+                        AND TSPS.PRD_ID IN
+                            <foreach collection="prdIds" item="prdId" open="(" separator="," close=")">
+                                #{prdId}
+                            </foreach>
+                    </if>
+                    <if test="!@com.serveone.util.StringUtil@isEmpty(bzplcId)">
+                        AND TSPS.BZPLC_ID = #{bzplcId}
+                    </if>
+                    <if test="!@com.serveone.util.StringUtil@isEmpty(prdId)">
+                        AND TSPS.PRD_ID = #{prdId}
+                    </if>
+                    <if test="!@com.serveone.util.StringUtil@isEmpty(stkNo)">
+                        AND TSPS.STK_NO = #{stkNo}
+                    </if>
+                    <if test="!@com.serveone.util.StringUtil@isEmpty(useYn)">
+                        AND TSPS.USE_YN = #{useYn}
+                    </if>
+                </where>
+        ) SR
+    </sql>
+
+</mapper>

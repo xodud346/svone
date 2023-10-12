@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Popup">
+
+	<!-- 팝업관리 검색 조건 -->
+	<sql id="popupWhere">
+		<where>
+				AND PM.POP_MST_USE_YN = 'Y'
+				AND	PM.POP_MST_IDX = PD.POP_MST_IDX
+				AND PD.POP_BZPLC_ID = PA.BZPLC_ID(+)
+			<if test="BZPLC_ID != null and BZPLC_ID != ''">
+				AND EXISTS (
+						SELECT 1
+						FROM T_POP_DETAIL TPD
+						WHERE TPD.POP_MST_IDX = PM.POP_MST_IDX
+						AND TPD.POP_BZPLC_ID IN
+						<foreach collection="idList" item="item" open="(" close=")" separator=",">
+							#{item}
+						</foreach>
+					)
+			</if>
+			<if test="searchPopMstChnGbn != null and searchPopMstChnGbn != ''">
+				AND PM.POP_MST_CHN_GBN = #{searchPopMstChnGbn}
+			</if>
+
+			<if test="searchPopMstLoginYn != null and searchPopMstLoginYn != ''">
+				AND PM.POP_MST_LOGIN_YN = #{searchPopMstLoginYn}
+			</if>
+
+			<if test='(searchPopMstLoginYn eq "Y") and searchPopMstBzplcYn != null and searchPopMstBzplcYn != ""'>
+				AND NVL(PM.POP_MST_BZPLC_YN, 'N') = #{searchPopMstBzplcYn}
+			</if>
+
+			<if test="searchTxt != null and searchTxt != ''">
+				AND PM.POP_MST_TITLE LIKE '%'||#{searchTxt}||'%'
+			</if>
+
+<!-- 			<if test="searchStartDate != null and searchStartDate != '' and searchEndDate != null and searchEndDate != ''"> -->
+<!-- 				<![CDATA[ -->
+<!-- 				AND PM.POP_MST_ST_DT <= REPLACE(#{searchEndDate},'-', '') AND REPLACE(#{searchStartDate},'-', '') <= PM.POP_MST_ED_DT -->
+<!-- 				]]> -->
+<!-- 			</if> -->
+
+			<if test="searchPopMstDplYn != null and searchPopMstDplYn != ''">
+				AND PM.POP_MST_DPL_YN = #{searchPopMstDplYn}
+			</if>
+		</where>
+	</sql>
+
+	<!-- 팝업관리 리스트 갯수 -->
+	<select id="selectPopupCount" parameterType="hashMap" resultType="integer">
+		/* Popup.selectPopupCount */
+		SELECT
+			COUNT(DISTINCT PM.POP_MST_IDX)
+		FROM
+			T_POP_MST PM,
+			T_POP_DETAIL PD,
+			TB_FC_BZPLC_BASIS PA
+		<include refid="popupWhere"/>
+	</select>
+
+	<resultMap id="resultPopup" type="hashMap">
+		<result property="POP_MST_IDX"	column="POP_MST_IDX"/>
+		<result property="POP_MST_TITLE"	column="POP_MST_TITLE"/>
+		<result property="POP_MST_CHN_GBN"	column="POP_MST_CHN_GBN"/>
+		<result property="POP_MST_ST_DT"	column="POP_MST_ST_DT"/>
+		<result property="POP_MST_ED_DT"	column="POP_MST_ED_DT"/>
+		<result property="POP_MST_IMG_TXT"	column="POP_MST_IMG_TXT" jdbcType="CLOB" javaType="java.lang.String"/>
+		<result property="POP_MST_DPL_YN"	column="POP_MST_DPL_YN"/>
+		<result property="POP_MST_USE_YN"	column="POP_MST_USE_YN"/>
+		<result property="POP_MST_REG_DT"	column="POP_MST_REG_DT"/>
+		<result property="POP_MST_LOGIN_YN"	column="POP_MST_LOGIN_YN"/>
+		<result property="POP_MST_BZPLC_YN"	column="POP_MST_BZPLC_YN"/>
+		<result property="BZPLC_ID"			column="BZPLC_ID"/>
+		<result property="BZPLC_NM"			column="BZPLC_NM"/>
+		<result property="BZMN_REG_NO"		column="BZMN_REG_NO"/>
+	</resultMap>
+
+	<!-- 팝업관리 리스트 조회 -->
+	<select id="selectPopupList" parameterType="hashMap" resultType="hashMap">
+		/* Popup.selectPopupList */
+		SELECT
+			S2.*
+		FROM
+			(   SELECT
+					ROWNUM AS RNUM,
+					S1.*
+				FROM
+					( SELECT
+								PM.POP_MST_IDX,
+								MAX(PM.POP_MST_TITLE) POP_MST_TITLE,
+								MAX(PM.POP_MST_CHN_GBN) POP_MST_CHN_GBN,
+								MAX(PM.POP_MST_ST_DT) POP_MST_ST_DT,
+								MAX(PM.POP_MST_ED_DT) POP_MST_ED_DT,
+								MAX(PM.POP_MST_DPL_YN) POP_MST_DPL_YN,
+								MAX(PM.POP_MST_REG_DT) POP_MST_REG_DT,
+								MAX(PM.POP_MST_LOGIN_YN) POP_MST_LOGIN_YN,
+								MAX(PM.POP_MST_BZPLC_YN) POP_MST_BZPLC_YN,
+								LISTAGG(PD.POP_BZPLC_ID,',') WITHIN GROUP (ORDER BY PM.POP_MST_IDX) POP_BZPLC_ID,
+								LISTAGG(PA.BZPLC_NM,',') WITHIN GROUP (ORDER BY PM.POP_MST_IDX) BZPLC_NM,
+								LISTAGG(PA.BZMN_REG_NO,',') WITHIN GROUP (ORDER BY PM.POP_MST_IDX) BZMN_REG_NO
+						FROM
+							T_POP_MST PM,
+							T_POP_DETAIL PD,
+							TB_FC_BZPLC_BASIS PA
+						<include refid="popupWhere"/>
+						GROUP BY PM.POP_MST_IDX
+						ORDER BY POP_MST_REG_DT DESC
+					)
+					S1
+			)
+			S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+	</select>
+
+	<select id="selectPopupInfo" parameterType="hashMap" resultMap="resultPopup">
+		<![CDATA[
+		/* Popup.selectPopupInfo */
+		SELECT
+				PM.POP_MST_IDX,
+				PM.POP_MST_TITLE,
+				PM.POP_MST_CHN_GBN,
+				PM.POP_MST_ST_DT,
+				PM.POP_MST_ED_DT,
+				PM.POP_MST_IMG_TXT,
+				PM.POP_MST_DPL_YN,
+				PM.POP_MST_REG_DT,
+				PM.POP_MST_LOGIN_YN,
+				PM.POP_MST_BZPLC_YN,
+				PD.BZPLC_ID,
+				PD.BZPLC_NM,
+				PD.BZMN_REG_NO
+		FROM
+			T_POP_MST PM
+			,(SELECT
+					PD.POP_MST_IDX,
+					LISTAGG(PD.POP_BZPLC_ID,',') WITHIN GROUP (ORDER BY PD.POP_MST_IDX) AS BZPLC_ID,
+					LISTAGG(PA.BZPLC_NM,',') WITHIN GROUP (ORDER BY PD.POP_MST_IDX) AS BZPLC_NM,
+					LISTAGG(PA.BZMN_REG_NO,',') WITHIN GROUP (ORDER BY PD.POP_MST_IDX) AS BZMN_REG_NO
+			FROM
+					T_POP_DETAIL PD,
+					TB_FC_BZPLC_BASIS PA
+			WHERE PD.POP_BZPLC_ID = PA.BZPLC_ID(+)
+			AND PD.POP_MST_IDX = #{POP_MST_IDX}
+			GROUP BY PD.POP_MST_IDX
+			) PD
+		WHERE PM.POP_MST_IDX = #{POP_MST_IDX}
+		AND PM.POP_MST_IDX = PD.POP_MST_IDX
+		]]>
+	</select>
+
+	<!-- 팝업관리 등록 -->
+	<insert id="insertPopup" parameterType="hashMap">
+	<selectKey keyProperty="POP_MST_IDX" resultType="Integer" order="BEFORE">
+		SELECT SEQ_POP_MST_IDX.NEXTVAL AS POP_MST_IDX  FROM DUAL
+	</selectKey>
+		<![CDATA[
+		/* Popup.insertPopup */
+		INSERT INTO T_POP_MST (
+			POP_MST_IDX
+			, POP_MST_TITLE
+			, POP_MST_CHN_GBN
+			, POP_MST_ST_DT
+			, POP_MST_ED_DT
+			, POP_MST_IMG_TXT
+			, POP_MST_DPL_YN
+			, POP_MST_USE_YN
+			, POP_MST_REG_DT
+			, POP_MST_REG_ID
+			, POP_MST_LOGIN_YN
+			, POP_MST_BZPLC_YN
+		)VALUES (
+			#{POP_MST_IDX}
+			, #{POP_MST_TITLE}
+			, #{POP_MST_CHN_GBN}
+			, #{POP_MST_ST_DT}
+			, #{POP_MST_ED_DT}
+			, #{POP_MST_IMG_TXT:CLOB}
+			, #{POP_MST_DPL_YN}
+			, 'Y'
+			, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, #{POP_MST_REG_ID}
+			, #{POP_MST_LOGIN_YN}
+			, #{POP_MST_BZPLC_YN}
+		)
+		]]>
+	</insert>
+
+	<!-- 팝업관리 수정 -->
+	<update id="updatePopup" parameterType="hashMap">
+		<![CDATA[
+		/* Popup.updatePopup */
+		UPDATE
+			T_POP_MST
+		SET
+			POP_MST_TITLE = #{POP_MST_TITLE}
+			, POP_MST_CHN_GBN = #{POP_MST_CHN_GBN}
+			, POP_MST_ST_DT = #{POP_MST_ST_DT}
+			, POP_MST_ED_DT = #{POP_MST_ED_DT}
+			, POP_MST_IMG_TXT = #{POP_MST_IMG_TXT}
+			, POP_MST_DPL_YN = #{POP_MST_DPL_YN}
+			, POP_MST_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, POP_MST_UPD_ID = #{POP_MST_UPD_ID}
+			, POP_MST_LOGIN_YN = #{POP_MST_LOGIN_YN}
+			, POP_MST_BZPLC_YN = #{POP_MST_BZPLC_YN}
+			, POP_MST_BZPLC_ID = #{POP_MST_BZPLC_ID}
+		WHERE
+			POP_MST_IDX = #{POP_MST_IDX}
+		]]>
+	</update>
+
+	<!-- 팝업관리(상세) 삭제_new -->
+	<update id="deletePopup" parameterType="HashMap">
+		/* Popup.deletePopup */
+		UPDATE T_POP_MST
+		SET POP_MST_USE_YN = 'N'
+		  , POP_MST_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		  , POP_MST_UPD_ID = #{POP_MST_UPD_ID}
+		WHERE
+			POP_MST_IDX = #{POP_MST_IDX}
+	</update>
+
+	<!-- 팝업관리(상세) 삭제_old -->
+<!-- 	<delete id="deletePopup" parameterType="HashMap"> -->
+<!-- 		/* Popup.deletePopup */ -->
+<!-- 		DELETE FROM T_POP_MST WHERE POP_MST_IDX = #{POP_MST_IDX} -->
+<!-- 	</delete> -->
+
+	<!-- 팝업관리(상세) 등록 -->
+	<insert id="insertPopupDetail" parameterType="hashMap">
+		<![CDATA[
+		/* Popup.insertPopupDetail */
+		INSERT INTO T_POP_DETAIL (
+			POP_DETAIL_IDX
+			, POP_MST_IDX
+			, POP_BZPLC_ID
+			, POP_REG_DT
+			, POP_REG_ID
+		)VALUES (
+			NVL((SELECT MAX(POP_DETAIL_IDX)+1 FROM T_POP_DETAIL),0)
+			, #{POP_MST_IDX}
+			, #{POP_BZPLC_ID}
+			, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, #{POP_MST_UPD_ID}
+		)
+		]]>
+	</insert>
+
+	<!-- 팝업관리(상세) 삭제 -->
+	<delete id="deletePopupDetail" parameterType="HashMap">
+		/* Popup.deletePopupDetail */
+		DELETE FROM T_POP_DETAIL WHERE POP_MST_IDX = #{POP_MST_IDX}
+	</delete>
+</mapper>

@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PubPrdProcStb">
+
+    <select id="selectPubPrdProcStb" parameterType="HashMap" resultType="HashMap">
+        /* PubPrdProcStbDao.selectPubPrdProcStb 공용상품처리대기 조회 */
+        <![CDATA[
+             SELECT A1.CHK /*CHK*/
+					,A1.CO_CD /*회사코드 PK*/
+					,A1.PRD_ID /* 상품ID PK*/
+					,A1.NEW_PRD_REQ_NO /*요청번호*/
+					,A1.PRD_CLCD /*카테고리*/
+					,A1.PRD_CLCD_NM /*카테고리명*/
+                    ,A1.PRC_STATE_CD /*처리상태코드*/
+					,A1.PRC_STATE_NM /*처리상태명*/
+					,A1.PUB_ONLY_SPR_CD /*공용전용구분코드*/
+					,A1.PUB_ONLY_SPR_NM /*공용전용구분명*/
+					,A1.MRO_PRD_STATS_CD /*MRO상품상태*/
+					,A1.MRO_PRD_STATS_NM /*MRO상품상태명*/
+					,A1.DISP_STATS_CD /*진열상태코드*/
+					,A1.DISP_STATS_NM /*진열상태명*/
+					,A1.PRD_NM /*상품명*/
+					,A1.MNFR_NO /*제조원ID*/
+					,A1.MNFR_NM /*제조원명*/
+					,A1.ATTR_VAL /*대표규격*/
+					,A1.SELL_UNIT_CD /*주문단위*/
+					,A1.ORGPLC_CTRY_CD /*원산지코드*/
+					,A1.ORGPLC_CTRY_NM /*원산지명*/
+					,A1.BZPLC_ID /*사업장ID*/
+					,A1.BZPLC_NM /*사업장명*/
+					,A1.OPR_UNIT_ID /*운영단위ID*/
+					,A1.OPR_UNIT_NM /*운영단위명*/
+					,A1.MEM_ID /*요청자ID*/
+					,A1.MEM_NM /*요청자명*/
+					,A1.INVN_STATS_NM /*재고여부*/
+					,A1.DLV_LT /*평균배송일*/
+					,A1.PRD_REG_DTM /*가격등록요청일*/
+					,A1.PRC_REG_DTM /*등록일*/
+					,B1.ORG_NM SALES_TEAM_NM /*영업팀명*/
+					,A1.OPRTR_ID /*영업담당자ID*/
+					,B1.OPRTR_NM /*영업담당자명*/
+					,A1.OPRTR_ID1 /*구매담당자ID*/
+					,C1.OPRTR_NM OPRTR_NM1 /*구매담당자명*/
+					,A1.PRD_ID_NUM 
+					,A1.SEL_MTHD_CD
+					,A1.PRC_APLY_SPR_CD
+					,A1.SEL_MTHD_NM
+					,A1.PRC_APLY_SPR_NM
+					,A1.EXHBN_CNT
+					,A1.REG_DIS_RSN
+		       FROM (SELECT 0 AS CHK,
+							A.CO_CD,
+							A.PRD_ID,
+							TO_NUMBER(A.PRD_ID) AS PRD_ID_NUM,
+							Z.NEW_PRD_REQ_NO AS NEW_PRD_REQ_NO, --신규상품요청번호
+							A.PRD_CLCD,
+							B.PUB_ONLY_SPR_CD,
+							SEL_MTHD_CD AS SEL_MTHD_CD,
+							B.MRO_PRD_STATS_CD,
+							DECODE(B.MRO_PRD_STATS_CD,'00','사용','10','미사용','20','종결') AS MRO_PRD_STATS_NM,
+							DECODE(A.PRD_USE_YN,'Y','사용','미사용') AS PRD_USE_YN,
+							C.DISP_STATS_CD,
+							FN_COM_DTL_CDNM('KO','DISP_STATS_CD',C.DISP_STATS_CD) AS DISP_STATS_NM,
+							A.PRD_NM,
+							B.MNFR_NO,
+                            TRIM(TO_CHAR(B.BASIS_UNIT_QTY,'999,999,999,999,999'))
+                               ||' '
+                               ||B.BASIS_UNIT_CD
+                               ||CASE WHEN B.BASIS_UNIT_QTY > 1
+                                       AND B.SELL_UNIT_CD IS NOT NULL
+                                       AND B.BASIS_UNIT_CD != B.SELL_UNIT_CD
+                                      THEN '/'||B.SELL_UNIT_CD
+                               END                                          AS SELL_UNIT_CD,-- 주문단위         
+							B.ORGPLC_CTRY_CD,
+							I.BZPLC_ID AS BZPLC_ID,
+							I.BZPLC_NM AS BZPLC_NM,
+							K.OPR_UNIT_NM AS OPR_UNIT_NM,
+							K.OPR_UNIT_ID AS OPR_UNIT_ID,
+							DECODE(G.REQ_SBJ_CD, '30', O.CPRTCP_ID, H.MBR_ID) AS MEM_ID,
+							DECODE(G.REQ_SBJ_CD, '30', O.CPRTCP_KOR_NM, H.MBR_NM) AS MEM_NM,
+							B.DLV_LT AS DLV_LT,
+							TO_CHAR(Z.REG_DTM,'YYYY.MM.DD HH24:MI:SS') AS PRD_REG_DTM,
+							TO_CHAR(C.REG_DTM,'YYYY.MM.DD HH24:MI:SS') AS PRC_REG_DTM,
+							A.PRC_APLY_SPR_CD,
+							FN_COM_DTL_CDNM('KO','INVN_STATS_CD',M.INVN_STATS_CD) AS INVN_STATS_NM,
+							FN_PR_ATTR_VAL_LIST(#{CO_CD},A.PRD_ID) AS ATTR_VAL,
+							FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD',B.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM,
+							FN_COM_DTL_CDNM('KO','SEL_MTHD_CD',SEL_MTHD_CD) AS SEL_MTHD_NM,
+							FN_COM_DTL_CDNM('KO','PRC_APLY_SPR_CD',A.PRC_APLY_SPR_CD) AS PRC_APLY_SPR_NM,
+							FN_PR_FULL_CLSF_NM(#{CO_CD},A.PRD_CLCD) AS PRD_CLCD_NM,
+							(SELECT Z.MRO_MNFR_NM FROM TB_PR_MNFR_INFO Z WHERE Z.CO_CD = A.CO_CD AND Z.MNFR_NO = B.MNFR_NO) MNFR_NM,
+							CASE WHEN (SELECT count(*) FROM TB_SA_EXHBN_CATG_PRD_DTL Z INNER JOIN TB_SA_EXHBN_INFO X ON Z.CO_CD = X.CO_CD	AND Z.EXHBN_SEQ = X.EXHBN_SEQ AND X.USE_YN = 'Y' WHERE Z.PRD_ID = A.PRD_ID) > 0 THEN '대상' ELSE '미대상' END  AS EXHBN_CNT,
+							L.CTRY_NM AS ORGPLC_CTRY_NM,
+							Z.REG_DIS_RSN,
+							K.SALS_TEAM_CD,
+							K.SALS_CHRPSN_ID AS OPRTR_ID,
+							FN_RD_CHRPSN_ID(A.CO_CD,B.MNFR_NO,A.PRD_CLCD,'30') OPRTR_ID1 /*구매담당자ID*/
+                            ,CASE WHEN C.PRD_ID IS NULL THEN '10' ELSE '20' END AS PRC_STATE_CD
+                            ,CASE WHEN C.PRD_ID IS NULL THEN '가격등록요청' ELSE '가격등록완료' END AS PRC_STATE_NM
+					   FROM TB_PR_NEW_PRD_REQ_PROC Z
+					  INNER JOIN TB_PR_PRD_INFO A --상품마스터
+						 ON Z.CO_CD = A.CO_CD
+						AND Z.RND_REQ_PRD_ID = A.PRD_ID
+						AND A.MALL_SPR_CD = '20'
+					  INNER JOIN TB_PR_MRO_PRD_INFO B --MRO상품 마스터
+						 ON A.CO_CD = B.CO_CD
+						AND A.PRD_ID = B.PRD_ID
+						AND B.MALL_SPR_CD = '20'
+					   LEFT OUTER JOIN TB_PR_PRD_CLSF_INFO D -- 분류마스터
+						 ON A.CO_CD = D.CO_CD
+						AND A.PRD_CLCD = D.PRD_CLCD
+					   LEFT OUTER JOIN TB_PR_NEW_PRD_CUST_REQ_INFO G -- 신규상품
+						 ON Z.CO_CD = G.CO_CD
+						AND Z.NEW_PRD_REQ_NO = G.NEW_PRD_REQ_NO
+					   LEFT OUTER JOIN TB_CC_MBR_BASIS H --회원
+						 ON G.CO_CD = H.CO_CD
+						AND G.REGPSN_ID = H.MBR_ID
+					   LEFT OUTER JOIN TB_CC_BZPLC_BASIS I --사업장
+						 ON H.CO_CD = I.CO_CD
+						AND H.BZPLC_ID = I.BZPLC_ID
+					   LEFT OUTER JOIN TB_CC_DEPT_BASIS J --부서
+					 	 ON H.CO_CD = J.CO_CD
+						AND H.DEPT_ID = J.DEPT_ID
+					   LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS K --운영단위
+						 ON J.CO_CD = K.CO_CD
+						AND J.OPR_UNIT_ID = K.OPR_UNIT_ID
+					   LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO P
+						 ON K.CO_CD = P.CO_CD
+						AND K.SALS_CHRPSN_ID = P.OPRTR_ID
+					   LEFT OUTER JOIN TB_DP_PRD_DISP_STATS_INFO C -- 진열정보
+						 ON A.CO_CD = C.CO_CD
+						AND A.PRD_ID = C.PRD_ID
+						AND ((B.PUB_ONLY_SPR_CD = 'P' AND C.BZPLC_ID = '*' AND C.OPR_UNIT_ID = '*')
+							OR (B.PUB_ONLY_SPR_CD = 'E' AND C.BZPLC_ID = I.BZPLC_ID AND C.OPR_UNIT_ID = K.OPR_UNIT_ID))
+					   LEFT JOIN TB_CO_CTRY_INFO L -- 국가
+						 ON A.CO_CD = L.CO_CD
+						AND B.ORGPLC_CTRY_CD = L.CTRY_SPR_CD
+					   LEFT OUTER JOIN TB_IV_PRD_INVN_DTLS M
+					     ON M.CO_CD = A.CO_CD
+					    AND M.PRD_ID = A.PRD_ID
+					    AND M.BSS_DT = (SELECT /*+ INDEX_DESC(A TB_IV_PRD_INVN_DTLS_PK) */
+									           BSS_DT
+									      FROM TB_IV_PRD_INVN_DTLS A
+										 WHERE 0=0
+										   AND CO_CD = #{CO_CD}
+										   AND ROWNUM = 1) -- 임시날짜
+					JOIN
+                    (
+                      SELECT
+                            A.CO_CD,
+                            A.CPRTCP_ID,
+                            C.CPRTCP_KOR_NM AS CPRTCP_NM,
+                            A.CURR_UNIT_CD,
+                            A.PRD_ID,
+                            A.PRD_PRC,
+                            FN_PC_MIN_ODR_QTY(A.CO_CD,A.PRD_ID)  MIN_ODR_QTY,
+                            A.PCPRC_INC_YN,
+                            A.VLD_STR_DT,
+                            A.VLD_END_DT
+                        FROM TB_PC_CPRTCP_LWST_PRC_INFO  A
+                            INNER JOIN
+                            TB_CP_CPRTCP_BASIS C
+                            ON  C.CO_CD = A.CO_CD
+                            AND C.CPRTCP_ID = A.CPRTCP_ID
+                    )    N
+                    ON N.CO_CD = A.CO_CD  
+                   AND N.PRD_ID = A.PRD_ID
+                   LEFT JOIN TB_CP_CPRTCP_BASIS O
+                    ON O.CO_CD = Z.CO_CD
+                   AND O.CPRTCP_ID = Z.REGPSN_ID
+                 WHERE NOT EXISTS ( SELECT 'X' FROM TB_PR_NEW_PRD_CUST_REQ_INFO WHERE CO_CD = Z.CO_CD AND NEW_PRD_REQ_NO = Z.NEW_PRD_REQ_NO AND REQ_SBJ_CD = '20' )	
+				    )A1
+			   LEFT JOIN TB_CO_MBR_OPRTR_INFO B1
+				 ON 1=1
+				AND B1.CO_CD = A1.CO_CD 
+				AND B1.OPRTR_ID = A1.OPRTR_ID
+			   LEFT JOIN TB_CO_MBR_OPRTR_INFO C1
+				 ON 1=1
+				AND C1.CO_CD = A1.CO_CD 
+				AND C1.OPRTR_ID = A1.OPRTR_ID1
+        ]]>
+        <if test="PRD_ID_CNT > 0">
+		      INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+				 ON 0=0
+				AND S2.SES_ID        = #{SES_ID}
+				AND S2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				AND S2.COL_ITM       = 'PRD_ID'
+				AND A1.PRD_ID LIKE '%' || S2.COND_DATA_VAL || '%' 
+						         </if>
+		<if test="PRD_CLCD_CNT > 0">
+			  INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S5
+			     ON 0=0
+			    AND S5.SES_ID        = #{SES_ID}
+			    AND S5.INQ_COND_DTLS = #{INQ_COND_DTLS}
+			    AND S5.COL_ITM       = 'PRD_CLCD'
+			    AND S5.COND_DATA_VAL = A1.PRD_CLCD
+						         </if>
+		<if test="REQ_NO_CNT > 0">
+			  INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S5
+			     ON 0=0
+			    AND S5.SES_ID        = #{SES_ID}
+			    AND S5.INQ_COND_DTLS = #{INQ_COND_DTLS}
+			    AND S5.COL_ITM       = 'REQ_NO'
+			    AND A1.NEW_PRD_REQ_NO LIKE '%' || S5.COND_DATA_VAL || '%' 
+						         </if>
+		<if test="REQ_BZPLC_CNT > 0">
+			  INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S5
+			     ON 0=0
+			    AND S5.SES_ID        = #{SES_ID}
+			    AND S5.INQ_COND_DTLS = #{INQ_COND_DTLS}
+			    AND S5.COL_ITM       = 'REQ_BZPLC'
+			    AND S5.COND_DATA_VAL = A1.BZPLC_ID 
+						         </if>
+		<if test="REQ_OPR_UNIT_CNT > 0">
+			  INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S5
+			     ON 0=0
+			    AND S5.SES_ID        = #{SES_ID}
+			    AND S5.INQ_COND_DTLS = #{INQ_COND_DTLS}
+			    AND S5.COL_ITM       = 'REQ_OPR_UNIT'
+			    AND S5.COND_DATA_VAL = A1.OPR_UNIT_ID 
+						         </if>				         
+              WHERE 1=1
+                AND A1.PUB_ONLY_SPR_CD = 'P'
+        <if test="PRC_PROC_STATS_CD != null and PRC_PROC_STATS_CD != ''" >
+                AND A1.PRC_STATE_CD = #{PRC_PROC_STATS_CD}
+        </if>
+        <if test="REQ_DT_FNL_PROC_DT_SPR != null and REQ_DT_FNL_PROC_DT_SPR != ''">
+   	  		<if test="REQ_DT_FNL_PROC_DT_SPR == '10'">
+        	    AND A1.PRD_REG_DTM BETWEEN TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY.MM.DD') || ' 00:00:00' AND TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY.MM.DD') || ' 23:59:59'
+            </if>
+            <if test="REQ_DT_FNL_PROC_DT_SPR == '20'">
+        	    AND A1.PRC_REG_DTM BETWEEN TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY.MM.DD') || ' 00:00:00' AND TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY.MM.DD') || ' 23:59:59'
+            </if>
+        </if>
+        <if test="CHRPSN_ID != null and CHRPSN_ID != ''" >
+        	<if test="CHRPSN_SPR_CD == '10'" >
+        	    AND	A1.OPRTR_ID = #{CHRPSN_ID} /* 영업담당자 */
+        	</if>
+        	<if test="CHRPSN_SPR_CD == '20'" >
+        	    AND A1.OPRTR_ID1 = #{CHRPSN_ID} /* 구매담당자 */
+        	</if>
+        </if>
+        <choose>
+            <when test='(SORT_COLUMN != null and SORT_COLUMN != "") and (SORT_TYPE != null and SORT_TYPE != "")'>
+              ORDER BY A1.${SORT_COLUMN} ${SORT_TYPE}
+            </when>
+            <otherwise>
+              ORDER BY A1.PRD_ID ,A1.NEW_PRD_REQ_NO
+            </otherwise>
+        </choose>
+             OFFSET #{START_NUM} ROWS FETCH FIRST #{ROW_COUNT} ROWS ONLY
+    </select>
+
+    
+    <select id="selectPubPrdProcStbCount" parameterType="HashMap" resultType="Integer">
+        /* PubPrdProcStbDao.selectPubPrdProcStbCount 공용상품처리대기 카운트 조회 */
+        <![CDATA[
+             SELECT COUNT(1) AS CNT
+		       FROM (SELECT 0 AS CHK,
+							A.CO_CD,
+							A.PRD_ID,
+							TO_NUMBER(A.PRD_ID) AS PRD_ID_NUM,
+							Z.NEW_PRD_REQ_NO AS NEW_PRD_REQ_NO, --신규상품요청번호
+							A.PRD_CLCD,
+							B.PUB_ONLY_SPR_CD,
+							SEL_MTHD_CD AS SEL_MTHD_CD,
+							B.MRO_PRD_STATS_CD,
+							DECODE(B.MRO_PRD_STATS_CD,'00','사용','10','미사용','20','종결') AS MRO_PRD_STATS_NM,
+							DECODE(A.PRD_USE_YN,'Y','사용','미사용') AS PRD_USE_YN,
+							C.DISP_STATS_CD,
+							FN_COM_DTL_CDNM('KO','DISP_STATS_CD',C.DISP_STATS_CD) AS DISP_STATS_NM,
+							A.PRD_NM,
+							B.MNFR_NO,
+							TRIM(TO_CHAR(B.BASIS_UNIT_QTY,'999,999,999,999,999'))
+                               ||' '
+                               ||B.BASIS_UNIT_CD
+                               ||CASE WHEN B.BASIS_UNIT_QTY > 1
+                                       AND B.SELL_UNIT_CD IS NOT NULL
+                                       AND B.BASIS_UNIT_CD != B.SELL_UNIT_CD
+                                      THEN '/'||B.SELL_UNIT_CD
+                               END                                          AS SELL_UNIT_CD,-- 주문단위
+							B.ORGPLC_CTRY_CD,
+							I.BZPLC_ID AS BZPLC_ID,
+							I.BZPLC_NM AS BZPLC_NM,
+							K.OPR_UNIT_NM AS OPR_UNIT_NM,
+							K.OPR_UNIT_ID AS OPR_UNIT_ID,
+							DECODE(G.REQ_SBJ_CD, '30', O.CPRTCP_ID, H.MBR_ID) AS MEM_ID,
+							DECODE(G.REQ_SBJ_CD, '30', O.CPRTCP_KOR_NM, H.MBR_NM) AS MEM_NM,
+							B.DLV_LT AS DLV_LT,
+							TO_CHAR(Z.REG_DTM,'YYYY.MM.DD HH24:MI:SS') AS PRD_REG_DTM,
+							TO_CHAR(C.REG_DTM,'YYYY.MM.DD HH24:MI:SS') AS PRC_REG_DTM,
+							A.PRC_APLY_SPR_CD,
+							FN_COM_DTL_CDNM('KO','INVN_STATS_CD',M.INVN_STATS_CD) AS INVN_STATS_NM,
+							FN_PR_ATTR_VAL_LIST(#{CO_CD},A.PRD_ID) AS ATTR_VAL,
+							FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD',B.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM,
+							FN_COM_DTL_CDNM('KO','SEL_MTHD_CD',SEL_MTHD_CD) AS SEL_MTHD_NM,
+							FN_COM_DTL_CDNM('KO','PRC_APLY_SPR_CD',A.PRC_APLY_SPR_CD) AS PRC_APLY_SPR_NM,
+							FN_PR_FULL_CLSF_NM(#{CO_CD},A.PRD_CLCD) AS PRD_CLCD_NM,
+							(SELECT Z.MRO_MNFR_NM FROM TB_PR_MNFR_INFO Z WHERE Z.CO_CD = A.CO_CD AND Z.MNFR_NO = B.MNFR_NO) MNFR_NM,
+							CASE WHEN (SELECT count(*) FROM TB_SA_EXHBN_CATG_PRD_DTL Z INNER JOIN TB_SA_EXHBN_INFO X ON Z.CO_CD = X.CO_CD	AND Z.EXHBN_SEQ = X.EXHBN_SEQ AND X.USE_YN = 'Y' WHERE Z.PRD_ID = A.PRD_ID) > 0 THEN '대상' ELSE '미대상' END  AS EXHBN_CNT,
+							L.CTRY_NM AS ORGPLC_CTRY_NM,
+							Z.REG_DIS_RSN,
+							K.SALS_TEAM_CD,
+							K.SALS_CHRPSN_ID AS OPRTR_ID,
+							FN_RD_CHRPSN_ID(A.CO_CD,B.MNFR_NO,A.PRD_CLCD,'30') OPRTR_ID1 /*구매담당자ID*/
+                            ,CASE WHEN C.PRD_ID IS NULL THEN '10' ELSE '20' END AS PRC_STATE_CD
+                            ,CASE WHEN C.PRD_ID IS NULL THEN '가격등록요청' ELSE '가격등록완료' END AS PRC_STATE_NM
+					   FROM TB_PR_NEW_PRD_REQ_PROC Z
+					  INNER JOIN TB_PR_PRD_INFO A --상품마스터
+						 ON Z.CO_CD = A.CO_CD
+						AND Z.RND_REQ_PRD_ID = A.PRD_ID
+						AND A.MALL_SPR_CD = '20'
+					  INNER JOIN TB_PR_MRO_PRD_INFO B --MRO상품 마스터
+						 ON A.CO_CD = B.CO_CD
+						AND A.PRD_ID = B.PRD_ID
+						AND B.MALL_SPR_CD = '20'
+					   LEFT OUTER JOIN TB_PR_PRD_CLSF_INFO D -- 분류마스터
+						 ON A.CO_CD = D.CO_CD
+						AND A.PRD_CLCD = D.PRD_CLCD
+					   LEFT OUTER JOIN TB_PR_NEW_PRD_CUST_REQ_INFO G -- 신규상품
+						 ON Z.CO_CD = G.CO_CD
+						AND Z.NEW_PRD_REQ_NO = G.NEW_PRD_REQ_NO
+					   LEFT OUTER JOIN TB_CC_MBR_BASIS H --회원
+						 ON G.CO_CD = H.CO_CD
+						AND G.REGPSN_ID = H.MBR_ID
+					   LEFT OUTER JOIN TB_CC_BZPLC_BASIS I --사업장
+						 ON H.CO_CD = I.CO_CD
+						AND H.BZPLC_ID = I.BZPLC_ID
+					   LEFT OUTER JOIN TB_CC_DEPT_BASIS J --부서
+					 	 ON H.CO_CD = J.CO_CD
+						AND H.DEPT_ID = J.DEPT_ID
+					   LEFT OUTER JOIN TB_CC_OPR_UNIT_BASIS K --운영단위
+						 ON J.CO_CD = K.CO_CD
+						AND J.OPR_UNIT_ID = K.OPR_UNIT_ID
+					   LEFT OUTER JOIN TB_CO_MBR_OPRTR_INFO P
+						 ON K.CO_CD = P.CO_CD
+						AND K.SALS_CHRPSN_ID = P.OPRTR_ID
+					   LEFT OUTER JOIN TB_DP_PRD_DISP_STATS_INFO C -- 진열정보
+						 ON A.CO_CD = C.CO_CD
+						AND A.PRD_ID = C.PRD_ID
+						AND ((B.PUB_ONLY_SPR_CD = 'P' AND C.BZPLC_ID = '*' AND C.OPR_UNIT_ID = '*')
+							OR (B.PUB_ONLY_SPR_CD = 'E' AND C.BZPLC_ID = I.BZPLC_ID AND C.OPR_UNIT_ID = K.OPR_UNIT_ID))
+					   LEFT JOIN TB_CO_CTRY_INFO L -- 국가
+						 ON A.CO_CD = L.CO_CD
+						AND B.ORGPLC_CTRY_CD = L.CTRY_SPR_CD
+					   LEFT OUTER JOIN TB_IV_PRD_INVN_DTLS M
+					     ON M.CO_CD = A.CO_CD
+					    AND M.PRD_ID = A.PRD_ID
+					    AND M.BSS_DT = (SELECT /*+ INDEX_DESC(A TB_IV_PRD_INVN_DTLS_PK) */
+									           BSS_DT
+									      FROM TB_IV_PRD_INVN_DTLS A
+										 WHERE 0=0
+										   AND CO_CD = #{CO_CD}
+										   AND ROWNUM = 1) -- 임시날짜
+					  JOIN
+                    (
+                      SELECT
+                            A.CO_CD,
+                            A.CPRTCP_ID,
+                            C.CPRTCP_KOR_NM AS CPRTCP_NM,
+                            A.CURR_UNIT_CD,
+                            A.PRD_ID,
+                            A.PRD_PRC,
+                            FN_PC_MIN_ODR_QTY(A.CO_CD,A.PRD_ID)  MIN_ODR_QTY,
+                            A.PCPRC_INC_YN,
+                            A.VLD_STR_DT,
+                            A.VLD_END_DT
+                        FROM TB_PC_CPRTCP_LWST_PRC_INFO  A
+                            INNER JOIN
+                            TB_CP_CPRTCP_BASIS C
+                            ON  C.CO_CD = A.CO_CD
+                            AND C.CPRTCP_ID = A.CPRTCP_ID
+                    )    N
+                    ON N.CO_CD = A.CO_CD  
+                   AND N.PRD_ID = A.PRD_ID
+                   LEFT JOIN TB_CP_CPRTCP_BASIS O
+                    ON O.CO_CD = Z.CO_CD
+                   AND O.CPRTCP_ID = Z.REGPSN_ID
+                 WHERE NOT EXISTS ( SELECT 'X' FROM TB_PR_NEW_PRD_CUST_REQ_INFO WHERE CO_CD = Z.CO_CD AND NEW_PRD_REQ_NO = Z.NEW_PRD_REQ_NO AND REQ_SBJ_CD = '20' )  						   
+				    )A1
+			   LEFT JOIN TB_CO_MBR_OPRTR_INFO B1
+				 ON 1=1
+				AND B1.CO_CD = A1.CO_CD 
+				AND B1.OPRTR_ID = A1.OPRTR_ID
+			   LEFT JOIN TB_CO_MBR_OPRTR_INFO C1
+				 ON 1=1
+				AND C1.CO_CD = A1.CO_CD 
+				AND C1.OPRTR_ID = A1.OPRTR_ID1
+        ]]>
+        <if test="PRD_ID_CNT > 0">
+		      INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S2
+				 ON 0=0
+				AND S2.SES_ID        = #{SES_ID}
+				AND S2.INQ_COND_DTLS = #{INQ_COND_DTLS}
+				AND S2.COL_ITM       = 'PRD_ID'
+				AND A1.PRD_ID LIKE '%' || S2.COND_DATA_VAL || '%' 
+						         </if>
+		<if test="PRD_CLCD_CNT > 0">
+			  INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S5
+			     ON 0=0
+			    AND S5.SES_ID        = #{SES_ID}
+			    AND S5.INQ_COND_DTLS = #{INQ_COND_DTLS}
+			    AND S5.COL_ITM       = 'PRD_CLCD'
+			    AND S5.COND_DATA_VAL = A1.PRD_CLCD
+						         </if>
+		<if test="REQ_NO_CNT > 0">
+			  INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S5
+			     ON 0=0
+			    AND S5.SES_ID        = #{SES_ID}
+			    AND S5.INQ_COND_DTLS = #{INQ_COND_DTLS}
+			    AND S5.COL_ITM       = 'REQ_NO'
+			    AND A1.NEW_PRD_REQ_NO LIKE '%' || S5.COND_DATA_VAL || '%' 
+						         </if>
+		<if test="REQ_BZPLC_CNT > 0">
+			  INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S5
+			     ON 0=0
+			    AND S5.SES_ID        = #{SES_ID}
+			    AND S5.INQ_COND_DTLS = #{INQ_COND_DTLS}
+			    AND S5.COL_ITM       = 'REQ_BZPLC'
+			    AND S5.COND_DATA_VAL = A1.BZPLC_ID 
+						         </if>
+		<if test="REQ_OPR_UNIT_CNT > 0">
+			  INNER JOIN TB_OD_ODR_INQ_TGT_DTLS S5
+			     ON 0=0
+			    AND S5.SES_ID        = #{SES_ID}
+			    AND S5.INQ_COND_DTLS = #{INQ_COND_DTLS}
+			    AND S5.COL_ITM       = 'REQ_OPR_UNIT'
+			    AND S5.COND_DATA_VAL = A1.OPR_UNIT_ID 
+						         </if>				         
+              WHERE 1=1
+                AND A1.PUB_ONLY_SPR_CD = 'P'
+        <if test="PRC_PROC_STATS_CD != null and PRC_PROC_STATS_CD != ''" >
+                AND A1.PRC_STATE_CD = #{PRC_PROC_STATS_CD}
+        </if>
+        <if test="REQ_DT_FNL_PROC_DT_SPR != null and REQ_DT_FNL_PROC_DT_SPR != ''">
+   	  		<if test="REQ_DT_FNL_PROC_DT_SPR == '10'">
+        	    AND A1.PRD_REG_DTM BETWEEN TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY.MM.DD') || ' 00:00:00' AND TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY.MM.DD') || ' 23:59:59'
+            </if>
+            <if test="REQ_DT_FNL_PROC_DT_SPR == '20'">
+            	AND A1.PRC_REG_DTM BETWEEN TO_CHAR(TO_DATE(#{DATE_FR_DT},'YYYYMMDD'),'YYYY.MM.DD') || ' 00:00:00' AND TO_CHAR(TO_DATE(#{DATE_TO_DT},'YYYYMMDD'),'YYYY.MM.DD') || ' 23:59:59'
+            </if>
+        </if>
+        <if test="CHRPSN_ID != null and CHRPSN_ID != ''" >
+        	<if test="CHRPSN_SPR_CD == '10'" >
+        	    AND	A1.OPRTR_ID = #{CHRPSN_ID} /* 영업담당자 */
+        	</if>
+        	<if test="CHRPSN_SPR_CD == '20'" >
+        	    AND A1.OPRTR_ID1 = #{CHRPSN_ID} /* 구매담당자 */
+        	</if>
+        </if>
+    </select>
+
+</mapper>
+

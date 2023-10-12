@@ -1,0 +1,594 @@
+<!DOCTYPE HTML>
+<html lang="ko">
+
+<head>
+	<meta charset="utf-8">
+	<title>코딩맵: SERVEONE(BO) </title>
+	<!-- meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width" -->
+	<script src="./js/lib/jquery-1.11.2.min.js"></script>
+
+	<style type="text/css">
+		/** 공통 **/
+		body { width: 100%; background-color: #ccc }
+		* { margin: 0; padding: 0; font-family: HelveticaNeue-Light, AppleSDGothicNeo-Light, 'Malgun Gothic', '맑은 고딕', sans-serif; }
+		#wrap { position: relative; padding: 20px 15px 20px 15px; line-height: 17px; font-size: 12px; font-family: "돋움", "san-serif" }
+		h1 { margin: 0 0 20px 0 }
+		h2 { margin: 0 0 10px 0 }
+
+		/* 테이블 */
+		table { border-collapse: collapse; width: 85%; margin: 0 0 40px 0 }
+		table th { border: 1px solid #ccc; padding: 5px 0 2px }
+		table thead th { padding: 6px 5px 3px 5px; color: #fff; background-color: #111 }
+		table tbody td { padding: 6px 5px 3px 5px; border: 1px solid #ccc; text-align: left; background-color: #FFFFFF }
+		table td.depth1 { font-weight: bold; background-color: #1056ad }
+		table td[title=Directory],
+		table td[title=완료일] {text-align:center;}
+		table tr:nth-child(even) td { background-color: #efefef }
+		table a { margin: 0 0 0 10px; text-decoration: none; font-weight: bold;}
+		a:hover { color: #000; text-decoration: underline; font-weight: bold }
+		table tr.new td { background-color: #fffceb; }
+		table tr:nth-child(even).new td { background-color: #fffad6; }
+		/** 파일 정보박스 **/
+		#info {position:fixed; top:40px; left: 85%; width: 200px; padding: 10px; border: 1px solid #ccc; text-align: left; background-color: #FFFFFF }
+		#info ul.info_class { padding: 0 0 0 15px }
+		#info ul.info_class li { margin: 0 0 5px 0; vertical-align: middle }
+		#info ul.info_class span { display: inline-block; width: 70px }
+		#info a { text-decoration: none; font-weight: bold; color: #9F9C9C }
+		#info a:hover { color: #000; text-decoration: underline; font-weight: bold }
+		#info ul.number { padding: 10px 0 0 }
+		#info ul.number li { margin: 4px 0; overflow: hidden; *zoom: 1 }
+		#info ul.number li span { display: block; float: left; width: 80px }
+		#info legend { color: #222; font-size: 22px; letter-spacing: -.09em }
+		hr { margin: 20px 0; color: #eee }
+		#info ul.quick_links { padding: 0 0 10px 15px }
+		#info ul.quick_links li { margin: 4px 0 }
+		#info ul.quick_links li a > em{display:inline-block; background: #5c076b; color:#fff;padding:0 4px; box-sizing:border-box;
+			margin-left:5px; line-height:16px; height:17px; text-align: center; font-size:11px; font-style:normal; animation: new 3s
+		ease-in alternate-reverse  infinite;}
+		@keyframes new{
+			0% {background:#ff652d;}
+			50% {background:#ff4989;}
+			100% {background:#5c076b;}
+		}
+		.list_txt { display: none; margin: 0 0 30px 0 }
+		.list_txt strong { font-size: 14px }
+		.incompletion { font-size: 12px; color: #999; font-weight: bold }
+		.verify_complete { font-size: 12px; color: green; font-weight: bold }
+		.pub_complete { font-size: 12px; color: blue; font-weight: bold }
+		.no_cont { font-size: 12px; color: #333; font-weight: bold }
+		.guide { font-size: 12px; color: #9c8874; font-weight: bold }
+		.new { background: #fffad6; font-size: 12px; color: #333; }
+		.info_class .new { font-weight: bold; }
+		.UI_complete { font-size: 12px; color: black; font-weight: bold }
+		.deb2 { font-size: 12px; color: #5c076b; font-weight: bold }
+		.commu { font-size: 12px; color: #FF6600; font-weight: bold }
+		.none { font-size: 12px; color: #000; font-weight: bold }
+		.red { color: red }
+		#tot_com { color: blue }
+		#ok_file { color: green }
+		#tot_icom { color: #999 }
+		/* fieldset#info legend {} */
+		a.modify_link { color: #fff; background-color: #777; border-radius: 3px; padding: 5px 10px; font-size: 12px; text-decoration: none }
+		a.modify_link:hover { text-decoration: none; background-color: #444 }
+		.activeLink { color: red !important; font-size: 16px; font-weight: bold !important; }
+		.deprecated td {text-decoration:line-through; background-color:#555 !important;}
+
+		.totalCountList {width:200px; margin-bottom:40px;}
+		.totalCountList th, .totalCountList td {border:1px solid #a1a1a1; font-size:12px; font-weight:normal; text-align:center; background:#fff !important;}
+		.modTable {padding:2px; color:yellow; font-size:14px; font-weight:bold; background-color:#000;}
+
+		/* @Media Query
+		------------------- ---------------------- */
+		@media only screen and (max-width:800px) {
+			#info { display: none }
+			table { min-width: 600px; width: 100% }
+			#list { width: 100%; min-width: 600px; }
+			* { box-sizing: border-box; }
+		}
+	</style>
+	<script>
+		$(function () {
+			$('table td a').on('click', function () {
+				$('table td a').removeClass('activeLink');
+				$(this).addClass('activeLink');
+			});
+
+
+			var objDone = $('.done');
+			$.each(objDone, function(index, item) {
+				$('#sumCount').text(index + 1);
+			})
+
+		});
+
+		function openWin(path, width, height){
+			window.open(path, "", 'width=' + width + ', height=' + height + ', toolbar=no, menubar=no, scrollbars=yes, resizable=no"');
+		}
+
+	</script>
+</head>
+
+<body>
+<div id="wrap">
+	<fieldset id="info">
+		<legend>[ 파일정보 ]</legend>
+		<ul class="quick_links">
+			<li><a href="#s1">공통가이드</a></li>
+			<li><a href="#s10">가격관리</a></li>
+			<li><a href="#s30">R&D 상품관리</a></li>
+		</ul>
+	</fieldset>
+	<h1>SERVEONE : html5/utf-8 [SSP BO 코딩맵]</h1>
+
+	<h2 id="s1">공통</h2>
+	<table class="countTable">
+		<thead>
+		<tr class="title">
+			<th>1Depth</th>
+			<th>2Depth</th>
+			<th>3Depth</th>
+			<th>화면명</th>
+			<th>Directory</th>
+			<th>파일명</th>
+			<th>완료일</th>
+			<th>수정일 및 내용</th>
+			<th>비고</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td class="deb2" title="1Depth">BO Page</td>
+			<td title="2Depth">목록</td>
+			<td title="3Depth"></td>
+			<td title="화면명"></td>
+			<td title="Directory">/html/</td>
+			<td title="파일명"><a href="./html/_svo.01.product.list.html" target="_blank" title="새창">_svo.01.product.list.html</a></td>
+			<td title="완료일"></td>
+			<td title="수정일 및 내용"></td>
+			<td title="비고"></td>
+		</tr>
+		<tr>
+			<td class="deb2" title="1Depth">BO Page</td>
+			<td title="2Depth">상세</td>
+			<td title="3Depth"></td>
+			<td title="화면명"></td>
+			<td title="Directory">/html/</td>
+			<td title="파일명"><a href="./html/_svo.01.product.view.html" target="_blank" title="새창">_svo.01.product.view.html</a></td>
+			<td title="완료일"></td>
+			<td title="수정일 및 내용"></td>
+			<td title="비고"></td>
+		</tr>		
+		</tbody>
+	</table>
+
+	<div id="list">
+		<h2 id="s10">가격관리</h2>
+		<table class="countTable">
+			<thead>
+			<tr class="title">
+				<th>1Depth</th>
+				<th>2Depth</th>
+				<th>3Depth</th>
+				<th>화면명</th>
+				<th>Directory</th>
+				<th>파일명</th>
+				<th>완료일</th>
+				<th>수정일 및 내용</th>
+				<th>비고</th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)가격정보 등록 공용상품 선택</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_06</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_06.html', 740, 400); return false;">SSP_BO_CA_06.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">공용상품 기준판매가 등록</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_07</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_CA_07.html" class="" target="_blank" title="새창">SSP_BO_CA_07.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)Condition 정보</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_25</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_25.html', 1236, 800); return false;">SSP_BO_CA_25.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)배송가능지역 정보 </td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_26</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_26.html', 740, 600); return false;">SSP_BO_CA_26.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)판매가 입력 </td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_28</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_28.html', 1236, 800); return false;">SSP_BO_CA_28.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)배송가능지역 정보 </td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_29</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_29.html', 740, 700); return false;">SSP_BO_CA_29.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)Condition 이력조회 </td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_32</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_32.html', 1236, 700); return false;">SSP_BO_CA_32.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">공용상품 기준판매가 상세</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_09</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="#none" class="" target="_blank" title="새창">SSP_BO_CA_09.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고">SSP_BO_CA_07 동일</td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)공용상품 영업지정판매가 등록</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_36</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_36.html', 920, 700); return false;">SSP_BO_CA_36.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)공용상품 영업지정판매가 상세</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_38</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_38.html', 920, 700); return false;">SSP_BO_CA_38.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)영업지정판매가 변경이력</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_34</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_34.html', 1236, 700); return false;">SSP_BO_CA_34.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)가격정보 등록 전용상품 선택</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_12</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide">SSP_BO_CA_12.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고">SSP_BO_CA_06 동일</td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">전용상품 노출판매가 등록</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_13</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_CA_13.html" class="" target="_blank" title="새창">SSP_BO_CA_13.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">전용상품 노출판매가 상세</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_15</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="#none" class="" target="_blank" title="새창">SSP_BO_CA_15.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고">SSP_BO_CA_13 동일</td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">절사관리</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_20</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_CA_20.html" class="" target="_blank" title="새창">SSP_BO_CA_20.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">상세카테고리계획매익률 목록</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_21</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_CA_21.html" class="" target="_blank" title="새창">SSP_BO_CA_21.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)카테고리계획매익율 목록</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_23</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_23.html', 1236, 700); return false;">SSP_BO_CA_23.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">일반고객할증률</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_24</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_CA_24.html" class="" target="_blank" title="새창">SSP_BO_CA_24.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">내부최저판매가 관리</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_40</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_CA_40.html" class="" target="_blank" title="새창">SSP_BO_CA_40.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">기준판매가 정기 배치</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_42</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_CA_42.html" class="" target="_blank" title="새창">SSP_BO_CA_42.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth"></td>
+				<td title="2Depth">(팝업)배치만들기</td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_CA_42_01</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_CA_42_01.html', 740, 500); return false;">SSP_BO_CA_42_01.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			</tbody>
+		</table>
+
+		<h2 id="s30">R&D상품관리</h2>
+		<table class="countTable">
+			<thead>
+			<tr class="title">
+				<th>1Depth</th>
+				<th>2Depth</th>
+				<th>3Depth</th>
+				<th>화면명</th>
+				<th>Directory</th>
+				<th>파일명</th>
+				<th>완료일</th>
+				<th>수정일 및 내용</th>
+				<th>비고</th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr>
+				<td class="deb2" title="1Depth">R&D등록상품 상세</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_03</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_RD_03.html" class="" target="_blank" title="새창">SSP_BO_RD_03.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">구매정보 생성</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_13</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_RD_13.html" class="" target="_blank" title="새창">SSP_BO_RD_13.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">구매정보 상세</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_14</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_RD_14.html" class="" target="_blank" title="새창">SSP_BO_RD_14.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">구매정보 변경이력 상세</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_15</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_RD_15.html" class="" target="_blank" title="새창">SSP_BO_RD_15.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">견적요청 상세</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_17</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_RD_17.html" class="" target="_blank" title="새창">SSP_BO_RD_17.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고">완료, 미확정 부분 제외</td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">R&D상품 등록</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_20</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_RD_20.html" class="" target="_blank" title="새창">SSP_BO_RD_20.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고">완료 부분 제외</td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)R&D상품 등록불가 처리</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_21</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_RD_21.html', 740, 400); return false;">SSP_BO_RD_21.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">상품별 화학물질정보 목록</td>
+				<td title="2Depth">상품별 화학물질정보</td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_42</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_RD_42.html" class="" target="_blank" title="새창">SSP_BO_RD_42.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth"></td>
+				<td title="2Depth">CAS No.별 화학물질정보</td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_43</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_RD_43.html" class="" target="_blank" title="새창">SSP_BO_RD_43.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">상품별 화학물질정보 등록</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_45</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_RD_45.html" class="" target="_blank" title="새창">SSP_BO_RD_45.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">MSDS 목록</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_46</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a href="./html/SSP_BO_RD_46.html" class="" target="_blank" title="새창">SSP_BO_RD_46.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)MSDS 등록</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_48</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_RD_48.html', 740, 500); return false;">SSP_BO_RD_48.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)MSDS 상세</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_RD_49</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_RD_49.html', 740, 650); return false;">SSP_BO_RD_49.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			<tr>
+				<td class="deb2" title="1Depth">(팝업)엑셀일괄업로드</td>
+				<td title="2Depth"></td>
+				<td title="3Depth"></td>
+				<td title="화면명">SSP_BO_PA_upload</td>
+				<td title="Directory"></td>
+				<td title="파일명"><a  href="#none" class="guide" onclick="openWin('./html/SSP_BO_PA_upload.html', 740, 500); return false;">SSP_BO_PA_upload.html</a></td>
+				<td title="완료일" class="done"></td>
+				<td title="수정일 및 내용"></td>
+				<td title="비고"></td>
+			</tr>
+			</tbody>
+		</table>
+	</div>
+	<!-- EOD : #list -->
+
+
+</div>
+<!-- EOD : wrap -->
+</body>
+</html>

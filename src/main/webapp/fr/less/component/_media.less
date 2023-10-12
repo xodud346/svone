@@ -1,0 +1,89 @@
+//* class ================================================================== */
+.set-media-aspect(@width: 640, @height: 480, @bgcolor: #eee) {
+    @ratio: ( @height / @width ) * 100;
+    position: relative;
+    height: 20px;
+    padding-bottom: @ratio + 0%;
+    background-color: @bgcolor;
+    .media,
+    > iframe,
+    > div {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+}
+
+.set-alignment(@type:a) when (@type = a) {
+    overflow: hidden;
+    zoom: 1;
+    margin: 10px 0;
+    .image, .head, .body {
+        display: table-cell;
+        vertical-align: top;
+        word-wrap:break-word;
+    }
+    &:after {
+        display: block;
+        content: " ";
+        height: 0;
+        clear: both;
+    }
+    .image {
+        img {
+            max-width: initial;
+        }
+    }
+}
+
+//* less ================================================================== */
+.media-aspect {
+  .set-media-aspect(640, 480, #eee);
+}
+//* css ===================================================================== */
+.thumbnail {
+    display: inline-block;
+    text-align: center;
+    overflow: hidden;
+    img {
+        display: inline-block;
+        // width: 100%;
+    }
+    .caption {
+        strong {
+            display: block;
+        }
+    }
+}
+
+.alignment {
+    .set-alignment(a);
+    .head {
+        display: block;
+        margin: 0 0 10px;
+        font-weight: bold;
+    }
+    .body {
+        overflow: hidden;
+        zoom: 1;
+        word-break: break-all;
+        margin: 0 0 10px;
+    }
+    .left {
+        padding-right: @theme-grid-gutter;
+    }
+    .right {
+        padding-left: @theme-grid-gutter;
+    }
+    &.vtop * {
+        vertical-align: top;
+    }
+    &.vmiddle * {
+        vertical-align: middle;
+    }
+    &.vbottom * {
+        vertical-align: bottom;
+    }
+}

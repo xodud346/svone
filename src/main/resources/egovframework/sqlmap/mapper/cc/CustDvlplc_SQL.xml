@@ -1,0 +1,829 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Dvplc">
+
+    <insert id="insertDvplcInfo" parameterType="HashMap">
+    	/* 배송지 등록 - DvplcMng_SQL.insertDvplcInfo */
+        <selectKey keyProperty="dlvplcId" resultType="String" order="BEFORE">   
+            SELECT SQ_CC_MBR_DLVPLC_BASIS_01.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO TB_CC_MBR_DLVPLC_BASIS 
+                  ( CO_CD
+				  , DLVPLC_ID
+				  , MBR_ID
+				  , RCVR_NM
+				  , ZPCD
+				  , REPR_ADDR
+				  , DTL_ADDR
+				  , HP_NO
+				  , TEL_NO
+				  , BASIS_DLVPLC_YN
+				  , USE_YN
+				  , REGPSN_ID
+				  , REG_DTM
+				  , UPDPSN_ID
+				  , UPD_DTM
+                  )
+                    VALUES 
+				  ( NVL(#{oprtrCoCd}, '1000')
+				  , #{dlvplcId}
+				  , #{mbrId}
+				  , #{rcvrNm}
+				  , #{ZPCD}
+				  , (SELECT FN_CC_ADDR_REPR(#{reprAddr}, #{dtlAddr}) FROM DUAL)
+			      , (SELECT FN_CC_ADDR_DTL (#{reprAddr}, #{dtlAddr}) FROM DUAL)
+				  , #{hpNo}
+				  , #{telNo}
+				  , #{basisDlvplcYn}
+				  , #{useYn}
+				  , #{regpsnId}
+				  , SYSDATE
+				  , #{updpsnId}
+				  , SYSDATE
+				  )
+    </insert>
+	<update id="updateDlvPlcN" parameterType="HashMap">
+		/* 회원 배송지정보 기본배송지 일괄 N으로 수정 - DvplcMng_SQL.updateDlvPlcN */
+		UPDATE TB_CC_MBR_DLVPLC_BASIS			/* 배송지기본 테이블 */
+		   SET BASIS_DLVPLC_YN = 'N'			/* 기본배송지여부 */
+		     , UPDPSN_ID       = #{updpsnId}    /* 수정자ID */
+		     , UPD_DTM         = SYSDATE        /* 수정일자 */
+		 WHERE MBR_ID          = #{mbrId}		/* 회원ID */
+	</update>
+	<update id="updateDlvPlcY" parameterType="HashMap">
+		/* 특정 배송지를 기본배송지로 변경 - DvplcMng_SQL.updateDlvPlcY */
+		UPDATE TB_CC_MBR_DLVPLC_BASIS			    /* TB_배송지기본 테이블 */
+		   SET BASIS_DLVPLC_YN = 'Y'			    /* 기본배송지여부 */
+		     , UPDPSN_ID          = #{updpsnId}     /* 수정자ID */
+		     , UPD_DTM            = SYSDATE         /* 수정일자 */
+		 WHERE DLVPLC_ID          = #{dlvplcId}		/* 회원ID */
+	</update>
+	<select id="selectDlvplcInfo" parameterType="HashMap" resultType="HashMap">
+		/* 배송지정보 단일조회 - DvplcMng_SQL.selectDlvplcInfo */
+        SELECT TCMDB.CO_CD																/* 회사코드 */
+             , TCMDB.DLVPLC_ID															/* 배송지ID */
+             , TCMDB.MBR_ID																/* 회원ID */
+             , TCMB.MBR_NM																/* 회원이름 */
+             , TCBB.BZPLC_ID															/* 사업장ID */
+             , TCBB.BZPLC_NM															/* 사업장이름 */
+             , TCDB.DEPT_ID																/* 부서ID */ 
+             , TCDB.DEPT_NM																/* 부서이름 */
+             , TCDB.OPR_UNIT_ID															/* 운영단위ID */
+             , TCOUB.OPR_UNIT_NM														/* 운영단위이름 */
+             , TCMDB.RCVR_NM															/* 수령인이름 */
+             , TCMDB.ZPCD																/* 우편번호 */
+             , TCMDB.REPR_ADDR															/* 대표주소 */
+             , TCMDB.DTL_ADDR															/* 상세주소 */
+             , TCMDB.HP_NO																/* 휴대폰번호 */
+             , REGEXP_REPLACE(TCMDB.HP_NO, '(02|.{3})(.+)(.{4})', '\1') HP_NO_1			/* 휴대폰번호1 */
+             , REGEXP_REPLACE(TCMDB.HP_NO, '(02|.{3})(.+)(.{4})', '\2') HP_NO_2			/* 휴대폰번호2 */
+             , REGEXP_REPLACE(TCMDB.HP_NO, '(02|.{3})(.+)(.{4})', '\3') HP_NO_3			/* 휴대폰번호3 */
+             , TCMDB.TEL_NO																/* 전화번호 */
+             , REGEXP_REPLACE(TCMDB.TEL_NO, '(02|.{3})(.+)(.{4})', '\1') TEL_NO_1		/* 전화번호1 */
+             , REGEXP_REPLACE(TCMDB.TEL_NO, '(02|.{3})(.+)(.{4})', '\2') TEL_NO_2		/* 전화번호2 */
+             , REGEXP_REPLACE(TCMDB.TEL_NO, '(02|.{3})(.+)(.{4})', '\3') TEL_NO_3		/* 전화번호3 */
+             , TCMDB.BASIS_DLVPLC_YN													/* 기본배송지여부 */
+             , TCMDB.USE_YN 															/* 사용여부 */
+          FROM TB_CC_MBR_DLVPLC_BASIS TCMDB												/* TB_배송지기본 */
+    INNER JOIN TB_CC_MBR_BASIS TCMB ON TCMDB.MBR_ID = TCMB.MBR_ID 						/* TB_회원기본 */
+    INNER JOIN TB_CC_BZPLC_BASIS TCBB ON TCMB.BZPLC_ID = TCBB.BZPLC_ID					/* TB_사업장기본 */
+    INNER JOIN TB_CC_DEPT_BASIS TCDB ON TCMB.DEPT_ID = TCDB.DEPT_ID						/* TB_부서기본 */
+    INNER JOIN TB_CC_OPR_UNIT_BASIS TCOUB ON TCDB.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID 		/* TB_운영단위기본 */
+         WHERE TCMDB.DLVPLC_ID = #{dlvplcId}											/* 배송지ID */
+    </select>
+    <update id="deleteDlvPlcUseYn" parameterType="HashMap">
+		/* 배송지정보 삭제처리(사용여부 N으로 수정) - DvplcMng_SQL.deleteDlvPlcUseYn */
+		UPDATE TB_CC_MBR_DLVPLC_BASIS			/* TB_배송지기본 테이블 */
+		   SET USE_YN      = 'N'				/* 사용여부 */
+		       , UPDPSN_ID = #{oprtrId}
+		       , UPD_DTM = SYSDATE
+		 WHERE DLVPLC_ID   = #{dlvplcId}		/* 배송지ID */
+	</update>
+	<select id="selectBasisDlvplcListCount" parameterType="HashMap" resultType="Integer">
+		/* 다중 기본배송지여부 조회 - DvplcMng_SQL.selectBasisDlvplcListCount */
+        SELECT COUNT(*)
+		  FROM TB_CC_MBR_DLVPLC_BASIS		/* TB_배송지기본 테이블 */
+		 <where>
+			<if test="dlvplcId != null and !dlvplcId.equals('')">
+				AND BASIS_DLVPLC_YN = 'Y' AND DLVPLC_ID IN 
+				<foreach collection="dlvplcId" item="item" index="index"  open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+        </where>
+    </select>
+	<select id="selectBasisDlvplcCount" parameterType="HashMap" resultType="Integer">
+		/* 기본배송지여부 조회 - DvplcMng_SQL.selectBasisDlvplcCount */
+        SELECT COUNT(*)
+		  FROM TB_CC_MBR_DLVPLC_BASIS		/* TB_배송지기본 테이블 */
+		 WHERE DLVPLC_ID = #{dlvplcId}		/* 배송지ID */
+		   AND BASIS_DLVPLC_YN ='Y'			/* 기본배송지 여부 */
+    </select>
+    <select id="selectMbrBasisDlvplcCount" parameterType="HashMap" resultType="Integer">
+		/* 회원 기본배송지 존재여부 조회 - DvplcMng_SQL.selectMbrBasisDlvplcCount */
+        SELECT COUNT(*)
+		  FROM TB_CC_MBR_DLVPLC_BASIS		/* TB_배송지기본 테이블 */
+		 WHERE MBR_ID = #{mbrId}			/* 배송지ID */
+		   AND BASIS_DLVPLC_YN ='Y'			/* 기본배송지 여부 */
+    </select>
+    <select id="selectDlvplcList" parameterType="HashMap" resultType="HashMap">
+    	/* 회원 배송지 리스트 조회 - CustDlvplc_SQL.selectDlvplcList */
+    	<include refid="com.ssp.bo.cc.common.sqlPrefixPagingCamel" />  
+        SELECT LIST.*
+          FROM (
+    	       SELECT '0' AS COL_CHK
+    	            , ROWNUM AS RNUM
+	                , TCMDB.MBR_ID
+	                , TCMB.MBR_NM
+	                , TCMDB.BASIS_DLVPLC_YN
+	                , TCMDB.DLVPLC_ID
+	                , TCMDB.RCVR_NM 
+	                , TCMDB.ZPCD
+	                , TCMDB.REPR_ADDR
+	                , TCMDB.DTL_ADDR
+	                , REGEXP_REPLACE(REPLACE(TCMDB.HP_NO,'-',''), '(02|.{3})(.+)(.{4})', '\1')
+                      || '-' || 
+                      REGEXP_REPLACE(REPLACE(TCMDB.HP_NO,'-',''), '(02|.{3})(.+)(.{4})', '\2')
+                      || '-' || 
+                      REGEXP_REPLACE(REPLACE(TCMDB.HP_NO,'-',''), '(02|.{3})(.+)(.{4})', '\3') AS HP_NO
+                    , REGEXP_REPLACE(REPLACE(TCMDB.HP_NO,'-',''), '(02|.{3})(.+)(.{4})', '\1') AS HP_NO_1
+                    , REGEXP_REPLACE(REPLACE(TCMDB.HP_NO,'-',''), '(02|.{3})(.+)(.{4})', '\2') AS HP_NO_2
+                    , REGEXP_REPLACE(REPLACE(TCMDB.HP_NO,'-',''), '(02|.{3})(.+)(.{4})', '\3') AS HP_NO_3
+                    , CASE WHEN TCMDB.TEL_NO IS NOT NULL
+                                THEN REGEXP_REPLACE(REPLACE(TCMDB.TEL_NO,'-',''), '(02|.{3})(.+)(.{4})', '\1')
+                                     || '-' || 
+                                     REGEXP_REPLACE(REPLACE(TCMDB.TEL_NO,'-',''), '(02|.{3})(.+)(.{4})', '\2')
+                                     || '-' || 
+                                     REGEXP_REPLACE(REPLACE(TCMDB.TEL_NO,'-',''), '(02|.{3})(.+)(.{4})', '\3')
+                           ELSE ''
+                       END TEL_NO
+                    , REGEXP_REPLACE(REPLACE(TCMDB.TEL_NO,'-',''), '(02|.{3})(.+)(.{4})', '\1') AS TEL_NO_1
+                    , REGEXP_REPLACE(REPLACE(TCMDB.TEL_NO,'-',''), '(02|.{3})(.+)(.{4})', '\2') AS TEL_NO_2
+                    , REGEXP_REPLACE(REPLACE(TCMDB.TEL_NO,'-',''), '(02|.{3})(.+)(.{4})', '\3') AS TEL_NO_3
+	                , TCMB.BZPLC_ID
+	                , TCBB.BZPLC_NM
+	                , TCOUB.OPR_UNIT_ID 
+	                , TCOUB.OPR_UNIT_NM
+	                , TCDB.DEPT_ID
+	                , TCDB.DEPT_NM
+	                , TCMDB.USE_YN
+	                , TCMDB.UPD_DTM
+	             FROM TB_CC_MBR_DLVPLC_BASIS TCMDB
+	       INNER JOIN TB_CC_MBR_BASIS      TCMB  ON TCMDB.CO_CD = TCMB.CO_CD  AND TCMDB.MBR_ID  = TCMB.MBR_ID                                               /* TB_회원기본 */
+	       INNER JOIN TB_CC_BZPLC_BASIS    TCBB  ON TCMDB.CO_CD = TCBB.CO_CD  AND TCMB.BZPLC_ID = TCBB.BZPLC_ID                                             /* TB_사업장기본 */
+	       INNER JOIN TB_CC_DEPT_BASIS     TCDB  ON TCMDB.CO_CD = TCDB.CO_CD  AND TCMB.DEPT_ID  = TCDB.DEPT_ID                                              /* TB_부서기본 */
+	       INNER JOIN TB_CC_OPR_UNIT_BASIS TCOUB ON TCMDB.CO_CD = TCOUB.CO_CD AND TCBB.BZPLC_ID = TCOUB.BZPLC_ID AND TCDB.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID   /* TB_운영단위기본 */
+	       <if test=" bzplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'BZPLC_ID'
+	            AND T1.COND_DATA_VAL = TCBB.BZPLC_ID
+		   </if>
+		   <if test=" oprUnitId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T2
+	            ON  T2.SES_ID = #{sesId}
+	            AND T2.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T2.COL_ITM = 'OPR_UNIT_ID'
+	            AND T2.COND_DATA_VAL = TCOUB.OPR_UNIT_ID
+		   </if>
+		   <if test=" deptId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T3
+	            ON  T3.SES_ID = #{sesId}
+	            AND T3.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T3.COL_ITM = 'DEPT_ID'
+	            AND T3.COND_DATA_VAL = TCDB.DEPT_ID
+		   </if>
+		   <if test=" mbrId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T4
+	            ON  T4.SES_ID = #{sesId} 
+	            AND T4.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T4.COL_ITM = 'MBR_ID'
+	            AND T4.COND_DATA_VAL = TCMB.MBR_ID
+		   </if>
+	            WHERE TCMDB.CO_CD = #{coCd}
+	            <if test='basisDlvplcYn != null and !"".equals(basisDlvplcYn)'>
+	            	AND TCMDB.BASIS_DLVPLC_YN = #{basisDlvplcYn}
+	            </if>
+	            <if test='dlvplcId != null and !"".equals(dlvplcId)'>
+	            	AND TCMDB.DLVPLC_ID = #{dlvplcId}
+	            </if>
+	            <if test='useYn != null and !"".equals(useYn)'>
+	            	<choose>
+	            		<when test=' useYn.equals("Y") '>
+	            			AND TCMDB.USE_YN = #{useYn}
+	            		</when>
+	            		<otherwise></otherwise>
+	            	</choose>
+	            </if>
+	           ) LIST
+		<choose>
+			<when test='sortColumn != null and !sortColumn.equals("") and  sortType != null and !sortType.equals("")'>
+				ORDER BY LIST.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY LIST.BASIS_DLVPLC_YN DESC, LIST.MBR_NM ASC</otherwise>
+		</choose>
+        <include refid="com.ssp.bo.cc.common.sqlPostfixPagingCamel" />
+    </select>
+    <select id="selectDlvplcListOrd" parameterType="HashMap" resultType="HashMap">
+    	/* 회원 배송지 리스트 조회 - CustDlvplc_SQL.selectDlvplcListOrd */
+        SELECT '0' AS COL_CHK
+    	     , A.RNUM
+	         , A.MBR_ID
+	         , A.MBR_NM
+	         , A.BASIS_DLVPLC_YN
+	         , A.DLVPLC_ID
+	         , A.RCVR_NM
+	         , A.ZPCD
+	         , A.REPR_ADDR
+	         , A.DTL_ADDR
+              ,          REGEXP_REPLACE(A.HP_NO, '(02|.{3})(.+)(.{4})', '\1')
+               || '-' || REGEXP_REPLACE(A.HP_NO, '(02|.{3})(.+)(.{4})', '\2')
+               || '-' || REGEXP_REPLACE(A.HP_NO, '(02|.{3})(.+)(.{4})', '\3') AS HP_NO
+             , REGEXP_REPLACE(A.HP_NO, '(02|.{3})(.+)(.{4})', '\1') AS HP_NO_1
+             , REGEXP_REPLACE(A.HP_NO, '(02|.{3})(.+)(.{4})', '\2') AS HP_NO_2
+             , REGEXP_REPLACE(A.HP_NO, '(02|.{3})(.+)(.{4})', '\3') AS HP_NO_3
+             , CASE WHEN A.TEL_NO IS NOT NULL
+                         THEN           REGEXP_REPLACE(A.TEL_NO, '(02|.{3})(.+)(.{4})', '\1')
+                              || '-' || REGEXP_REPLACE(A.TEL_NO, '(02|.{3})(.+)(.{4})', '\2')
+                              || '-' || REGEXP_REPLACE(A.TEL_NO, '(02|.{3})(.+)(.{4})', '\3')
+                    ELSE ''
+                END TEL_NO
+             , REGEXP_REPLACE(A.TEL_NO, '(02|.{3})(.+)(.{4})', '\1') AS TEL_NO_1
+             , REGEXP_REPLACE(A.TEL_NO, '(02|.{3})(.+)(.{4})', '\2') AS TEL_NO_2
+             , REGEXP_REPLACE(A.TEL_NO, '(02|.{3})(.+)(.{4})', '\3') AS TEL_NO_3
+	         , A.BZPLC_ID
+	         , A.BZPLC_NM
+	         , A.OPR_UNIT_ID
+	         , A.OPR_UNIT_NM
+	         , A.DEPT_ID
+	         , A.DEPT_NM
+	         , A.USE_YN
+	         , A.UPD_DTM
+	      FROM (
+	           SELECT ROWNUM AS RNUM
+	                , TCMDB.MBR_ID
+	                , TCMB.MBR_NM
+	                , TCMDB.BASIS_DLVPLC_YN
+	                , TCMDB.DLVPLC_ID
+	                , TCMDB.RCVR_NM 
+	                , TCMDB.ZPCD
+	                , TCMDB.REPR_ADDR
+	                , TCMDB.DTL_ADDR
+	                , TCMDB.HP_NO
+	                , TCMDB.TEL_NO
+	                , TCMB.BZPLC_ID
+	                , TCBB.BZPLC_NM
+	                , TCOUB.OPR_UNIT_ID 
+	                , TCOUB.OPR_UNIT_NM
+	                , TCDB.DEPT_ID
+	                , TCDB.DEPT_NM
+	                , TCMDB.USE_YN
+	                , TCMDB.UPD_DTM
+	             FROM TB_CC_MBR_DLVPLC_BASIS TCMDB
+	       INNER JOIN TB_CC_MBR_BASIS TCMB ON TCMDB.MBR_ID = TCMB.MBR_ID 
+	       INNER JOIN TB_CC_BZPLC_BASIS TCBB ON TCMB.BZPLC_ID = TCBB.BZPLC_ID 
+	       INNER JOIN TB_CC_DEPT_BASIS TCDB ON TCMB.DEPT_ID = TCDB.DEPT_ID 
+	       INNER JOIN TB_CC_OPR_UNIT_BASIS TCOUB ON TCDB.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID
+	           ) A
+		<where>
+			<if test="dlvplcId != null and !dlvplcId.equals('')">
+				AND A.DLVPLC_ID = #{dlvplcId}
+			</if>
+			<if test="useYn != null and !useYn.equals('') and !useYn.equals('ALL')">
+				AND A.USE_YN = #{useYn}
+			</if>
+			<if test="bzplcId != null and !bzplcId.equals('')">
+				AND A.BZPLC_ID IN 
+				<foreach collection="bzplcId" item="item" index="index"  open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="bzplcNm != null and !bzplcNm.equals('')">
+				AND A.BZPLC_NM IN 
+				<foreach collection="bzplcNm" item="item" index="index"  open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="deptId != null and !deptId.equals('')">
+				AND A.DEPT_ID IN 
+				<foreach collection="deptId" item="item" index="index"  open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="deptNm != null and !deptNm.equals('')">
+				AND A.DEPT_NM IN 
+				<foreach collection="deptNm" item="item" index="index"  open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="oprUnitId != null and !oprUnitId.equals('')">
+				AND A.OPR_UNIT_ID IN 
+				<foreach collection="oprUnitId" item="item" index="index"  open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="oprUnitNm != null and !oprUnitNm.equals('')">
+				AND A.OPR_UNIT_NM IN 
+				<foreach collection="oprUnitNm" item="item" index="index"  open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="mbrId != null and !mbrId.equals('')">
+				AND A.MBR_ID IN 
+				<foreach collection="mbrId" item="item" index="index"  open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="mbrNm != null and !mbrNm.equals('')">
+				AND A.MBR_NM IN 
+				<foreach collection="mbrNm" item="item" index="index"  open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+		
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.MBR_NM ASC</otherwise>
+		</choose>
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>
+    <select id="selectDlvplcListCountOrd" parameterType="HashMap" resultType="Integer">
+    	/* 회원 배송지 리스트 카운트 조회 - CustDlvplc_SQL.selectDlvplcListCountOrd */
+    	SELECT COUNT(*) 
+          FROM TB_CC_MBR_DLVPLC_BASIS TCMDB
+    INNER JOIN TB_CC_MBR_BASIS TCMB ON TCMDB.MBR_ID = TCMB.MBR_ID 
+    INNER JOIN TB_CC_BZPLC_BASIS TCBB ON TCMB.BZPLC_ID = TCBB.BZPLC_ID 
+    INNER JOIN TB_CC_DEPT_BASIS TCDB ON TCMB.DEPT_ID = TCDB.DEPT_ID 
+    INNER JOIN TB_CC_OPR_UNIT_BASIS TCOUB ON TCDB.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID 
+    <where>
+    	<if test="dlvplcId != null and !dlvplcId.equals('')">
+				AND TCMDB.DLVPLC_ID = #{dlvplcId}
+			</if>
+		<if test="useYn != null and !useYn.equals('') and !useYn.equals('ALL')">
+			AND TCMDB.USE_YN = #{useYn}
+		</if>
+		<if test="bzplcId != null and !bzplcId.equals('')">
+			AND TCBB.BZPLC_ID IN 
+			<foreach collection="bzplcId" item="item" index="index"  open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="bzplcNm != null and !bzplcNm.equals('')">
+			AND TCBB.BZPLC_NM IN 
+			<foreach collection="bzplcNm" item="item" index="index"  open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="deptId != null and !deptId.equals('')">
+			AND TCDB.DEPT_ID IN 
+			<foreach collection="deptId" item="item" index="index"  open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="deptNm!= null and !deptNm.equals('')">
+			AND TCDB.DEPT_NM IN 
+			<foreach collection="deptNm" item="item" index="index"  open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="oprUnitId != null and !oprUnitId.equals('')">
+			AND TCOUB.OPR_UNIT_ID IN 
+			<foreach collection="oprUnitId" item="item" index="index"  open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="oprUnitNm != null and !oprUnitNm.equals('')">
+			AND TCOUB.OPR_UNIT_NM IN 
+			<foreach collection="oprUnitNm" item="item" index="index"  open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="mbrId != null and !mbrId.equals('')">
+			AND TCMB.MBR_ID IN 
+			<foreach collection="mbrId" item="item" index="index"  open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="mbrNm!= null and !mbrNm.equals('')">
+			AND TCMB.MBR_NM IN 
+			<foreach collection="mbrNm" item="item" index="index"  open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+    </where>
+    </select>
+    <select id="selectMbrBasicInfo" parameterType="HashMap" resultType="HashMap">
+    	/* 회원 소속정보 단일조회 - CustDlvplc_SQL.selectMbrBasicInfo */
+		SELECT TCMB.MBR_ID                                                              /* 회원 아이디 */
+			 , TCMB.MBR_NM                                                              /* 회원 이름 */
+			 , TCMB.BZPLC_ID                                                            /* 사업장 아이디 */
+			 , TCBB.BZPLC_NM                                                            /* 사업장 이름 */
+			 , TCOUB.OPR_UNIT_ID                                                        /* 운영단위 아이디 */
+			 , TCOUB.OPR_UNIT_NM                                                        /* 운영단이 이름 */
+			 , TCDB.DEPT_ID                                                             /* 부서 아이디 */
+			 , TCDB.DEPT_NM                                                             /* 부서 이름 */
+		  FROM TB_CC_MBR_BASIS TCMB                                                     /* 회원기본테 이블 */
+     LEFT JOIN TB_CC_BZPLC_BASIS TCBB ON TCMB.BZPLC_ID = TCBB.BZPLC_ID                  /* 사업장기본 테이블 */
+     LEFT JOIN TB_CC_DEPT_BASIS TCDB ON TCMB.DEPT_ID = TCDB.DEPT_ID                     /* 부서기본 테이블 */
+     LEFT JOIN TB_CC_OPR_UNIT_BASIS TCOUB ON TCDB.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID       /* 운영단위기본 테이블 */
+         WHERE TCMB.MBR_ID = #{mbrId}													/* 회원ID */
+    </select>
+    <select id="selectMbrBasicList" parameterType="HashMap" resultType="HashMap">
+    	/* 회원 소속정보 단일조회 리스트 - CustDlvplc_SQL.selectMbrBasicList */
+		SELECT A.RNUM                     /* ROWNUM */    
+			 , A.MBR_ID                   /* 회원 아이디 */    
+			 , A.MBR_NM                   /* 회원 이름 */     
+			 , A.BZPLC_ID                 /* 사업장 아이디 */   
+			 , A.BZPLC_NM                 /* 사업장 이름 */    
+			 , A.OPR_UNIT_ID              /* 운영단위 아이디 */  
+			 , A.OPR_UNIT_NM              /* 운영단이 이름 */       
+			 , A.DEPT_ID                  /* 부서 아이디 */    
+			 , A.DEPT_NM                  /* 부서 이름 */
+			 , A.UPD_DTM				  /* 수정일자 */     
+	      FROM (         
+               SELECT ROWNUM AS RNUM														   /* ROWNUM */
+					, TCMB.MBR_ID                                                              /* 회원 아이디 */
+					, TCMB.MBR_NM                                                              /* 회원 이름 */
+					, TCMB.BZPLC_ID                                                            /* 사업장 아이디 */
+					, TCBB.BZPLC_NM                                                            /* 사업장 이름 */
+					, TCOUB.OPR_UNIT_ID                                                        /* 운영단위 아이디 */
+					, TCOUB.OPR_UNIT_NM                                                        /* 운영단이 이름 */
+					, TCDB.DEPT_ID                                                             /* 부서 아이디 */
+					, TCDB.DEPT_NM                                                             /* 부서 이름 */
+					, TCMB.UPD_DTM															   /* 수정일자 */
+	             FROM TB_CC_MBR_BASIS TCMB                                                     /* 회원기본테 이블 */
+	        LEFT JOIN TB_CC_BZPLC_BASIS TCBB ON TCMB.BZPLC_ID = TCBB.BZPLC_ID                  /* 사업장기본 테이블 */
+	        LEFT JOIN TB_CC_DEPT_BASIS TCDB ON TCMB.DEPT_ID = TCDB.DEPT_ID                     /* 부서기본 테이블 */
+	        LEFT JOIN TB_CC_OPR_UNIT_BASIS TCOUB ON TCDB.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID       /* 운영단위기본 테이블 */
+	            WHERE 1=1
+	           ) A
+		ORDER BY A.UPD_DTM DESC
+	    OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+    </select>
+    <select id="selectMbrBasicListCnt" parameterType="HashMap" resultType="Integer">
+    	/* 회원 소속정보 단일조회 리스트 카운트 조회 - CustDlvplc_SQL.selectMbrBasicListCnt */
+    	SELECT COUNT(*)																	/* 카운트 */
+          FROM TB_CC_MBR_BASIS TCMB                                                     /* 회원기본테 이블 */
+     LEFT JOIN TB_CC_BZPLC_BASIS TCBB ON TCMB.BZPLC_ID = TCBB.BZPLC_ID                  /* 사업장기본 테이블 */
+     LEFT JOIN TB_CC_DEPT_BASIS TCDB ON TCMB.DEPT_ID = TCDB.DEPT_ID                     /* 부서기본 테이블 */
+     LEFT JOIN TB_CC_OPR_UNIT_BASIS TCOUB ON TCDB.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID       /* 운영단위기본 테이블 */
+         WHERE 1=1
+    </select>
+    <update id="deleteDlvplcInfo" parameterType="HashMap">
+    	/* 배송지 정보 다중삭제 - CustDlvplc_SQL.deleteDlvplcInfo */
+    	UPDATE TB_CC_MBR_DLVPLC_BASIS
+    	   SET USE_YN = 'N'
+    	     , UPD_DTM = SYSDATE
+    	     , UPDPSN_ID = #{updpsnId}
+    	<where>
+			<if test="dlvplcId!= null and !dlvplcId.equals('')">
+				AND DLVPLC_ID IN 
+				<foreach collection="dlvplcId" item="item" index="index"  open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+        </where>
+    </update>
+	<select id="selectDlvplcListNew" parameterType="HashMap" resultType="HashMap">
+		/* 배송지 리스트 조회 - CustDlvplc_SQL.selectDlvplcListNew */
+		SELECT '0' AS COL_CHK
+             , TCMDB.MBR_ID
+--           , SUBSTR(TCMDB.HP_NO , 0, LENGTH(TCMDB.HP_NO)  -8) || LPAD(SUBSTR(TCMDB.HP_NO , LENGTH(TCMDB.HP_NO)-3),8 ,'*') AS MSKD_HP_NO
+             , TCMDB.HP_NO
+             , FN_CC_MASK_TELNO(TCMDB.HP_NO ) AS MSKD_HP_NO
+--           , SUBSTR(TCMDB.TEL_NO, 0, LENGTH(TCMDB.TEL_NO) -8) || LPAD(SUBSTR(TCMDB.TEL_NO, LENGTH(TCMDB.TEL_NO)-3),8,'*') AS MSKD_TEL_NO
+			 , FN_CC_MASK_TELNO(TCMDB.TEL_NO) AS MSKD_TEL_NO 
+             , TCMDB.TEL_NO
+             , TCMB.MBR_NM
+             , CASE WHEN LENGTH(TCMB.MBR_NM) = 2 THEN SUBSTR(TCMB.MBR_NM,1,1) || LPAD('*',(LENGTH(TCMB.MBR_NM)-1),'*')
+				    WHEN LENGTH(TCMB.MBR_NM) = 3 THEN SUBSTR(TCMB.MBR_NM,1,1) || LPAD('*',(LENGTH(TCMB.MBR_NM)-2),'*') || SUBSTR(TCMB.MBR_NM,3,1)
+				    ELSE SUBSTR(TCMB.MBR_NM,1,2) || LPAD('*',(LENGTH(TCMB.MBR_NM)-2),'*')
+				END AS MSKD_MBR_NM
+             , TCMDB.BASIS_DLVPLC_YN
+             , TCMDB.DLVPLC_ID
+             , TCMDB.RCVR_NM 
+             , CASE WHEN LENGTH(TCMDB.RCVR_NM) = 2 THEN SUBSTR(TCMDB.RCVR_NM,1,1) || LPAD('*',(LENGTH(TCMDB.RCVR_NM)-1),'*')
+				    WHEN LENGTH(TCMDB.RCVR_NM) = 3 THEN SUBSTR(TCMDB.RCVR_NM,1,1) || LPAD('*',(LENGTH(TCMDB.RCVR_NM)-2),'*') || SUBSTR(TCMDB.RCVR_NM,3,1)
+				    ELSE SUBSTR(TCMDB.RCVR_NM,1,2) || LPAD('*',(LENGTH(TCMDB.RCVR_NM)-2),'*')
+				END AS MSKD_RCVR_NM
+             , TCMDB.ZPCD
+             , TCMDB.REPR_ADDR
+             , TCMDB.DTL_ADDR
+             , LPAD('*',(LENGTH(TCMDB.DTL_ADDR)),'*') AS MSKD_DTL_ADDR
+             , TCMB.BZPLC_ID
+             , TCBB.BZPLC_NM
+             , TCOUB.OPR_UNIT_ID 
+             , TCOUB.OPR_UNIT_NM
+             , TCDB.DEPT_ID
+             , TCDB.DEPT_NM
+             , TCMDB.USE_YN
+             , TCMDB.UPD_DTM
+             , CASE WHEN TCMB.MBR_USE_CD = 'Y' THEN '사용'
+					WHEN TCMB.MBR_USE_CD = 'N' THEN '미사용'
+                	WHEN TCMB.MBR_USE_CD = 'L' THEN '휴면'
+				    ELSE '탈퇴' 
+					END AS MBR_USE_CD																															 /* 회원상태     */
+             
+          FROM TB_CC_MBR_BASIS        TCMB                                                                                                               /* TB_회원기본     */
+    INNER JOIN (
+               SELECT CO_CD
+                    , MBR_ID
+		            , HP_NO
+		            , TEL_NO
+		            , BASIS_DLVPLC_YN
+		            , DLVPLC_ID
+		            , RCVR_NM 
+		            , ZPCD
+		            , REPR_ADDR
+		            , DTL_ADDR
+		            , USE_YN
+		            , UPD_DTM
+                 FROM TB_CC_MBR_DLVPLC_BASIS
+               WHERE CO_CD = #{coCd} 
+	            <if test=' basisDlvplcYn != null and !"".equals(basisDlvplcYn) '>
+	            	AND BASIS_DLVPLC_YN = #{basisDlvplcYn}
+	            </if>
+	            <!-- <if test=' dlvplcId != null and !"".equals(dlvplcId) '>
+	            	AND DLVPLC_ID       = TRIM(#{dlvplcId})
+	            </if> -->
+	            <if test=' useYn != null and !"".equals(useYn) '>
+	            	AND USE_YN         = #{useYn}
+	            </if>
+    		   ) TCMDB                       ON TCMDB.CO_CD = TCMB.CO_CD   AND TCMDB.MBR_ID  = TCMB.MBR_ID                                                /* TB_배송지       */
+    INNER JOIN TB_CC_DEPT_BASIS       TCDB   ON TCMB.CO_CD  = TCDB.CO_CD   AND TCMB.DEPT_ID  = TCDB.DEPT_ID                                               /* TB_부서기본     */
+    INNER JOIN TB_CC_BZPLC_BASIS      TCBB   ON TCMB.CO_CD  = TCBB.CO_CD   AND TCMB.BZPLC_ID = TCBB.BZPLC_ID                                              /* TB_사업장기본   */
+    INNER JOIN TB_CC_OPR_UNIT_BASIS   TCOUB  ON TCDB.CO_CD  = TCOUB.CO_CD  AND TCDB.BZPLC_ID = TCOUB.BZPLC_ID AND TCDB.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID    /* TB_운영단위기본 */
+		   <if test=" bzplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1 
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'BZPLC_ID'
+	            AND T1.COND_DATA_VAL = TCBB.BZPLC_ID
+		   </if>
+		   <if test=" oprUnitId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T2
+	            ON  T2.SES_ID = #{sesId}
+	            AND T2.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T2.COL_ITM = 'OPR_UNIT_ID'
+	            AND T2.COND_DATA_VAL = TCOUB.OPR_UNIT_ID
+		   </if>
+		   <if test=" deptId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T3
+	            ON  T3.SES_ID = #{sesId}
+	            AND T3.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T3.COL_ITM = 'DEPT_ID'
+	            AND T3.COND_DATA_VAL = TCDB.DEPT_ID
+		   </if>
+		   <if test=" mbrId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T4
+	            ON  T4.SES_ID = #{sesId} 
+	            AND T4.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T4.COL_ITM = 'MBR_ID'
+	            AND T4.COND_DATA_VAL = TCMB.MBR_ID
+		   </if>
+		      <if test=" dlvplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'DLVPLC_ID'
+	            AND T1.COND_DATA_VAL = TCMDB.DLVPLC_ID
+		   </if>
+	      	<choose>
+				<when test='sortColumn != null and !sortColumn.equals("") and  sortType != null and !sortType.equals("")'>
+					<if test=' "MBR_ID".equals(sortColumn) '>
+						ORDER BY TCMDB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "MBR_NM".equals(sortColumn) '>
+						ORDER BY TCMB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "BASIS_DLVPLC_YN".equals(sortColumn) '>
+						ORDER BY TCMDB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "DLVPLC_ID".equals(sortColumn) '>
+						ORDER BY TCMDB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "RCVR_NM".equals(sortColumn) '>
+						ORDER BY TCMDB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "ZPCD".equals(sortColumn) '>
+						ORDER BY TCMDB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "REPR_ADDR".equals(sortColumn) '>
+						ORDER BY TCMDB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "DTL_ADDR".equals(sortColumn) '>
+						ORDER BY TCMDB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "HP_NO".equals(sortColumn) '>
+						ORDER BY TCMDB.${sortColumn} ${sortType} 
+					</if>
+					<if test=' "TEL_NO".equals(sortColumn) '>
+						ORDER BY TCMDB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "BZPLC_ID".equals(sortColumn) '>
+						ORDER BY TCBB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "BZPLC_NM".equals(sortColumn) '>
+						ORDER BY TCBB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "OPR_UNIT_ID".equals(sortColumn) '>
+						ORDER BY TCOUB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "OPR_UNIT_NM".equals(sortColumn) '>
+						ORDER BY TCOUB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "DEPT_ID".equals(sortColumn) '>
+						ORDER BY TCDB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "DEPT_NM".equals(sortColumn) '>
+						ORDER BY TCDB.${sortColumn} ${sortType}
+					</if>
+					<if test=' "USE_YN".equals(sortColumn) '>
+						ORDER BY TCMDB.${sortColumn} ${sortType}
+					</if>
+				</when>
+				<otherwise>
+					ORDER BY MBR_ID ASC, BASIS_DLVPLC_YN DESC, DLVPLC_ID ASC	--박재광 2022.06.15
+				</otherwise>
+			</choose>
+			OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY
+	</select>
+	<select id="selectDlvplcListNewCnt" parameterType="HashMap" resultType="Integer">
+		/* 배송지 리스트 조회 - CustDlvplc_SQL.selectDlvplcListNewCnt */
+		SELECT COUNT(*)
+          FROM TB_CC_MBR_DLVPLC_BASIS TCMDB
+    INNER JOIN TB_CC_MBR_BASIS        TCMB  ON TCMDB.CO_CD = TCMB.CO_CD   AND TCMDB.MBR_ID  = TCMB.MBR_ID                                               /* TB_회원기본 */
+    INNER JOIN TB_CC_DEPT_BASIS       TCDB  ON TCMB.CO_CD  = TCDB.CO_CD   AND TCMB.DEPT_ID  = TCDB.DEPT_ID                                              /* TB_부서기본 */
+    INNER JOIN TB_CC_BZPLC_BASIS      TCBB  ON TCMB.CO_CD  = TCBB.CO_CD   AND TCMB.BZPLC_ID = TCBB.BZPLC_ID                                             /* TB_사업장기본 */
+    INNER JOIN TB_CC_OPR_UNIT_BASIS   TCOUB ON TCDB.CO_CD  = TCOUB.CO_CD  AND TCDB.BZPLC_ID = TCOUB.BZPLC_ID AND TCDB.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID   /* TB_운영단위기본 */
+		   <if test=" bzplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'BZPLC_ID'
+	            AND T1.COND_DATA_VAL = TCBB.BZPLC_ID
+		   </if>
+		   <if test=" oprUnitId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T2
+	            ON  T2.SES_ID = #{sesId}
+	            AND T2.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T2.COL_ITM = 'OPR_UNIT_ID'
+	            AND T2.COND_DATA_VAL = TCOUB.OPR_UNIT_ID
+		   </if>
+		   <if test=" deptId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T3
+	            ON  T3.SES_ID = #{sesId}
+	            AND T3.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T3.COL_ITM = 'DEPT_ID'
+	            AND T3.COND_DATA_VAL = TCDB.DEPT_ID
+		   </if>
+		   <if test=" mbrId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T4
+	            ON  T4.SES_ID = #{sesId} 
+	            AND T4.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T4.COL_ITM = 'MBR_ID'
+	            AND T4.COND_DATA_VAL = TCMB.MBR_ID
+		   </if>
+		   <if test=" dlvplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'DLVPLC_ID'
+	            AND T1.COND_DATA_VAL = TCMDB.DLVPLC_ID
+		   </if>
+          WHERE TCMDB.CO_CD = #{coCd}
+            <if test='basisDlvplcYn != null and !"".equals(basisDlvplcYn)'>
+            	AND TCMDB.BASIS_DLVPLC_YN = #{basisDlvplcYn}
+            </if>
+            <!-- <if test='dlvplcId != null and !"".equals(dlvplcId)'>
+            	AND TCMDB.DLVPLC_ID = TRIM(#{dlvplcId})
+            </if> -->
+            <if test='useYn != null and !"".equals(useYn)'>
+            	AND TCMDB.USE_YN = #{useYn}
+            </if>
+	</select>
+	<select id="selectBeforeDlvplcBasisInfo" parameterType="HashMap" resultType="HashMap">
+		/* 기존의 기본 배송지 정보 조회 - Dvplc.selectBeforeDlvplcBasisInfo */
+		SELECT CO_CD
+		     , DLVPLC_ID
+		     , MBR_ID
+		     , RCVR_NM
+		     , ZPCD
+		     , REPR_ADDR
+		     , DTL_ADDR
+		     , HP_NO
+		     , TEL_NO
+		     , BASIS_DLVPLC_YN
+		     , USE_YN
+		     , REGPSN_ID
+		     , REG_DTM
+		     , UPDPSN_ID
+		     , UPD_DTM 
+		  FROM TB_CC_MBR_DLVPLC_BASIS
+		 WHERE CO_CD           = NVL(#{coCd},'1000')
+		   AND MBR_ID          = #{mbrId}
+		   AND BASIS_DLVPLC_YN = 'Y'
+	</select>
+	<select id="selectDlvplcBasisCnt" parameterType="HashMap" resultType="Integer">
+		SELECT COUNT(*) 
+		FROM TB_CC_MBR_DLVPLC_BASIS
+		WHERE BASIS_DLVPLC_YN ='Y' 
+			AND USE_YN='Y' 
+			AND MBR_ID = #{mbrId}
+	</select>
+	<select id="selectMbrDlvplcExcelList" parameterType="HashMap" resultType="java.util.LinkedHashMap">
+		/* 배송지리스트 엑셀 다운로드 조회 - Dvplc.selectMbrDlvplcExcelList */
+		SELECT TCMB.BZPLC_ID
+		     , TCBB.BZPLC_NM
+		     , TCOUB.OPR_UNIT_ID
+		     , TCOUB.OPR_UNIT_NM
+		     , TCDB.DEPT_ID
+		     , TCDB.DEPT_NM
+		     , TCMDB.MBR_ID
+		     , TCMB.MBR_NM
+		     , TCMDB.BASIS_DLVPLC_YN
+		     , TCMDB.DLVPLC_ID
+		     , TCMDB.RCVR_NM
+		     , TCMDB.ZPCD
+		     , TCMDB.REPR_ADDR
+		     , TCMDB.DTL_ADDR
+		     , TCMDB.USE_YN
+		     , TO_CHAR(TCMDB.REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+		     , NVL((SELECT FN_CC_GET_MBR_NM(TCMDB.CO_CD, TCMDB.REGPSN_ID) FROM DUAL), '-') REGPSN_NM
+		  FROM TB_CC_MBR_DLVPLC_BASIS TCMDB
+	INNER JOIN TB_CC_MBR_BASIS        TCMB  ON TCMDB.CO_CD = TCMB.CO_CD  AND TCMDB.MBR_ID  = TCMB.MBR_ID
+	 LEFT JOIN TB_CC_MBR_BASIS        TCMB2 ON TCMDB.CO_CD = TCMB2.CO_CD AND TCMDB.REGPSN_ID  = TCMB2.MBR_ID
+	INNER JOIN TB_CC_BZPLC_BASIS      TCBB  ON TCMB.CO_CD  = TCBB.CO_CD  AND TCMB.BZPLC_ID = TCBB.BZPLC_ID
+	INNER JOIN TB_CC_DEPT_BASIS       TCDB  ON TCMB.CO_CD  = TCDB.CO_CD  AND TCMB.DEPT_ID  = TCDB.DEPT_ID
+	INNER JOIN TB_CC_OPR_UNIT_BASIS   TCOUB ON TCDB.CO_CD  = TCOUB.CO_CD AND TCDB.BZPLC_ID = TCOUB.BZPLC_ID AND TCDB.OPR_UNIT_ID = TCOUB.OPR_UNIT_ID
+	 		<if test=" bzplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'BZPLC_ID'
+	            AND T1.COND_DATA_VAL = TCBB.BZPLC_ID
+		   </if>
+		   <if test=" oprUnitId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T2
+	            ON  T2.SES_ID = #{sesId}
+	            AND T2.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T2.COL_ITM = 'OPR_UNIT_ID'
+	            AND T2.COND_DATA_VAL = TCOUB.OPR_UNIT_ID
+		   </if>
+		   <if test=" deptId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T3
+	            ON  T3.SES_ID = #{sesId}
+	            AND T3.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T3.COL_ITM = 'DEPT_ID'
+	            AND T3.COND_DATA_VAL = TCDB.DEPT_ID
+		   </if>
+		   <if test=" mbrId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T4
+	            ON  T4.SES_ID = #{sesId} 
+	            AND T4.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T4.COL_ITM = 'MBR_ID'
+	            AND T4.COND_DATA_VAL = TCMB.MBR_ID
+		   </if>
+		   <if test=" dlvplcId > 0 ">
+	            JOIN
+	            TB_OD_ODR_INQ_TGT_DTLS   T1
+	            ON  T1.SES_ID = #{sesId}
+	            AND T1.INQ_COND_DTLS = #{inqCondDtls}
+	            AND T1.COL_ITM = 'DLVPLC_ID'
+	            AND T1.COND_DATA_VAL = TCMDB.DLVPLC_ID
+		   </if>
+		 WHERE TCMDB.CO_CD = #{coCd}
+            <if test='basisDlvplcYn != null and !"".equals(basisDlvplcYn)'>
+            	AND TCMDB.BASIS_DLVPLC_YN = #{basisDlvplcYn}
+            </if>
+            <!-- <if test='dlvplcId != null and !"".equals(dlvplcId)'>
+            	AND TCMDB.DLVPLC_ID = #{dlvplcId}
+            </if> -->
+            <if test='useYn != null and !"".equals(useYn)'>
+            	AND TCMDB.USE_YN = #{useYn}
+            </if>
+	</select>
+</mapper>

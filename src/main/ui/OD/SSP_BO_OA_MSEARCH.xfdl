@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="SSP_BO_TEST" width="200" height="330" onload="SSP_BO_TEST_onload" scrolltype="none" oninit="SSP_BO_TEST_oninit" onkeyup="SSP_BO_TEST_onkeyup">
+    <Layouts>
+      <Layout height="330" width="200">
+        <TextArea id="tareaInput" taborder="0" left="0" top="0" width="200" height="280"/>
+        <Button id="btn_select" taborder="1" text="확인" left="5" top="290" width="45" height="30" onclick="btn_select_onclick" cssclass="btn_WF_select" positionstep="0"/>
+        <Button id="btn_del" taborder="2" text="삭제" top="290" width="45" height="30" onclick="btn_del_onclick" positionstep="0" left="55"/>
+      </Layout>
+    </Layouts>
+    <Objects>
+      <Dataset id="ds_select" useclientlayout="true">
+        <ColumnInfo>
+          <Column id="SES_ID" type="STRING" size="256"/>
+          <Column id="INQ_COND_DTLS" type="STRING" size="256"/>
+          <Column id="COL_ITM" type="STRING" size="256"/>
+          <Column id="COND_DATA_VAL" type="STRING" size="256"/>
+        </ColumnInfo>
+      </Dataset>
+    </Objects>
+    <Script type="xscript5.1"><![CDATA[
+/***********************************************************************************************
+ * Form 변수 선언 영역
+************************************************************************************************/
+include "OD::odUtils.xjs";
+
+this.fv_oApp = nexacro.getApplication();	//application object 
+this.totalCount = 0;
+this.insertCount = 0;
+
+this.fv_inqCondDtls ="";
+this.fv_colItm ="";
+this.fv_sIdList = "";
+			
+this.SSP_BO_TEST_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	//공통 함수 호출(필수)
+	this.gfn_formOnLoad(this);
+	
+	fv_inqCondDtls = this.parent.pv1;
+    fv_colItm = this.parent.pv2;
+	
+	if(this.parent.pv5 != undefined)
+	{
+		fv_sIdList = this.parent.pv5;
+		fv_sIdList = fv_sIdList.replace(/[ ]/g,"");
+		fv_sIdList = fv_sIdList.replace(/[,]/g,"\n");		
+		this.tareaInput.set_value(fv_sIdList);
+	}
+	else {
+		fv_sIdList = ""; 
+	} 
+	 
+	this.fn_regShortCutMethod();
+};
+
+this.SSP_BO_TEST_oninit = function(obj:nexacro.Form,e:nexacro.EventInfo)
+{	
+	this.getOwnerFrame().set_resizable(true);
+	this.getOwnerFrame().set_width(this.parent.pv3);
+	this.getOwnerFrame().set_height(this.parent.pv4);
+	this.tareaInput.width = this.getOwnerFrame().width;
+	this.tareaInput.height = this.getOwnerFrame().height - 60;
+	this.btn_select.set_left(5);
+	this.btn_select.set_top(this.getOwnerFrame().height - 55);
+	this.btn_del.set_left(55);
+	this.btn_del.set_top(this.getOwnerFrame().height - 55) ;
+}; 
+ 
+this.SSP_BO_TEST_onkeyup = function(obj:nexacro.Form,e:nexacro.KeyEventInfo)
+{ 
+	this.fn_processKey(obj, e); 
+}; 
+ 
+
+this.btn_del_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	fv_sIdList = "";
+	this.tareaInput.set_value(fv_sIdList);	
+};
+
+this.btn_select_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	fv_sIdList = this.tareaInput.value;
+	fv_sIdList = fv_sIdList.replace(/[ ]/g,"");
+	fv_sIdList = fv_sIdList.replace(/[\n]/g,",");
+	
+	var resData = {};
+	var resList = [];
+	
+	var val = fv_sIdList.split(',');
+	
+	var nRow ;
+	var strValue ;
+	for(var i=0; i < val.length; i++)
+	{
+		strValue = val[i];
+		if(strValue.length != 0  )
+		{
+			resData.KEY   = fv_colItm;
+			resData.VALUE = strValue;
+			resList.push(JSON.stringify(resData));
+		}
+	}
+	if(val.length != 0)
+		this.close(JSON.stringify(resList));
+	else
+		this.close(null);
+};
+ 
+// 단축키 등록 
+this.fn_regShortCutMethod = function() { 
+	//this.fn_regMethodENTER("btn_search_onclick"); 
+	this.fn_regMethodESC("fn_closeForm"); 
+	this.fn_regMethodShiftENTER("btn_select_onclick"); 
+}; 
+ 
+//  
+this.fn_closeForm = function() { 
+	this.close(); 
+}; 
+]]></Script>
+  </Form>
+</FDL>

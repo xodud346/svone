@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PcPrdPrcHst">
+
+	<sql id="ListWhereJoinPrdId">
+		<if test="prdId > 0 ">
+			JOIN TB_OD_ODR_INQ_TGT_DTLS AA
+		            ON  AA.SES_ID = #{sesId}
+		            AND AA.INQ_COND_DTLS = #{inqCondDtls}
+		            AND AA.COL_ITM = 'PRD_ID'
+		            AND LPAD(AA.COND_DATA_VAL, 18, '0') = A.PRD_ID
+		</if>
+	</sql>
+	<sql id="ListWhereJoinReprPrdGrpId">
+		<if test="reprPrdGrpId > 0 ">
+			JOIN TB_OD_ODR_INQ_TGT_DTLS BB
+		            ON  BB.SES_ID = #{sesId}
+		            AND BB.INQ_COND_DTLS = #{inqCondDtls}
+		            AND BB.COL_ITM = 'REPR_PRD_GRP_ID'
+		            AND LPAD(BB.COND_DATA_VAL, 10, '0') = D.REPR_PRD_GRP_ID
+		</if>
+	</sql>
+	<sql id="ListWhereJoinBzplcId">
+		<if test="bzplcId > 0 ">
+			JOIN TB_OD_ODR_INQ_TGT_DTLS CC
+		            ON  CC.SES_ID = #{sesId}
+		            AND CC.INQ_COND_DTLS = #{inqCondDtls}
+		            AND CC.COL_ITM = 'BZPLC_ID'
+		            AND CC.COND_DATA_VAL = A.BZPLC_ID
+		</if>
+	</sql>
+	<sql id="ListWhereJoinOprUnitId">
+		<if test="oprUnitId > 0 ">
+			JOIN TB_OD_ODR_INQ_TGT_DTLS DD
+		            ON  DD.SES_ID = #{sesId}
+		            AND DD.INQ_COND_DTLS = #{inqCondDtls}
+		            AND DD.COL_ITM = 'OPR_UNIT_ID'
+		            AND DD.COND_DATA_VAL = A.OPR_UNIT_ID
+		</if>
+	</sql>
+
+
+
+	<sql id="ListWhere">
+		<!-- 전용공용구분 -->
+		<if test="pubOnlySprCd != null and pubOnlySprCd != ''.toString()">
+			AND C.PUB_ONLY_SPR_CD = #{pubOnlySprCd}
+		</if>
+
+		<!-- SSP카테고리 검색 -->
+		<if test="prdClcd != null and prdClcd!= ''.toString()">
+			AND	B.PRD_CLCD = #{prdClcd}
+		</if>
+
+		<!-- 예외관리상품 검색 -->
+		<if test="prcAplySprCd != null and prcAplySprCd!= ''.toString()">
+		    <choose>
+		    	<when test='"0" eq prcAplySprCd'>
+			AND	B.PRC_APLY_SPR_CD IS NULL
+				</when>
+				<otherwise>
+			AND	B.PRC_APLY_SPR_CD = #{prcAplySprCd}
+				</otherwise>
+		    </choose>
+		</if>
+
+		<!-- SSP상품상태 검색 -->
+		<if test="prdStatsCd != null and prdStatsCd!= ''.toString()">
+		    AND	B.PRD_USE_YN = #{prdStatsCd}
+		</if>
+
+		<!-- SSP진열상태 검색 -->
+		<if test="dispStatsCd != null and dispStatsCd!= ''.toString()">
+			<!-- 진열상태 주석 AND	A.DISP_STATS_CD = #{dispStatsCd} -->
+		</if>
+		
+
+		<!-- 날짜 검색 -->
+		<if test="dateCd != null and dateCd!= ''.toString()">
+			<if test="strDtm != null and strDtm!= ''.toString() and endDtm != null and endDtm!= ''.toString()">
+			    <choose>
+					<when test='"10" eq dateCd'>
+						<![CDATA[
+					    AND B.UPD_DTM >= TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS')
+					    AND B.UPD_DTM < TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')
+					    ]]>
+					</when>
+					<when test='"20" eq dateCd'>
+						<![CDATA[
+					    AND B.REG_DTM >= TO_DATE(#{strDtm}||'000000','YYYYMMDDHH24MISS')
+					    AND B.REG_DTM < TO_DATE(#{endDtm}||'235959','YYYYMMDDHH24MISS')
+					    ]]>
+					</when>
+				</choose>
+			</if>
+		</if>
+
+		<!-- 진열이상여부 검색 -->
+		<if test="dispAbno != null and dispAbno!= ''.toString()">
+	    	<choose>
+	    		<when test='"0" eq dispAbno'>
+					AND (A.PCPRC_INC_YN = 'Y'
+					OR A.PURG_INFO_PSB_YN = 'N'
+					OR A.SSP_BSS_SALSPRC_VLD_PERD_YN = 'N'
+					OR A.SAFT_INVN_YN = 'N')
+				</when>
+				<when test='"10" eq dispAbno'>
+					AND A.PCPRC_INC_YN = 'Y'
+				</when>
+				<when test='"20" eq dispAbno'>
+					AND A.PURG_INFO_PSB_YN = 'N'
+				</when>
+				<when test='"30" eq dispAbno'>
+					AND A.SSP_BSS_SALSPRC_VLD_PERD_YN = 'N'
+				</when>
+				<when test='"40" eq dispAbno'>
+					AND A.SAFT_INVN_YN = 'N'
+				</when>
+			</choose>
+
+		</if>
+		
+		<if test="reprPrdSprCd != null and reprPrdSprCd!= ''.toString()">
+		    <choose>
+				<when test='"3" eq reprPrdSprCd'>
+					AND (D.REPR_PRD_SPR_YN = 'N' OR D.REPR_PRD_SPR_YN IS NULL)
+				</when>
+				<otherwise>
+					AND D.REPR_PRD_SPR_RSN_CD = #{reprPrdSprCd}
+				</otherwise>
+			</choose>
+		</if>
+		<!-- 담당자 조회 -->
+		<if test="chrpsnCd != null and chrpsnCd!= ''.toString()">
+		    <if test="chrpsnId != null and chrpsnId!= ''.toString()">
+		    	<choose>
+		    		<when test='"10" eq chrpsnCd'><!-- 영업담당자 검색 -->
+						AND A.SALS_CHRPSN_ID = #{chrpsnId}
+					</when>
+					<when test='"20" eq chrpsnCd'><!-- 구매담당자 검색 -->
+						AND C.PURG_CHRPSN_ID = #{chrpsnId}
+					</when>
+					<when test='"30" eq chrpsnCd'><!-- MD담당자 검색 -->
+						AND K.OPRTR_ID =  #{chrpsnId}
+					</when>
+					
+				</choose>
+			</if>
+		</if>
+		
+		<!-- MD팀담당자 검색 -->
+		<if test="teamId != null and teamId!= ''.toString()">
+    		AND K.ORG_CD = #{teamId}
+		</if>
+		
+	</sql>
+
+    <select id="selectPrdPrcHstList" parameterType="HashMap" resultType="HashMap">
+        /* PcPrdPrcHst.selectPrdPrcHstList */
+        SELECT 
+        	*
+        FROM (
+			SELECT 
+				A.PRD_ID,--상품ID
+		        LTRIM(A.PRD_ID,'0')  TRIM_PRD_ID, --0제거 PRD_ID데이터
+		        A.REPR_PRD_GRP_ID, --대표상품그룹ID
+		        LTRIM(A.REPR_PRD_GRP_ID,'0') TRIM_REPR_PRD_GRP_ID, --0제거 대표상품그룹ID
+		        A.PRD_CLCD, --SSP카테고리 ID
+				FN_PR_FULL_CLSF_NM(A.CO_CD,A.PRD_CLCD) AS PRD_CLCD_NM, -- SSP카테고리 명
+				FN_COM_DTL_CDNM('KO','PUB_ONLY_SPR_CD',A.PUB_ONLY_SPR_CD) AS PUB_ONLY_SPR_NM, --공용전용구분 명
+				FN_COM_DTL_CDNM('KO','SEL_MTHD_CD',E.SEL_MTHD_CD) AS SEL_MTHD_NM, --선정방식
+				FN_COM_DTL_CDNM('KO','REPR_PRD_SPR_CD',DECODE(A.REPR_PRD_SPR_YN, 'Y', A.REPR_PRD_SPR_RSN_CD, '3')) AS REPR_PRD_SPR_NM, --대표상품구분
+				FN_COM_DTL_CDNM('KO','PRC_APLY_SPR_CD',A.PRC_APLY_SPR_CD) AS PRC_APLY_SPR_NM, -- 예외관리상품
+				FN_COM_DTL_CDNM('KO', 'MRO_PRD_STATS_CD', A.MRO_PRD_STATS_CD) MRO_PRD_STATS_CD,    --MRO상품상태
+				FN_COM_DTL_CDNM('KO','USE_YN', A.PRD_USE_YN) PRD_STATS_CD, --SSP상품상태
+				A.PRD_NM, --상품명
+				SSP_APP.FN_PR_ATTR_VAL_LIST(A.CO_CD,A.PRD_ID) ATTR_VAL, --속성명(대표규격)
+			 	A.MNFR_NO, --제조사번호
+		        G.MNFR_NM,  --제조사명
+		        H.CTRY_NM AS ORGPLC_CTRY_NM, --원산지명
+		        A.BSS_PCPRC, --최저매입가
+		        LTRIM(A.LWST_BUY_CPRTCP_ID,'0')  TRIM_CPRTCP_ID, --0제거 협력사데이터
+		        I.CPRTCP_KOR_NM AS CPRTCP_NM,
+		        A.PLN_PRFRT, --계획매익율
+		        A.STPRC, --SSP기준가
+			    A.PURG_DSGN_SALSPRC, --구매지정판매가
+			    A.DSTRB_STD_PRC, --list price
+			    A.MRK_LWST_SALSPRC, --시장최저판매가
+			    A.INTL_LWST_SALSPRC, --내부최저판매가
+			    A.SSP_BSS_SALSPRC, --SSP기준판매가
+			    A.BSS_SALSPRC_STR_DTM, --가격유효기간시작
+			    A.BSS_SALSPRC_END_DTM, --가격유효기간종료
+		        FN_PC_MIN_ODR_QTY(A.CO_CD,A.PRD_ID) AS MIN_ODR_QTY, --최소주문수량
+		        A.MULT_SELL_UNIT_QTY, --배수주문수량
+		        CASE WHEN (SELECT count(*) FROM TB_SA_EXHBN_CATG_PRD_DTL Z INNER JOIN TB_SA_EXHBN_INFO X ON Z.CO_CD = X.CO_CD   AND Z.EXHBN_SEQ = X.EXHBN_SEQ AND X.USE_YN = 'Y' WHERE Z.PRD_ID = A.PRD_ID) > 0 THEN '대상' ELSE '미대상' END AS EXHBN_CNT, --기획전 대상여부
+		        NVL2(J.INVN_STATS_CD,'재고','미재고') AS INVN_STATS_NM,
+		        A.DLV_LT AS DLV_LT, --평균배송LT
+				A.PURG_CHRPSN_ID AS PURG_CHRPSN_ID, --구매담당자
+			    (SELECT OPRTR_NM FROM TB_CO_MBR_OPRTR_INFO WHERE OPRTR_ID = A.PURG_CHRPSN_ID) AS PURG_CHRPSN_NM,    --구매담당자이름
+			    A.OPRTR_ID AS OPRTR_ID, --MD담당자
+			    A.OPRTR_NM AS OPRTR_NM, --MD담당자 이름
+			    A.PRC_REG_DTM, --SSP가격등록일
+			    A.PRC_UPD_DTM --가격정보갱신일
+		FROM (
+			SELECT
+				A.PRD_ID,--상품ID
+			    B.PRD_CLCD, --SSP카테고리 ID
+			    C.PUB_ONLY_SPR_CD,
+			    B.PRC_APLY_SPR_CD,
+			    C.MRO_PRD_STATS_CD,
+			    B.PRD_USE_YN,
+			    B.PRD_NM, --상품명
+			    A.CO_CD,
+			    C.MNFR_NO, --제조사번호
+			    C.SELL_UNIT_CD,    --주문단위
+			    C.ORGPLC_CTRY_CD, --원산지
+			    A.PLN_PRFRT, --계획매익율
+			    A.BSS_PCPRC, --최저매입가
+			    A.LWST_BUY_CPRTCP_ID, --최저매입가
+			    A.STPRC, --SSP기준가
+			    A.PURG_DSGN_SALSPRC, --구매지정판매가
+			    A.DSTRB_STD_PRC, --list price
+			    A.MRK_LWST_SALSPRC, --시장최저판매가
+			    A.INTL_LWST_SALSPRC, --내부최저판매가
+			    A.SSP_BSS_SALSPRC, --SSP기준판매가
+			    A.BSS_SALSPRC_STR_DTM, --가격유효기간시작
+			    A.BSS_SALSPRC_END_DTM, --가격유효기간종료
+			    C.MULT_SELL_UNIT_QTY, --배수주문수량
+			    C.DLV_LT AS DLV_LT, --평균배송LT
+			    C.PURG_CHRPSN_ID AS PURG_CHRPSN_ID, --구매담당자
+			    A.REG_DTM AS PRC_REG_DTM, --SSP가격등록일
+			    A.UPD_DTM AS PRC_UPD_DTM, --가격정보갱신일
+			    K.OPRTR_ID AS OPRTR_ID, --MD담당자
+				K.OPRTR_NM AS OPRTR_NM, --MD담당자 이름
+				D.REPR_PRD_SPR_YN,
+				D.REPR_PRD_SPR_RSN_CD,
+				D.REPR_PRD_GRP_ID
+			FROM TB_PC_PRD_PRC_HST A
+			<include refid="ListWhereJoinPrdId" />
+			INNER JOIN TB_PR_PRD_INFO B --SSP상품정보
+		        ON A.CO_CD = B.CO_CD AND A.PRD_ID = B.PRD_ID AND B.MALL_SPR_CD = '10'
+		    INNER JOIN TB_PR_MRO_PRD_INFO C --MRO상품정보
+		        ON A.CO_CD = C.CO_CD AND A.PRD_ID = C.PRD_ID
+		   	LEFT OUTER JOIN	TB_PR_REPR_PRD_MNG_DTL D  --대표상품
+				ON  A.CO_CD = D.CO_CD 
+				AND A.PRD_ID = D.PRD_ID 
+				AND D.SSP_PRD_YN = 'Y'
+			<include refid="ListWhereJoinReprPrdGrpId" />
+			LEFT OUTER JOIN
+			    (
+			    SELECT A.CO_CD, A.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD ,B.ORG_CD
+			    FROM    TB_PR_PRD_CLSF_CHRPSN_INFO A
+			            INNER JOIN TB_CO_MBR_OPRTR_INFO B
+			           ON A.CO_CD = B.CO_CD
+			           AND A.PRD_CLSF_CHRPSN_ID = B.OPRTR_ID
+			    WHERE A.PRD_CLSF_CHRPSN_SPR_CD = '10'
+			    AND A.PRD_CLSF_CHRPSN_TP_CD = '20'
+			    )   K -- MD담당자
+			    ON  B.CO_CD = K.CO_CD
+			    AND B.PRD_CLCD = K.PRD_CLCD
+			WHERE A.CO_CD = #{coCd}
+			<include refid="ListWhere" />
+		    )A
+		    INNER JOIN TB_PR_PRD_CLSF_INFO E --카테고리정보
+				ON  A.CO_CD = E.CO_CD
+				AND A.PRD_CLCD = E.PRD_CLCD
+			LEFT OUTER JOIN
+				TB_PR_MNFR_INFO G   --제조원
+				ON  A.CO_CD = G.CO_CD
+				AND A.MNFR_NO = G.MNFR_NO
+			LEFT OUTER JOIN TB_CO_CTRY_INFO H -- 국가
+				ON  A.CO_CD = H.CO_CD
+				AND A.ORGPLC_CTRY_CD = H.CTRY_SPR_CD
+			LEFT OUTER JOIN TB_CP_CPRTCP_BASIS I
+				ON I.CO_CD = A.CO_CD
+				AND I.CPRTCP_ID = A.LWST_BUY_CPRTCP_ID
+			LEFT OUTER JOIN VW_IV_PRD_INVN_DTLS J -- 재고마스터
+			    ON A.CO_CD = J.CO_CD
+			    AND A.PRD_ID = J.PRD_ID
+		)A
+		<choose>
+			<when test="sortColumn != null and !sortColumn.equals('') and  sortType != null and !sortType.equals('')">
+				ORDER BY A.${sortColumn} ${sortType}
+			</when>
+			<otherwise>ORDER BY A.PRD_ID DESC</otherwise>
+		</choose>
+		OFFSET #{startNum} ROWS FETCH FIRST #{rowCount} ROWS ONLY 
+    </select>
+    
+    <select id="selectPrdPrcHstCount" parameterType="hashMap" resultType="integer">
+    	/* PcPrdPrcHst.selectPrdPrcHstCount */
+		SELECT COUNT(*)
+			FROM TB_PC_PRD_PRC_HST A
+			<include refid="ListWhereJoinPrdId" />
+			INNER JOIN TB_PR_PRD_INFO B --SSP상품정보
+		        ON A.CO_CD = B.CO_CD AND A.PRD_ID = B.PRD_ID AND B.MALL_SPR_CD = '10'
+		    INNER JOIN TB_PR_MRO_PRD_INFO C --MRO상품정보
+		        ON A.CO_CD = C.CO_CD AND A.PRD_ID = C.PRD_ID
+		   	LEFT OUTER JOIN	TB_PR_REPR_PRD_MNG_DTL D  --대표상품
+				ON  A.CO_CD = D.CO_CD 
+				AND A.PRD_ID = D.PRD_ID 
+				AND D.SSP_PRD_YN = 'Y'
+			<include refid="ListWhereJoinReprPrdGrpId" />
+			LEFT OUTER JOIN
+			    (
+			    SELECT A.CO_CD, A.PRD_CLCD, OPRTR_ID, OPRTR_NM, PRD_CLSF_CHRPSN_TP_CD ,B.ORG_CD
+			    FROM    TB_PR_PRD_CLSF_CHRPSN_INFO A
+			            INNER JOIN TB_CO_MBR_OPRTR_INFO B
+			           ON A.CO_CD = B.CO_CD
+			           AND A.PRD_CLSF_CHRPSN_ID = B.OPRTR_ID
+			    WHERE A.PRD_CLSF_CHRPSN_SPR_CD = '10'
+			    AND A.PRD_CLSF_CHRPSN_TP_CD = '20'
+			    )   K -- MD담당자
+			    ON  B.CO_CD = K.CO_CD
+			    AND B.PRD_CLCD = K.PRD_CLCD
+			WHERE A.CO_CD = #{coCd}
+			<include refid="ListWhere" />
+    </select>
+	
+	
+	
+</mapper>

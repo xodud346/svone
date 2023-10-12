@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+				http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+				http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+				http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd">
+
+	<!-- annotation 설정 -->
+	<context:component-scan base-package="com.ssp.core, com.ssp.bo, com.nexacro17">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.stereotype.Service" />
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.stereotype.Repository" />
+	</context:component-scan>
+
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/"/> 
+            <bean id="localeChangeInterceptor" class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+		        <property name="paramName" value="language" />
+		    </bean>		    
+        </mvc:interceptor>
+		<bean class="com.ssp.bo.co.interceptor.LoggingInterceptor" />
+		<bean class="com.ssp.bo.co.interceptor.WebAccessInterceptor" />        
+    </mvc:interceptors>
+        
+    <bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver" />
+    <!-- 쿠키를 이용한 Locale 이용시 <bean id="localeResolver" class="org.springframework.web.servlet.i18n.CookieLocaleResolver"/> -->
+    <!-- <bean id="localeChangeInterceptor" class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+        <property name="paramName" value="language" />
+    </bean> -->
+
+	<!-- 서블릿컨네이너상의 exception에 대한 오류 페이지를 연결하는 mvc 설정 -->
+	<bean class="com.ssp.core.common.handler.SspMappingExceptionResolver">
+<!-- 	<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver"> -->
+		<property name="defaultErrorView" value="common/error/error" />
+		<property name="exceptionMappings">
+			<props>
+				<!-- 공통 -->
+				<prop key="com.ssp.core.common.exception.FileUploadException">common/error/error_fileUpload</prop>
+				<prop key="com.ssp.core.common.exception.ParamFilterException">common/error/error_paramFilter</prop>
+				<prop key="com.ssp.core.common.exception.TransactionException">common/error/error_transaction</prop>
+				<prop key="com.ssp.core.common.exception.SessionException">common/error/error_session</prop>
+				<prop key="com.ssp.core.common.exception.DoubleSubmitException">common/error/error_doublesubmit</prop>
+				<prop key="org.springframework.web.HttpRequestMethodNotSupportedException">404</prop>
+				<prop key="com.ssp.core.common.exception.AccessMypageDeniedException">common/error/error_mypageAccessDenied</prop>
+
+				<!-- 관리자 -->
+				<prop key="com.ssp.core.common.exception.AmAuthenticationException">am/common/error/error_login</prop>
+				<prop key="com.ssp.core.common.exception.AccessException">am/common/error/error_access</prop>
+
+				<!-- 프론트 -->
+				<prop key="com.ssp.core.common.exception.PcAuthenticationException">pc/common/error/error_login</prop>
+				<prop key="com.ssp.core.common.exception.PcAuthenticationBusinessException">pc/common/error/error_businesslogin</prop>
+				<prop key="com.ssp.core.common.exception.PcTrafficException">pc/common/error/error</prop>
+				<prop key="com.ssp.core.common.exception.AccreditationException">pc/common/error/accreditation</prop>
+
+				<!-- 모바일 -->
+				<prop key="com.ssp.core.common.exception.MobileAuthenticationException">mobile/common/error/error_login</prop>
+				<prop key="com.ssp.core.common.exception.MobileAccreditationException">mobile/common/error/accreditation</prop>
+			</props>
+		</property>
+	</bean>
+
+    
+    <!-- /////////////////////////////////// 넥사크로플랫폼 UIADAPTER17 설정 시작 /////////////////////////////////// -->
+    <bean id="nexacroInterceptor" class="com.nexacro.uiadapter17.spring.core.servlet.NexacroInterceptor"/>
+    <bean id="nexacroFileView"    class="com.nexacro.uiadapter17.spring.core.view.NexacroFileView" />
+    <bean id="nexacroView"        class="com.nexacro.uiadapter17.spring.core.view.NexacroView">
+        <property name="defaultContentType" value="PlatformXml" />
+        <property name="defaultCharset" value="UTF-8" />
+    </bean>
+    
+    <!-- 넥사크로플랫폼 RequestMappingHandlerAdapter 구현체 등록 -->
+    <bean class="com.nexacro.uiadapter17.spring.core.resolve.NexacroRequestMappingHandlerAdapter" p:order="0">
+        <property name="customArgumentResolvers">
+            <list><bean class="com.nexacro.uiadapter17.spring.core.resolve.NexacroMethodArgumentResolver" /></list>
+        </property>
+        <property name="customReturnValueHandlers">
+            <list>
+                <bean class="com.nexacro.uiadapter17.spring.core.resolve.NexacroHandlerMethodReturnValueHandler">
+                    <property name="view"     ref="nexacroView" />
+                    <property name="fileView" ref="nexacroFileView" />
+                </bean>
+            </list>
+        </property>
+    </bean>
+    
+    <!-- 넥사크로플랫폼 EXCEPTION-RESOLVER 등록 -->
+    <bean id="exceptionResolver" class="com.nexacro.uiadapter17.spring.core.resolve.NexacroMappingExceptionResolver" p:order="1">
+        <property name="view" ref="nexacroView" />   
+        <property name="shouldLogStackTrace" value="true" />   
+        <property name="shouldSendStackTrace" value="true" />
+        <!-- shouldSendStackTrace 가 false 일 경우 nexacro platform으로 전송되는 에러메시지  -->
+        <!-- <property name="defaultErrorMsg" value="An Error Occured. check the ErrorCode for detail of error infomation" /> -->
+        <property name="defaultErrorMsg" value="fail.common.msg" />
+        <property name="messageSource" ref="messageSource" />   
+    </bean>
+
+    <!-- XENI REQUEST-MAPPING-HANDLERADAPTER 등록 -->
+    <bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter"/>
+    <bean id="xeniUrlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping" p:order="0">
+        <property name="mappings">
+            <props>
+                <prop key="/XExportImport.do">xeniWrappingController</prop>
+            </props>
+        </property>
+    </bean>
+    
+    <!-- XENI WRAPPINGCONTROLLER 설정. -->
+    <bean id="xeniWrappingController" class="org.springframework.web.servlet.mvc.ServletWrappingController">
+        <property name="servletClass">
+            <value>com.ssp.bo.co.interceptor.GridExportImportServlet</value>
+        </property>
+    </bean>
+
+    <!-- /////////////////////////////////// 넥사크로플랫폼 UIADAPTER17 설정 끝 /////////////////////////////////// -->
+    
+    <!-- Multipart Resolver 최대 10메가 바이트(정확히 10메가는 아니지만)까지 업로드가 가능하도록 설정 -->
+    
+    
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="524288000" />
+        <property name="maxInMemorySize" value="524288000" />
+    </bean>
+    <!-- <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize"   value="31457280" />
+        <property name="maxInMemorySize" value="100000000" />
+    </bean> -->
+    
+    
+    <!-- Hibernate Validation -->
+    <bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+        <property name="validationMessageSource" ref="messageSource" />
+    </bean>
+    
+    <!-- ###################################### -->
+    <!-- jasperReports -->
+	<bean  class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	         <property name="order" value="99"></property>
+	         <property name="prefix" value="/WEB-INF/jsp/"></property>
+	         <property name="suffix" value=".jsp" />
+	<!--   <property name="prefix" value="${prefix}"></property>-->
+	<!--   <property name="suffix" value=".jsp"></property>-->
+	 </bean>
+ 	<!-- ResourceBundleViewResolver -->
+ 	<!-- <bean  class="org.springframework.web.servlet.view.XmlViewResolver">
+  		<property name="location" value="/WEB-INF/jasperReport/jaspers-views.xml" ></property>
+  		<property name="order" value="0" ></property>
+ 	</bean> -->
+	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="0"/>
+	</bean>
+
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+		<property name="order">
+			<value>1</value>
+		</property>
+	</bean> 
+    <!-- ###################################### -->
+    
+    <bean id="downloadView" class="com.ssp.core.util.DownloadView" />
+	<bean id="imageView" class="com.ssp.core.util.ImageView" />
+    
+    <bean id="downloadViewResolver"
+		class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order">
+			<value>0</value>
+		</property>
+	</bean>
+    
+    <!-- annotation-driven 설정. -->
+    <mvc:annotation-driven />
+    
+</beans>

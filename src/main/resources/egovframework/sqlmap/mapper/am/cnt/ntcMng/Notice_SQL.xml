@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Notice">
+	<!-- 관리자 > 게시판 관리 > 공지사항 조건절 -->
+	<sql id="noticeWhere">
+		AND NTS.BRD_NTS_USE_YN = 'Y'
+		<if test="regId != null and regId != ''">
+			AND NTS.BRD_NTS_REG_ID = #{regId}
+		</if>
+		<if test="popUpYn != null and popUpYn !=''">
+			AND NTS.BRD_NTS_POP_YN = #{popUpYn}
+		</if>
+		<if test="searchText != null and searchText !=''">
+			AND ((NTS.BRD_NTS_TITLE LIKE '%' || #{searchText} || '%') OR (NTS.BRD_NTS_CONTENTS LIKE '%' || #{searchText} || '%'))
+		</if>
+
+		<if test="oprUntIdList != null and oprUntIdList.size > 0">
+			AND EXISTS  (
+				SELECT S.NTS_MST_IDX
+				FROM T_BRD_NTS_DETAIL S
+				WHERE S.NTS_MST_IDX = NTS.BRD_NTS_IDX
+				AND S.NTS_BZPLC_ID IN
+				<foreach item="item" index="index" collection="oprUntIdList" open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			)
+		</if>
+
+		<if test="sort != null and sort != ''">
+			<choose>
+				<when test="sort == 'reg'">
+					AND NTS.BRD_NTS_REG_DT BETWEEN REPLACE(#{searchStrDt},'-', '')||'000000' AND REPLACE(#{searchEndDt},'-', '')||'235959'
+				</when>
+				<otherwise>
+					<![CDATA[
+						AND NTS.BRD_NTS_STR_DT BETWEEN REPLACE(#{searchStrDt},'-', '')||'000000'
+						AND REPLACE(#{searchEndDt},'-', '')||'235959'
+					]]>
+				</otherwise>
+			</choose>
+		</if>
+	</sql>
+
+	<!-- 관리자 > 게시판 관리 > 공지사항 상세정보  -->
+	<resultMap id="resultNoticeDetail" type="HashMap">
+		<result property="BRD_NTS_IDX"		column="BRD_NTS_IDX"/>
+		<result property="BRD_NTS_TITLE"	column="BRD_NTS_TITLE"/>
+		<result property="BRD_NTS_CONTENTS"	column="BRD_NTS_CONTENTS" jdbcType="CLOB" javaType="java.lang.String"/>
+		<result property="BRD_NTS_TOP_YN"	column="BRD_NTS_TOP_YN"/>
+		<result property="BRD_NTS_READ_CNT"	column="BRD_NTS_READ_CNT"/>
+		<result property="BRD_NTS_USE_YN"	column="BRD_NTS_USE_YN"/>
+		<result property="BRD_NTS_REG_DT"	column="BRD_NTS_REG_DT"/>
+		<!-- <result property="BRD_NTS_REG_IP"	column="BRD_NTS_REG_IP"/> -->
+		<result property="BRD_NTS_REG_ID"	column="BRD_NTS_REG_ID"/>
+		<result property="BRD_NTS_UPD_DT"	column="BRD_NTS_UPD_DT"/>
+		<!-- <result property="BRD_NTS_UPD_IP"	column="BRD_NTS_UPD_IP"/> -->
+		<result property="BRD_NTS_UPD_ID"	column="BRD_NTS_UPD_ID"/>
+		<!-- <result property="BRD_CMN_COM_IDX"	column="BRD_CMN_COM_IDX"/> -->
+		<result property="BRD_NTS_LOGN_YN"	column="BRD_NTS_LOGN_YN"/>
+		<result property="BRD_NTS_TRGT_BZPLC_YN"	column="BRD_NTS_TRGT_BZPLC_YN"/>
+		<result property="BRD_NTS_STR_DT"	column="BRD_NTS_STR_DT"/>
+		<result property="BRD_NTS_END_DT"	column="BRD_NTS_END_DT"/>
+		<result property="BRD_NTS_POP_YN"	column="BRD_NTS_POP_YN"/>
+		<result property="BRD_NTS_POP_STR_DT"	column="BRD_NTS_POP_STR_DT"/>
+		<result property="BRD_NTS_POP_END_DT"	column="BRD_NTS_POP_END_DT"/>
+		<result property="ATFL_ID"	column="ATFL_ID"/>
+	</resultMap>
+
+	<sql id="noticeRegWhere">
+		<choose>
+			<when test="useYn == null">
+			AND USE_YN = 'Y'
+			</when>
+			<when test="useYn != ''">
+			AND USE_YN = #{useYn}
+			</when>
+			<otherwise></otherwise>
+		</choose>
+		<if test='empNo != null and empNo != ""'>
+			AND EMP_NO LIKE '%' || #{empNo} || '%'
+		</if>
+		<if test='oprtrNm != null and oprtrNm != ""'>
+			AND OPRTR_NM LIKE '%' || #{oprtrNm} || '%'
+		</if>
+
+	</sql>
+
+	<!-- 등록자 건수 -->
+	<select id="selectNoticeRegCount" parameterType="hashMap" resultType="Integer">
+		/* Notice.selectNoticeRegCount */
+		SELECT
+			COUNT(0)
+		FROM TB_FC_MEM_OPRTR
+		<where>
+			<include refid="noticeRegWhere" />
+		</where>
+	</select>
+
+	<!-- 등록자 조회 -->
+	<select id="selectNoticeReg" parameterType="hashMap" resultType="hashMap">
+		/* Notice.selectNoticeReg */
+		<if test="startNum != null and endNum != null">
+		SELECT
+			S2.*
+		FROM
+		(	SELECT
+				ROWNUM AS RNUM,
+				S1.*
+			FROM
+			(
+		</if>
+			SELECT	EMP_NO
+				,	OPRTR_NM
+			FROM TB_FC_MEM_OPRTR
+			<where>
+				<include refid="noticeRegWhere" />
+			</where>
+			ORDER BY EMP_NO ASC
+		<if test="startNum != null and endNum != null">
+			) S1
+		) S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+		</if>
+	</select>
+
+	<!-- 공지사항 목록 총 건수 -->
+	<select id="selectNoticeCount" parameterType="hashMap" resultType="Integer">
+		/* Notice.selectNoticeCount */
+		SELECT
+			COUNT(BRD_NTS_IDX) AS CNT
+		FROM T_BRD_NTS NTS
+		<where>
+			<include refid="noticeWhere"/>
+		</where>
+	</select>
+
+	<!-- 공지사항 목록 -->
+	<select id="selectNoticeList" parameterType="hashMap" resultType="hashMap">
+		/* Notice.selectNoticeList */
+		SELECT
+			S2.*
+		FROM
+			(
+			SELECT
+				ROWNUM RNUM,
+				S1.*
+			FROM
+				(
+				SELECT
+						NTS.BRD_NTS_IDX
+					,	NTS.BRD_NTS_TOP_YN
+					,	NTS.BRD_NTS_TITLE
+					,	TO_CHAR(TO_DATE(NTS.BRD_NTS_STR_DT, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') as STR_DT
+					,	TO_CHAR(TO_DATE(NTS.BRD_NTS_END_DT, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') as END_DT
+					,	NTS.BRD_NTS_READ_CNT
+					,	NTS.BRD_NTS_POP_YN
+					,	NTS.ATFL_ID
+					,	CASE
+							WHEN EXISTS(
+								SELECT 1
+								FROM TB_SB_ATCH_FILE ATCH_M
+									INNER JOIN TB_SB_ATCH_FILE_DTL ATCH_D
+										ON ATCH_D.ATFL_ID = ATCH_M.ATFL_ID
+										AND ATCH_D.FILE_USE_YN = 'Y'
+								WHERE ATCH_M.ATFL_ID = NTS.ATFL_ID
+								AND ATCH_M.USE_YN = 'Y'
+							) THEN 'Y'
+							ELSE 'N'
+						END AS FILE_YN
+					,	NTS.BRD_NTS_REG_DT
+					,	NTS.BRD_NTS_REG_ID
+					,	REG.ADM_MST_NM								AS BRD_NTS_REG_NM
+					,	REG.ADM_MST_ERP_NO							AS BRD_NTS_REG_EMP_NO
+					,	NVL(NTS.BRD_NTS_UPD_DT, NTS.BRD_NTS_REG_DT)	AS BRD_NTS_UPD_DT
+					,	NVL(NTS.BRD_NTS_UPD_ID, NTS.BRD_NTS_REG_ID)	AS BRD_NTS_UPD_ID
+					,	UPD.ADM_MST_NM								AS BRD_NTS_UPD_NM
+					,	UPD.ADM_MST_ERP_NO							AS BRD_NTS_UPD_EMP_NO
+				FROM	T_BRD_NTS NTS
+						LEFT JOIN T_ADM_MST REG
+							ON REG.ADM_MST_ID = NTS.BRD_NTS_REG_ID
+							AND REG.ADM_MST_STATE = 'Y'
+						LEFT JOIN T_ADM_MST UPD
+							ON UPD.ADM_MST_ID = NVL(NTS.BRD_NTS_UPD_ID, NTS.BRD_NTS_REG_ID)
+							AND UPD.ADM_MST_STATE = 'Y'
+				<where>
+					<include refid="noticeWhere"/>
+				</where>
+				ORDER BY NTS.BRD_NTS_TOP_YN DESC, NTS.BRD_NTS_IDX DESC
+				) S1
+			) S2
+		WHERE
+			S2.RNUM BETWEEN #{startNum} AND #{endNum}
+
+	</select>
+
+	<!-- 공지사항 등록 -->
+	<insert id="insertNotice" parameterType="HashMap">
+		<selectKey keyProperty="brdNtsIdx" resultType="Integer" order="BEFORE">
+			SELECT SEQ_BRD_NTS_IDX.NEXTVAL AS BRD_NTS_IDX FROM DUAL
+		</selectKey>
+		/* Notice.insertNotice */
+		INSERT INTO T_BRD_NTS
+		(
+			BRD_NTS_IDX
+		,	BRD_NTS_TITLE
+		,	BRD_NTS_CONTENTS
+		,	BRD_NTS_TOP_YN
+		,	BRD_NTS_READ_CNT
+		,	BRD_NTS_REG_DT
+		,	BRD_NTS_REG_IP
+		,	BRD_NTS_REG_ID
+		,	BRD_CMN_COM_IDX
+
+		,	BRD_NTS_LOGN_YN
+		,	BRD_NTS_TRGT_BZPLC_YN
+		,	BRD_NTS_STR_DT
+		,	BRD_NTS_END_DT
+		,	BRD_NTS_POP_YN
+		,	BRD_NTS_POP_STR_DT
+		,	BRD_NTS_POP_END_DT
+		,	ATFL_ID
+		) VALUES (
+			#{brdNtsIdx}
+		,	#{brdNtsTitle}
+		,	#{brdNtsContents:CLOB}
+		,	NVL(#{topYn}, 'N')
+		,	0
+		,	TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		,	#{brdNtsRegIp}
+		,	#{brdNtsRegId}
+		,	687
+
+		,	#{lognYn}
+		,	#{trgtBzplcYn}
+		,	#{postStrDt}
+		,	#{postEndDt}
+		,	#{popYn}
+		,	#{popupStrDt}
+		,	#{popupEndDt}
+		,	#{atflId}
+		)
+	</insert>
+
+	<!-- 공지사항 운영단위 등록 -->
+	<insert id="insertNoticeDetail" parameterType="HashMap">
+		/* Notice.insertNoticeDetail */
+		INSERT INTO T_BRD_NTS_DETAIL
+		(
+			NTS_DETAIL_IDX
+		,	NTS_MST_IDX
+		,	NTS_BZPLC_ID
+		,	NTS_REG_DT
+		,	NTS_REG_ID
+		)
+		VALUES
+		(
+			NVL((SELECT MAX(NTS_DETAIL_IDX)+1 FROM T_BRD_NTS_DETAIL),0)
+		,	#{brdNtsIdx}
+		,	#{ntsBzplcId}
+		,	TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		,	#{brdNtsRegId}
+		)
+	</insert>
+
+	<!-- 공지사항 상세 -->
+	<select id="selectNoticeDetail" parameterType="hashMap" resultMap="resultNoticeDetail">
+		/* Notice.selectNoticeDetail */
+		SELECT	NTS.BRD_NTS_IDX
+			,	NTS.BRD_NTS_TITLE
+			,	NTS.BRD_NTS_CONTENTS
+			,	NTS.BRD_NTS_TOP_YN
+			,	NTS.BRD_NTS_READ_CNT
+			,	NTS.BRD_NTS_LOGN_YN
+			,	NTS.BRD_NTS_TRGT_BZPLC_YN
+			,	NTS.BRD_NTS_STR_DT
+			,	NTS.BRD_NTS_END_DT
+			,	NTS.BRD_NTS_POP_YN
+			,	NTS.BRD_NTS_POP_STR_DT
+			,	NTS.BRD_NTS_POP_END_DT
+			,	NTS.ATFL_ID
+			,	NTS.BRD_NTS_USE_YN
+			,	NTS.BRD_NTS_REG_DT
+			,	NTS.BRD_NTS_REG_ID
+			,	REG.ADM_MST_NM								AS BRD_NTS_REG_NM
+			,	REG.ADM_MST_ERP_NO							AS BRD_NTS_REG_EMP_NO
+			,	NVL(NTS.BRD_NTS_UPD_DT, NTS.BRD_NTS_REG_DT)	AS BRD_NTS_UPD_DT
+			,	NVL(NTS.BRD_NTS_UPD_ID, NTS.BRD_NTS_REG_ID)	AS BRD_NTS_UPD_ID
+			,	UPD.ADM_MST_NM								AS BRD_NTS_UPD_NM
+			,	UPD.ADM_MST_ERP_NO							AS BRD_NTS_UPD_EMP_NO
+		FROM	T_BRD_NTS NTS
+				LEFT JOIN T_ADM_MST REG
+					ON REG.ADM_MST_ID = NTS.BRD_NTS_REG_ID
+					AND REG.ADM_MST_STATE = 'Y'
+				LEFT JOIN T_ADM_MST UPD
+					ON UPD.ADM_MST_ID = NVL(NTS.BRD_NTS_UPD_ID, NTS.BRD_NTS_REG_ID)
+					AND UPD.ADM_MST_STATE = 'Y'
+		WHERE	NTS.BRD_NTS_IDX = #{index}
+	</select>
+
+	<!-- 공지사항 상세 > 운영단위 조회 -->
+	<select id="selectNoticeBzplcDetail" parameterType="hashMap" resultType="hashMap">
+		/* Notice.selectNoticeBzplcDetail */
+		SELECT
+			a.NTS_BZPLC_ID
+			, b.OPR_UNT_NM
+			, b.USE_YN
+		FROM T_BRD_NTS_DETAIL a
+		LEFT JOIN TB_FC_BZPLC_OPR_UNT b
+		ON a.NTS_BZPLC_ID = b.OPR_UNT_ID
+		WHERE a.NTS_MST_IDX = #{index}
+	</select>
+
+
+	<!-- 공지사항 수정 -->
+	<update id="updateNotice" parameterType="HashMap">
+		/* Notice.updateNotice */
+		UPDATE
+			T_BRD_NTS
+		SET
+			BRD_NTS_TITLE = #{brdNtsTitle}
+			, BRD_NTS_CONTENTS = #{brdNtsContents}
+			, BRD_NTS_TOP_YN = NVL(#{topYn}, 'N')
+			, BRD_NTS_UPD_DT = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+			, BRD_NTS_UPD_IP = #{brdNtsUpdIp}
+			, BRD_NTS_UPD_ID = #{brdNtsUpdId}
+			, BRD_NTS_LOGN_YN = #{lognYn}
+			, BRD_NTS_TRGT_BZPLC_YN = #{trgtBzplcYn}
+			, BRD_NTS_STR_DT = #{postStrDt}
+			, BRD_NTS_END_DT = #{postEndDt}
+			, BRD_NTS_POP_YN = #{popYn}
+			, BRD_NTS_POP_STR_DT = #{popupStrDt}
+			, BRD_NTS_POP_END_DT = #{popupEndDt}
+		WHERE
+			BRD_NTS_IDX = #{brdNtsIdx}
+	</update>
+
+	<update id="deleteNotice" parameterType="HashMap">
+		/* Notice.deleteNotice */
+		UPDATE T_BRD_NTS
+		SET BRD_NTS_USE_YN = 'N'
+		WHERE BRD_NTS_IDX = #{brdNtsIdx}
+	</update>
+
+	<delete id="deleteNoticeDetail" parameterType="HashMap">
+		/* Notice.deleteNoticeDetail */
+		DELETE FROM T_BRD_NTS_DETAIL
+		WHERE NTS_MST_IDX = #{brdNtsIdx}
+	</delete>
+
+	<delete id="deleteNoticeFile" parameterType="HashMap">
+		/* Notice.deleteNoticeFile */
+		DELETE FROM T_CMM_FLE WHERE CMM_FLE_TB_PK = #{brdNtsIdx} AND CMM_FLE_TB_NM = 'T_BRD_NTS'
+	</delete>
+
+</mapper>
